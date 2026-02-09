@@ -22,6 +22,7 @@ const priorityBgColors: Record<string, string> = {
 export default function StandingOrdersPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: orders = [] } = useStandingOrders();
   const createMutation = useCreateStandingOrder();
   const updateMutation = useUpdateStandingOrder();
@@ -66,21 +67,28 @@ export default function StandingOrdersPage() {
 
       <div className="flex items-center gap-3 mb-8">
         <FileSignature className="text-red-600" size={28} />
-        <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
-          Standing Orders
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
+            Standing Orders
+          </h1>
+          <p className="text-slate-400 text-sm" data-testid="text-page-description">
+            {userRole === 'dom' ? 'Permanent directives for your sub' : 'Orders issued by your Dom'}
+          </p>
+        </div>
       </div>
 
-      <Button
-        data-testid="button-toggle-form"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        New Order
-      </Button>
+      {userRole === 'dom' && (
+        <Button
+          data-testid="button-toggle-form"
+          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-2" />
+          Issue Order
+        </Button>
+      )}
 
-      {showForm && (
+      {showForm && userRole === 'dom' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-order">
           <Input
             data-testid="input-order-title"
@@ -132,7 +140,9 @@ export default function StandingOrdersPage() {
 
       <div className="space-y-3">
         {orders.length === 0 && (
-          <p className="text-slate-500 text-center py-8" data-testid="text-no-orders">No standing orders yet. Create your first one.</p>
+          <p className="text-slate-500 text-center py-8" data-testid="text-no-orders">
+            {userRole === 'sub' ? 'No standing orders from your Dom yet.' : 'No standing orders yet. Create your first one.'}
+          </p>
         )}
         {orders.map((order) => (
           <div
@@ -170,28 +180,30 @@ export default function StandingOrdersPage() {
                   {order.active ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  data-testid={`button-toggle-order-${order.id}`}
-                  variant="ghost"
-                  size="sm"
-                  className={order.active ? 'text-green-500 hover:text-green-400' : 'text-slate-600 hover:text-slate-400'}
-                  onClick={() => handleToggleActive(order)}
-                  disabled={updateMutation.isPending}
-                >
-                  {order.active ? <Check size={16} /> : <X size={16} />}
-                </Button>
-                <Button
-                  data-testid={`button-delete-order-${order.id}`}
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-500 hover:text-red-400"
-                  onClick={() => handleDelete(order.id)}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 size={16} />
-                </Button>
-              </div>
+              {userRole === 'dom' && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    data-testid={`button-toggle-order-${order.id}`}
+                    variant="ghost"
+                    size="sm"
+                    className={order.active ? 'text-green-500 hover:text-green-400' : 'text-slate-600 hover:text-slate-400'}
+                    onClick={() => handleToggleActive(order)}
+                    disabled={updateMutation.isPending}
+                  >
+                    {order.active ? <Check size={16} /> : <X size={16} />}
+                  </Button>
+                  <Button
+                    data-testid={`button-delete-order-${order.id}`}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-400"
+                    onClick={() => handleDelete(order.id)}
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { Hand, Plus, Check, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { usePermissionRequests, useCreatePermissionRequest, useAuth } from '@/lib/hooks';
+import { usePermissionRequests, useCreatePermissionRequest, useUpdatePermissionRequest, useAuth } from '@/lib/hooks';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500/20 text-yellow-500',
@@ -20,8 +20,10 @@ const statusIcons: Record<string, React.ReactNode> = {
 export default function PermissionRequestsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: requests = [] } = usePermissionRequests();
   const createMutation = useCreatePermissionRequest();
+  const updateMutation = useUpdatePermissionRequest();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -51,21 +53,28 @@ export default function PermissionRequestsPage() {
 
       <div className="flex items-center gap-3 mb-8">
         <Hand className="text-red-600" size={28} />
-        <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
-          Permission Requests
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
+            Permission Requests
+          </h1>
+          <p className="text-slate-400 text-sm" data-testid="text-page-description">
+            {userRole === 'sub' ? 'Ask your Dom for permission' : "Review your sub's requests"}
+          </p>
+        </div>
       </div>
 
-      <Button
-        data-testid="button-toggle-form"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        New Request
-      </Button>
+      {userRole === 'sub' && (
+        <Button
+          data-testid="button-toggle-form"
+          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-2" />
+          Request Permission
+        </Button>
+      )}
 
-      {showForm && (
+      {showForm && userRole === 'sub' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-request">
           <Input
             data-testid="input-request-title"
@@ -106,7 +115,9 @@ export default function PermissionRequestsPage() {
 
       <div className="space-y-3">
         {requests.length === 0 && (
-          <p className="text-slate-500 text-center py-8" data-testid="text-no-requests">No permission requests yet. Create your first one.</p>
+          <p className="text-slate-500 text-center py-8" data-testid="text-no-requests">
+            {userRole === 'dom' ? "No permission requests from your sub yet." : 'No permission requests yet. Create your first one.'}
+          </p>
         )}
         {requests.map((request) => (
           <div
@@ -134,6 +145,30 @@ export default function PermissionRequestsPage() {
                   </p>
                 )}
               </div>
+              {userRole === 'dom' && request.status === 'pending' && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    data-testid={`button-approve-request-${request.id}`}
+                    variant="ghost"
+                    size="sm"
+                    className="text-green-500 hover:text-green-400"
+                    onClick={() => updateMutation.mutate({ id: request.id, status: 'approved' })}
+                    disabled={updateMutation.isPending}
+                  >
+                    <Check size={16} />
+                  </Button>
+                  <Button
+                    data-testid={`button-deny-request-${request.id}`}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-400"
+                    onClick={() => updateMutation.mutate({ id: request.id, status: 'denied' })}
+                    disabled={updateMutation.isPending}
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         ))}

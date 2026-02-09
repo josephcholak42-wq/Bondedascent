@@ -26,6 +26,7 @@ const categoryColor: Record<string, string> = {
 export default function CountdownEventsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: events = [] } = useCountdownEvents();
   const createMutation = useCreateCountdownEvent();
   const deleteMutation = useDeleteCountdownEvent();
@@ -72,22 +73,29 @@ export default function CountdownEventsPage() {
         ← Back
       </Button>
 
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <Timer className="text-red-600" size={28} />
-          <h1 className="text-2xl font-bold text-white uppercase tracking-tighter">Countdown Events</h1>
+          <h1 className="text-2xl font-bold text-white uppercase tracking-tighter">
+            {userRole === 'dom' ? 'Countdown Events' : 'Upcoming Events'}
+          </h1>
         </div>
-        <Button
-          data-testid="button-toggle-form"
-          variant="outline"
-          className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} className="mr-1" /> New
-        </Button>
+        {userRole === 'dom' && (
+          <Button
+            data-testid="button-toggle-form"
+            variant="outline"
+            className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white"
+            onClick={() => setShowForm(!showForm)}
+          >
+            <Plus size={16} className="mr-1" /> New Event
+          </Button>
+        )}
       </div>
+      <p className="text-sm text-slate-400 mb-8" data-testid="text-page-description">
+        {userRole === 'dom' ? 'Set deadlines and milestones' : 'Events and deadlines set by your Dom'}
+      </p>
 
-      {showForm && (
+      {userRole === 'dom' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-4" data-testid="form-create-event">
           <div>
             <label className="text-sm text-slate-400 uppercase tracking-wider block mb-1">Title</label>
@@ -157,7 +165,7 @@ export default function CountdownEventsPage() {
       <div className="space-y-4">
         {events.length === 0 && (
           <div className="text-center text-slate-500 py-12" data-testid="text-empty-state">
-            No countdown events yet. Create your first one!
+            {userRole === 'sub' ? 'No upcoming events yet.' : 'No countdown events yet. Create your first one!'}
           </div>
         )}
         {events.map(event => {
@@ -189,16 +197,18 @@ export default function CountdownEventsPage() {
                   >
                     {event.category}
                   </span>
-                  <Button
-                    data-testid={`button-delete-${event.id}`}
-                    variant="ghost"
-                    size="sm"
-                    className="text-slate-500 hover:text-red-500"
-                    onClick={() => handleDelete(event.id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
+                  {userRole === 'dom' && (
+                    <Button
+                      data-testid={`button-delete-${event.id}`}
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-500 hover:text-red-500"
+                      onClick={() => handleDelete(event.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  )}
                 </div>
               </div>
 

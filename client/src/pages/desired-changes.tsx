@@ -22,6 +22,7 @@ const statusStyles: Record<string, string> = {
 export default function DesiredChangesPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: changes = [] } = useDesiredChanges();
   const createMutation = useCreateDesiredChange();
   const updateMutation = useUpdateDesiredChange();
@@ -61,21 +62,28 @@ export default function DesiredChangesPage() {
 
       <div className="flex items-center gap-3 mb-8">
         <Target className="text-red-600" size={28} />
-        <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
-          Desired Changes
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
+            {userRole === 'dom' ? 'Desired Changes' : 'Required Changes'}
+          </h1>
+          <p className="text-slate-400 text-sm" data-testid="text-page-description">
+            {userRole === 'dom' ? 'Changes you want from your sub' : 'Changes requested by your Dom'}
+          </p>
+        </div>
       </div>
 
-      <Button
-        data-testid="button-toggle-form"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        New Change
-      </Button>
+      {userRole === 'dom' && (
+        <Button
+          data-testid="button-toggle-form"
+          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-2" />
+          Request Change
+        </Button>
+      )}
 
-      {showForm && (
+      {showForm && userRole === 'dom' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-change">
           <Input
             data-testid="input-change-title"
@@ -128,7 +136,9 @@ export default function DesiredChangesPage() {
 
       <div className="space-y-3">
         {changes.length === 0 && (
-          <p className="text-slate-500 text-center py-8" data-testid="text-no-changes">No desired changes yet. Create your first one.</p>
+          <p className="text-slate-500 text-center py-8" data-testid="text-no-changes">
+            {userRole === 'sub' ? 'No changes requested by your Dom yet.' : 'No desired changes yet. Create your first one.'}
+          </p>
         )}
         {changes.map((change) => (
           <div
@@ -161,7 +171,7 @@ export default function DesiredChangesPage() {
                   {change.status}
                 </span>
               </div>
-              {change.status === 'active' && (
+              {userRole === 'dom' && change.status === 'active' && (
                 <div className="flex items-center gap-1">
                   <Button
                     data-testid={`button-achieve-change-${change.id}`}

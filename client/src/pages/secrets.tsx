@@ -14,6 +14,7 @@ const TIER_COLORS: Record<string, string> = {
 export default function SecretsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: mySecrets = [] } = useSecrets();
   const { data: sharedSecrets = [] } = useSecretsForMe();
   const createSecretMutation = useCreateSecret();
@@ -78,7 +79,7 @@ export default function SecretsPage() {
           ) : (
             <>
               <EyeOff size={16} className="text-slate-600" data-testid={`icon-hidden-${secret.id}`} />
-              {isShared && (
+              {isShared && userRole === 'dom' && (
                 <Button
                   data-testid={`button-reveal-secret-${secret.id}`}
                   variant="ghost"
@@ -108,12 +109,15 @@ export default function SecretsPage() {
         ← Back
       </Button>
 
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-2">
         <Lock className="text-red-600" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
-          Secrets Exchange
+          {userRole === 'dom' ? 'Secrets Vault' : 'Confessions'}
         </h1>
       </div>
+      <p className="text-slate-400 text-sm mb-8 ml-10" data-testid="text-page-description">
+        {userRole === 'dom' ? 'Extract and manage confessions' : 'Share your secrets with your Dom'}
+      </p>
 
       <Button
         data-testid="button-toggle-form"
@@ -121,7 +125,7 @@ export default function SecretsPage() {
         onClick={() => setShowForm(!showForm)}
       >
         <Plus size={16} className="mr-2" />
-        New Secret
+        {userRole === 'dom' ? 'New Secret' : 'New Confession'}
       </Button>
 
       {showForm && (
@@ -177,7 +181,7 @@ export default function SecretsPage() {
         <div>
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2" data-testid="text-section-my-secrets">
             <Lock size={14} className="text-red-600" />
-            My Secrets
+            {userRole === 'dom' ? 'Stored Secrets' : 'My Confessions'}
           </h2>
           <div className="space-y-2">
             {mySecrets.length === 0 ? (
@@ -191,7 +195,7 @@ export default function SecretsPage() {
         <div>
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2" data-testid="text-section-shared-secrets">
             <Eye size={14} className="text-red-600" />
-            Shared With Me
+            {userRole === 'dom' ? 'Confessions Received' : "Dom's Secrets"}
           </h2>
           <div className="space-y-2">
             {sharedSecrets.length === 0 ? (

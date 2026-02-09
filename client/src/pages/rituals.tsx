@@ -8,6 +8,7 @@ import { useRituals, useCreateRitual, useUpdateRitual, useDeleteRitual, useAuth 
 export default function RitualsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: rituals = [] } = useRituals();
   const createRitualMutation = useCreateRitual();
   const updateRitualMutation = useUpdateRitual();
@@ -55,21 +56,28 @@ export default function RitualsPage() {
 
       <div className="flex items-center gap-3 mb-8">
         <Flame className="text-red-600" size={28} />
-        <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
-          Rituals & Protocols
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
+            {userRole === 'dom' ? 'Rituals & Protocols' : 'My Rituals'}
+          </h1>
+          <p className="text-slate-400 text-sm" data-testid="text-page-description">
+            {userRole === 'dom' ? 'Protocols for your sub to follow' : 'Protocols assigned by your Dom'}
+          </p>
+        </div>
       </div>
 
-      <Button
-        data-testid="button-toggle-form"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        New Ritual
-      </Button>
+      {userRole === 'dom' && (
+        <Button
+          data-testid="button-toggle-form"
+          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-2" />
+          Assign Ritual
+        </Button>
+      )}
 
-      {showForm && (
+      {showForm && userRole === 'dom' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-ritual">
           <Input
             data-testid="input-ritual-title"
@@ -129,7 +137,9 @@ export default function RitualsPage() {
 
       <div className="space-y-3">
         {rituals.length === 0 && (
-          <p className="text-slate-500 text-center py-8" data-testid="text-no-rituals">No rituals yet. Create your first one.</p>
+          <p className="text-slate-500 text-center py-8" data-testid="text-no-rituals">
+            {userRole === 'sub' ? 'No rituals assigned yet.' : 'No rituals yet. Create your first one.'}
+          </p>
         )}
         {rituals.map((ritual) => (
           <div
@@ -182,16 +192,18 @@ export default function RitualsPage() {
                 >
                   {ritual.active ? <Check size={16} /> : <X size={16} />}
                 </Button>
-                <Button
-                  data-testid={`button-delete-ritual-${ritual.id}`}
-                  variant="ghost"
-                  size="sm"
-                  className="text-red-500 hover:text-red-400"
-                  onClick={() => handleDelete(ritual.id)}
-                  disabled={deleteRitualMutation.isPending}
-                >
-                  <Trash2 size={16} />
-                </Button>
+                {userRole === 'dom' && (
+                  <Button
+                    data-testid={`button-delete-ritual-${ritual.id}`}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-400"
+                    onClick={() => handleDelete(ritual.id)}
+                    disabled={deleteRitualMutation.isPending}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                )}
               </div>
             </div>
           </div>

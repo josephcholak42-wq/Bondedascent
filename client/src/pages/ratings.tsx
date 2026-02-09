@@ -9,12 +9,13 @@ import type { Rating } from '@shared/schema';
 export default function RatingsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: ratingsGiven = [] } = useRatings();
   const { data: ratingsReceived = [] } = useRatingsReceived();
   const createRatingMutation = useCreateRating();
   const { data: partner } = usePartner();
 
-  const [activeTab, setActiveTab] = useState<'given' | 'received'>('given');
+  const [activeTab, setActiveTab] = useState<'given' | 'received'>(userRole === 'sub' ? 'received' : 'given');
   const [showForm, setShowForm] = useState(false);
   const [overall, setOverall] = useState(5);
   const [communication, setCommunication] = useState(5);
@@ -78,12 +79,15 @@ export default function RatingsPage() {
         ← Back
       </Button>
 
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-2">
         <Star className="text-red-600" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-tighter" data-testid="text-page-title">
-          Ratings
+          {userRole === 'dom' ? 'Performance Ratings' : 'My Ratings'}
         </h1>
       </div>
+      <p className="text-sm text-slate-400 mb-8" data-testid="text-page-description">
+        {userRole === 'dom' ? "Rate your sub's performance" : 'Performance ratings from your Dom'}
+      </p>
 
       <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 text-center" data-testid="text-average-score">
         <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">Average Score</p>
@@ -98,7 +102,7 @@ export default function RatingsPage() {
           onClick={() => setActiveTab('given')}
         >
           <BarChart size={14} className="mr-2" />
-          Given
+          {userRole === 'dom' ? 'My Ratings' : 'Given'}
         </Button>
         <Button
           data-testid="button-tab-received"
@@ -110,7 +114,7 @@ export default function RatingsPage() {
         </Button>
       </div>
 
-      {partner && (
+      {userRole === 'dom' && partner && (
         <Button
           data-testid="button-toggle-form"
           className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
@@ -121,7 +125,7 @@ export default function RatingsPage() {
         </Button>
       )}
 
-      {showForm && (
+      {userRole === 'dom' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-4" data-testid="form-create-rating">
           <div>
             <label className="text-xs text-slate-400 uppercase tracking-wider block mb-2">Overall ({overall})</label>
@@ -160,7 +164,7 @@ export default function RatingsPage() {
             />
           </div>
           <div>
-            <label className="text-xs text-slate-400 uppercase tracking-wider block mb-2">Effort ({effort})</label>
+            <label className="text-xs text-slate-400 uppercase tracking-wider block mb-2">Devotion ({effort})</label>
             <Slider
               data-testid="slider-effort"
               min={1}

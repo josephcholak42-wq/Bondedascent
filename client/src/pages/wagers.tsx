@@ -15,6 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function WagersPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: wagers = [] } = useWagers();
   const createWagerMutation = useCreateWager();
   const updateWagerMutation = useUpdateWager();
@@ -56,23 +57,28 @@ export default function WagersPage() {
         ← Back
       </Button>
 
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-2">
         <Dices className="text-red-600" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
-          Wagers
+          {userRole === 'dom' ? 'Wagers' : 'Active Wagers'}
         </h1>
       </div>
+      <p className="text-sm text-slate-400 mb-8" data-testid="text-page-description">
+        {userRole === 'dom' ? 'Set stakes and challenges' : 'Wagers set by your Dom'}
+      </p>
 
-      <Button
-        data-testid="button-toggle-form"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        New Wager
-      </Button>
+      {userRole === 'dom' && (
+        <Button
+          data-testid="button-toggle-form"
+          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-2" />
+          Propose Wager
+        </Button>
+      )}
 
-      {showForm && (
+      {userRole === 'dom' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-wager">
           <Input
             data-testid="input-wager-title"
@@ -120,7 +126,7 @@ export default function WagersPage() {
 
       <div className="space-y-3">
         {wagers.length === 0 && (
-          <p className="text-slate-500 text-center py-8" data-testid="text-no-wagers">No wagers yet. Create your first one.</p>
+          <p className="text-slate-500 text-center py-8" data-testid="text-no-wagers">{userRole === 'sub' ? 'No wagers from your Dom yet.' : 'No wagers yet. Create your first one.'}</p>
         )}
         {wagers.map((wager) => (
           <div
@@ -154,7 +160,7 @@ export default function WagersPage() {
                 )}
               </div>
             </div>
-            {wager.status === 'active' && (
+            {userRole === 'dom' && wager.status === 'active' && (
               <div className="flex gap-2 mt-3 pt-3 border-t border-slate-800">
                 <Button
                   data-testid={`button-resolve-won-${wager.id}`}

@@ -14,6 +14,7 @@ const typeColors: Record<string, string> = {
 export default function DevotionsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: devotions = [] } = useDevotions();
   const createMutation = useCreateDevotion();
   const updateMutation = useUpdateDevotion();
@@ -48,23 +49,28 @@ export default function DevotionsPage() {
         ← Back
       </Button>
 
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-2">
         <Heart className="text-red-600" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
-          Devotions
+          {userRole === 'dom' ? "Sub's Devotions" : 'Devotions'}
         </h1>
       </div>
+      <p className="text-slate-400 text-sm mb-8 ml-10" data-testid="text-page-description">
+        {userRole === 'dom' ? "View your sub's expressions of devotion" : 'Express your devotion and commitment'}
+      </p>
 
-      <Button
-        data-testid="button-toggle-form"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        New Devotion
-      </Button>
+      {userRole === 'sub' && (
+        <Button
+          data-testid="button-toggle-form"
+          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-2" />
+          New Devotion
+        </Button>
+      )}
 
-      {showForm && (
+      {userRole === 'sub' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-devotion">
           <select
             data-testid="select-devotion-type"
@@ -108,7 +114,9 @@ export default function DevotionsPage() {
 
       <div className="space-y-3">
         {devotions.length === 0 && (
-          <p className="text-slate-500 text-center py-8" data-testid="text-no-devotions">No devotions yet. Create your first one.</p>
+          <p className="text-slate-500 text-center py-8" data-testid="text-no-devotions">
+            {userRole === 'dom' ? "Your sub hasn't created any devotions yet." : 'No devotions yet. Create your first one.'}
+          </p>
         )}
         {devotions.map((devotion) => (
           <div
@@ -135,16 +143,18 @@ export default function DevotionsPage() {
                   {devotion.content}
                 </p>
               </div>
-              <Button
-                data-testid={`button-toggle-devotion-${devotion.id}`}
-                variant="ghost"
-                size="sm"
-                className={devotion.completed ? 'text-green-500 hover:text-green-400' : 'text-slate-600 hover:text-slate-400'}
-                onClick={() => handleToggleCompleted(devotion)}
-                disabled={updateMutation.isPending}
-              >
-                <Check size={16} />
-              </Button>
+              {userRole === 'sub' && (
+                <Button
+                  data-testid={`button-toggle-devotion-${devotion.id}`}
+                  variant="ghost"
+                  size="sm"
+                  className={devotion.completed ? 'text-green-500 hover:text-green-400' : 'text-slate-600 hover:text-slate-400'}
+                  onClick={() => handleToggleCompleted(devotion)}
+                  disabled={updateMutation.isPending}
+                >
+                  <Check size={16} />
+                </Button>
+              )}
             </div>
           </div>
         ))}

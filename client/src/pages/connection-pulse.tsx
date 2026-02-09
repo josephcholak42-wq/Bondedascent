@@ -7,6 +7,7 @@ import { usePartner, usePartnerStats, usePartnerActivity, useAuth } from '@/lib/
 export default function ConnectionPulsePage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: partner } = usePartner();
   const { data: partnerStats } = usePartnerStats();
   const { data: partnerActivity = [] } = usePartnerActivity();
@@ -49,6 +50,7 @@ export default function ConnectionPulsePage() {
           <h1 className="text-2xl font-bold text-white uppercase tracking-tighter" data-testid="text-page-title">
             Connection Pulse
           </h1>
+          <p className="text-xs text-slate-500 mt-1">{userRole === 'dom' ? "Monitor your sub's devotion" : 'Your bond with your Dom'}</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 text-center" data-testid="text-not-paired">
@@ -82,6 +84,7 @@ export default function ConnectionPulsePage() {
         <h1 className="text-2xl font-bold text-white uppercase tracking-tighter" data-testid="text-page-title">
           Connection Pulse
         </h1>
+        <p className="text-xs text-slate-500 mt-1">{userRole === 'dom' ? "Monitor your sub's devotion" : 'Your bond with your Dom'}</p>
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 mb-6 flex flex-col items-center" data-testid="section-bond-strength">
@@ -122,7 +125,7 @@ export default function ConnectionPulsePage() {
       <div>
         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2" data-testid="text-activity-heading">
           <Activity size={14} className="text-red-600" />
-          Recent Partner Activity
+          {userRole === 'dom' ? "Sub's Recent Activity" : "Dom's Recent Activity"}
         </h2>
         <div className="space-y-2">
           {recentActivity.length === 0 && (

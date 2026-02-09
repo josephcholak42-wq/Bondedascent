@@ -9,6 +9,26 @@ BondedAscent is a full-stack web application for dynamic protocol management bet
 - **Sub Velvet Mode**: CircleDot/Collar center with devotion-pulse animation. Orbital nodes renamed to: Obey, Confess, Endure, Reflect, Serve, Earn, Sensory, Vault. Features: time since last command counter, demand timer response cards with urgency escalation, pending orders with acknowledge buttons.
 - **Functional Features**: Demand timers (DB-backed with expiration), quick commands (instant push-notified orders), presence heartbeat (30s pings), lockdown mode (restricts sub to tasks only), compliance gauge.
 - **Key Tables**: `demand_timers`, `quick_commands`, `presence_heartbeats`, `users.locked_down` field
+- **Enforcement System**: Levels 1-5 with auto-task assignment, `users.enforcement_level` field
+- **Override Actions**: Revoke rewards, clear tasks, force check-in (real backend operations)
+- **Accusations**: Dom can make accusations, Sub responds. `accusations` table with from/to user tracking
+
+### Role-Based Feature Pages
+All 14 extra feature pages have dom/sub role differentiation:
+- **Standing Orders**: Dom creates/manages, Sub views read-only
+- **Permission Requests**: Sub creates requests, Dom approves/denies
+- **Desired Changes**: Dom creates change requests, Sub views as "Required Changes"
+- **Rituals**: Dom assigns rituals, Sub views and marks completion
+- **Ratings**: Dom rates sub performance, Sub views received ratings
+- **Wagers**: Dom proposes/resolves, Sub views only
+- **Play Sessions**: Dom plans/completes, Sub views as "Scheduled Sessions"
+- **Countdown Events**: Dom creates/deletes events, Sub views as "Upcoming Events"
+- **Devotions**: Sub creates/completes, Dom views as "Sub's Devotions"
+- **Secrets**: Dom sees "Secrets Vault", Sub sees "Confessions"
+- **Conflicts**: Both create/discuss, only Dom resolves
+- **Limits**: Both create/delete (shared safety feature)
+- **Achievements**: Role-appropriate descriptions
+- **Connection Pulse**: Role-appropriate activity labels
 
 ## User Preferences
 

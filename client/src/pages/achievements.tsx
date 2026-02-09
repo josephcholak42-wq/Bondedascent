@@ -23,6 +23,7 @@ const tierIcons: Record<string, React.ReactNode> = {
 export default function AchievementsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: achievements = [] } = useAchievements();
 
   return (
@@ -39,11 +40,12 @@ export default function AchievementsPage() {
       <div className="flex items-center gap-3 mb-8">
         <Award className="text-red-600" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-tighter">Achievements</h1>
+        <p className="text-xs text-slate-500 mt-1">{userRole === 'dom' ? 'Milestones earned through authority' : 'Milestones earned through devotion'}</p>
       </div>
 
       {achievements.length === 0 ? (
         <div className="text-center text-slate-500 py-16" data-testid="text-empty-state">
-          No achievements unlocked yet. Keep going!
+          {userRole === 'dom' ? 'No achievements unlocked yet. Keep commanding!' : 'No achievements unlocked yet. Keep serving!'}
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

@@ -14,6 +14,7 @@ const statusColors: Record<string, string> = {
 export default function ConflictsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: conflicts = [] } = useConflicts();
   const createMutation = useCreateConflict();
   const updateMutation = useUpdateConflict();
@@ -57,12 +58,15 @@ export default function ConflictsPage() {
         ← Back
       </Button>
 
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-2">
         <AlertTriangle className="text-red-600" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
           Conflict Resolution
         </h1>
       </div>
+      <p className="text-slate-400 text-sm mb-8 ml-10" data-testid="text-page-description">
+        {userRole === 'dom' ? 'Address and resolve issues' : 'Raise and discuss issues with your Dom'}
+      </p>
 
       <Button
         data-testid="button-toggle-form"
@@ -159,19 +163,21 @@ export default function ConflictsPage() {
                       <MessageSquare size={16} />
                     </Button>
                   )}
-                  <Button
-                    data-testid={`button-resolve-conflict-${conflict.id}`}
-                    variant="ghost"
-                    size="sm"
-                    className="text-green-500 hover:text-green-400"
-                    onClick={() => setResolvingId(resolvingId === conflict.id ? null : conflict.id)}
-                  >
-                    <Check size={16} />
-                  </Button>
+                  {userRole === 'dom' && (
+                    <Button
+                      data-testid={`button-resolve-conflict-${conflict.id}`}
+                      variant="ghost"
+                      size="sm"
+                      className="text-green-500 hover:text-green-400"
+                      onClick={() => setResolvingId(resolvingId === conflict.id ? null : conflict.id)}
+                    >
+                      <Check size={16} />
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
-            {resolvingId === conflict.id && (
+            {userRole === 'dom' && resolvingId === conflict.id && (
               <div className="mt-3 flex gap-2" data-testid={`form-resolve-${conflict.id}`}>
                 <Input
                   data-testid={`input-resolution-${conflict.id}`}

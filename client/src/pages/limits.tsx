@@ -22,6 +22,7 @@ const LEVEL_BG: Record<string, string> = {
 export default function LimitsPage() {
   const [, setLocation] = useLocation();
   const { data: user } = useAuth();
+  const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: limits = [] } = useLimits();
   const createLimitMutation = useCreateLimit();
   const deleteLimitMutation = useDeleteLimit();
@@ -67,12 +68,15 @@ export default function LimitsPage() {
         ← Back
       </Button>
 
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-3 mb-2">
         <Shield className="text-red-600" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-tighter" data-testid="text-page-title">
-          Limits & Boundaries
+          {userRole === 'dom' ? 'Limits & Boundaries' : 'My Limits'}
         </h1>
       </div>
+      <p className="text-slate-400 text-sm mb-8 ml-10" data-testid="text-page-description">
+        {userRole === 'dom' ? 'Define and review boundaries' : 'Set your boundaries and limits'}
+      </p>
 
       <Button
         data-testid="button-toggle-form"
