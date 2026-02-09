@@ -1355,12 +1355,127 @@ export default function BondedAscentApp() {
               </div>
             )}
             
-            {['countdowns', 'training', 'scene', 'ladders', 'logbook', 'vault'].includes(modal!) && (
-              <div className="text-center py-8">
-                <Target size={48} className="mx-auto text-red-500 mb-4" />
-                <h2 className="text-2xl font-black text-white uppercase mb-4">{modal!.replace('_', ' ')}</h2>
-                <p className="text-slate-400 px-8 text-sm">Module initialized. Awaiting partner connection to synchronize data.</p>
-                <Button variant="outline" onClick={() => setModal(null)} className="mt-6 border-slate-800 cursor-pointer">Close</Button>
+            {modal === 'training' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <Target size={48} className="mx-auto text-red-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Training Grounds</h2>
+                  <p className="text-xs text-slate-500 mt-1">Structured exercises and drills</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { icon: <Timer size={20} />, label: "Endurance", desc: "Timed hold exercises" },
+                    { icon: <Hand size={20} />, label: "Posture", desc: "Position training" },
+                    { icon: <Ear size={20} />, label: "Obedience", desc: "Response drills" },
+                    { icon: <HeartPulse size={20} />, label: "Breathing", desc: "Controlled breathing" },
+                  ].map((item, i) => (
+                    <button key={i} className="flex flex-col items-center gap-2 p-4 bg-slate-900/50 border border-white/5 rounded-xl hover:border-red-500/50 transition-all cursor-pointer">
+                      <div className="text-red-400">{item.icon}</div>
+                      <span className="text-[10px] font-bold uppercase text-slate-300">{item.label}</span>
+                      <span className="text-[9px] text-slate-600">{item.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {modal === 'scene' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <Film size={48} className="mx-auto text-purple-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Scene Builder</h2>
+                  <p className="text-xs text-slate-500 mt-1">Plan and track scenes</p>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { label: "Warm-Up", color: "bg-green-500/10 border-green-500/20 text-green-400" },
+                    { label: "Main Scene", color: "bg-purple-500/10 border-purple-500/20 text-purple-400" },
+                    { label: "Cooldown", color: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
+                  ].map((phase, i) => (
+                    <div key={i} className={`p-4 rounded-xl border ${phase.color}`}>
+                      <div className="text-xs font-bold uppercase tracking-widest">{phase.label}</div>
+                      <div className="text-[10px] opacity-60 mt-1">Tap to configure phase details</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {modal === 'ladders' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <Activity size={48} className="mx-auto text-rose-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Escalation Ladders</h2>
+                  <p className="text-xs text-slate-500 mt-1">Progressive intensity levels</p>
+                </div>
+                <div className="space-y-2">
+                  {['Level 1 — Gentle', 'Level 2 — Moderate', 'Level 3 — Intense', 'Level 4 — Advanced', 'Level 5 — Expert'].map((lvl, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-slate-900/50 border border-white/5 rounded-xl">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${i < 2 ? 'bg-green-900/30 text-green-400' : i < 4 ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-400'}`}>{i + 1}</div>
+                      <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">{lvl}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {modal === 'logbook' && (
+              <div className="p-4 space-y-6 overflow-y-auto">
+                <div className="text-center">
+                  <FileText size={48} className="mx-auto text-pink-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Session Logbook</h2>
+                  <p className="text-xs text-slate-500 mt-1">Record of past scenes and sessions</p>
+                </div>
+                <div className="space-y-3">
+                  {activityLog.slice(0, 10).map((log) => (
+                    <div key={log.id} className="flex gap-3 items-start bg-slate-900/50 border border-white/5 p-3 rounded-xl">
+                      <span className="font-mono text-[10px] text-slate-600 min-w-[50px] mt-0.5">{formatTime(log.createdAt)}</span>
+                      <div>
+                        <div className="text-xs font-bold text-slate-300 uppercase">{log.action.replace(/_/g, ' ')}</div>
+                        {log.detail && <div className="text-[10px] text-slate-500 mt-0.5">{log.detail}</div>}
+                      </div>
+                    </div>
+                  ))}
+                  {activityLog.length === 0 && <div className="text-xs text-slate-600 text-center py-8">No sessions logged yet</div>}
+                </div>
+              </div>
+            )}
+
+            {modal === 'vault' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <Box size={48} className="mx-auto text-indigo-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">The Vault</h2>
+                  <p className="text-xs text-slate-500 mt-1">Locked achievements and milestones</p>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { label: "First Task", icon: <Check size={16} />, unlocked: (stats?.completedTasks ?? 0) > 0 },
+                    { label: "Check-In", icon: <MessageSquare size={16} />, unlocked: (stats?.totalCheckIns ?? 0) > 0 },
+                    { label: "Dare Done", icon: <Dices size={16} />, unlocked: (stats?.completedDares ?? 0) > 0 },
+                    { label: "Level 3", icon: <Award size={16} />, unlocked: level >= 3 },
+                    { label: "Journal", icon: <BookOpen size={16} />, unlocked: (stats?.totalJournalEntries ?? 0) > 0 },
+                    { label: "Bonded", icon: <Heart size={16} />, unlocked: !!partner },
+                  ].map((badge, i) => (
+                    <div key={i} className={`flex flex-col items-center gap-2 p-4 rounded-xl border ${badge.unlocked ? 'bg-indigo-900/20 border-indigo-500/30' : 'bg-black/20 border-white/5 opacity-40'}`}>
+                      <div className={badge.unlocked ? 'text-indigo-400' : 'text-slate-600'}>{badge.icon}</div>
+                      <span className="text-[9px] font-bold uppercase text-slate-400">{badge.label}</span>
+                      {badge.unlocked && <Unlock size={10} className="text-indigo-400" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {modal === 'countdowns' && (
+              <div className="p-4 space-y-6 text-center">
+                <Zap size={48} className="mx-auto text-red-500 mb-2" />
+                <h2 className="text-xl font-bold text-white uppercase">Active Timers</h2>
+                <div className="bg-black/40 p-6 rounded-2xl border border-red-500/20">
+                  <div className="text-4xl font-black text-red-500 font-mono tracking-widest">00:00</div>
+                  <p className="text-[10px] text-slate-600 mt-2 uppercase">No active timers</p>
+                </div>
+                <Button variant="outline" onClick={() => setModal(null)} className="border-slate-800 cursor-pointer">Close</Button>
               </div>
             )}
           </div>
