@@ -3,11 +3,21 @@ import { db } from "./db";
 import {
   users, tasks, checkIns, dares, rewards, punishments,
   journalEntries, notifications, activityLog, pairCodes,
+  rituals, limits, secrets, wagers, ratings, countdownEvents,
+  standingOrders, permissionRequests, devotions, conflicts,
+  desiredChanges, achievements, playSessions,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
   type InsertJournal, type Notification, type InsertNotification,
   type ActivityLogEntry, type Dare, type PairCode,
+  type Ritual, type InsertRitual, type Limit, type InsertLimit,
+  type Secret, type InsertSecret, type Wager, type InsertWager,
+  type Rating, type InsertRating, type CountdownEvent, type InsertCountdownEvent,
+  type StandingOrder, type InsertStandingOrder, type PermissionRequest, type InsertPermissionRequest,
+  type Devotion, type InsertDevotion, type Conflict, type InsertConflict,
+  type DesiredChange, type InsertDesiredChange, type Achievement, type InsertAchievement,
+  type PlaySession, type InsertPlaySession,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -56,6 +66,61 @@ export interface IStorage {
   linkPartners(userId1: string, userId2: string): Promise<void>;
   unlinkPartner(userId: string): Promise<void>;
   getPartner(userId: string): Promise<User | undefined>;
+
+  getRituals(userId: string): Promise<Ritual[]>;
+  createRitual(ritual: InsertRitual): Promise<Ritual>;
+  updateRitual(id: string, data: Partial<Ritual>): Promise<Ritual | undefined>;
+  deleteRitual(id: string): Promise<void>;
+
+  getLimits(userId: string): Promise<Limit[]>;
+  createLimit(limit: InsertLimit): Promise<Limit>;
+  updateLimit(id: string, data: Partial<Limit>): Promise<Limit | undefined>;
+  deleteLimit(id: string): Promise<void>;
+
+  getSecrets(userId: string): Promise<Secret[]>;
+  getSecretsForUser(forUserId: string): Promise<Secret[]>;
+  createSecret(secret: InsertSecret): Promise<Secret>;
+  revealSecret(id: string): Promise<Secret | undefined>;
+
+  getWagers(userId: string): Promise<Wager[]>;
+  createWager(wager: InsertWager): Promise<Wager>;
+  updateWager(id: string, data: Partial<Wager>): Promise<Wager | undefined>;
+
+  getRatings(userId: string): Promise<Rating[]>;
+  getRatingsForUser(ratedUserId: string): Promise<Rating[]>;
+  createRating(rating: InsertRating): Promise<Rating>;
+
+  getCountdownEvents(userId: string): Promise<CountdownEvent[]>;
+  createCountdownEvent(event: InsertCountdownEvent): Promise<CountdownEvent>;
+  deleteCountdownEvent(id: string): Promise<void>;
+
+  getStandingOrders(userId: string): Promise<StandingOrder[]>;
+  createStandingOrder(order: InsertStandingOrder): Promise<StandingOrder>;
+  updateStandingOrder(id: string, data: Partial<StandingOrder>): Promise<StandingOrder | undefined>;
+  deleteStandingOrder(id: string): Promise<void>;
+
+  getPermissionRequests(userId: string): Promise<PermissionRequest[]>;
+  createPermissionRequest(request: InsertPermissionRequest): Promise<PermissionRequest>;
+  updatePermissionRequest(id: string, data: Partial<PermissionRequest>): Promise<PermissionRequest | undefined>;
+
+  getDevotions(userId: string): Promise<Devotion[]>;
+  createDevotion(devotion: InsertDevotion): Promise<Devotion>;
+  updateDevotion(id: string, data: Partial<Devotion>): Promise<Devotion | undefined>;
+
+  getConflicts(userId: string): Promise<Conflict[]>;
+  createConflict(conflict: InsertConflict): Promise<Conflict>;
+  updateConflict(id: string, data: Partial<Conflict>): Promise<Conflict | undefined>;
+
+  getDesiredChanges(userId: string): Promise<DesiredChange[]>;
+  createDesiredChange(change: InsertDesiredChange): Promise<DesiredChange>;
+  updateDesiredChange(id: string, data: Partial<DesiredChange>): Promise<DesiredChange | undefined>;
+
+  getAchievements(userId: string): Promise<Achievement[]>;
+  createAchievement(achievement: InsertAchievement): Promise<Achievement>;
+
+  getPlaySessions(userId: string): Promise<PlaySession[]>;
+  createPlaySession(session: InsertPlaySession): Promise<PlaySession>;
+  updatePlaySession(id: string, data: Partial<PlaySession>): Promise<PlaySession | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -234,6 +299,197 @@ export class DatabaseStorage implements IStorage {
     const user = await this.getUser(userId);
     if (!user?.partnerId) return undefined;
     return this.getUser(user.partnerId);
+  }
+
+  async getRituals(userId: string): Promise<Ritual[]> {
+    return db.select().from(rituals).where(eq(rituals.userId, userId)).orderBy(desc(rituals.createdAt));
+  }
+
+  async createRitual(ritual: InsertRitual): Promise<Ritual> {
+    const [r] = await db.insert(rituals).values(ritual).returning();
+    return r;
+  }
+
+  async updateRitual(id: string, data: Partial<Ritual>): Promise<Ritual | undefined> {
+    const [r] = await db.update(rituals).set(data).where(eq(rituals.id, id)).returning();
+    return r;
+  }
+
+  async deleteRitual(id: string): Promise<void> {
+    await db.delete(rituals).where(eq(rituals.id, id));
+  }
+
+  async getLimits(userId: string): Promise<Limit[]> {
+    return db.select().from(limits).where(eq(limits.userId, userId)).orderBy(desc(limits.createdAt));
+  }
+
+  async createLimit(limit: InsertLimit): Promise<Limit> {
+    const [l] = await db.insert(limits).values(limit).returning();
+    return l;
+  }
+
+  async updateLimit(id: string, data: Partial<Limit>): Promise<Limit | undefined> {
+    const [l] = await db.update(limits).set(data).where(eq(limits.id, id)).returning();
+    return l;
+  }
+
+  async deleteLimit(id: string): Promise<void> {
+    await db.delete(limits).where(eq(limits.id, id));
+  }
+
+  async getSecrets(userId: string): Promise<Secret[]> {
+    return db.select().from(secrets).where(eq(secrets.userId, userId)).orderBy(desc(secrets.createdAt));
+  }
+
+  async getSecretsForUser(forUserId: string): Promise<Secret[]> {
+    return db.select().from(secrets).where(eq(secrets.forUserId, forUserId)).orderBy(desc(secrets.createdAt));
+  }
+
+  async createSecret(secret: InsertSecret): Promise<Secret> {
+    const [s] = await db.insert(secrets).values(secret).returning();
+    return s;
+  }
+
+  async revealSecret(id: string): Promise<Secret | undefined> {
+    const [s] = await db.update(secrets).set({ revealed: true }).where(eq(secrets.id, id)).returning();
+    return s;
+  }
+
+  async getWagers(userId: string): Promise<Wager[]> {
+    return db.select().from(wagers).where(eq(wagers.userId, userId)).orderBy(desc(wagers.createdAt));
+  }
+
+  async createWager(wager: InsertWager): Promise<Wager> {
+    const [w] = await db.insert(wagers).values(wager).returning();
+    return w;
+  }
+
+  async updateWager(id: string, data: Partial<Wager>): Promise<Wager | undefined> {
+    const [w] = await db.update(wagers).set(data).where(eq(wagers.id, id)).returning();
+    return w;
+  }
+
+  async getRatings(userId: string): Promise<Rating[]> {
+    return db.select().from(ratings).where(eq(ratings.userId, userId)).orderBy(desc(ratings.createdAt));
+  }
+
+  async getRatingsForUser(ratedUserId: string): Promise<Rating[]> {
+    return db.select().from(ratings).where(eq(ratings.ratedUserId, ratedUserId)).orderBy(desc(ratings.createdAt));
+  }
+
+  async createRating(rating: InsertRating): Promise<Rating> {
+    const [r] = await db.insert(ratings).values(rating).returning();
+    return r;
+  }
+
+  async getCountdownEvents(userId: string): Promise<CountdownEvent[]> {
+    return db.select().from(countdownEvents).where(eq(countdownEvents.userId, userId)).orderBy(desc(countdownEvents.createdAt));
+  }
+
+  async createCountdownEvent(event: InsertCountdownEvent): Promise<CountdownEvent> {
+    const [e] = await db.insert(countdownEvents).values(event).returning();
+    return e;
+  }
+
+  async deleteCountdownEvent(id: string): Promise<void> {
+    await db.delete(countdownEvents).where(eq(countdownEvents.id, id));
+  }
+
+  async getStandingOrders(userId: string): Promise<StandingOrder[]> {
+    return db.select().from(standingOrders).where(eq(standingOrders.userId, userId)).orderBy(desc(standingOrders.createdAt));
+  }
+
+  async createStandingOrder(order: InsertStandingOrder): Promise<StandingOrder> {
+    const [o] = await db.insert(standingOrders).values(order).returning();
+    return o;
+  }
+
+  async updateStandingOrder(id: string, data: Partial<StandingOrder>): Promise<StandingOrder | undefined> {
+    const [o] = await db.update(standingOrders).set(data).where(eq(standingOrders.id, id)).returning();
+    return o;
+  }
+
+  async deleteStandingOrder(id: string): Promise<void> {
+    await db.delete(standingOrders).where(eq(standingOrders.id, id));
+  }
+
+  async getPermissionRequests(userId: string): Promise<PermissionRequest[]> {
+    return db.select().from(permissionRequests).where(eq(permissionRequests.userId, userId)).orderBy(desc(permissionRequests.createdAt));
+  }
+
+  async createPermissionRequest(request: InsertPermissionRequest): Promise<PermissionRequest> {
+    const [r] = await db.insert(permissionRequests).values(request).returning();
+    return r;
+  }
+
+  async updatePermissionRequest(id: string, data: Partial<PermissionRequest>): Promise<PermissionRequest | undefined> {
+    const [r] = await db.update(permissionRequests).set(data).where(eq(permissionRequests.id, id)).returning();
+    return r;
+  }
+
+  async getDevotions(userId: string): Promise<Devotion[]> {
+    return db.select().from(devotions).where(eq(devotions.userId, userId)).orderBy(desc(devotions.createdAt));
+  }
+
+  async createDevotion(devotion: InsertDevotion): Promise<Devotion> {
+    const [d] = await db.insert(devotions).values(devotion).returning();
+    return d;
+  }
+
+  async updateDevotion(id: string, data: Partial<Devotion>): Promise<Devotion | undefined> {
+    const [d] = await db.update(devotions).set(data).where(eq(devotions.id, id)).returning();
+    return d;
+  }
+
+  async getConflicts(userId: string): Promise<Conflict[]> {
+    return db.select().from(conflicts).where(eq(conflicts.userId, userId)).orderBy(desc(conflicts.createdAt));
+  }
+
+  async createConflict(conflict: InsertConflict): Promise<Conflict> {
+    const [c] = await db.insert(conflicts).values(conflict).returning();
+    return c;
+  }
+
+  async updateConflict(id: string, data: Partial<Conflict>): Promise<Conflict | undefined> {
+    const [c] = await db.update(conflicts).set(data).where(eq(conflicts.id, id)).returning();
+    return c;
+  }
+
+  async getDesiredChanges(userId: string): Promise<DesiredChange[]> {
+    return db.select().from(desiredChanges).where(eq(desiredChanges.userId, userId)).orderBy(desc(desiredChanges.createdAt));
+  }
+
+  async createDesiredChange(change: InsertDesiredChange): Promise<DesiredChange> {
+    const [c] = await db.insert(desiredChanges).values(change).returning();
+    return c;
+  }
+
+  async updateDesiredChange(id: string, data: Partial<DesiredChange>): Promise<DesiredChange | undefined> {
+    const [c] = await db.update(desiredChanges).set(data).where(eq(desiredChanges.id, id)).returning();
+    return c;
+  }
+
+  async getAchievements(userId: string): Promise<Achievement[]> {
+    return db.select().from(achievements).where(eq(achievements.userId, userId)).orderBy(desc(achievements.unlockedAt));
+  }
+
+  async createAchievement(achievement: InsertAchievement): Promise<Achievement> {
+    const [a] = await db.insert(achievements).values(achievement).returning();
+    return a;
+  }
+
+  async getPlaySessions(userId: string): Promise<PlaySession[]> {
+    return db.select().from(playSessions).where(eq(playSessions.userId, userId)).orderBy(desc(playSessions.createdAt));
+  }
+
+  async createPlaySession(session: InsertPlaySession): Promise<PlaySession> {
+    const [s] = await db.insert(playSessions).values(session).returning();
+    return s;
+  }
+
+  async updatePlaySession(id: string, data: Partial<PlaySession>): Promise<PlaySession | undefined> {
+    const [s] = await db.update(playSessions).set(data).where(eq(playSessions.id, id)).returning();
+    return s;
   }
 }
 

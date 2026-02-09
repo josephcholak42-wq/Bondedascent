@@ -543,5 +543,351 @@ export async function registerRoutes(
     res.json(list);
   });
 
+  // --- RITUALS ---
+  app.get("/api/rituals", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getRituals(user.id));
+  });
+
+  app.post("/api/rituals", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, frequency, timeOfDay } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const ritual = await storage.createRitual({ userId: user.id, assignedBy: user.id, title: title.trim(), description, frequency, timeOfDay });
+    await storage.logActivity(user.id, "ritual_created", title.trim());
+    res.status(201).json(ritual);
+  });
+
+  app.patch("/api/rituals/:id", requireAuth, async (req, res) => {
+    const ritual = await storage.updateRitual(req.params.id, req.body);
+    if (!ritual) return res.status(404).json({ message: "Not found" });
+    res.json(ritual);
+  });
+
+  app.delete("/api/rituals/:id", requireAuth, async (req, res) => {
+    await storage.deleteRitual(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.get("/api/partner/rituals", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner" });
+    res.json(await storage.getRituals(partner.id));
+  });
+
+  app.post("/api/partner/rituals", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner" });
+    const { title, description, frequency, timeOfDay } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const ritual = await storage.createRitual({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, frequency, timeOfDay });
+    await storage.logActivity(user.id, "ritual_assigned", `Assigned "${title.trim()}" to ${partner.username}`);
+    await storage.createNotification({ userId: partner.id, text: `New ritual from ${user.username}: ${title.trim()}`, type: "info" });
+    res.status(201).json(ritual);
+  });
+
+  // --- LIMITS ---
+  app.get("/api/limits", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getLimits(user.id));
+  });
+
+  app.post("/api/limits", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { name, category, level, description } = req.body;
+    if (!name?.trim()) return res.status(400).json({ message: "Name required" });
+    const limit = await storage.createLimit({ userId: user.id, name: name.trim(), category, level, description });
+    await storage.logActivity(user.id, "limit_set", name.trim());
+    res.status(201).json(limit);
+  });
+
+  app.patch("/api/limits/:id", requireAuth, async (req, res) => {
+    const limit = await storage.updateLimit(req.params.id, req.body);
+    if (!limit) return res.status(404).json({ message: "Not found" });
+    res.json(limit);
+  });
+
+  app.delete("/api/limits/:id", requireAuth, async (req, res) => {
+    await storage.deleteLimit(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.get("/api/partner/limits", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner" });
+    res.json(await storage.getLimits(partner.id));
+  });
+
+  // --- SECRETS ---
+  app.get("/api/secrets", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getSecrets(user.id));
+  });
+
+  app.get("/api/secrets/for-me", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getSecretsForUser(user.id));
+  });
+
+  app.post("/api/secrets", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, content, tier, forUserId } = req.body;
+    if (!title?.trim() || !content?.trim()) return res.status(400).json({ message: "Title and content required" });
+    const secret = await storage.createSecret({ userId: user.id, forUserId, title: title.trim(), content: content.trim(), tier });
+    await storage.logActivity(user.id, "secret_created", title.trim());
+    if (forUserId) {
+      await storage.createNotification({ userId: forUserId, text: `${user.username} shared a secret with you`, type: "info" });
+    }
+    res.status(201).json(secret);
+  });
+
+  app.patch("/api/secrets/:id/reveal", requireAuth, async (req, res) => {
+    const secret = await storage.revealSecret(req.params.id);
+    if (!secret) return res.status(404).json({ message: "Not found" });
+    res.json(secret);
+  });
+
+  // --- WAGERS ---
+  app.get("/api/wagers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getWagers(user.id));
+  });
+
+  app.post("/api/wagers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, stakes, partnerId } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const wager = await storage.createWager({ userId: user.id, partnerId, title: title.trim(), description, stakes });
+    await storage.logActivity(user.id, "wager_created", title.trim());
+    if (partnerId) {
+      await storage.createNotification({ userId: partnerId, text: `${user.username} proposed a wager: ${title.trim()}`, type: "info" });
+    }
+    res.status(201).json(wager);
+  });
+
+  app.patch("/api/wagers/:id", requireAuth, async (req, res) => {
+    const wager = await storage.updateWager(req.params.id, req.body);
+    if (!wager) return res.status(404).json({ message: "Not found" });
+    res.json(wager);
+  });
+
+  // --- RATINGS ---
+  app.get("/api/ratings", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getRatings(user.id));
+  });
+
+  app.get("/api/ratings/received", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getRatingsForUser(user.id));
+  });
+
+  app.post("/api/ratings", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { ratedUserId, overall, communication, obedience, effort, notes } = req.body;
+    if (!ratedUserId || typeof overall !== "number") return res.status(400).json({ message: "Rated user and overall score required" });
+    const rating = await storage.createRating({ userId: user.id, ratedUserId, overall, communication, obedience, effort, notes });
+    await storage.logActivity(user.id, "rating_given", `Rated partner ${overall}/10`);
+    await storage.createNotification({ userId: ratedUserId, text: `${user.username} rated you ${overall}/10`, type: "info" });
+    res.status(201).json(rating);
+  });
+
+  // --- COUNTDOWN EVENTS ---
+  app.get("/api/countdown-events", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getCountdownEvents(user.id));
+  });
+
+  app.post("/api/countdown-events", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, targetDate, category } = req.body;
+    if (!title?.trim() || !targetDate) return res.status(400).json({ message: "Title and target date required" });
+    const event = await storage.createCountdownEvent({ userId: user.id, title: title.trim(), description, targetDate: new Date(targetDate), category });
+    await storage.logActivity(user.id, "countdown_created", title.trim());
+    res.status(201).json(event);
+  });
+
+  app.delete("/api/countdown-events/:id", requireAuth, async (req, res) => {
+    await storage.deleteCountdownEvent(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  // --- STANDING ORDERS ---
+  app.get("/api/standing-orders", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getStandingOrders(user.id));
+  });
+
+  app.post("/api/standing-orders", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, priority } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const order = await storage.createStandingOrder({ userId: user.id, assignedBy: user.id, title: title.trim(), description, priority });
+    await storage.logActivity(user.id, "standing_order_created", title.trim());
+    res.status(201).json(order);
+  });
+
+  app.patch("/api/standing-orders/:id", requireAuth, async (req, res) => {
+    const order = await storage.updateStandingOrder(req.params.id, req.body);
+    if (!order) return res.status(404).json({ message: "Not found" });
+    res.json(order);
+  });
+
+  app.delete("/api/standing-orders/:id", requireAuth, async (req, res) => {
+    await storage.deleteStandingOrder(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.post("/api/partner/standing-orders", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner" });
+    const { title, description, priority } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const order = await storage.createStandingOrder({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, priority });
+    await storage.logActivity(user.id, "standing_order_assigned", `Assigned "${title.trim()}" to ${partner.username}`);
+    await storage.createNotification({ userId: partner.id, text: `New standing order from ${user.username}: ${title.trim()}`, type: "info" });
+    res.status(201).json(order);
+  });
+
+  // --- PERMISSION REQUESTS ---
+  app.get("/api/permission-requests", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getPermissionRequests(user.id));
+  });
+
+  app.post("/api/permission-requests", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const request = await storage.createPermissionRequest({ userId: user.id, title: title.trim(), description });
+    await storage.logActivity(user.id, "permission_requested", title.trim());
+    const partner = await storage.getPartner(user.id);
+    if (partner) {
+      await storage.createNotification({ userId: partner.id, text: `${user.username} is requesting permission: ${title.trim()}`, type: "info" });
+    }
+    res.status(201).json(request);
+  });
+
+  app.patch("/api/permission-requests/:id", requireAuth, async (req, res) => {
+    const request = await storage.updatePermissionRequest(req.params.id, req.body);
+    if (!request) return res.status(404).json({ message: "Not found" });
+    res.json(request);
+  });
+
+  app.get("/api/partner/permission-requests", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner" });
+    res.json(await storage.getPermissionRequests(partner.id));
+  });
+
+  // --- DEVOTIONS ---
+  app.get("/api/devotions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getDevotions(user.id));
+  });
+
+  app.post("/api/devotions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { type, content } = req.body;
+    if (!content?.trim()) return res.status(400).json({ message: "Content required" });
+    const devotion = await storage.createDevotion({ userId: user.id, type: type || "affirmation", content: content.trim() });
+    await storage.logActivity(user.id, "devotion_created", content.trim().substring(0, 50));
+    res.status(201).json(devotion);
+  });
+
+  app.patch("/api/devotions/:id", requireAuth, async (req, res) => {
+    const devotion = await storage.updateDevotion(req.params.id, req.body);
+    if (!devotion) return res.status(404).json({ message: "Not found" });
+    res.json(devotion);
+  });
+
+  // --- CONFLICTS ---
+  app.get("/api/conflicts", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getConflicts(user.id));
+  });
+
+  app.post("/api/conflicts", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, partnerId } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const conflict = await storage.createConflict({ userId: user.id, partnerId, title: title.trim(), description });
+    await storage.logActivity(user.id, "conflict_opened", title.trim());
+    res.status(201).json(conflict);
+  });
+
+  app.patch("/api/conflicts/:id", requireAuth, async (req, res) => {
+    const conflict = await storage.updateConflict(req.params.id, req.body);
+    if (!conflict) return res.status(404).json({ message: "Not found" });
+    res.json(conflict);
+  });
+
+  // --- DESIRED CHANGES ---
+  app.get("/api/desired-changes", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getDesiredChanges(user.id));
+  });
+
+  app.post("/api/desired-changes", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, category, targetUserId } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const change = await storage.createDesiredChange({ userId: user.id, targetUserId, title: title.trim(), description, category });
+    await storage.logActivity(user.id, "desired_change_created", title.trim());
+    res.status(201).json(change);
+  });
+
+  app.patch("/api/desired-changes/:id", requireAuth, async (req, res) => {
+    const change = await storage.updateDesiredChange(req.params.id, req.body);
+    if (!change) return res.status(404).json({ message: "Not found" });
+    res.json(change);
+  });
+
+  // --- ACHIEVEMENTS ---
+  app.get("/api/achievements", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getAchievements(user.id));
+  });
+
+  app.post("/api/achievements", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { name, description, icon, tier } = req.body;
+    if (!name?.trim()) return res.status(400).json({ message: "Name required" });
+    const achievement = await storage.createAchievement({ userId: user.id, name: name.trim(), description, icon, tier });
+    await storage.logActivity(user.id, "achievement_unlocked", name.trim());
+    res.status(201).json(achievement);
+  });
+
+  // --- PLAY SESSIONS ---
+  app.get("/api/play-sessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json(await storage.getPlaySessions(user.id));
+  });
+
+  app.post("/api/play-sessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, notes, mood, intensity, activities, scheduledFor, partnerId } = req.body;
+    const session = await storage.createPlaySession({
+      userId: user.id, partnerId, title, notes, mood,
+      intensity, activities, status: "planned", scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
+    });
+    await storage.logActivity(user.id, "play_session_created", title || "New session");
+    res.status(201).json(session);
+  });
+
+  app.patch("/api/play-sessions/:id", requireAuth, async (req, res) => {
+    const data = { ...req.body };
+    if (data.completedAt) data.completedAt = new Date(data.completedAt);
+    if (data.scheduledFor) data.scheduledFor = new Date(data.scheduledFor);
+    const session = await storage.updatePlaySession(req.params.id, data);
+    if (!session) return res.status(404).json({ message: "Not found" });
+    res.json(session);
+  });
+
   return httpServer;
 }
