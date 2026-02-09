@@ -41,24 +41,31 @@ import {
   useToggleLockdown, useLockdownStatus,
 } from '@/lib/hooks';
 
-function VelvetParticles() {
+const PARTICLE_DATA = Array.from({ length: 20 }).map(() => ({
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  duration: `${3 + Math.random() * 4}s`,
+  delay: `${Math.random() * 5}s`,
+}));
+
+const VelvetParticles = React.memo(function VelvetParticles() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      {Array.from({ length: 20 }).map((_, i) => (
+      {PARTICLE_DATA.map((p, i) => (
         <div
           key={i}
           className="absolute w-1 h-1 rounded-full bg-red-500/40"
           style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animation: `float-ember ${3 + Math.random() * 4}s ease-in-out infinite`,
-            animationDelay: `${Math.random() * 5}s`,
+            left: p.left,
+            top: p.top,
+            animation: `float-ember ${p.duration} ease-in-out infinite`,
+            animationDelay: p.delay,
           }}
         />
       ))}
     </div>
   );
-}
+});
 
 export default function BondedAscentApp() {
   const [activeView, setActiveView] = useState('dashboard');
