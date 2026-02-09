@@ -177,6 +177,11 @@ export default function BondedAscentApp() {
   const xpMax = 100 * level;
   const xpPercent = Math.min(Math.round((xp / xpMax) * 100), 100);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-role', userRole);
+    return () => document.documentElement.removeAttribute('data-role');
+  }, [userRole]);
+
   const handleToggleTask = (taskId: string) => {
     toggleTaskMutation.mutate(taskId);
   };
@@ -949,21 +954,32 @@ export default function BondedAscentApp() {
       return (
         <div className="space-y-8 animate-in slide-in-from-right duration-500">
           <div className="text-center pt-4">
-            <div className="w-24 h-24 mx-auto rounded-full p-1 border-2 border-slate-700 mb-4 bg-black">
+            <div className="w-24 h-24 mx-auto rounded-full p-1 border-2 mb-4 bg-black" style={{ borderColor: userRole === 'dom' ? 'rgba(220,38,38,0.6)' : 'rgba(168,85,247,0.6)', boxShadow: `0 0 20px var(--role-glow)` }}>
               <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
-                <User size={40} className="text-slate-600" />
+                <User size={40} className={userRole === 'dom' ? 'text-red-500' : 'text-purple-400'} />
               </div>
             </div>
             <h2 data-testid="text-username" className="text-3xl font-black text-white uppercase tracking-tighter">{user?.username}</h2>
-            <div className="flex items-center justify-center gap-2 mt-2 bg-black/40 w-fit mx-auto px-4 py-1 rounded-full border border-white/10">
-              <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_lime]" />
-              <span className="text-xs font-bold text-green-500 uppercase">Connected as {userRole.toUpperCase()}</span>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="flex items-center gap-2 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-white/10">
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_lime]" />
+                <span className="text-xs font-bold text-green-500 uppercase">Connected</span>
+              </div>
+              <span
+                className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border ${
+                  userRole === 'dom'
+                    ? 'bg-red-900/40 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
+                    : 'bg-purple-900/40 text-purple-300 border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                }`}
+              >
+                {userRole === 'dom' ? 'DOM' : 'SUB'}
+              </span>
             </div>
           </div>
 
-          <div className="bg-gradient-to-r from-red-950/50 to-black border border-red-900/50 p-6 rounded-2xl flex items-center justify-between shadow-lg">
+          <div className="p-6 rounded-2xl flex items-center justify-between shadow-lg" style={{ background: `linear-gradient(to right, var(--role-accent-bg), black)`, border: `1px solid var(--role-accent-border)` }}>
             <div className="flex items-center gap-5">
-              <div className="bg-red-900/30 p-3 rounded-full shadow-[0_0_15px_rgba(220,38,38,0.2)]"><ShieldAlert size={24} className="text-red-500" /></div>
+              <div className="p-3 rounded-full" style={{ backgroundColor: 'var(--role-accent-bg)', boxShadow: `0 0 15px var(--role-glow)` }}><ShieldAlert size={24} className="text-red-500" /></div>
               <div>
                 <div className="font-bold text-red-500 text-lg uppercase tracking-wide">Crisis Mode</div>
                 <div className="text-xs text-red-400/50 font-mono">Pause all tasks & XP</div>
@@ -1265,9 +1281,18 @@ export default function BondedAscentApp() {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-3 bg-black/40 px-3 py-1.5 rounded-full border border-white/5">
-              <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_lime]" />
-              <span data-testid="text-role-badge" className="text-xs font-bold text-slate-400 uppercase hidden sm:inline">{userRole}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold text-white uppercase tracking-wider hidden sm:inline">{user?.username}</span>
+              <span
+                data-testid="text-role-badge"
+                className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest border ${
+                  userRole === 'dom'
+                    ? 'bg-red-900/40 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]'
+                    : 'bg-purple-900/40 text-purple-300 border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.3)]'
+                }`}
+              >
+                {userRole === 'dom' ? 'DOM' : 'SUB'}
+              </span>
             </div>
           </div>
         </header>

@@ -19,7 +19,7 @@
   --color-popover: hsl(222.2 84% 4.9%);
   --color-popover-foreground: hsl(210 40% 98%);
   
-  --color-primary: hsl(0 72% 51%); /* Red */
+  --color-primary: hsl(var(--role-primary-h, 0) var(--role-primary-s, 72%) var(--role-primary-l, 51%));
   --color-primary-foreground: hsl(210 40% 98%);
   
   --color-secondary: hsl(217.2 32.6% 17.5%);
@@ -39,6 +39,33 @@
   --color-ring: hsl(212.7 26.8% 83.9%);
   
   --radius: 0.75rem;
+}
+
+:root {
+  --role-primary-h: 0;
+  --role-primary-s: 72%;
+  --role-primary-l: 51%;
+  --role-glow: rgba(220, 38, 38, 0.3);
+  --role-accent-bg: rgba(127, 29, 29, 0.3);
+  --role-accent-border: rgba(220, 38, 38, 0.3);
+}
+
+:root[data-role="dom"] {
+  --role-primary-h: 0;
+  --role-primary-s: 72%;
+  --role-primary-l: 51%;
+  --role-glow: rgba(220, 38, 38, 0.35);
+  --role-accent-bg: rgba(127, 29, 29, 0.3);
+  --role-accent-border: rgba(220, 38, 38, 0.3);
+}
+
+:root[data-role="sub"] {
+  --role-primary-h: 330;
+  --role-primary-s: 65%;
+  --role-primary-l: 50%;
+  --role-glow: rgba(190, 60, 140, 0.3);
+  --role-accent-bg: rgba(88, 28, 88, 0.25);
+  --role-accent-border: rgba(168, 85, 247, 0.3);
 }
 
 @layer base {
