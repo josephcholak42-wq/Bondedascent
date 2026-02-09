@@ -523,6 +523,26 @@ export default function BondedAscentApp() {
                 <BigButton icon={<Dices />} label="Wheel of Dares" sub={`${dares.length} dares`} onClick={() => setModal('wheel')} color="text-purple-500" />
                 <BigButton icon={<MessageSquare />} label="Daily Check-In" sub="Submit Report" color="text-blue-500" onClick={() => setModal('checkin')} />
               </div>
+
+              <div className="border-t border-white/5 pt-6">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">Features</h3>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                  <FeatureLink icon={<Flame />} label="Rituals" href="/rituals" color="text-orange-400" />
+                  <FeatureLink icon={<Shield />} label="Limits" href="/limits" color="text-blue-400" />
+                  <FeatureLink icon={<Eye />} label="Secrets" href="/secrets" color="text-purple-400" />
+                  <FeatureLink icon={<Dices />} label="Wagers" href="/wagers" color="text-yellow-400" />
+                  <FeatureLink icon={<Star />} label="Ratings" href="/ratings" color="text-amber-400" />
+                  <FeatureLink icon={<HeartPulse />} label="Pulse" href="/connection-pulse" color="text-pink-400" />
+                  <FeatureLink icon={<Play />} label="Sessions" href="/play-sessions" color="text-green-400" />
+                  <FeatureLink icon={<Timer />} label="Countdown" href="/countdown-events" color="text-cyan-400" />
+                  <FeatureLink icon={<Award />} label="Achieve" href="/achievements" color="text-emerald-400" />
+                  <FeatureLink icon={<FileSignature />} label="Orders" href="/standing-orders" color="text-red-400" />
+                  <FeatureLink icon={<Hand />} label="Permits" href="/permission-requests" color="text-indigo-400" />
+                  <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" />
+                  <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" />
+                  <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" />
+                </div>
+              </div>
             </div>
           ) : (
             <div className="relative h-[450px] w-full flex items-center justify-center animate-in zoom-in-95 duration-700">
@@ -2200,6 +2220,22 @@ function SanctuaryNode({ icon, label, angle, color, onClick }: { icon: React.Rea
     >
       <div className="text-white drop-shadow-md">{React.cloneElement(icon, { size: 18 })}</div>
       <span className="text-[7px] font-black text-white uppercase absolute -bottom-5 w-24 text-center bg-black/80 px-1 py-0.5 rounded backdrop-blur-sm border border-white/10">{label}</span>
+    </button>
+  );
+}
+
+function FeatureLink({ icon, label, href, color }: { icon: React.ReactElement<any>, label: string, href: string, color: string }) {
+  const [, setLocation] = useLocation();
+  return (
+    <button 
+      data-testid={`link-feature-${label.toLowerCase()}`}
+      onClick={() => setLocation(href)} 
+      className="flex flex-col items-center gap-2 p-2 hover:scale-105 transition-transform cursor-pointer group"
+    >
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center border border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50 transition-all ${color}`}>
+        {React.cloneElement(icon, { size: 20 })}
+      </div>
+      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide group-hover:text-white transition-colors">{label}</span>
     </button>
   );
 }

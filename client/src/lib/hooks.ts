@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, getQueryFn } from "./queryClient";
-import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry } from "@shared/schema";
+import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession } from "@shared/schema";
 
 type SafeUser = Omit<User, "password">;
 
@@ -424,4 +424,484 @@ export function useCreatePartnerReward() {
 
 export function usePartnerActivity() {
   return useQuery<ActivityLogEntry[]>({ queryKey: ["/api/partner/activity"] });
+}
+
+export function useRituals() {
+  return useQuery<Ritual[]>({ queryKey: ["/api/rituals"] });
+}
+
+export function useCreateRitual() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; frequency?: string; timeOfDay?: string }) => {
+      const res = await apiRequest("POST", "/api/rituals", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdateRitual() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; frequency?: string; timeOfDay?: string; active?: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/rituals/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useDeleteRitual() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/rituals/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePartnerRituals() {
+  return useQuery<Ritual[]>({ queryKey: ["/api/partner/rituals"] });
+}
+
+export function useCreatePartnerRitual() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; frequency?: string; timeOfDay?: string }) => {
+      const res = await apiRequest("POST", "/api/partner/rituals", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/partner/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useLimits() {
+  return useQuery<Limit[]>({ queryKey: ["/api/limits"] });
+}
+
+export function useCreateLimit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; category?: string; level?: string; description?: string }) => {
+      const res = await apiRequest("POST", "/api/limits", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/limits"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdateLimit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; category?: string; level?: string; description?: string }) => {
+      const res = await apiRequest("PATCH", `/api/limits/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/limits"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useDeleteLimit() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/limits/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/limits"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePartnerLimits() {
+  return useQuery<Limit[]>({ queryKey: ["/api/partner/limits"] });
+}
+
+export function useSecrets() {
+  return useQuery<Secret[]>({ queryKey: ["/api/secrets"] });
+}
+
+export function useSecretsForMe() {
+  return useQuery<Secret[]>({ queryKey: ["/api/secrets/for-me"] });
+}
+
+export function useCreateSecret() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; content: string; forUserId?: string; tier?: string }) => {
+      const res = await apiRequest("POST", "/api/secrets", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/secrets"] });
+      qc.invalidateQueries({ queryKey: ["/api/secrets/for-me"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useRevealSecret() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("PATCH", `/api/secrets/${id}/reveal`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/secrets"] });
+      qc.invalidateQueries({ queryKey: ["/api/secrets/for-me"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useWagers() {
+  return useQuery<Wager[]>({ queryKey: ["/api/wagers"] });
+}
+
+export function useCreateWager() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; stakes?: string; partnerId?: string }) => {
+      const res = await apiRequest("POST", "/api/wagers", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/wagers"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdateWager() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; status?: string; winnerId?: string }) => {
+      const res = await apiRequest("PATCH", `/api/wagers/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/wagers"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useRatings() {
+  return useQuery<Rating[]>({ queryKey: ["/api/ratings"] });
+}
+
+export function useRatingsReceived() {
+  return useQuery<Rating[]>({ queryKey: ["/api/ratings/received"] });
+}
+
+export function useCreateRating() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { ratedUserId: string; overall: number; communication?: number; obedience?: number; effort?: number; notes?: string }) => {
+      const res = await apiRequest("POST", "/api/ratings", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/ratings"] });
+      qc.invalidateQueries({ queryKey: ["/api/ratings/received"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useCountdownEvents() {
+  return useQuery<CountdownEvent[]>({ queryKey: ["/api/countdown-events"] });
+}
+
+export function useCreateCountdownEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; targetDate: string; category?: string }) => {
+      const res = await apiRequest("POST", "/api/countdown-events", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/countdown-events"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useDeleteCountdownEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/countdown-events/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/countdown-events"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useStandingOrders() {
+  return useQuery<StandingOrder[]>({ queryKey: ["/api/standing-orders"] });
+}
+
+export function useCreateStandingOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; priority?: string }) => {
+      const res = await apiRequest("POST", "/api/standing-orders", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdateStandingOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; description?: string; priority?: string; active?: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/standing-orders/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useDeleteStandingOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/standing-orders/${id}`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useCreatePartnerStandingOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; priority?: string }) => {
+      const res = await apiRequest("POST", "/api/partner/standing-orders", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/standing-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePermissionRequests() {
+  return useQuery<PermissionRequest[]>({ queryKey: ["/api/permission-requests"] });
+}
+
+export function useCreatePermissionRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string }) => {
+      const res = await apiRequest("POST", "/api/permission-requests", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/permission-requests"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdatePermissionRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; status?: string }) => {
+      const res = await apiRequest("PATCH", `/api/permission-requests/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/permission-requests"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/permission-requests"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePartnerPermissionRequests() {
+  return useQuery<PermissionRequest[]>({ queryKey: ["/api/partner/permission-requests"] });
+}
+
+export function useDevotions() {
+  return useQuery<Devotion[]>({ queryKey: ["/api/devotions"] });
+}
+
+export function useCreateDevotion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { type?: string; content: string }) => {
+      const res = await apiRequest("POST", "/api/devotions", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/devotions"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdateDevotion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; content?: string; completed?: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/devotions/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/devotions"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useConflicts() {
+  return useQuery<Conflict[]>({ queryKey: ["/api/conflicts"] });
+}
+
+export function useCreateConflict() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; partnerId?: string }) => {
+      const res = await apiRequest("POST", "/api/conflicts", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/conflicts"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdateConflict() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; status?: string; resolution?: string }) => {
+      const res = await apiRequest("PATCH", `/api/conflicts/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/conflicts"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useDesiredChanges() {
+  return useQuery<DesiredChange[]>({ queryKey: ["/api/desired-changes"] });
+}
+
+export function useCreateDesiredChange() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; targetUserId?: string; category?: string }) => {
+      const res = await apiRequest("POST", "/api/desired-changes", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/desired-changes"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdateDesiredChange() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; status?: string; title?: string; description?: string }) => {
+      const res = await apiRequest("PATCH", `/api/desired-changes/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/desired-changes"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useAchievements() {
+  return useQuery<Achievement[]>({ queryKey: ["/api/achievements"] });
+}
+
+export function useCreateAchievement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; description?: string; icon?: string; tier?: string }) => {
+      const res = await apiRequest("POST", "/api/achievements", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/achievements"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePlaySessions() {
+  return useQuery<PlaySession[]>({ queryKey: ["/api/play-sessions"] });
+}
+
+export function useCreatePlaySession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title?: string; notes?: string; mood?: string; intensity?: number; activities?: string[]; status?: string; scheduledFor?: string; partnerId?: string }) => {
+      const res = await apiRequest("POST", "/api/play-sessions", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/play-sessions"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUpdatePlaySession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; notes?: string; mood?: string; intensity?: number; duration?: number; activities?: string[]; status?: string; completedAt?: string }) => {
+      const res = await apiRequest("PATCH", `/api/play-sessions/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/play-sessions"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
 }
