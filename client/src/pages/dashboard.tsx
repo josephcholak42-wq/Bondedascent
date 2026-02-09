@@ -30,6 +30,9 @@ import {
   useJournal, useCreateJournal,
   useNotifications, useDismissNotification,
   useActivityLog,
+  usePartner, usePartnerStats, useGeneratePairCode, useJoinPairCode, useUnlinkPartner,
+  usePartnerTasks, useCreatePartnerTask, usePartnerCheckIns, useReviewPartnerCheckIn,
+  useCreatePartnerPunishment, useCreatePartnerReward, usePartnerActivity,
 } from '@/lib/hooks';
 
 export default function BondedAscentApp() {
@@ -47,6 +50,10 @@ export default function BondedAscentApp() {
   const [newRewardName, setNewRewardName] = useState('');
   const [newPunishmentName, setNewPunishmentName] = useState('');
   const [journalContent, setJournalContent] = useState('');
+  const [pairCodeInput, setPairCodeInput] = useState('');
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [pairError, setPairError] = useState<string | null>(null);
+  const [pairSuccess, setPairSuccess] = useState<string | null>(null);
 
   const { data: user } = useAuth();
   const logoutMutation = useLogout();
@@ -70,6 +77,19 @@ export default function BondedAscentApp() {
   const { data: notifications = [] } = useNotifications();
   const dismissNotificationMutation = useDismissNotification();
   const { data: activityLog = [] } = useActivityLog();
+
+  const { data: partner } = usePartner();
+  const { data: partnerStats } = usePartnerStats();
+  const generatePairCodeMutation = useGeneratePairCode();
+  const joinPairCodeMutation = useJoinPairCode();
+  const unlinkPartnerMutation = useUnlinkPartner();
+  const { data: partnerTasks = [] } = usePartnerTasks();
+  const createPartnerTaskMutation = useCreatePartnerTask();
+  const { data: partnerCheckIns = [] } = usePartnerCheckIns();
+  const reviewPartnerCheckInMutation = useReviewPartnerCheckIn();
+  const createPartnerPunishmentMutation = useCreatePartnerPunishment();
+  const createPartnerRewardMutation = useCreatePartnerReward();
+  const { data: partnerActivity = [] } = usePartnerActivity();
 
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const xp = stats?.xp ?? 0;
@@ -169,62 +189,83 @@ export default function BondedAscentApp() {
           <div className="text-center relative">
             <div className="w-20 h-20 rounded-full border-2 border-slate-700 p-1 mb-2 bg-black">
               <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                <Heart size={32} className="text-slate-600" />
+                <Heart size={32} className={partner ? "text-red-400" : "text-slate-600"} />
               </div>
             </div>
-            <div className="text-sm font-bold text-slate-400 uppercase tracking-wider">Sub</div>
+            <div className="text-sm font-bold text-slate-400 uppercase tracking-wider">{partner ? partner.username : 'Not Paired'}</div>
           </div>
         </div>
         
-        <div className="w-full max-w-sm flex gap-4">
-          <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
-            <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Compliance</div>
-            <div data-testid="text-compliance" className="text-2xl font-black text-green-500">{stats?.complianceRate ?? 0}%</div>
-          </div>
-          <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
-            <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">XP Level</div>
-            <div data-testid="text-level" className="text-2xl font-black text-red-500">Lv {level}</div>
-            <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-              <div className="h-full bg-red-600" style={{ width: `${xpPercent}%` }}></div>
+        {!partner ? (
+          <button onClick={() => setModal('pair')} className="w-full max-w-sm px-6 py-4 rounded-full flex justify-between items-center group active:scale-95 transition-all cursor-pointer bg-gradient-to-b from-red-700 to-red-950 border-t border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.4)]">
+            <div className="flex items-center gap-3">
+              <Anchor size={20} className="text-white drop-shadow-md" />
+              <span className="font-black uppercase text-sm tracking-wider text-white">Connect to your Sub</span>
+            </div>
+            <ChevronRight size={20} className="text-white opacity-70 group-hover:translate-x-1 transition-transform" />
+          </button>
+        ) : (
+          <div className="w-full max-w-sm flex gap-4">
+            <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
+              <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Compliance</div>
+              <div data-testid="text-compliance" className="text-2xl font-black text-green-500">{partnerStats?.complianceRate ?? 0}%</div>
+            </div>
+            <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
+              <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Sub Level</div>
+              <div data-testid="text-level" className="text-2xl font-black text-red-500">Lv {partnerStats?.level ?? 1}</div>
+              <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
+                <div className="h-full bg-red-600" style={{ width: `${partnerStats ? Math.min(Math.round(((partnerStats.xp ?? 0) / (100 * (partnerStats.level ?? 1))) * 100), 100) : 0}%` }}></div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="space-y-6">
         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">Control Panel</h3>
         
-        <div className="grid grid-cols-2 gap-4">
-          <BigButton icon={<List />} label="Assign Tasks" sub={`${tasks.length} protocols`} color="text-blue-500" onClick={() => setModal('dom_tasks')} />
-          <BigButton icon={<Gift />} label="Grant Reward" sub={`${rewards.length} rewards`} color="text-purple-500" onClick={() => setModal('dom_rewards')} />
-          <BigButton icon={<Gavel />} label="Punish" sub="Assign Penalty" color="text-red-600" onClick={() => setModal('dom_punish')} />
-          <BigButton icon={<MessageSquare />} label="Review Logs" sub={`${checkIns.filter(c => c.status === 'pending').length} Pending`} color="text-emerald-500" onClick={() => setModal('dom_review')} />
-        </div>
-
-        <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Live Activity Feed</h3>
-            <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase animate-pulse">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Live
+        {partner ? (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <BigButton icon={<List />} label="Assign Tasks" sub={`${partnerTasks.length} protocols`} color="text-blue-500" onClick={() => setModal('dom_tasks')} />
+              <BigButton icon={<Gift />} label="Grant Reward" sub={`${rewards.length} rewards`} color="text-purple-500" onClick={() => setModal('dom_rewards')} />
+              <BigButton icon={<Gavel />} label="Punish" sub="Assign Penalty" color="text-red-600" onClick={() => setModal('dom_punish')} />
+              <BigButton icon={<MessageSquare />} label="Review Logs" sub={`${partnerCheckIns.filter(c => c.status === 'pending').length} Pending`} color="text-emerald-500" onClick={() => setModal('dom_review')} />
             </div>
-          </div>
-          <div className="space-y-3">
-            {activityLog.slice(0, 5).map((log, i) => (
-              <div key={log.id} className="flex gap-3 items-start text-xs text-slate-300">
-                <span className="font-mono text-slate-600 min-w-[50px]">{formatTime(log.createdAt)}</span>
-                <div className="mt-0.5">
-                  {log.action.includes('task') ? <CheckCircle size={12} className="text-green-500" /> :
-                   log.action.includes('dare') ? <Dices size={12} className="text-purple-500" /> :
-                   <FileText size={12} className="text-blue-500" />}
+
+            <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{partner.username}'s Activity</h3>
+                <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Live
                 </div>
-                <span>{log.detail || log.action}</span>
               </div>
-            ))}
-            {activityLog.length === 0 && (
-              <div className="text-xs text-slate-600 text-center py-4">No activity yet</div>
-            )}
+              <div className="space-y-3">
+                {partnerActivity.slice(0, 5).map((log) => (
+                  <div key={log.id} className="flex gap-3 items-start text-xs text-slate-300">
+                    <span className="font-mono text-slate-600 min-w-[50px]">{formatTime(log.createdAt)}</span>
+                    <div className="mt-0.5">
+                      {log.action.includes('task') ? <CheckCircle size={12} className="text-green-500" /> :
+                       log.action.includes('dare') ? <Dices size={12} className="text-purple-500" /> :
+                       <FileText size={12} className="text-blue-500" />}
+                    </div>
+                    <span>{log.detail || log.action}</span>
+                  </div>
+                ))}
+                {partnerActivity.length === 0 && (
+                  <div className="text-xs text-slate-600 text-center py-4">No activity yet</div>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl bg-black/20">
+            <Heart size={48} className="mx-auto text-slate-700 mb-4" />
+            <div className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">No Sub Connected</div>
+            <div className="text-xs text-slate-600 mb-6">Generate an invite code or have your sub enter yours to link accounts.</div>
+            <Button data-testid="button-connect-sub" onClick={() => setModal('pair')} className="bg-red-600 hover:bg-red-500">Connect Partner</Button>
           </div>
-        </div>
+        )}
 
         <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -407,6 +448,35 @@ export default function BondedAscentApp() {
             >
               <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${isCrisisMode ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">Partner Bond</h3>
+            {partner ? (
+              <div className="bg-gradient-to-r from-red-950/30 to-black border border-red-900/30 p-5 rounded-2xl">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="w-12 h-12 rounded-full bg-red-900/30 border border-red-500/30 flex items-center justify-center">
+                    <Heart size={20} className="text-red-400" />
+                  </div>
+                  <div>
+                    <div className="font-bold text-white uppercase tracking-wider text-sm">{partner.username}</div>
+                    <div className="text-[10px] text-red-400/60 font-mono uppercase">{partner.role} — Level {partner.level}</div>
+                  </div>
+                </div>
+                <Button
+                  data-testid="button-unlink"
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-red-900/50 text-red-400 hover:bg-red-950/50 mt-2"
+                  onClick={async () => { await unlinkPartnerMutation.mutateAsync(); }}
+                  disabled={unlinkPartnerMutation.isPending}
+                >
+                  {unlinkPartnerMutation.isPending ? <Loader2 className="animate-spin" size={14} /> : 'Dissolve Bond'}
+                </Button>
+              </div>
+            ) : (
+              <ProfileItem icon={<Anchor size={20} />} label="Connect to Partner" onClick={() => setModal('pair')} />
+            )}
           </div>
 
           <div className="space-y-3">
@@ -710,38 +780,146 @@ export default function BondedAscentApp() {
               </div>
             )}
             
+            {modal === 'pair' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center mb-4">
+                  <Anchor size={48} className="mx-auto text-red-500 mb-2" />
+                  <h2 className="text-xl font-black text-white uppercase">Connect to Partner</h2>
+                  <p className="text-xs text-slate-500 mt-2">Link your accounts using an invite code</p>
+                </div>
+
+                {pairError && (
+                  <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-xs text-red-400 flex items-center gap-2">
+                    <AlertCircle size={14} /> {pairError}
+                  </div>
+                )}
+                {pairSuccess && (
+                  <div className="bg-green-900/20 border border-green-500/30 p-3 rounded-lg text-xs text-green-400 flex items-center gap-2">
+                    <CheckCircle size={14} /> {pairSuccess}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="bg-slate-900/50 border border-white/5 p-5 rounded-xl space-y-3">
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Option 1: Generate a Code</div>
+                    <p className="text-[10px] text-slate-500">Share this code with your partner so they can connect to you.</p>
+                    {generatedCode ? (
+                      <div className="text-center">
+                        <div className="text-3xl font-black text-red-500 tracking-[0.3em] bg-black/40 py-3 rounded-lg border border-red-500/30">{generatedCode}</div>
+                        <p className="text-[10px] text-slate-600 mt-2">Expires in 30 minutes</p>
+                      </div>
+                    ) : (
+                      <Button
+                        data-testid="button-generate-code"
+                        className="w-full bg-red-600 hover:bg-red-500"
+                        onClick={async () => {
+                          setPairError(null);
+                          try {
+                            const result = await generatePairCodeMutation.mutateAsync();
+                            setGeneratedCode(result.code);
+                          } catch (e: any) {
+                            setPairError(e?.message || 'Failed to generate code');
+                          }
+                        }}
+                        disabled={generatePairCodeMutation.isPending}
+                      >
+                        {generatePairCodeMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Generate Invite Code'}
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="h-px flex-1 bg-white/10" />
+                    <span className="text-[10px] text-slate-600 uppercase font-bold">or</span>
+                    <div className="h-px flex-1 bg-white/10" />
+                  </div>
+
+                  <div className="bg-slate-900/50 border border-white/5 p-5 rounded-xl space-y-3">
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Option 2: Enter a Code</div>
+                    <p className="text-[10px] text-slate-500">Enter the code your partner shared with you.</p>
+                    <div className="flex gap-2">
+                      <input
+                        data-testid="input-pair-code"
+                        type="text"
+                        value={pairCodeInput}
+                        onChange={(e) => setPairCodeInput(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => e.key === 'Enter' && pairCodeInput.trim() && (async () => {
+                          setPairError(null);
+                          try {
+                            const result = await joinPairCodeMutation.mutateAsync(pairCodeInput.trim());
+                            setPairSuccess(`Bonded with ${result.partnerUsername}!`);
+                            setPairCodeInput('');
+                            setTimeout(() => { setModal(null); setPairSuccess(null); }, 2000);
+                          } catch (e: any) {
+                            setPairError(e?.message || 'Failed to join');
+                          }
+                        })()}
+                        placeholder="XXXXXX"
+                        maxLength={6}
+                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white text-center font-mono tracking-widest focus:outline-none focus:border-red-500/50 uppercase"
+                      />
+                      <Button
+                        data-testid="button-join-code"
+                        className="bg-red-600 hover:bg-red-500"
+                        onClick={async () => {
+                          if (!pairCodeInput.trim()) return;
+                          setPairError(null);
+                          try {
+                            const result = await joinPairCodeMutation.mutateAsync(pairCodeInput.trim());
+                            setPairSuccess(`Bonded with ${result.partnerUsername}!`);
+                            setPairCodeInput('');
+                            setTimeout(() => { setModal(null); setPairSuccess(null); }, 2000);
+                          } catch (e: any) {
+                            setPairError(e?.message || 'Failed to join');
+                          }
+                        }}
+                        disabled={joinPairCodeMutation.isPending || !pairCodeInput.trim()}
+                      >
+                        {joinPairCodeMutation.isPending ? <Loader2 className="animate-spin" size={16} /> : 'Join'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {modal === 'dom_tasks' && (
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center mb-4">
                   <List size={48} className="mx-auto text-blue-500 mb-2" />
                   <h2 className="text-xl font-bold text-white uppercase">Assign Protocols</h2>
+                  {partner && <p className="text-xs text-slate-500 mt-1">Assigning to {partner.username}</p>}
                 </div>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <input 
-                      data-testid="input-dom-task"
-                      type="text" 
-                      value={newTaskText}
-                      onChange={(e) => setNewTaskText(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleCreateTask()}
-                      placeholder="New Task Description..." 
-                      className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500" 
-                    />
-                    <Button data-testid="button-dom-add-task" className="bg-blue-600 hover:bg-blue-500" onClick={handleCreateTask} disabled={createTaskMutation.isPending}>
-                      <Check size={16} />
-                    </Button>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a partner first</div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <input 
+                        data-testid="input-dom-task"
+                        type="text" 
+                        value={newTaskText}
+                        onChange={(e) => setNewTaskText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && newTaskText.trim() && (() => { createPartnerTaskMutation.mutate({ text: newTaskText }); setNewTaskText(''); })()}
+                        placeholder="New Task Description..." 
+                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500" 
+                      />
+                      <Button data-testid="button-dom-add-task" className="bg-blue-600 hover:bg-blue-500" onClick={() => { if (newTaskText.trim()) { createPartnerTaskMutation.mutate({ text: newTaskText }); setNewTaskText(''); } }} disabled={createPartnerTaskMutation.isPending}>
+                        <Check size={16} />
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase text-slate-500 font-bold tracking-widest pl-1">{partner.username}'s Protocols</Label>
+                      {partnerTasks.map(t => (
+                        <div key={t.id} className="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-white/5">
+                          <span className={`text-sm text-slate-300 ${t.done ? 'line-through opacity-50' : ''}`}>{t.text}</span>
+                          {t.done ? <CheckCircle size={16} className="text-green-500" /> : <Clock size={16} className="text-slate-600" />}
+                        </div>
+                      ))}
+                      {partnerTasks.length === 0 && <div className="text-xs text-slate-600 text-center py-4">No protocols assigned yet</div>}
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase text-slate-500 font-bold tracking-widest pl-1">Active Protocols</Label>
-                    {tasks.map(t => (
-                      <div key={t.id} className="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-white/5">
-                        <span className={`text-sm text-slate-300 ${t.done ? 'line-through opacity-50' : ''}`}>{t.text}</span>
-                        <button data-testid={`button-delete-task-${t.id}`} className="text-slate-600 hover:text-red-500 cursor-pointer" onClick={() => deleteTaskMutation.mutate(t.id)}><XCircle size={16} /></button>
-                      </div>
-                    ))}
-                    {tasks.length === 0 && <div className="text-xs text-slate-600 text-center py-4">No protocols yet</div>}
-                  </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -749,33 +927,40 @@ export default function BondedAscentApp() {
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center mb-4">
                   <Gift size={48} className="mx-auto text-purple-500 mb-2" />
-                  <h2 className="text-xl font-bold text-white uppercase">Manage Rewards</h2>
+                  <h2 className="text-xl font-bold text-white uppercase">Grant Rewards</h2>
+                  {partner && <p className="text-xs text-slate-500 mt-1">For {partner.username}</p>}
                 </div>
-                <div className="space-y-3">
-                  {rewards.map((r) => (
-                    <div key={r.id} className="flex justify-between items-center p-3 bg-slate-900/50 border border-white/5 rounded-xl">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500/10 rounded-full text-purple-400"><Star size={14} /></div>
-                        <span className="text-sm font-bold text-slate-300">{r.name}</span>
-                      </div>
-                      <span className="text-[10px] text-slate-500">{r.unlocked ? 'Unlocked' : `Lv ${r.unlockLevel}`}</span>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a partner first</div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      {rewards.map((r) => (
+                        <div key={r.id} className="flex justify-between items-center p-3 bg-slate-900/50 border border-white/5 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-500/10 rounded-full text-purple-400"><Star size={14} /></div>
+                            <span className="text-sm font-bold text-slate-300">{r.name}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-500">{r.unlocked ? 'Unlocked' : `Lv ${r.unlockLevel}`}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    data-testid="input-reward-name"
-                    type="text"
-                    value={newRewardName}
-                    onChange={(e) => setNewRewardName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateReward()}
-                    placeholder="New reward name..."
-                    className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                  />
-                  <Button data-testid="button-create-reward" className="bg-purple-600 hover:bg-purple-500" onClick={handleCreateReward} disabled={createRewardMutation.isPending}>
-                    <Plus size={16} />
-                  </Button>
-                </div>
+                    <div className="flex gap-2">
+                      <input
+                        data-testid="input-reward-name"
+                        type="text"
+                        value={newRewardName}
+                        onChange={(e) => setNewRewardName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(''); })()}
+                        placeholder="New reward name..."
+                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                      />
+                      <Button data-testid="button-create-reward" className="bg-purple-600 hover:bg-purple-500" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(''); } }} disabled={createPartnerRewardMutation.isPending}>
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -784,38 +969,45 @@ export default function BondedAscentApp() {
                 <div className="text-center mb-4">
                   <Gavel size={48} className="mx-auto text-red-600 mb-2" />
                   <h2 className="text-xl font-bold text-white uppercase">Discipline</h2>
+                  {partner && <p className="text-xs text-slate-500 mt-1">For {partner.username}</p>}
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {['Corner Time', 'Writing Lines', 'Cold Shower', 'Privilege Revoked'].map((p, i) => (
-                    <button 
-                      key={i} 
-                      data-testid={`button-punish-${i}`}
-                      onClick={() => { handleCreatePunishment(p); setModal(null); }}
-                      className="p-4 bg-red-950/20 border border-red-900/30 hover:bg-red-900/40 hover:border-red-500/50 rounded-xl text-center transition-all group cursor-pointer"
-                    >
-                      <div className="text-red-500 font-bold text-xs uppercase mb-1 group-hover:text-white transition-colors">{p}</div>
-                      <div className="text-[9px] text-red-500/50">Assign Immediately</div>
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    data-testid="input-punishment-name"
-                    type="text"
-                    value={newPunishmentName}
-                    onChange={(e) => setNewPunishmentName(e.target.value)}
-                    placeholder="Custom punishment..."
-                    className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
-                  />
-                  <Button 
-                    data-testid="button-custom-punish"
-                    className="bg-red-600 hover:bg-red-500" 
-                    onClick={() => { if (newPunishmentName.trim()) { handleCreatePunishment(newPunishmentName); setNewPunishmentName(''); setModal(null); } }}
-                    disabled={createPunishmentMutation.isPending}
-                  >
-                    <Plus size={16} />
-                  </Button>
-                </div>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a partner first</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      {['Corner Time', 'Writing Lines', 'Cold Shower', 'Privilege Revoked'].map((p, i) => (
+                        <button 
+                          key={i} 
+                          data-testid={`button-punish-${i}`}
+                          onClick={() => { createPartnerPunishmentMutation.mutate({ name: p }); setModal(null); }}
+                          className="p-4 bg-red-950/20 border border-red-900/30 hover:bg-red-900/40 hover:border-red-500/50 rounded-xl text-center transition-all group cursor-pointer"
+                        >
+                          <div className="text-red-500 font-bold text-xs uppercase mb-1 group-hover:text-white transition-colors">{p}</div>
+                          <div className="text-[9px] text-red-500/50">Assign Immediately</div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        data-testid="input-punishment-name"
+                        type="text"
+                        value={newPunishmentName}
+                        onChange={(e) => setNewPunishmentName(e.target.value)}
+                        placeholder="Custom punishment..."
+                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+                      />
+                      <Button 
+                        data-testid="button-custom-punish"
+                        className="bg-red-600 hover:bg-red-500" 
+                        onClick={() => { if (newPunishmentName.trim()) { createPartnerPunishmentMutation.mutate({ name: newPunishmentName }); setNewPunishmentName(''); setModal(null); } }}
+                        disabled={createPartnerPunishmentMutation.isPending}
+                      >
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -823,28 +1015,54 @@ export default function BondedAscentApp() {
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center mb-4">
                   <FileSignature size={48} className="mx-auto text-emerald-500 mb-2" />
-                  <h2 className="text-xl font-bold text-white uppercase">Pending Reviews</h2>
+                  <h2 className="text-xl font-bold text-white uppercase">Review Check-Ins</h2>
+                  {partner && <p className="text-xs text-slate-500 mt-1">{partner.username}'s submissions</p>}
                 </div>
-                <div className="space-y-4">
-                  {checkIns.filter(c => c.status === 'pending').map((rev) => (
-                    <div key={rev.id} className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div className="flex gap-2 items-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">Check-In</span>
-                          <span className="text-[10px] text-slate-500">{formatTime(rev.createdAt)}</span>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a partner first</div>
+                ) : (
+                  <div className="space-y-4">
+                    {partnerCheckIns.filter(c => c.status === 'pending').map((rev) => (
+                      <div key={rev.id} className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex gap-2 items-center">
+                            <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">Check-In</span>
+                            <span className="text-[10px] text-slate-500">{formatTime(rev.createdAt)}</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Mood:</span> <span className="text-white font-bold">{rev.mood}/10</span></div>
+                          <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Obedience:</span> <span className="text-white font-bold">{rev.obedience}/10</span></div>
+                        </div>
+                        {rev.notes && <p className="text-sm text-slate-300 italic">"{rev.notes}"</p>}
+                        <div className="flex gap-2">
+                          <Button
+                            data-testid={`button-approve-${rev.id}`}
+                            size="sm"
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-500"
+                            onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'approved', xpAwarded: 10 })}
+                            disabled={reviewPartnerCheckInMutation.isPending}
+                          >
+                            <Check size={14} className="mr-1" /> Approve (+10 XP)
+                          </Button>
+                          <Button
+                            data-testid={`button-reject-${rev.id}`}
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 border-red-900/50 text-red-400 hover:bg-red-950/50"
+                            onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'rejected', xpAwarded: 0 })}
+                            disabled={reviewPartnerCheckInMutation.isPending}
+                          >
+                            <XCircle size={14} className="mr-1" /> Reject
+                          </Button>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Mood:</span> <span className="text-white font-bold">{rev.mood}/10</span></div>
-                        <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Obedience:</span> <span className="text-white font-bold">{rev.obedience}/10</span></div>
-                      </div>
-                      {rev.notes && <p className="text-sm text-slate-300 italic">"{rev.notes}"</p>}
-                    </div>
-                  ))}
-                  {checkIns.filter(c => c.status === 'pending').length === 0 && (
-                    <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">No pending reviews</div>
-                  )}
-                </div>
+                    ))}
+                    {partnerCheckIns.filter(c => c.status === 'pending').length === 0 && (
+                      <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">No pending reviews</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

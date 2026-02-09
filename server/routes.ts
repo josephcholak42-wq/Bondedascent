@@ -333,5 +333,207 @@ export async function registerRoutes(
     res.json(safeUser);
   });
 
+  // --- PARTNER PAIRING ---
+  app.post("/api/pair/generate", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (user.partnerId) {
+      return res.status(400).json({ message: "Already paired. Unlink first." });
+    }
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+    const pairCode = await storage.createPairCode(user.id, code, expiresAt);
+    res.status(201).json({ code: pairCode.code, expiresAt: pairCode.expiresAt });
+  });
+
+  app.post("/api/pair/join", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { code } = req.body;
+    if (!code || typeof code !== "string") {
+      return res.status(400).json({ message: "Invite code required" });
+    }
+    if (user.partnerId) {
+      return res.status(400).json({ message: "Already paired. Unlink first." });
+    }
+
+    const pairCode = await storage.getPairCodeByCode(code.toUpperCase().trim());
+    if (!pairCode) {
+      return res.status(404).json({ message: "Invalid or expired code" });
+    }
+    if (new Date(pairCode.expiresAt) < new Date()) {
+      return res.status(400).json({ message: "Code has expired. Ask your partner to generate a new one." });
+    }
+    if (pairCode.userId === user.id) {
+      return res.status(400).json({ message: "You can't pair with yourself" });
+    }
+
+    const codeOwner = await storage.getUser(pairCode.userId);
+    if (!codeOwner) {
+      return res.status(404).json({ message: "Code owner not found" });
+    }
+    if (codeOwner.partnerId) {
+      return res.status(400).json({ message: "That user is already paired with someone else" });
+    }
+
+    await storage.usePairCode(pairCode.id, user.id);
+    await storage.linkPartners(user.id, pairCode.userId);
+
+    await storage.logActivity(user.id, "partner_linked", `Paired with ${codeOwner.username}`);
+    await storage.logActivity(pairCode.userId, "partner_linked", `Paired with ${user.username}`);
+    await storage.createNotification({ userId: user.id, text: `You are now bonded with ${codeOwner.username}`, type: "info" });
+    await storage.createNotification({ userId: pairCode.userId, text: `You are now bonded with ${user.username}`, type: "info" });
+
+    res.json({ message: "Successfully paired!", partnerUsername: codeOwner.username });
+  });
+
+  app.delete("/api/pair", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) {
+      return res.status(400).json({ message: "Not currently paired" });
+    }
+    const partner = await storage.getPartner(user.id);
+    await storage.unlinkPartner(user.id);
+    await storage.logActivity(user.id, "partner_unlinked", partner ? `Unlinked from ${partner.username}` : "Partner unlinked");
+    if (partner) {
+      await storage.logActivity(partner.id, "partner_unlinked", `${user.username} ended the bond`);
+      await storage.createNotification({ userId: partner.id, text: `${user.username} has ended the bond`, type: "alert" });
+    }
+    res.json({ message: "Bond dissolved" });
+  });
+
+  app.get("/api/pair/partner", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) {
+      return res.json(null);
+    }
+    const { password: _, ...safePartner } = partner;
+    res.json(safePartner);
+  });
+
+  app.get("/api/pair/partner/stats", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) {
+      return res.status(404).json({ message: "No partner linked" });
+    }
+
+    const taskList = await storage.getTasks(partner.id);
+    const completedTasks = taskList.filter(t => t.done).length;
+    const checkInList = await storage.getCheckIns(partner.id);
+    const dareList = await storage.getDares(partner.id);
+    const journalList = await storage.getJournalEntries(partner.id);
+
+    res.json({
+      username: partner.username,
+      role: partner.role,
+      xp: partner.xp,
+      level: partner.level,
+      completedTasks,
+      totalTasks: taskList.length,
+      totalCheckIns: checkInList.length,
+      totalDares: dareList.length,
+      completedDares: dareList.filter(d => d.completed).length,
+      totalJournalEntries: journalList.length,
+      complianceRate: taskList.length > 0 ? Math.round((completedTasks / taskList.length) * 100) : 0,
+      pendingCheckIns: checkInList.filter(c => c.status === "pending").length,
+    });
+  });
+
+  // --- DOM: PARTNER MANAGEMENT (cross-user operations for paired partners) ---
+  app.get("/api/partner/tasks", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+    const taskList = await storage.getTasks(partner.id);
+    res.json(taskList);
+  });
+
+  app.post("/api/partner/tasks", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+    const { text } = req.body;
+    if (!text || typeof text !== "string" || !text.trim()) {
+      return res.status(400).json({ message: "Task text required" });
+    }
+    const task = await storage.createTask({ text: text.trim(), userId: partner.id, assignedBy: user.id });
+    await storage.logActivity(user.id, "task_assigned", `Assigned "${text.trim()}" to ${partner.username}`);
+    await storage.createNotification({ userId: partner.id, text: `New task from ${user.username}: ${text.trim()}`, type: "info" });
+    res.status(201).json(task);
+  });
+
+  app.get("/api/partner/checkins", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+    const list = await storage.getCheckIns(partner.id);
+    res.json(list);
+  });
+
+  app.patch("/api/partner/checkins/:id/review", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+
+    const parsed = reviewBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid review data" });
+    }
+
+    const checkIns = await storage.getCheckIns(partner.id);
+    const target = checkIns.find(c => c.id === req.params.id);
+    if (!target) return res.status(404).json({ message: "Check-in not found" });
+
+    const { status, xpAwarded } = parsed.data;
+    const checkIn = await storage.reviewCheckIn(req.params.id, status, xpAwarded);
+    if (!checkIn) return res.status(404).json({ message: "Check-in not found" });
+
+    if (status === "approved" && xpAwarded > 0) {
+      const newXp = Math.min((partner.xp || 0) + xpAwarded, 100 * (partner.level || 1));
+      await storage.updateUserXp(partner.id, newXp);
+    }
+
+    await storage.logActivity(user.id, "checkin_reviewed", `${status} check-in for ${partner.username}`);
+    await storage.createNotification({ userId: partner.id, text: `Check-in ${status} by ${user.username}${xpAwarded > 0 ? ` (+${xpAwarded} XP)` : ''}`, type: "info" });
+    res.json(checkIn);
+  });
+
+  app.post("/api/partner/punishments", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+    const { name } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Punishment name required" });
+    }
+    const punishment = await storage.createPunishment({ userId: partner.id, assignedBy: user.id, name: name.trim() });
+    await storage.logActivity(user.id, "punishment_assigned", `Assigned "${name.trim()}" to ${partner.username}`);
+    await storage.createNotification({ userId: partner.id, text: `Punishment from ${user.username}: ${name.trim()}`, type: "alert" });
+    res.status(201).json(punishment);
+  });
+
+  app.post("/api/partner/rewards", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+    const { name, unlockLevel } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Reward name required" });
+    }
+    const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
+    const reward = await storage.createReward({ userId: partner.id, name: name.trim(), unlockLevel: lvl });
+    await storage.logActivity(user.id, "reward_granted", `Granted "${name.trim()}" to ${partner.username}`);
+    await storage.createNotification({ userId: partner.id, text: `Reward from ${user.username}: ${name.trim()}`, type: "info" });
+    res.status(201).json(reward);
+  });
+
+  app.get("/api/partner/activity", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+    const list = await storage.getActivityLog(partner.id);
+    res.json(list);
+  });
+
   return httpServer;
 }

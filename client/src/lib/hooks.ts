@@ -268,3 +268,146 @@ export function useDismissNotification() {
 export function useActivityLog() {
   return useQuery<ActivityLogEntry[]>({ queryKey: ["/api/activity"] });
 }
+
+export function usePartner() {
+  return useQuery<SafeUser | null>({
+    queryKey: ["/api/pair/partner"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+}
+
+export function usePartnerStats() {
+  return useQuery<{
+    username: string; role: string; xp: number; level: number;
+    completedTasks: number; totalTasks: number; totalCheckIns: number;
+    totalDares: number; completedDares: number; totalJournalEntries: number;
+    complianceRate: number; pendingCheckIns: number;
+  } | null>({
+    queryKey: ["/api/pair/partner/stats"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/pair/partner/stats", { credentials: "include" });
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error("Failed to fetch partner stats");
+        return res.json();
+      } catch {
+        return null;
+      }
+    },
+  });
+}
+
+export function useGeneratePairCode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/pair/generate");
+      return res.json() as Promise<{ code: string; expiresAt: string }>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/pair/partner"] });
+    },
+  });
+}
+
+export function useJoinPairCode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (code: string) => {
+      const res = await apiRequest("POST", "/api/pair/join", { code });
+      return res.json() as Promise<{ message: string; partnerUsername: string }>;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/pair/partner"] });
+      qc.invalidateQueries({ queryKey: ["/api/pair/partner/stats"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUnlinkPartner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/pair");
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/pair/partner"] });
+      qc.invalidateQueries({ queryKey: ["/api/pair/partner/stats"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePartnerTasks() {
+  return useQuery<Task[]>({ queryKey: ["/api/partner/tasks"] });
+}
+
+export function useCreatePartnerTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { text: string }) => {
+      const res = await apiRequest("POST", "/api/partner/tasks", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePartnerCheckIns() {
+  return useQuery<CheckIn[]>({ queryKey: ["/api/partner/checkins"] });
+}
+
+export function useReviewPartnerCheckIn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { checkInId: string; status: string; xpAwarded: number }) => {
+      const res = await apiRequest("PATCH", `/api/partner/checkins/${data.checkInId}/review`, { status: data.status, xpAwarded: data.xpAwarded });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/partner/checkins"] });
+      qc.invalidateQueries({ queryKey: ["/api/pair/partner/stats"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useCreatePartnerPunishment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string }) => {
+      const res = await apiRequest("POST", "/api/partner/punishments", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/punishments"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useCreatePartnerReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; unlockLevel?: number }) => {
+      const res = await apiRequest("POST", "/api/partner/rewards", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePartnerActivity() {
+  return useQuery<ActivityLogEntry[]>({ queryKey: ["/api/partner/activity"] });
+}
