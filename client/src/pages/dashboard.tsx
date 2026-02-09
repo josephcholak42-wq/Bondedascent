@@ -394,18 +394,18 @@ export default function BondedAscentApp() {
           <div className="absolute inset-0 bg-red-900/10 blur-[80px] rounded-full pointer-events-none" />
           <button className="w-28 h-28 rounded-full bg-gradient-to-br from-red-800 to-black border-2 border-red-500/30 shadow-[0_0_40px_rgba(220,38,38,0.3)] flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer">
             <Shield className="text-white mb-1 group-hover:text-red-200" size={32} />
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">Command</span>
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">Throne</span>
           </button>
           
           <div className="absolute w-[260px] h-[260px] border border-white/5 rounded-full pointer-events-none" />
-          <SanctuaryNode icon={<Target />} label="Direct" angle={270} color="bg-red-600" onClick={() => setModal('training')} />
-          <SanctuaryNode icon={<Film />} label="Scene" angle={315} color="bg-purple-600" onClick={() => setModal('scene')} />
-          <SanctuaryNode icon={<Activity />} label="Ladders" angle={0} color="bg-rose-600" onClick={() => setModal('ladders')} />
-          <SanctuaryNode icon={<FileText />} label="Logbook" angle={45} color="bg-pink-600" onClick={() => setModal('logbook')} />
-          <SanctuaryNode icon={<Sliders />} label="Sensory" angle={90} color="bg-slate-700" onClick={() => setModal('sensory')} />
-          <SanctuaryNode icon={<Box />} label="Vault" angle={135} color="bg-indigo-600" onClick={() => setModal('vault')} />
-          <SanctuaryNode icon={<Heart />} label="Aftercare" angle={180} color="bg-pink-500" onClick={() => setModal('aftercare')} />
-          <SanctuaryNode icon={<Star />} label="Worship" angle={225} color="bg-amber-600" onClick={() => setModal('worship')} />
+          <SanctuaryNode icon={<Terminal />} label="Command" angle={270} color="bg-red-600" onClick={() => setModal('dom_command')} />
+          <SanctuaryNode icon={<Eye />} label="Inspect" angle={315} color="bg-emerald-600" onClick={() => setModal('dom_inspect')} />
+          <SanctuaryNode icon={<Film />} label="Direct" angle={0} color="bg-purple-600" onClick={() => setModal('dom_direct')} />
+          <SanctuaryNode icon={<FileText />} label="Surveil" angle={45} color="bg-cyan-600" onClick={() => setModal('dom_surveil')} />
+          <SanctuaryNode icon={<Activity />} label="Enforce" angle={90} color="bg-rose-600" onClick={() => setModal('dom_enforce')} />
+          <SanctuaryNode icon={<Gift />} label="Bestow" angle={135} color="bg-amber-600" onClick={() => setModal('dom_bestow')} />
+          <SanctuaryNode icon={<Gavel />} label="Decree" angle={180} color="bg-orange-600" onClick={() => setModal('dom_decree')} />
+          <SanctuaryNode icon={<ShieldAlert />} label="Override" angle={225} color="bg-red-900" onClick={() => setModal('dom_override')} />
         </div>
       )}
     </div>
@@ -1193,6 +1193,393 @@ export default function BondedAscentApp() {
                     )}
                   </div>
                 )}
+              </div>
+            )}
+
+            {modal === 'dom_command' && (
+              <div className="p-4 space-y-6 overflow-y-auto">
+                <div className="text-center">
+                  <Terminal size={48} className="mx-auto text-red-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Command Center</h2>
+                  <p className="text-xs text-slate-500 mt-1">{partner ? `Commanding ${partner.username}` : 'No sub connected'}</p>
+                </div>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a sub first</div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <input
+                        data-testid="input-dom-command-task"
+                        type="text"
+                        value={newTaskText}
+                        onChange={(e) => setNewTaskText(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && newTaskText.trim() && (() => { createPartnerTaskMutation.mutate({ text: newTaskText }); setNewTaskText(''); })()}
+                        placeholder="Issue a new command..."
+                        className="flex-1 bg-black/40 border border-red-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+                      />
+                      <Button data-testid="button-dom-command-send" className="bg-red-600 hover:bg-red-500 cursor-pointer" onClick={() => { if (newTaskText.trim()) { createPartnerTaskMutation.mutate({ text: newTaskText }); setNewTaskText(''); } }} disabled={createPartnerTaskMutation.isPending}>
+                        <Send size={16} />
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Active Orders ({partnerTasks.filter(t => !t.done).length})</div>
+                      {partnerTasks.filter(t => !t.done).map(t => (
+                        <div key={t.id} className="flex items-center gap-3 bg-red-950/20 border border-red-900/20 p-3 rounded-xl">
+                          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                          <span className="text-sm text-white font-bold flex-1">{t.text}</span>
+                          <span className="text-[9px] text-red-500/50 uppercase">Pending</span>
+                        </div>
+                      ))}
+                      {partnerTasks.filter(t => t.done).length > 0 && (
+                        <>
+                          <div className="text-[10px] text-slate-600 uppercase tracking-widest font-bold mt-4">Completed ({partnerTasks.filter(t => t.done).length})</div>
+                          {partnerTasks.filter(t => t.done).map(t => (
+                            <div key={t.id} className="flex items-center gap-3 bg-slate-900/30 border border-white/5 p-3 rounded-xl opacity-50">
+                              <CheckCircle size={14} className="text-green-500" />
+                              <span className="text-sm text-slate-400 line-through">{t.text}</span>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      {partnerTasks.length === 0 && <div className="text-xs text-slate-600 text-center py-4">No commands issued yet</div>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {modal === 'dom_inspect' && (
+              <div className="p-4 space-y-6 overflow-y-auto">
+                <div className="text-center">
+                  <Eye size={48} className="mx-auto text-emerald-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Inspection</h2>
+                  <p className="text-xs text-slate-500 mt-1">{partner ? `Reviewing ${partner.username}'s reports` : 'No sub connected'}</p>
+                </div>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a sub first</div>
+                ) : (
+                  <div className="space-y-4">
+                    {partnerCheckIns.filter(c => c.status === 'pending').length > 0 && (
+                      <div className="bg-emerald-950/20 border border-emerald-500/20 p-3 rounded-xl text-center">
+                        <div className="text-xs text-emerald-400 font-bold uppercase">{partnerCheckIns.filter(c => c.status === 'pending').length} Pending Review</div>
+                      </div>
+                    )}
+                    {partnerCheckIns.filter(c => c.status === 'pending').map((rev) => (
+                      <div key={rev.id} className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3">
+                        <div className="flex gap-2 items-center">
+                          <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">Check-In</span>
+                          <span className="text-[10px] text-slate-500">{formatTime(rev.createdAt)}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Mood:</span> <span className="text-white font-bold">{rev.mood}/10</span></div>
+                          <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Obedience:</span> <span className="text-white font-bold">{rev.obedience}/10</span></div>
+                        </div>
+                        {rev.notes && <p className="text-sm text-slate-300 italic">"{rev.notes}"</p>}
+                        <div className="flex gap-2">
+                          <Button data-testid={`button-vinspect-approve-${rev.id}`} size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-500 cursor-pointer" onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'approved', xpAwarded: 10 })} disabled={reviewPartnerCheckInMutation.isPending}>
+                            <Check size={14} className="mr-1" /> Approve (+10 XP)
+                          </Button>
+                          <Button data-testid={`button-vinspect-reject-${rev.id}`} size="sm" variant="outline" className="flex-1 border-red-900/50 text-red-400 hover:bg-red-950/50 cursor-pointer" onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'rejected', xpAwarded: 0 })} disabled={reviewPartnerCheckInMutation.isPending}>
+                            <XCircle size={14} className="mr-1" /> Reject
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {partnerCheckIns.filter(c => c.status === 'pending').length === 0 && (
+                      <div className="text-center py-6">
+                        <CheckCircle size={32} className="mx-auto text-emerald-700 mb-2" />
+                        <div className="text-xs text-slate-600 uppercase tracking-widest">All reports reviewed</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {modal === 'dom_direct' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <Film size={48} className="mx-auto text-purple-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Scene Director</h2>
+                  <p className="text-xs text-slate-500 mt-1">Control the scene flow</p>
+                </div>
+                {scenePhase >= 0 && (
+                  <div className="bg-purple-950/30 border border-purple-500/30 p-4 rounded-2xl text-center space-y-3">
+                    <div className="text-[10px] text-purple-400 uppercase font-bold tracking-widest">Scene Active — {scenePhases[scenePhase]}</div>
+                    <div className="text-3xl font-black text-purple-400 font-mono tracking-widest">{formatTimerDisplay(sceneTimer)}</div>
+                    <div className="flex gap-2 justify-center">
+                      <Button data-testid="button-dom-advance-scene" size="sm" onClick={advanceScene} className="bg-purple-600 hover:bg-purple-500 cursor-pointer">
+                        {scenePhase < scenePhases.length - 1 ? `Next: ${scenePhases[scenePhase + 1]}` : 'Complete Scene'}
+                      </Button>
+                      <Button data-testid="button-dom-end-scene" variant="outline" size="sm" onClick={endScene} className="border-red-800 text-red-400 hover:bg-red-950 cursor-pointer">End</Button>
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {[
+                    { label: "Warm-Up", desc: "Ease into the scene", color: "bg-green-500/10 border-green-500/20 text-green-400", activeColor: "bg-green-500/30 border-green-500/50 text-green-300 ring-1 ring-green-500/30" },
+                    { label: "Main Scene", desc: "Core intensity", color: "bg-purple-500/10 border-purple-500/20 text-purple-400", activeColor: "bg-purple-500/30 border-purple-500/50 text-purple-300 ring-1 ring-purple-500/30" },
+                    { label: "Cooldown", desc: "Wind down safely", color: "bg-blue-500/10 border-blue-500/20 text-blue-400", activeColor: "bg-blue-500/30 border-blue-500/50 text-blue-300 ring-1 ring-blue-500/30" },
+                  ].map((phase, i) => (
+                    <div key={i} className={`p-4 rounded-xl border transition-all ${scenePhase === i ? phase.activeColor : scenePhase > i ? 'bg-white/5 border-white/10 text-slate-600' : phase.color}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-widest">{phase.label}</div>
+                          <div className="text-[9px] opacity-60 mt-0.5">{phase.desc}</div>
+                        </div>
+                        {scenePhase > i && <Check size={14} className="text-green-500" />}
+                        {scenePhase === i && <div className="w-2 h-2 rounded-full bg-current animate-pulse" />}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {scenePhase < 0 && (
+                  <Button data-testid="button-dom-start-scene" onClick={startScene} className="w-full bg-purple-600 hover:bg-purple-500 font-bold uppercase cursor-pointer">
+                    <Play size={16} className="mr-2" /> Begin Scene
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {modal === 'dom_surveil' && (
+              <div className="p-4 space-y-6 overflow-y-auto">
+                <div className="text-center">
+                  <FileText size={48} className="mx-auto text-cyan-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Surveillance</h2>
+                  <p className="text-xs text-slate-500 mt-1">{partner ? `Monitoring ${partner.username}` : 'No sub connected'}</p>
+                </div>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a sub first</div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center gap-2 text-[10px] text-cyan-500 font-bold uppercase animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-cyan-500" /> Live Feed
+                    </div>
+                    {partnerActivity.slice(0, 15).map((log) => (
+                      <div key={log.id} className="flex gap-3 items-start bg-slate-900/50 border border-white/5 p-3 rounded-xl">
+                        <span className="font-mono text-[10px] text-cyan-700 min-w-[50px] mt-0.5">{formatTime(log.createdAt)}</span>
+                        <div className="mt-0.5">
+                          {log.action.includes('task') ? <CheckCircle size={12} className="text-green-500" /> :
+                           log.action.includes('dare') ? <Dices size={12} className="text-purple-500" /> :
+                           log.action.includes('check') ? <MessageSquare size={12} className="text-blue-500" /> :
+                           log.action.includes('scene') ? <Film size={12} className="text-purple-400" /> :
+                           <Activity size={12} className="text-cyan-400" />}
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-slate-300 uppercase">{log.action.replace(/_/g, ' ')}</div>
+                          {log.detail && <div className="text-[10px] text-slate-500 mt-0.5">{log.detail}</div>}
+                        </div>
+                      </div>
+                    ))}
+                    {partnerActivity.length === 0 && (
+                      <div className="text-center py-8">
+                        <Eye size={32} className="mx-auto text-slate-700 mb-2" />
+                        <div className="text-xs text-slate-600 uppercase tracking-widest">No activity detected</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {modal === 'dom_enforce' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <Activity size={48} className="mx-auto text-rose-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Enforcement</h2>
+                  <p className="text-xs text-slate-500 mt-1">Set intensity and rules</p>
+                </div>
+                <div className="bg-rose-950/20 border border-rose-500/20 p-4 rounded-xl text-center space-y-2">
+                  <div className="text-[10px] text-rose-400 uppercase font-bold tracking-widest">Current Intensity</div>
+                  <div className="text-3xl font-black text-rose-500">Level {ladderLevel}</div>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Level 1 — Gentle', desc: 'Soft guidance, light rules' },
+                    { label: 'Level 2 — Moderate', desc: 'Standard expectations' },
+                    { label: 'Level 3 — Intense', desc: 'Strict adherence required' },
+                    { label: 'Level 4 — Advanced', desc: 'Full protocol enforcement' },
+                    { label: 'Level 5 — Absolute', desc: 'Total authority mode' },
+                  ].map((lvl, i) => {
+                    const lvlNum = i + 1;
+                    const selected = ladderLevel === lvlNum;
+                    return (
+                      <button
+                        key={i}
+                        data-testid={`button-dom-enforce-${lvlNum}`}
+                        onClick={() => {
+                          setLadderLevel(lvlNum);
+                          logActivityMutation.mutate({ action: 'enforcement_set', detail: lvl.label });
+                        }}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
+                          ${selected ? 'bg-rose-900/30 border-rose-500/50 ring-1 ring-rose-500/30' :
+                            'bg-slate-900/50 border-white/5 hover:border-rose-500/30'}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black
+                          ${selected ? 'bg-rose-500 text-white' : i < 2 ? 'bg-green-900/30 text-green-400' : i < 4 ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-400'}`}>
+                          {selected ? <Check size={14} /> : lvlNum}
+                        </div>
+                        <div className="text-left">
+                          <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">{lvl.label}</span>
+                          <div className="text-[9px] text-slate-600">{lvl.desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {modal === 'dom_bestow' && (
+              <div className="p-4 space-y-6 overflow-y-auto">
+                <div className="text-center">
+                  <Gift size={48} className="mx-auto text-amber-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Bestow Rewards</h2>
+                  <p className="text-xs text-slate-500 mt-1">{partner ? `Rewarding ${partner.username}` : 'No sub connected'}</p>
+                </div>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a sub first</div>
+                ) : (
+                  <>
+                    <div className="space-y-3">
+                      {rewards.map((r) => (
+                        <div key={r.id} className="flex justify-between items-center p-3 bg-amber-950/10 border border-amber-900/20 rounded-xl">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-amber-500/10 rounded-full text-amber-400"><Star size={14} /></div>
+                            <div>
+                              <span className="text-sm font-bold text-amber-200">{r.name}</span>
+                              <div className="text-[9px] text-amber-600">{r.unlocked ? 'Bestowed' : `Requires Lv ${r.unlockLevel}`}</div>
+                            </div>
+                          </div>
+                          {r.unlocked ? <Check size={14} className="text-amber-400" /> : <Lock size={14} className="text-slate-600" />}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        data-testid="input-dom-bestow-reward"
+                        type="text"
+                        value={newRewardName}
+                        onChange={(e) => setNewRewardName(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(''); })()}
+                        placeholder="New reward to bestow..."
+                        className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                      />
+                      <Button data-testid="button-dom-bestow-create" className="bg-amber-600 hover:bg-amber-500 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(''); } }} disabled={createPartnerRewardMutation.isPending}>
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                    {rewards.length === 0 && <div className="text-xs text-slate-600 text-center py-4">No rewards created yet</div>}
+                  </>
+                )}
+              </div>
+            )}
+
+            {modal === 'dom_decree' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <Gavel size={48} className="mx-auto text-orange-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Issue Decree</h2>
+                  <p className="text-xs text-slate-500 mt-1">{partner ? `Disciplining ${partner.username}` : 'No sub connected'}</p>
+                </div>
+                {!partner ? (
+                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a sub first</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { name: 'Corner Time', icon: <Clock size={18} /> },
+                        { name: 'Writing Lines', icon: <FileText size={18} /> },
+                        { name: 'Cold Shower', icon: <Thermometer size={18} /> },
+                        { name: 'Privilege Revoked', icon: <Ban size={18} /> },
+                      ].map((p, i) => (
+                        <button
+                          key={i}
+                          data-testid={`button-dom-decree-${i}`}
+                          onClick={() => { createPartnerPunishmentMutation.mutate({ name: p.name }); logActivityMutation.mutate({ action: 'decree_issued', detail: p.name }); }}
+                          className="flex flex-col items-center gap-2 p-4 bg-orange-950/20 border border-orange-900/30 hover:bg-orange-900/40 hover:border-orange-500/50 rounded-xl transition-all cursor-pointer group"
+                        >
+                          <div className="text-orange-500 group-hover:text-orange-300 transition-colors">{p.icon}</div>
+                          <div className="text-orange-400 font-bold text-[10px] uppercase">{p.name}</div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        data-testid="input-dom-decree-custom"
+                        type="text"
+                        value={newPunishmentName}
+                        onChange={(e) => setNewPunishmentName(e.target.value)}
+                        placeholder="Custom decree..."
+                        className="flex-1 bg-black/40 border border-orange-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                      />
+                      <Button
+                        data-testid="button-dom-decree-custom"
+                        className="bg-orange-600 hover:bg-orange-500 cursor-pointer"
+                        onClick={() => { if (newPunishmentName.trim()) { createPartnerPunishmentMutation.mutate({ name: newPunishmentName }); setNewPunishmentName(''); } }}
+                        disabled={createPartnerPunishmentMutation.isPending}
+                      >
+                        <Plus size={16} />
+                      </Button>
+                    </div>
+                    {punishments.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Recent Decrees</div>
+                        {punishments.slice(0, 5).map(p => (
+                          <div key={p.id} className="flex items-center gap-3 bg-slate-900/30 border border-white/5 p-2 rounded-lg">
+                            <Gavel size={12} className="text-orange-600" />
+                            <span className="text-xs text-slate-400">{p.name}</span>
+                            <span className={`ml-auto text-[9px] uppercase font-bold ${p.status === 'completed' ? 'text-green-500' : 'text-orange-500'}`}>{p.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {modal === 'dom_override' && (
+              <div className="p-4 space-y-6">
+                <div className="text-center">
+                  <ShieldAlert size={48} className="mx-auto text-red-600 mb-4 animate-pulse" />
+                  <h2 className="text-xl font-bold text-white uppercase">Override Control</h2>
+                  <p className="text-xs text-slate-500 mt-1">Emergency overrides and forced modes</p>
+                </div>
+                <div className="bg-red-950/30 border border-red-500/30 p-6 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-white text-sm uppercase tracking-wider">Force Crisis Mode</div>
+                      <div className="text-[10px] text-red-400/70">Immediately lock sub's interface</div>
+                    </div>
+                    <Button data-testid="button-dom-override-crisis" variant="destructive" size="sm" onClick={() => { setIsCrisisMode(true); setModal(null); logActivityMutation.mutate({ action: 'crisis_forced', detail: 'Dom activated crisis mode' }); }} className="cursor-pointer">
+                      ACTIVATE
+                    </Button>
+                  </div>
+                </div>
+                <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl space-y-3">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Quick Overrides</div>
+                  {[
+                    { label: 'Revoke All Rewards', desc: 'Reset earned privileges', action: 'rewards_revoked' },
+                    { label: 'Clear Task Queue', desc: 'Remove all pending orders', action: 'tasks_cleared' },
+                    { label: 'Force Check-In', desc: 'Demand immediate report', action: 'checkin_forced' },
+                  ].map((item, i) => (
+                    <button
+                      key={i}
+                      data-testid={`button-dom-override-${i}`}
+                      onClick={() => {
+                        logActivityMutation.mutate({ action: item.action, detail: item.label });
+                      }}
+                      className="w-full flex items-center justify-between bg-black/30 border border-white/5 p-3 rounded-xl hover:border-red-500/30 transition-all cursor-pointer group"
+                    >
+                      <div className="text-left">
+                        <div className="text-xs font-bold text-slate-300 uppercase group-hover:text-white">{item.label}</div>
+                        <div className="text-[9px] text-slate-600">{item.desc}</div>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-700 group-hover:text-red-500" />
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
