@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { type User } from "@shared/schema";
+import { z } from "zod";
 
 function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
@@ -10,6 +11,17 @@ function requireAuth(req: any, res: any, next: any) {
   }
   next();
 }
+
+const checkInBodySchema = z.object({
+  mood: z.number().int().min(1).max(10),
+  obedience: z.number().int().min(1).max(10),
+  notes: z.string().optional(),
+});
+
+const reviewBodySchema = z.object({
+  status: z.enum(["approved", "rejected"]),
+  xpAwarded: z.number().int().min(0).max(100).optional().default(0),
+});
 
 export async function registerRoutes(
   httpServer: Server,
@@ -27,27 +39,36 @@ export async function registerRoutes(
 
   app.post("/api/tasks", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { text, targetUserId } = req.body;
-    if (!text) return res.status(400).json({ message: "Task text required" });
+    const { text } = req.body;
+    if (!text || typeof text !== "string" || !text.trim()) {
+      return res.status(400).json({ message: "Task text required" });
+    }
 
     const task = await storage.createTask({
-      text,
-      userId: targetUserId || user.id,
+      text: text.trim(),
+      userId: user.id,
       assignedBy: user.id,
     });
 
-    await storage.logActivity(user.id, "task_created", text);
+    await storage.logActivity(user.id, "task_created", text.trim());
     res.status(201).json(task);
   });
 
   app.patch("/api/tasks/:id/toggle", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const tasks = await storage.getTasks(user.id);
+    const owned = tasks.find(t => t.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Task not found" });
+
     const task = await storage.toggleTask(req.params.id);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
     if (task.done) {
-      const newXp = Math.min((user.xp || 0) + 5, 100 * (user.level || 1));
-      await storage.updateUserXp(user.id, newXp);
+      const freshUser = await storage.getUser(user.id);
+      if (freshUser) {
+        const newXp = Math.min((freshUser.xp || 0) + 5, 100 * (freshUser.level || 1));
+        await storage.updateUserXp(user.id, newXp);
+      }
       await storage.logActivity(user.id, "task_completed", task.text);
       await storage.createNotification({ userId: user.id, text: `Completed: ${task.text} (+5 XP)`, type: "info" });
     }
@@ -56,6 +77,11 @@ export async function registerRoutes(
   });
 
   app.delete("/api/tasks/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const tasks = await storage.getTasks(user.id);
+    const owned = tasks.find(t => t.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Task not found" });
+
     await storage.deleteTask(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -67,29 +93,40 @@ export async function registerRoutes(
     res.json(list);
   });
 
-  app.get("/api/checkins/pending", requireAuth, async (req, res) => {
-    const user = req.user as User;
-    const { userId } = req.query;
-    const list = await storage.getPendingCheckIns((userId as string) || user.id);
-    res.json(list);
-  });
-
   app.post("/api/checkins", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { mood, obedience, notes } = req.body;
+    const parsed = checkInBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid check-in data. Mood and obedience must be 1-10." });
+    }
+
+    const { mood, obedience, notes } = parsed.data;
     const checkIn = await storage.createCheckIn({ userId: user.id, mood, obedience, notes });
     await storage.logActivity(user.id, "checkin_submitted", `Mood: ${mood}, Obedience: ${obedience}`);
     await storage.createNotification({ userId: user.id, text: "Check-in submitted successfully", type: "info" });
 
-    const newXp = Math.min((user.xp || 0) + 15, 100 * (user.level || 1));
-    await storage.updateUserXp(user.id, newXp);
+    const freshUser = await storage.getUser(user.id);
+    if (freshUser) {
+      const newXp = Math.min((freshUser.xp || 0) + 15, 100 * (freshUser.level || 1));
+      await storage.updateUserXp(user.id, newXp);
+    }
 
     res.status(201).json(checkIn);
   });
 
   app.patch("/api/checkins/:id/review", requireAuth, async (req, res) => {
-    const { status, xpAwarded } = req.body;
-    const checkIn = await storage.reviewCheckIn(req.params.id, status, xpAwarded || 0);
+    const user = req.user as User;
+    const parsed = reviewBodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ message: "Invalid review data" });
+    }
+
+    const checkIns = await storage.getCheckIns(user.id);
+    const owned = checkIns.find(c => c.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Check-in not found" });
+
+    const { status, xpAwarded } = parsed.data;
+    const checkIn = await storage.reviewCheckIn(req.params.id, status, xpAwarded);
     if (!checkIn) return res.status(404).json({ message: "Check-in not found" });
 
     if (status === "approved" && xpAwarded > 0) {
@@ -133,10 +170,18 @@ export async function registerRoutes(
 
   app.patch("/api/dares/:id/complete", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const dares = await storage.getDares(user.id);
+    const owned = dares.find(d => d.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Dare not found" });
+
     const dare = await storage.completeDare(req.params.id);
     if (!dare) return res.status(404).json({ message: "Dare not found" });
-    const newXp = Math.min((user.xp || 0) + 10, 100 * (user.level || 1));
-    await storage.updateUserXp(user.id, newXp);
+
+    const freshUser = await storage.getUser(user.id);
+    if (freshUser) {
+      const newXp = Math.min((freshUser.xp || 0) + 10, 100 * (freshUser.level || 1));
+      await storage.updateUserXp(user.id, newXp);
+    }
     await storage.logActivity(user.id, "dare_completed", dare.text);
     res.json(dare);
   });
@@ -150,13 +195,21 @@ export async function registerRoutes(
 
   app.post("/api/rewards", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { name, unlockLevel, targetUserId } = req.body;
-    if (!name) return res.status(400).json({ message: "Reward name required" });
-    const reward = await storage.createReward({ userId: targetUserId || user.id, name, unlockLevel: unlockLevel || 1 });
+    const { name, unlockLevel } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Reward name required" });
+    }
+    const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
+    const reward = await storage.createReward({ userId: user.id, name: name.trim(), unlockLevel: lvl });
     res.status(201).json(reward);
   });
 
   app.patch("/api/rewards/:id/toggle", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const rewards = await storage.getRewards(user.id);
+    const owned = rewards.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Reward not found" });
+
     const reward = await storage.toggleReward(req.params.id);
     if (!reward) return res.status(404).json({ message: "Reward not found" });
     res.json(reward);
@@ -171,20 +224,31 @@ export async function registerRoutes(
 
   app.post("/api/punishments", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { name, targetUserId } = req.body;
-    if (!name) return res.status(400).json({ message: "Punishment name required" });
+    const { name } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Punishment name required" });
+    }
     const punishment = await storage.createPunishment({
-      userId: targetUserId || user.id,
+      userId: user.id,
       assignedBy: user.id,
-      name,
+      name: name.trim(),
     });
-    await storage.logActivity(user.id, "punishment_assigned", name);
-    await storage.createNotification({ userId: targetUserId || user.id, text: `Punishment assigned: ${name}`, type: "alert" });
+    await storage.logActivity(user.id, "punishment_assigned", name.trim());
+    await storage.createNotification({ userId: user.id, text: `Punishment assigned: ${name.trim()}`, type: "alert" });
     res.status(201).json(punishment);
   });
 
   app.patch("/api/punishments/:id/status", requireAuth, async (req, res) => {
+    const user = req.user as User;
     const { status } = req.body;
+    if (!status || !["active", "completed", "cancelled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const punishments = await storage.getPunishments(user.id);
+    const owned = punishments.find(p => p.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Punishment not found" });
+
     const punishment = await storage.updatePunishmentStatus(req.params.id, status);
     if (!punishment) return res.status(404).json({ message: "Punishment not found" });
     res.json(punishment);
@@ -200,8 +264,10 @@ export async function registerRoutes(
   app.post("/api/journal", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { content } = req.body;
-    if (!content) return res.status(400).json({ message: "Journal content required" });
-    const entry = await storage.createJournalEntry({ userId: user.id, content });
+    if (!content || typeof content !== "string" || !content.trim()) {
+      return res.status(400).json({ message: "Journal content required" });
+    }
+    const entry = await storage.createJournalEntry({ userId: user.id, content: content.trim() });
     await storage.logActivity(user.id, "journal_entry", "New journal entry");
     res.status(201).json(entry);
   });
@@ -214,6 +280,11 @@ export async function registerRoutes(
   });
 
   app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const notifications = await storage.getNotifications(user.id);
+    const owned = notifications.find(n => n.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Notification not found" });
+
     await storage.dismissNotification(req.params.id);
     res.json({ message: "Dismissed" });
   });
@@ -228,6 +299,7 @@ export async function registerRoutes(
   // --- USER / XP ---
   app.get("/api/user/stats", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const freshUser = await storage.getUser(user.id);
     const taskList = await storage.getTasks(user.id);
     const completedTasks = taskList.filter(t => t.done).length;
     const totalTasks = taskList.length;
@@ -237,8 +309,8 @@ export async function registerRoutes(
     const completedDares = dareList.filter(d => d.completed).length;
 
     res.json({
-      xp: user.xp,
-      level: user.level,
+      xp: freshUser?.xp ?? 0,
+      level: freshUser?.level ?? 1,
       completedTasks,
       totalTasks,
       totalCheckIns: checkInList.length,

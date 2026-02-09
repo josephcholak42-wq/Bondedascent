@@ -1,34 +1,58 @@
 import React, { useState } from 'react';
 import { useLocation } from "wouter";
-import { Lock, User, Mail, ArrowRight, Shield, Heart } from 'lucide-react';
+import { Lock, User, ArrowRight, Shield, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { useLogin, useRegister } from '@/lib/hooks';
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [, setLocation] = useLocation();
   const [role, setRole] = useState<'sub' | 'dom'>('sub');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleAuth = (e: React.FormEvent) => {
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock authentication - just redirect to dashboard with the selected role state
-    // In a real app, this would use an API
-    localStorage.setItem('userRole', role);
-    setLocation('/');
+    setError('');
+
+    if (!username || !password) {
+      setError('Username and password are required');
+      return;
+    }
+
+    try {
+      if (isLogin) {
+        await loginMutation.mutateAsync({ username, password });
+      } else {
+        await registerMutation.mutateAsync({ username, password, role });
+      }
+      setLocation('/');
+    } catch (err: any) {
+      const msg = err?.message || 'Something went wrong';
+      const cleaned = msg.replace(/^\d+:\s*/, '').replace(/^"(.*)"$/, '$1');
+      try {
+        const parsed = JSON.parse(cleaned);
+        setError(parsed.message || cleaned);
+      } catch {
+        setError(cleaned);
+      }
+    }
   };
+
+  const isLoading = loginMutation.isPending || registerMutation.isPending;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Texture */}
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-      
-      {/* Decorative Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-900/10 blur-[100px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="w-full max-w-md z-10 animate-in fade-in zoom-in-95 duration-500">
-        
-        {/* Logo/Header */}
         <div className="text-center mb-10">
           <div className="flex justify-center mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-slate-900 to-black rounded-2xl border border-white/10 flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.2)]">
@@ -41,48 +65,43 @@ export default function AuthPage() {
           <p className="text-slate-500 text-sm uppercase tracking-widest font-bold">Protocol Management Interface</p>
         </div>
 
-        {/* Auth Card */}
         <div className="bg-slate-900/60 backdrop-blur-md border border-white/5 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
-          {/* Top light accent */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent opacity-50" />
           
           <div className="flex gap-4 mb-8 p-1 bg-black/40 rounded-xl border border-white/5">
             <button 
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${isLogin ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              data-testid="tab-login"
+              onClick={() => { setIsLogin(true); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${isLogin ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
               Login
             </button>
             <button 
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${!isLogin ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+              data-testid="tab-register"
+              onClick={() => { setIsLogin(false); setError(''); }}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${!isLogin ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
               Register
             </button>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-6">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Username</Label>
-                <div className="relative group">
-                  <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" />
-                  <input 
-                    type="text" 
-                    placeholder="Enter username"
-                    className="w-full bg-black/40 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors placeholder:text-slate-600"
-                  />
-                </div>
-              </div>
-            )}
+          {error && (
+            <div data-testid="text-error" className="mb-6 p-3 bg-red-950/50 border border-red-500/30 rounded-xl text-xs text-red-400 font-bold uppercase tracking-wider text-center">
+              {error}
+            </div>
+          )}
 
+          <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-2">
-              <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Email / ID</Label>
+              <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Username</Label>
               <div className="relative group">
-                <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" />
+                <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" />
                 <input 
-                  type="email" 
-                  placeholder="protocol@bonded.ascent"
+                  data-testid="input-username"
+                  type="text" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
                   className="w-full bg-black/40 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors placeholder:text-slate-600"
                 />
               </div>
@@ -93,39 +112,56 @@ export default function AuthPage() {
               <div className="relative group">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" />
                 <input 
+                  data-testid="input-password"
                   type="password" 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full bg-black/40 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors placeholder:text-slate-600"
                 />
               </div>
             </div>
 
-            {/* Role Selection Mockup */}
-            <div className="space-y-2 pt-2">
-              <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Select Role Profile</Label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setRole('sub')}
-                  className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${role === 'sub' ? 'bg-red-900/20 border-red-500 text-white shadow-[0_0_10px_rgba(220,38,38,0.2)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
-                >
-                  <Heart size={16} className={role === 'sub' ? 'text-red-500' : ''} />
-                  <span className="text-xs font-bold uppercase">Submissive</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole('dom')}
-                  className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all ${role === 'dom' ? 'bg-red-900/20 border-red-500 text-white shadow-[0_0_10px_rgba(220,38,38,0.2)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
-                >
-                  <Shield size={16} className={role === 'dom' ? 'text-red-500' : ''} />
-                  <span className="text-xs font-bold uppercase">Dominant</span>
-                </button>
+            {!isLogin && (
+              <div className="space-y-2 pt-2 animate-in slide-in-from-top-2">
+                <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Select Role Profile</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    data-testid="button-role-sub"
+                    type="button"
+                    onClick={() => setRole('sub')}
+                    className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${role === 'sub' ? 'bg-red-900/20 border-red-500 text-white shadow-[0_0_10px_rgba(220,38,38,0.2)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+                  >
+                    <Heart size={16} className={role === 'sub' ? 'text-red-500' : ''} />
+                    <span className="text-xs font-bold uppercase">Submissive</span>
+                  </button>
+                  <button
+                    data-testid="button-role-dom"
+                    type="button"
+                    onClick={() => setRole('dom')}
+                    className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${role === 'dom' ? 'bg-red-900/20 border-red-500 text-white shadow-[0_0_10px_rgba(220,38,38,0.2)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+                  >
+                    <Shield size={16} className={role === 'dom' ? 'text-red-500' : ''} />
+                    <span className="text-xs font-bold uppercase">Dominant</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <Button type="submit" className="w-full py-6 bg-gradient-to-r from-red-800 to-red-950 hover:from-red-700 hover:to-red-900 border-t border-red-500/30 text-white font-black uppercase tracking-widest rounded-xl shadow-lg group">
-              {isLogin ? 'Initiate Session' : 'Create Profile'}
-              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={16} />
+            <Button 
+              data-testid="button-submit"
+              type="submit" 
+              disabled={isLoading}
+              className="w-full py-6 bg-gradient-to-r from-red-800 to-red-950 hover:from-red-700 hover:to-red-900 border-t border-red-500/30 text-white font-black uppercase tracking-widest rounded-xl shadow-lg group"
+            >
+              {isLoading ? (
+                <Loader2 className="animate-spin" size={16} />
+              ) : (
+                <>
+                  {isLogin ? 'Initiate Session' : 'Create Profile'}
+                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={16} />
+                </>
+              )}
             </Button>
           </form>
 
