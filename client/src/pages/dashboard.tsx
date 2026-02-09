@@ -9,8 +9,11 @@ import {
   PieChart, Award, Zap, Settings,
   LogOut, Trash2, Bell, ShieldAlert,
   Moon, Sun, RefreshCw, MessageSquare, RotateCcw,
-  Dices, List, Play, Pause, AlertTriangle
+  Dices, List, Play, Pause, AlertTriangle, Smile, Meh, Frown
 } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 export default function BondedAscentApp() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -18,6 +21,12 @@ export default function BondedAscentApp() {
   const [isCrisisMode, setIsCrisisMode] = useState(false);
   const [modal, setModal] = useState<string | null>(null);
   const [xp, setXp] = useState(35);
+
+  // --- MODULE STATES ---
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [wheelResult, setWheelResult] = useState<string | null>(null);
+  const [checkInStep, setCheckInStep] = useState(0);
+  const [checkInData, setCheckInData] = useState({ mood: 5, obedience: 5, notes: '' });
 
   const [tasks, setTasks] = useState([
     { id: 1, text: 'Morning Protocol', done: true },
@@ -29,6 +38,24 @@ export default function BondedAscentApp() {
   const toggleTask = (id: number) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
     if (tasks.find(t => t.id === id && !t.done)) setXp(curr => Math.min(curr + 5, 100));
+  };
+
+  const spinWheel = () => {
+    setIsSpinning(true);
+    setWheelResult(null);
+    setTimeout(() => {
+      setIsSpinning(false);
+      const dares = ["Send a photo holding your breath", "Write a poem about obedience", "30 min plank", "No speaking for 1 hour", "Wear the collar for 2 hours", "Cold shower", "Request permission to speak"];
+      setWheelResult(dares[Math.floor(Math.random() * dares.length)]);
+    }, 2000);
+  };
+
+  const submitCheckIn = () => {
+     setModal(null);
+     setCheckInStep(0);
+     setCheckInData({ mood: 5, obedience: 5, notes: '' });
+     setXp(curr => Math.min(curr + 15, 100)); // Bonus XP
+     alert("Check-in submitted. +15 XP");
   };
 
   // --- RENDER CONTENT SWITCHER ---
@@ -318,16 +345,156 @@ export default function BondedAscentApp() {
       {/* --- MODAL SYSTEM --- */}
       {modal && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-           <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-black border border-white/10 p-6 rounded-2xl shadow-2xl relative overflow-hidden">
-                <button onClick={() => setModal(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors cursor-pointer"><X size={24}/></button>
+           <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-black border border-white/10 p-6 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+                <button onClick={() => setModal(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors cursor-pointer z-50"><X size={24}/></button>
                 
-                {modal === 'safeword' && <div className="text-center"><ShieldAlert size={64} className="mx-auto text-yellow-500 mb-6 animate-bounce" /><h2 className="text-2xl font-black text-white uppercase mb-4">Safeword Triggered</h2><p className="text-slate-400 mb-8">Alert sent to Partner. App paused.</p><button onClick={() => setModal(null)} className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold uppercase rounded-lg cursor-pointer">Resume</button></div>}
+                {modal === 'safeword' && <div className="text-center p-4"><ShieldAlert size={64} className="mx-auto text-yellow-500 mb-6 animate-bounce" /><h2 className="text-2xl font-black text-white uppercase mb-4">Safeword Triggered</h2><p className="text-slate-400 mb-8">Alert sent to Partner. App paused.</p><button onClick={() => setModal(null)} className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold uppercase rounded-lg cursor-pointer">Resume</button></div>}
                 
-                {modal === 'bond' && <div className="text-center"><Anchor size={48} className="mx-auto text-red-600 mb-4" /><h2 className="text-xl font-black text-white uppercase">Level 1</h2><p className="text-red-400 font-bold uppercase text-xs mb-6">Emerging Bond</p><div className="w-full h-4 bg-black rounded-full overflow-hidden border border-white/20 mb-2"><div className="h-full bg-red-600" style={{ width: `${xp}%` }} /></div><div className="flex justify-between text-[10px] text-slate-500 uppercase"><span>0 XP</span><span>{xp} / 100</span><span>Level 2</span></div></div>}
+                {modal === 'bond' && <div className="text-center p-4"><Anchor size={48} className="mx-auto text-red-600 mb-4" /><h2 className="text-xl font-black text-white uppercase">Level 1</h2><p className="text-red-400 font-bold uppercase text-xs mb-6">Emerging Bond</p><div className="w-full h-4 bg-black rounded-full overflow-hidden border border-white/20 mb-2"><div className="h-full bg-red-600" style={{ width: `${xp}%` }} /></div><div className="flex justify-between text-[10px] text-slate-500 uppercase"><span>0 XP</span><span>{xp} / 100</span><span>Level 2</span></div></div>}
                 
-                {modal === 'wheel' && <div className="text-center"><Dices size={48} className="mx-auto text-purple-500 mb-4" /><h2 className="text-xl font-bold text-white mb-2">Wheel of Dares</h2><button className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase rounded-lg mt-4 cursor-pointer">Spin Now</button></div>}
+                {modal === 'wheel' && (
+                  <div className="text-center p-4">
+                    <Dices size={48} className={`mx-auto text-purple-500 mb-4 ${isSpinning ? 'animate-spin' : ''}`} />
+                    <h2 className="text-xl font-bold text-white mb-2">Wheel of Dares</h2>
+                    
+                    {wheelResult ? (
+                      <div className="my-8 animate-in zoom-in-95">
+                         <div className="text-xs text-purple-400 uppercase tracking-widest mb-2">Fate Decided</div>
+                         <div className="text-lg font-black text-white border p-4 rounded-xl bg-purple-900/20 border-purple-500/50">{wheelResult}</div>
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 my-8 italic">"Let fate decide your next task..."</p>
+                    )}
+
+                    <button 
+                      onClick={spinWheel} 
+                      disabled={isSpinning}
+                      className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    >
+                      {isSpinning ? 'Spinning...' : 'Spin Now'}
+                    </button>
+                  </div>
+                )}
                 
-                {['training', 'scene', 'ladders', 'logbook', 'sensory', 'vault', 'aftercare', 'worship', 'balance', 'badges', 'countdowns', 'checkin'].includes(modal) && (
+                {modal === 'checkin' && (
+                  <div className="p-4 space-y-6">
+                    <div className="text-center mb-6">
+                      <MessageSquare size={32} className="mx-auto text-blue-500 mb-2" />
+                      <h2 className="text-xl font-bold text-white uppercase">Daily Check-In</h2>
+                    </div>
+
+                    {checkInStep === 0 && (
+                      <div className="space-y-6 animate-in slide-in-from-right">
+                        <div>
+                          <div className="flex justify-between items-center mb-4">
+                            <Label className="text-slate-300">Current Mood</Label>
+                            <span className="text-xs font-mono text-blue-400">{checkInData.mood}/10</span>
+                          </div>
+                          <div className="flex gap-4 items-center">
+                            <Frown size={16} className="text-slate-600" />
+                            <Slider 
+                              defaultValue={[checkInData.mood]} 
+                              max={10} 
+                              step={1} 
+                              onValueChange={(vals) => setCheckInData(p => ({...p, mood: vals[0]}))}
+                              className="flex-1"
+                            />
+                            <Smile size={16} className="text-slate-600" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center mb-4">
+                            <Label className="text-slate-300">Obedience Level</Label>
+                            <span className="text-xs font-mono text-blue-400">{checkInData.obedience}/10</span>
+                          </div>
+                          <Slider 
+                            defaultValue={[checkInData.obedience]} 
+                            max={10} 
+                            step={1} 
+                            onValueChange={(vals) => setCheckInData(p => ({...p, obedience: vals[0]}))}
+                          />
+                        </div>
+
+                        <Button onClick={() => setCheckInStep(1)} className="w-full bg-blue-600 hover:bg-blue-500 text-white mt-4">Next Step</Button>
+                      </div>
+                    )}
+
+                    {checkInStep === 1 && (
+                       <div className="space-y-4 animate-in slide-in-from-right">
+                          <div>
+                            <Label className="text-slate-300 mb-2 block">Notes / Confessions</Label>
+                            <textarea 
+                              className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-blue-500 min-h-[100px]"
+                              placeholder="Anything to report..."
+                              value={checkInData.notes}
+                              onChange={(e) => setCheckInData(p => ({...p, notes: e.target.value}))}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                             <Button variant="outline" onClick={() => setCheckInStep(0)} className="flex-1 border-slate-700 text-slate-400">Back</Button>
+                             <Button onClick={submitCheckIn} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white">Submit Report</Button>
+                          </div>
+                       </div>
+                    )}
+                  </div>
+                )}
+
+                {modal === 'badges' && (
+                  <div className="p-4 text-center">
+                     <Award size={48} className="mx-auto text-green-500 mb-4" />
+                     <h2 className="text-xl font-bold text-white uppercase mb-6">Earned Badges</h2>
+                     <div className="grid grid-cols-3 gap-4">
+                        <div className="flex flex-col items-center gap-2">
+                           <div className="w-16 h-16 rounded-full bg-yellow-500/20 border border-yellow-500 flex items-center justify-center text-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                              <Star size={24} fill="currentColor" />
+                           </div>
+                           <span className="text-[10px] uppercase font-bold text-yellow-500">First Steps</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 opacity-50 grayscale">
+                           <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500">
+                              <Lock size={24} />
+                           </div>
+                           <span className="text-[10px] uppercase font-bold text-slate-600">Locked</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 opacity-50 grayscale">
+                           <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500">
+                              <Lock size={24} />
+                           </div>
+                           <span className="text-[10px] uppercase font-bold text-slate-600">Locked</span>
+                        </div>
+                     </div>
+                  </div>
+                )}
+
+                {modal === 'vault' && (
+                   <div className="p-4 text-center">
+                      <Box size={48} className="mx-auto text-indigo-500 mb-4" />
+                      <h2 className="text-xl font-bold text-white uppercase mb-6">The Vault</h2>
+                      <p className="text-sm text-slate-400 mb-8">Rewards are unlocked by your Mistress based on your XP.</p>
+                      
+                      <div className="space-y-3">
+                         <div className="flex items-center gap-4 p-3 rounded-lg border border-indigo-500/30 bg-indigo-900/10">
+                            <div className="p-2 bg-indigo-500/20 rounded-full text-indigo-400"><Film size={20} /></div>
+                            <div className="text-left flex-1">
+                               <div className="text-xs font-bold text-indigo-300 uppercase">Private Video</div>
+                               <div className="text-[10px] text-indigo-400/50">Unlocked at Level 5</div>
+                            </div>
+                            <Lock size={16} className="text-indigo-500/50" />
+                         </div>
+                         <div className="flex items-center gap-4 p-3 rounded-lg border border-indigo-500/30 bg-indigo-900/10">
+                            <div className="p-2 bg-indigo-500/20 rounded-full text-indigo-400"><Gift size={20} /></div>
+                            <div className="text-left flex-1">
+                               <div className="text-xs font-bold text-indigo-300 uppercase">Wish Granted</div>
+                               <div className="text-[10px] text-indigo-400/50">Unlocked at Level 10</div>
+                            </div>
+                            <Lock size={16} className="text-indigo-500/50" />
+                         </div>
+                      </div>
+                   </div>
+                )}
+                
+                {['training', 'scene', 'ladders', 'logbook', 'sensory', 'aftercare', 'worship', 'balance', 'countdowns'].includes(modal) && (
                    <div className="text-center py-8">
                       <Target size={48} className="mx-auto text-red-500 mb-4" />
                       <h2 className="text-2xl font-black text-white uppercase mb-4">{modal.replace('_', ' ')}</h2>
