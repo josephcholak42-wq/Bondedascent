@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from "wouter";
 import { 
   Lock, Key, Shield, AlertCircle, CheckCircle, 
   FileText, User, ChevronRight, Activity, 
@@ -12,7 +13,7 @@ import {
   Dices, List, Play, Pause, AlertTriangle, Smile, Meh, Frown, 
   Music, Eye, Coffee, Thermometer, Info, HeartPulse,
   FlameKindling, Sparkles, BookHeart, UserRoundCheck, 
-  HandMetal, Ear, Hand
+  HandMetal, Ear, Hand, Gavel, FileSignature, Timer
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -24,10 +25,17 @@ export default function BondedAscentApp() {
   const [isCrisisMode, setIsCrisisMode] = useState(false);
   const [modal, setModal] = useState<string | null>(null);
   const [xp, setXp] = useState(35);
+  const [, setLocation] = useLocation();
+  const [userRole, setUserRole] = useState<'sub' | 'dom'>('sub');
   const [notifications, setNotifications] = useState([
     { id: 1, text: "New Dare available on the Wheel", type: "info" },
     { id: 2, text: "Mistress requested a photo log", type: "alert" }
   ]);
+
+  useEffect(() => {
+    const role = localStorage.getItem('userRole') as 'sub' | 'dom';
+    if (role) setUserRole(role);
+  }, []);
 
   // --- MODULE STATES ---
   const [isSpinning, setIsSpinning] = useState(false);
@@ -78,25 +86,107 @@ export default function BondedAscentApp() {
      addNotification("Check-in submitted. Reward granted.");
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('userRole');
+    setLocation('/auth');
+  };
+
+  // --- DOM DASHBOARD COMPONENT ---
+  const DomDashboard = () => (
+    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+      
+      {/* DOM HEADER */}
+      <div className="flex flex-col items-center gap-6 pt-4">
+         <div className="flex items-center gap-8 relative">
+            <div className="text-center relative">
+               <div className="w-20 h-20 rounded-full border-2 border-red-600 p-1 mb-2 bg-black shadow-[0_0_15px_rgba(220,38,38,0.3)]">
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200" className="w-full h-full rounded-full object-cover grayscale opacity-90" alt="Dom" />
+               </div>
+               <div className="text-sm font-bold text-white uppercase tracking-wider">You (Dom)</div>
+            </div>
+            {/* Connection Wire */}
+            <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-red-900 to-transparent relative opacity-50">
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-red-600 rounded-full shadow-[0_0_15px_red] animate-pulse" />
+            </div>
+            <div className="text-center relative">
+               <div className="w-20 h-20 rounded-full border-2 border-slate-700 p-1 mb-2 bg-black">
+                  <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200" className="w-full h-full rounded-full object-cover opacity-60" alt="Sub" />
+               </div>
+               <div className="text-sm font-bold text-slate-400 uppercase tracking-wider">Sub</div>
+            </div>
+         </div>
+         
+         <div className="w-full max-w-sm flex gap-4">
+            <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
+               <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Compliance</div>
+               <div className="text-2xl font-black text-green-500">92%</div>
+            </div>
+            <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
+               <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">XP Level</div>
+               <div className="text-2xl font-black text-red-500">Lv 1</div>
+            </div>
+         </div>
+      </div>
+
+      {/* DOM ACTIONS GRID */}
+      <div className="space-y-6">
+         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">Control Panel</h3>
+         
+         <div className="grid grid-cols-2 gap-4">
+            <BigButton 
+              icon={<List />} 
+              label="Assign Tasks" 
+              sub="Manage Protocols" 
+              color="text-blue-500" 
+              onClick={() => addNotification("Task assignment interface loaded")} 
+            />
+            <BigButton 
+              icon={<Gift />} 
+              label="Grant Reward" 
+              sub="Unlock Vault Item" 
+              color="text-purple-500" 
+              onClick={() => addNotification("Reward sent to Sub")} 
+            />
+            <BigButton 
+              icon={<Gavel />} 
+              label="Punish" 
+              sub="Assign Penalty" 
+              color="text-red-600" 
+              onClick={() => addNotification("Punishment protocol initiated")} 
+            />
+            <BigButton 
+              icon={<MessageSquare />} 
+              label="Review Logs" 
+              sub="Read Check-ins" 
+              color="text-emerald-500" 
+              onClick={() => addNotification("Opening daily logs...")} 
+            />
+         </div>
+
+         <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-4">
+               <ShieldAlert size={28} className="text-red-500" />
+               <div>
+                  <div className="font-bold text-white text-sm uppercase tracking-wider">Force Crisis Mode</div>
+                  <div className="text-[10px] text-slate-500">Override Sub's interface immediately</div>
+               </div>
+            </div>
+            <Button variant="destructive" size="sm" onClick={() => setIsCrisisMode(true)}>ACTIVATE</Button>
+         </div>
+      </div>
+    </div>
+  );
+
   // --- RENDER CONTENT SWITCHER ---
   const renderContent = () => {
+    if (userRole === 'dom' && activeView === 'dashboard') {
+      return <DomDashboard />;
+    }
+
     if (activeView === 'dashboard') {
       return (
         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
           
-          {/* NOTIFICATION TOASTS (Compact Inline) */}
-          {notifications.length > 0 && (
-            <div className="space-y-2">
-              {notifications.map(n => (
-                <div key={n.id} className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2">
-                  <Info size={14} className="text-red-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">{n.text}</span>
-                  <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="ml-auto opacity-50 hover:opacity-100"><X size={12}/></button>
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* HEADER CARD */}
           <div className="flex flex-col items-center gap-6 pt-4">
              <div className="flex items-center gap-8 relative">
@@ -118,7 +208,7 @@ export default function BondedAscentApp() {
                 </div>
              </div>
              
-             <button onClick={() => setModal('bond')} className="w-full max-sm px-6 py-4 rounded-full flex justify-between items-center group active:scale-95 transition-all cursor-pointer bg-gradient-to-b from-red-700 to-red-950 border-t border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.4)]">
+             <button onClick={() => setModal('bond')} className="w-full max-w-sm px-6 py-4 rounded-full flex justify-between items-center group active:scale-95 transition-all cursor-pointer bg-gradient-to-b from-red-700 to-red-950 border-t border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.4)]">
                 <div className="flex items-center gap-3">
                    <Anchor size={20} className="text-white drop-shadow-md" />
                    <span className="font-black uppercase text-sm tracking-wider text-white">Level 1 <span className="opacity-70 font-bold text-[10px] ml-1">Emerging Bond</span></span>
@@ -217,7 +307,7 @@ export default function BondedAscentApp() {
               <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Profile</h2>
               <div className="flex items-center justify-center gap-2 mt-2 bg-black/40 w-fit mx-auto px-4 py-1 rounded-full border border-white/10">
                  <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_lime]" />
-                 <span className="text-xs font-bold text-green-500 uppercase">Connected</span>
+                 <span className="text-xs font-bold text-green-500 uppercase">Connected as {userRole.toUpperCase()}</span>
               </div>
            </div>
 
@@ -248,7 +338,13 @@ export default function BondedAscentApp() {
 
            <div className="space-y-3 pb-8">
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">Account</h3>
-              <ProfileItem icon={<LogOut size={20} />} label="Log Out" onClick={() => alert('Logged out')} />
+              <ProfileItem icon={<RefreshCw size={20} />} label={`Switch to ${userRole === 'sub' ? 'Dom' : 'Sub'} View`} onClick={() => {
+                const newRole = userRole === 'sub' ? 'dom' : 'sub';
+                setUserRole(newRole);
+                localStorage.setItem('userRole', newRole);
+                addNotification(`Switched to ${newRole.toUpperCase()} view`);
+              }} />
+              <ProfileItem icon={<LogOut size={20} />} label="Log Out" onClick={handleLogout} />
               <ProfileItem icon={<Trash2 size={20} />} label="Delete Account" className="text-red-500 border-red-900/30 hover:bg-red-950/50" />
            </div>
         </div>
@@ -484,6 +580,19 @@ export default function BondedAscentApp() {
         <div className="flex-1 overflow-y-auto p-4 pb-28 md:pb-8 scroll-smooth">
           <div className="max-w-4xl mx-auto space-y-6">
             
+            {/* NOTIFICATION TOASTS (Compact Inline) */}
+            {notifications.length > 0 && (
+              <div className="space-y-2">
+                {notifications.map(n => (
+                  <div key={n.id} className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2">
+                    <Info size={14} className="text-red-500" />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">{n.text}</span>
+                    <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="ml-auto opacity-50 hover:opacity-100"><X size={12}/></button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* SAFEWORD BAR */}
             <button 
               onClick={() => setModal('safeword')} 
