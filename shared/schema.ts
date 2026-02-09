@@ -12,6 +12,7 @@ export const users = pgTable("users", {
   xp: integer("xp").notNull().default(0),
   level: integer("level").notNull().default(1),
   partnerId: varchar("partner_id"),
+  lockedDown: boolean("locked_down").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -436,6 +437,32 @@ export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
 export type PlaySession = typeof playSessions.$inferSelect;
 export type InsertPlaySession = z.infer<typeof insertPlaySessionSchema>;
 
+export const demandTimers = pgTable("demand_timers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromUserId: varchar("from_user_id").notNull(),
+  toUserId: varchar("to_user_id").notNull(),
+  message: text("message").notNull(),
+  durationSeconds: integer("duration_seconds").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  responded: boolean("responded").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const quickCommands = pgTable("quick_commands", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromUserId: varchar("from_user_id").notNull(),
+  toUserId: varchar("to_user_id").notNull(),
+  message: text("message").notNull(),
+  acknowledged: boolean("acknowledged").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const presenceHeartbeats = pgTable("presence_heartbeats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  lastSeen: timestamp("last_seen").notNull().defaultNow(),
+});
+
 export const pushSubscriptions = pgTable("push_subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
@@ -444,6 +471,15 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   auth: text("auth").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const insertDemandTimerSchema = createInsertSchema(demandTimers).omit({ id: true, createdAt: true, responded: true });
+export const insertQuickCommandSchema = createInsertSchema(quickCommands).omit({ id: true, createdAt: true, acknowledged: true });
+
+export type DemandTimer = typeof demandTimers.$inferSelect;
+export type InsertDemandTimer = z.infer<typeof insertDemandTimerSchema>;
+export type QuickCommand = typeof quickCommands.$inferSelect;
+export type InsertQuickCommand = z.infer<typeof insertQuickCommandSchema>;
+export type PresenceHeartbeat = typeof presenceHeartbeats.$inferSelect;
 
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true });
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;

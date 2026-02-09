@@ -940,3 +940,116 @@ export function useTestPush() {
     },
   });
 }
+
+export function useDemandTimers() {
+  return useQuery<any[]>({
+    queryKey: ["/api/demand-timers"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchInterval: 5000,
+  });
+}
+
+export function useCreateDemandTimer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { message: string; durationSeconds: number }) => {
+      const res = await apiRequest("POST", "/api/demand-timers", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/demand-timers"] });
+    },
+  });
+}
+
+export function useRespondDemandTimer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/demand-timers/${id}/respond`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/demand-timers"] });
+    },
+  });
+}
+
+export function useQuickCommands() {
+  return useQuery<any[]>({
+    queryKey: ["/api/quick-commands"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchInterval: 5000,
+  });
+}
+
+export function useSendQuickCommand() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { message: string }) => {
+      const res = await apiRequest("POST", "/api/quick-commands", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/quick-commands"] });
+    },
+  });
+}
+
+export function useAcknowledgeCommand() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/quick-commands/${id}/acknowledge`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/quick-commands"] });
+    },
+  });
+}
+
+export function usePresenceHeartbeat() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/presence/heartbeat");
+      return res.json();
+    },
+  });
+}
+
+export function usePartnerPresence(partnerId: string | null | undefined) {
+  return useQuery<{ online: boolean; lastSeen: string | null }>({
+    queryKey: ["/api/presence", partnerId],
+    queryFn: async () => {
+      if (!partnerId) return { online: false, lastSeen: null };
+      const res = await fetch(`/api/presence/${partnerId}`, { credentials: "include" });
+      return res.json();
+    },
+    enabled: !!partnerId,
+    refetchInterval: 15000,
+  });
+}
+
+export function useToggleLockdown() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (locked: boolean) => {
+      const res = await apiRequest("POST", "/api/partner/lockdown", { locked });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/partner/lockdown"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+  });
+}
+
+export function useLockdownStatus() {
+  return useQuery<{ lockedDown: boolean }>({
+    queryKey: ["/api/partner/lockdown"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchInterval: 10000,
+  });
+}

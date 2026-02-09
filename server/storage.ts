@@ -6,6 +6,7 @@ import {
   rituals, limits, secrets, wagers, ratings, countdownEvents,
   standingOrders, permissionRequests, devotions, conflicts,
   desiredChanges, achievements, playSessions, pushSubscriptions,
+  demandTimers, quickCommands, presenceHeartbeats,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -19,6 +20,9 @@ import {
   type DesiredChange, type InsertDesiredChange, type Achievement, type InsertAchievement,
   type PlaySession, type InsertPlaySession,
   type PushSubscription, type InsertPushSubscription,
+  type DemandTimer, type InsertDemandTimer,
+  type QuickCommand, type InsertQuickCommand,
+  type PresenceHeartbeat,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -127,6 +131,19 @@ export interface IStorage {
   createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
   deletePushSubscription(endpoint: string): Promise<void>;
   deletePushSubscriptionForUser(userId: string, endpoint: string): Promise<void>;
+
+  getDemandTimers(toUserId: string): Promise<DemandTimer[]>;
+  createDemandTimer(timer: InsertDemandTimer): Promise<DemandTimer>;
+  respondDemandTimer(id: string): Promise<DemandTimer | undefined>;
+
+  getQuickCommands(toUserId: string): Promise<QuickCommand[]>;
+  createQuickCommand(cmd: InsertQuickCommand): Promise<QuickCommand>;
+  acknowledgeQuickCommand(id: string): Promise<QuickCommand | undefined>;
+
+  updatePresence(userId: string): Promise<void>;
+  getPresence(userId: string): Promise<PresenceHeartbeat | undefined>;
+
+  updateUserLockdown(userId: string, lockedDown: boolean): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -517,6 +534,53 @@ export class DatabaseStorage implements IStorage {
     await db.delete(pushSubscriptions).where(
       and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpoint, endpoint))
     );
+  }
+
+  async getDemandTimers(toUserId: string): Promise<DemandTimer[]> {
+    return db.select().from(demandTimers).where(eq(demandTimers.toUserId, toUserId)).orderBy(desc(demandTimers.createdAt));
+  }
+
+  async createDemandTimer(timer: InsertDemandTimer): Promise<DemandTimer> {
+    const [t] = await db.insert(demandTimers).values(timer).returning();
+    return t;
+  }
+
+  async respondDemandTimer(id: string): Promise<DemandTimer | undefined> {
+    const [t] = await db.update(demandTimers).set({ responded: true }).where(eq(demandTimers.id, id)).returning();
+    return t;
+  }
+
+  async getQuickCommands(toUserId: string): Promise<QuickCommand[]> {
+    return db.select().from(quickCommands).where(eq(quickCommands.toUserId, toUserId)).orderBy(desc(quickCommands.createdAt));
+  }
+
+  async createQuickCommand(cmd: InsertQuickCommand): Promise<QuickCommand> {
+    const [c] = await db.insert(quickCommands).values(cmd).returning();
+    return c;
+  }
+
+  async acknowledgeQuickCommand(id: string): Promise<QuickCommand | undefined> {
+    const [c] = await db.update(quickCommands).set({ acknowledged: true }).where(eq(quickCommands.id, id)).returning();
+    return c;
+  }
+
+  async updatePresence(userId: string): Promise<void> {
+    const existing = await db.select().from(presenceHeartbeats).where(eq(presenceHeartbeats.userId, userId));
+    if (existing.length > 0) {
+      await db.update(presenceHeartbeats).set({ lastSeen: new Date() }).where(eq(presenceHeartbeats.userId, userId));
+    } else {
+      await db.insert(presenceHeartbeats).values({ userId, lastSeen: new Date() });
+    }
+  }
+
+  async getPresence(userId: string): Promise<PresenceHeartbeat | undefined> {
+    const [p] = await db.select().from(presenceHeartbeats).where(eq(presenceHeartbeats.userId, userId));
+    return p;
+  }
+
+  async updateUserLockdown(userId: string, lockedDown: boolean): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ lockedDown }).where(eq(users.id, userId)).returning();
+    return user;
   }
 }
 

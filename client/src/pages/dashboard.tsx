@@ -14,7 +14,8 @@ import {
   Music, Eye, Coffee, Thermometer, Info, HeartPulse,
   FlameKindling, Sparkles, BookHeart, UserRoundCheck, 
   HandMetal, Ear, Hand, Gavel, FileSignature, Timer,
-  Unlock, Ban, Search, Check, XCircle, Loader2, Plus, Square
+  Unlock, Ban, Search, Check, XCircle, Loader2, Plus, Square,
+  Link, Crown, Crosshair, Skull, Siren, SendHorizonal, CircleDot
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,30 @@ import {
   usePartnerTasks, useCreatePartnerTask, usePartnerCheckIns, useReviewPartnerCheckIn,
   useCreatePartnerPunishment, useCreatePartnerReward, usePartnerActivity,
   useVapidPublicKey, useSubscribePush, useUnsubscribePush, useTestPush,
+  useDemandTimers, useCreateDemandTimer, useRespondDemandTimer,
+  useQuickCommands, useSendQuickCommand, useAcknowledgeCommand,
+  usePresenceHeartbeat, usePartnerPresence,
+  useToggleLockdown, useLockdownStatus,
 } from '@/lib/hooks';
+
+function VelvetParticles() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+      {Array.from({ length: 20 }).map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-1 h-1 rounded-full bg-red-500/40"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animation: `float-ember ${3 + Math.random() * 4}s ease-in-out infinite`,
+            animationDelay: `${Math.random() * 5}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function BondedAscentApp() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -55,6 +79,11 @@ export default function BondedAscentApp() {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [pairError, setPairError] = useState<string | null>(null);
   const [pairSuccess, setPairSuccess] = useState<string | null>(null);
+
+  const [commandInput, setCommandInput] = useState('');
+  const [demandMessage, setDemandMessage] = useState('');
+  const [demandDuration, setDemandDuration] = useState(5);
+  const [throneWordIndex, setThroneWordIndex] = useState(0);
 
   const [trainingActive, setTrainingActive] = useState<string | null>(null);
   const [trainingTimer, setTrainingTimer] = useState(0);
@@ -108,6 +137,17 @@ export default function BondedAscentApp() {
   const createPartnerRewardMutation = useCreatePartnerReward();
   const { data: partnerActivity = [] } = usePartnerActivity();
   const logActivityMutation = useLogActivity();
+
+  const { data: demandTimers = [] } = useDemandTimers();
+  const createDemandTimerMutation = useCreateDemandTimer();
+  const respondDemandTimerMutation = useRespondDemandTimer();
+  const { data: quickCommands = [] } = useQuickCommands();
+  const sendQuickCommandMutation = useSendQuickCommand();
+  const acknowledgeCommandMutation = useAcknowledgeCommand();
+  const presenceHeartbeatMutation = usePresenceHeartbeat();
+  const { data: partnerPresence } = usePartnerPresence(partner?.id);
+  const toggleLockdownMutation = useToggleLockdown();
+  const { data: lockdownStatus } = useLockdownStatus();
 
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const xp = stats?.xp ?? 0;
@@ -203,6 +243,22 @@ export default function BondedAscentApp() {
       if (trainingIntervalRef.current) clearInterval(trainingIntervalRef.current);
       if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    presenceHeartbeatMutation.mutate();
+    const interval = setInterval(() => {
+      presenceHeartbeatMutation.mutate();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const throneWords = ['OBEY', 'SUBMIT', 'KNEEL', 'SERVE', 'YIELD'];
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setThroneWordIndex(prev => (prev + 1) % throneWords.length);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const scenePhases = ['Warm-Up', 'Main Scene', 'Cooldown'];
@@ -322,6 +378,12 @@ export default function BondedAscentApp() {
         </button>
       </div>
 
+      {isVelvetMode && partner && (
+        <div className="text-center py-2">
+          <span className="text-xs font-bold text-red-500/60 uppercase tracking-[0.2em]">Your domain awaits, Master</span>
+        </div>
+      )}
+
       {!isVelvetMode ? (
         <div className="space-y-6 animate-in fade-in">
           <div className="grid grid-cols-4 gap-3">
@@ -411,22 +473,168 @@ export default function BondedAscentApp() {
           </div>
         </div>
       ) : (
-        <div className="relative h-[450px] w-full flex items-center justify-center animate-in zoom-in-95 duration-700">
-          <div className="absolute inset-0 bg-red-900/10 blur-[80px] rounded-full pointer-events-none" />
-          <button className="w-28 h-28 rounded-full bg-gradient-to-br from-red-800 to-black border-2 border-red-500/30 shadow-[0_0_40px_rgba(220,38,38,0.3)] flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer">
-            <Shield className="text-white mb-1 group-hover:text-red-200" size={32} />
-            <span className="text-[10px] font-black text-white uppercase tracking-widest">Throne</span>
-          </button>
-          
-          <div className="absolute w-[260px] h-[260px] border border-white/5 rounded-full pointer-events-none" />
-          <SanctuaryNode icon={<Terminal />} label="Command" angle={270} color="bg-red-600" onClick={() => setModal('dom_command')} />
-          <SanctuaryNode icon={<Eye />} label="Inspect" angle={315} color="bg-emerald-600" onClick={() => setModal('dom_inspect')} />
-          <SanctuaryNode icon={<Film />} label="Direct" angle={0} color="bg-purple-600" onClick={() => setModal('dom_direct')} />
-          <SanctuaryNode icon={<FileText />} label="Surveil" angle={45} color="bg-cyan-600" onClick={() => setModal('dom_surveil')} />
-          <SanctuaryNode icon={<Activity />} label="Enforce" angle={90} color="bg-rose-600" onClick={() => setModal('dom_enforce')} />
-          <SanctuaryNode icon={<Gift />} label="Bestow" angle={135} color="bg-amber-600" onClick={() => setModal('dom_bestow')} />
-          <SanctuaryNode icon={<Gavel />} label="Decree" angle={180} color="bg-orange-600" onClick={() => setModal('dom_decree')} />
-          <SanctuaryNode icon={<ShieldAlert />} label="Override" angle={225} color="bg-red-900" onClick={() => setModal('dom_override')} />
+        <div className="relative w-full animate-in zoom-in-95 duration-700 space-y-6">
+          <div className="relative h-[450px] w-full flex items-center justify-center">
+            <VelvetParticles />
+            <div className="absolute inset-0 bg-gradient-radial from-red-900/20 via-transparent to-transparent pointer-events-none" />
+            <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.8)] pointer-events-none rounded-2xl z-10" />
+
+            <button className="w-32 h-32 rounded-full bg-gradient-to-br from-red-800 to-black border-2 border-red-500/50 flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer relative"
+              style={{ animation: 'throne-pulse 2s ease-in-out infinite' }}>
+              <Crown className="text-white mb-1 group-hover:text-red-200 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]" size={36} />
+              <span className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] absolute -bottom-6">
+                {throneWords[throneWordIndex]}
+              </span>
+            </button>
+
+            <div className="absolute w-[280px] h-[280px] border border-red-500/10 rounded-full pointer-events-none" />
+            <div className="absolute w-[280px] h-[280px] rounded-full pointer-events-none">
+              <svg className="w-full h-full absolute" viewBox="0 0 280 280">
+                <circle cx="140" cy="140" r="130" fill="none" stroke="rgba(220,38,38,0.15)" strokeWidth="1" strokeDasharray="4 4" style={{ animation: 'chain-flow 2s linear infinite' }} />
+              </svg>
+            </div>
+
+            <SanctuaryNode icon={<Terminal />} label="Command" angle={270} color="bg-red-600" onClick={() => setModal('dom_command')} />
+            <SanctuaryNode icon={<Crosshair />} label="Interrogate" angle={315} color="bg-emerald-600" onClick={() => setModal('dom_inspect')} />
+            <SanctuaryNode icon={<Film />} label="Direct" angle={0} color="bg-purple-600" onClick={() => setModal('dom_direct')} />
+            <SanctuaryNode icon={<Eye />} label="Watch" angle={45} color="bg-cyan-600" onClick={() => setModal('dom_surveil')} />
+            <SanctuaryNode icon={<Siren />} label="Enforce" angle={90} color="bg-rose-600" onClick={() => setModal('dom_enforce')} />
+            <SanctuaryNode icon={<Unlock />} label="Permit" angle={135} color="bg-amber-600" onClick={() => setModal('dom_bestow')} />
+            <SanctuaryNode icon={<Skull />} label="Sentence" angle={180} color="bg-orange-600" onClick={() => setModal('dom_decree')} />
+            <SanctuaryNode icon={<ShieldAlert />} label="Override" angle={225} color="bg-red-900" onClick={() => setModal('dom_override')} />
+          </div>
+
+          {partner && partnerPresence && (
+            <div className="flex items-center justify-center gap-3 py-2">
+              <div className={`w-3 h-3 rounded-full ${partnerPresence.online ? 'bg-green-500 shadow-[0_0_10px_lime] animate-pulse' : 'bg-slate-600'}`} />
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                {partner.username}: {partnerPresence.online ? (
+                  <span className="text-green-400">Online Now</span>
+                ) : (
+                  <span className="text-slate-500">Last seen {partnerPresence.lastSeen ? new Date(partnerPresence.lastSeen).toLocaleTimeString() : 'never'}</span>
+                )}
+              </span>
+              <Link size={12} className={partnerPresence.online ? 'text-green-400' : 'text-slate-600'} />
+            </div>
+          )}
+
+          {partner && (
+            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Compliance Gauge</h4>
+                <span className="text-lg font-black text-white">{partnerStats?.complianceRate ?? 0}%</span>
+              </div>
+              <div className="relative h-4 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                <div
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{
+                    width: `${partnerStats?.complianceRate ?? 0}%`,
+                    background: `linear-gradient(90deg, #dc2626 0%, #f59e0b ${Math.max(50, partnerStats?.complianceRate ?? 0)}%, #22c55e 100%)`,
+                    boxShadow: '0 0 15px rgba(220,38,38,0.5)',
+                  }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[9px] font-black text-white uppercase tracking-widest drop-shadow-lg">
+                    {(partnerStats?.complianceRate ?? 0) >= 80 ? 'OBEDIENT' : (partnerStats?.complianceRate ?? 0) >= 50 ? 'ADEQUATE' : 'DEFIANT'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {partner && (
+            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4">
+              <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-3">Quick Command</h4>
+              <div className="flex gap-2">
+                <input
+                  data-testid="input-quick-command"
+                  type="text"
+                  value={commandInput}
+                  onChange={(e) => setCommandInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && commandInput.trim()) {
+                      sendQuickCommandMutation.mutate({ message: commandInput });
+                      setCommandInput('');
+                    }
+                  }}
+                  placeholder="Issue an order..."
+                  className="flex-1 bg-black/60 border border-red-900/50 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
+                />
+                <Button
+                  data-testid="button-send-command"
+                  size="sm"
+                  className="bg-red-600 hover:bg-red-500"
+                  disabled={sendQuickCommandMutation.isPending || !commandInput.trim()}
+                  onClick={() => {
+                    if (commandInput.trim()) {
+                      sendQuickCommandMutation.mutate({ message: commandInput });
+                      setCommandInput('');
+                    }
+                  }}
+                >
+                  <SendHorizonal size={16} />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {partner && (
+            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4">
+              <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-3">Demand Timer</h4>
+              <div className="space-y-3">
+                <input
+                  data-testid="input-demand-message"
+                  type="text"
+                  value={demandMessage}
+                  onChange={(e) => setDemandMessage(e.target.value)}
+                  placeholder="What must they do?"
+                  className="w-full bg-black/60 border border-red-900/50 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
+                />
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">Minutes:</span>
+                  <input
+                    data-testid="input-demand-duration"
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={demandDuration}
+                    onChange={(e) => setDemandDuration(Number(e.target.value))}
+                    className="w-20 bg-black/60 border border-red-900/50 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-red-500"
+                  />
+                  <Button
+                    data-testid="button-send-demand"
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-500 ml-auto"
+                    disabled={createDemandTimerMutation.isPending || !demandMessage.trim()}
+                    onClick={() => {
+                      if (demandMessage.trim()) {
+                        createDemandTimerMutation.mutate({ message: demandMessage, durationSeconds: demandDuration * 60 });
+                        setDemandMessage('');
+                      }
+                    }}
+                  >
+                    Set Demand
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {partner && (
+            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Lockdown Mode</h4>
+                <p className="text-[9px] text-slate-500 mt-1">Restrict sub to tasks only</p>
+              </div>
+              <button
+                data-testid="button-lockdown-toggle"
+                onClick={() => toggleLockdownMutation.mutate(!(lockdownStatus?.lockedDown ?? false))}
+                className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 shadow-inner cursor-pointer ${lockdownStatus?.lockedDown ? 'bg-red-600 shadow-[0_0_10px_red]' : 'bg-slate-900 border border-slate-700'}`}
+              >
+                <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${lockdownStatus?.lockedDown ? 'translate-x-6' : 'translate-x-0'}`} />
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -540,6 +748,8 @@ export default function BondedAscentApp() {
                 </div>
               </div>
               
+              {!(user?.lockedDown) && (
+              <>
               <div className="grid grid-cols-2 gap-4">
                 <BigButton icon={<Dices />} label="Wheel of Dares" sub={`${dares.length} dares`} onClick={() => setModal('wheel')} color="text-purple-500" />
                 <BigButton icon={<MessageSquare />} label="Daily Check-In" sub="Submit Report" color="text-blue-500" onClick={() => setModal('checkin')} />
@@ -564,24 +774,103 @@ export default function BondedAscentApp() {
                   <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" />
                 </div>
               </div>
+              </>
+              )}
+
+              {user?.lockedDown && (
+                <div className="bg-red-950/30 border-2 border-red-500/30 rounded-2xl p-6 text-center animate-pulse">
+                  <Lock size={32} className="mx-auto text-red-500 mb-3" />
+                  <div className="text-sm font-black text-red-400 uppercase tracking-widest">Lockdown Active</div>
+                  <div className="text-[10px] text-slate-500 mt-1">Your access is restricted. Focus on your protocols.</div>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="relative h-[450px] w-full flex items-center justify-center animate-in zoom-in-95 duration-700">
-              <div className="absolute inset-0 bg-red-900/10 blur-[80px] rounded-full pointer-events-none" />
-              <button className="w-28 h-28 rounded-full bg-gradient-to-br from-red-800 to-black border-2 border-red-500/30 shadow-[0_0_40px_rgba(220,38,38,0.3)] flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer">
-                <Home className="text-white mb-1 group-hover:text-red-200" size={32} />
-                <span className="text-[10px] font-black text-white uppercase tracking-widest">Explore</span>
-              </button>
-              
-              <div className="absolute w-[260px] h-[260px] border border-white/5 rounded-full pointer-events-none" />
-              <SanctuaryNode icon={<Target />} label="Training" angle={270} color="bg-red-600" onClick={() => setModal('training')} />
-              <SanctuaryNode icon={<Film />} label="Scene" angle={315} color="bg-purple-600" onClick={() => setModal('scene')} />
-              <SanctuaryNode icon={<Activity />} label="Ladders" angle={0} color="bg-rose-600" onClick={() => setModal('ladders')} />
-              <SanctuaryNode icon={<FileText />} label="Logbook" angle={45} color="bg-pink-600" onClick={() => setModal('logbook')} />
-              <SanctuaryNode icon={<Sliders />} label="Sensory" angle={90} color="bg-slate-700" onClick={() => setModal('sensory')} />
-              <SanctuaryNode icon={<Box />} label="Vault" angle={135} color="bg-indigo-600" onClick={() => setModal('vault')} />
-              <SanctuaryNode icon={<Heart />} label="Aftercare" angle={180} color="bg-pink-500" onClick={() => setModal('aftercare')} />
-              <SanctuaryNode icon={<Star />} label="Worship" angle={225} color="bg-amber-600" onClick={() => setModal('worship')} />
+            <div className="relative w-full animate-in zoom-in-95 duration-700 space-y-6">
+              <div className="relative h-[450px] w-full flex items-center justify-center">
+                <VelvetParticles />
+                <div className="absolute inset-0 bg-gradient-radial from-red-900/15 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.8)] pointer-events-none rounded-2xl z-10" />
+
+                <button className="w-28 h-28 rounded-full bg-gradient-to-br from-red-900 to-black border-2 border-red-500/30 shadow-[0_0_40px_rgba(220,38,38,0.3)] flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer"
+                  style={{ animation: 'devotion-pulse 2.5s ease-in-out infinite' }}>
+                  <CircleDot className="text-red-400 mb-1 group-hover:text-red-200 drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]" size={32} />
+                  <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">Collar</span>
+                </button>
+
+                <div className="absolute w-[260px] h-[260px] rounded-full pointer-events-none">
+                  <svg className="w-full h-full absolute" viewBox="0 0 260 260">
+                    <circle cx="130" cy="130" r="120" fill="none" stroke="rgba(220,38,38,0.12)" strokeWidth="1" strokeDasharray="4 4" style={{ animation: 'chain-flow 2s linear infinite' }} />
+                  </svg>
+                </div>
+
+                <SanctuaryNode icon={<Check />} label="Obey" angle={270} color="bg-red-600" onClick={() => setModal('training')} />
+                <SanctuaryNode icon={<MessageSquare />} label="Confess" angle={315} color="bg-purple-600" onClick={() => setModal('checkin')} />
+                <SanctuaryNode icon={<Flame />} label="Endure" angle={0} color="bg-rose-600" onClick={() => setModal('ladders')} />
+                <SanctuaryNode icon={<BookOpen />} label="Reflect" angle={45} color="bg-pink-600" onClick={() => setModal('logbook')} />
+                <SanctuaryNode icon={<Heart />} label="Serve" angle={90} color="bg-red-700" onClick={() => setModal('worship')} />
+                <SanctuaryNode icon={<Star />} label="Earn" angle={135} color="bg-amber-600" onClick={() => setModal('scene')} />
+                <SanctuaryNode icon={<Sliders />} label="Sensory" angle={180} color="bg-slate-700" onClick={() => setModal('sensory')} />
+                <SanctuaryNode icon={<Box />} label="Vault" angle={225} color="bg-indigo-600" onClick={() => setModal('vault')} />
+              </div>
+
+              {partner && (
+                <div className="flex items-center justify-center gap-3 py-2">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
+                    Time Since Last Command:
+                  </span>
+                  <span className="text-sm font-black text-red-400">
+                    {partnerActivity.length > 0 ? formatTime(partnerActivity[0]?.createdAt) : 'No commands yet'}
+                  </span>
+                </div>
+              )}
+
+              {demandTimers.filter((t: any) => !t.responded && new Date(t.expiresAt) > new Date()).length > 0 && (
+                <div className="space-y-3">
+                  {demandTimers.filter((t: any) => !t.responded && new Date(t.expiresAt) > new Date()).map((timer: any) => {
+                    const remaining = Math.max(0, Math.ceil((new Date(timer.expiresAt).getTime() - Date.now()) / 1000));
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    const urgency = remaining < 60 ? 'border-red-500 bg-red-950/60 animate-pulse' : remaining < 180 ? 'border-orange-500 bg-orange-950/40' : 'border-yellow-500/50 bg-yellow-950/30';
+                    return (
+                      <div key={timer.id} className={`border rounded-2xl p-4 ${urgency}`}>
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="text-xs font-black text-white uppercase tracking-wider">{timer.message}</div>
+                          <span className="text-lg font-mono font-black text-red-400">{mins}:{secs.toString().padStart(2, '0')}</span>
+                        </div>
+                        <Button
+                          data-testid={`button-respond-demand-${timer.id}`}
+                          size="sm"
+                          className="w-full bg-red-600 hover:bg-red-500 font-black uppercase tracking-widest"
+                          onClick={() => respondDemandTimerMutation.mutate(timer.id)}
+                        >
+                          RESPOND
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {quickCommands.filter((c: any) => !c.acknowledged).length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Pending Orders</h4>
+                  {quickCommands.filter((c: any) => !c.acknowledged).slice(0, 5).map((cmd: any) => (
+                    <div key={cmd.id} className="bg-red-950/40 border border-red-900/50 rounded-xl p-3 flex items-center justify-between">
+                      <span className="text-xs font-bold text-white uppercase">{cmd.message}</span>
+                      <Button
+                        data-testid={`button-ack-command-${cmd.id}`}
+                        size="sm"
+                        variant="outline"
+                        className="border-red-500/50 text-red-400 text-[10px] uppercase"
+                        onClick={() => acknowledgeCommandMutation.mutate(cmd.id)}
+                      >
+                        Acknowledge
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -841,6 +1130,28 @@ export default function BondedAscentApp() {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
+      <style>{`
+        @keyframes float-ember {
+          0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+          50% { opacity: 0.8; transform: translateY(-40px) scale(1.2); }
+        }
+        @keyframes throne-pulse {
+          0%, 100% { box-shadow: 0 0 40px rgba(220,38,38,0.3), 0 0 80px rgba(220,38,38,0.1); }
+          50% { box-shadow: 0 0 60px rgba(220,38,38,0.6), 0 0 120px rgba(220,38,38,0.3); }
+        }
+        @keyframes chain-flow {
+          0% { stroke-dashoffset: 20; }
+          100% { stroke-dashoffset: 0; }
+        }
+        @keyframes word-rotate {
+          0%, 20% { opacity: 1; }
+          25%, 100% { opacity: 0; }
+        }
+        @keyframes devotion-pulse {
+          0%, 100% { transform: scale(1); opacity: 0.7; }
+          50% { transform: scale(1.15); opacity: 1; }
+        }
+      `}</style>
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
       
       {isCrisisMode && (

@@ -929,5 +929,109 @@ export async function registerRoutes(
     res.json({ message: "Test notification sent" });
   });
 
+  app.get("/api/demand-timers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const timers = await storage.getDemandTimers(user.id);
+    res.json(timers);
+  });
+
+  app.post("/api/demand-timers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    const { message, durationSeconds } = req.body;
+    if (!message || !durationSeconds) return res.status(400).json({ message: "Message and duration required" });
+    const expiresAt = new Date(Date.now() + durationSeconds * 1000);
+    const timer = await storage.createDemandTimer({
+      fromUserId: user.id,
+      toUserId: user.partnerId,
+      message,
+      durationSeconds,
+      expiresAt,
+    });
+    await notifyUser(user.partnerId, `DEMAND: ${message} — Respond within ${Math.ceil(durationSeconds / 60)} min`, "alert");
+    res.status(201).json(timer);
+  });
+
+  app.post("/api/demand-timers/:id/respond", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const timers = await storage.getDemandTimers(user.id);
+    const target = timers.find(t => t.id === req.params.id);
+    if (!target) return res.status(404).json({ message: "Timer not found or not yours" });
+    const timer = await storage.respondDemandTimer(req.params.id);
+    if (!timer) return res.status(404).json({ message: "Timer not found" });
+    res.json(timer);
+  });
+
+  app.get("/api/quick-commands", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const commands = await storage.getQuickCommands(user.id);
+    res.json(commands);
+  });
+
+  app.post("/api/quick-commands", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ message: "Message required" });
+    const cmd = await storage.createQuickCommand({
+      fromUserId: user.id,
+      toUserId: user.partnerId,
+      message,
+    });
+    await notifyUser(user.partnerId, `ORDER: ${message}`, "alert");
+    res.status(201).json(cmd);
+  });
+
+  app.post("/api/quick-commands/:id/acknowledge", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const commands = await storage.getQuickCommands(user.id);
+    const target = commands.find(c => c.id === req.params.id);
+    if (!target) return res.status(404).json({ message: "Command not found or not yours" });
+    const cmd = await storage.acknowledgeQuickCommand(req.params.id);
+    if (!cmd) return res.status(404).json({ message: "Command not found" });
+    res.json(cmd);
+  });
+
+  app.post("/api/presence/heartbeat", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    await storage.updatePresence(user.id);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/presence/:userId", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (req.params.userId !== user.id && req.params.userId !== user.partnerId) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+    const presence = await storage.getPresence(req.params.userId);
+    if (!presence) return res.json({ online: false, lastSeen: null });
+    const isOnline = Date.now() - new Date(presence.lastSeen).getTime() < 60000;
+    res.json({ online: isOnline, lastSeen: presence.lastSeen });
+  });
+
+  app.post("/api/partner/lockdown", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    const { locked } = req.body;
+    const updated = await storage.updateUserLockdown(user.partnerId, !!locked);
+    if (!updated) return res.status(404).json({ message: "Partner not found" });
+    if (locked) {
+      await notifyUser(user.partnerId, "Your dashboard has been locked down. Focus on your protocols.", "alert");
+    } else {
+      await notifyUser(user.partnerId, "Lockdown lifted. Full access restored.", "info");
+    }
+    res.json({ lockedDown: updated.lockedDown });
+  });
+
+  app.get("/api/partner/lockdown", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (user.partnerId) {
+      const partnerUser = await storage.getUser(user.partnerId);
+      res.json({ lockedDown: partnerUser?.lockedDown ?? false });
+    } else {
+      res.json({ lockedDown: false });
+    }
+  });
+
   return httpServer;
 }
