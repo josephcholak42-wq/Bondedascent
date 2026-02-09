@@ -221,63 +221,96 @@ export default function BondedAscentApp() {
         )}
       </div>
 
-      <div className="space-y-6">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 pb-2">Control Panel</h3>
-        
-        {partner ? (
-          <>
-            <div className="grid grid-cols-2 gap-4">
-              <BigButton icon={<List />} label="Assign Tasks" sub={`${partnerTasks.length} protocols`} color="text-blue-500" onClick={() => setModal('dom_tasks')} />
-              <BigButton icon={<Gift />} label="Grant Reward" sub={`${rewards.length} rewards`} color="text-purple-500" onClick={() => setModal('dom_rewards')} />
-              <BigButton icon={<Gavel />} label="Punish" sub="Assign Penalty" color="text-red-600" onClick={() => setModal('dom_punish')} />
-              <BigButton icon={<MessageSquare />} label="Review Logs" sub={`${partnerCheckIns.filter(c => c.status === 'pending').length} Pending`} color="text-emerald-500" onClick={() => setModal('dom_review')} />
-            </div>
+      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Control Panel</h3>
+        <button 
+          data-testid="button-dom-velvet-toggle"
+          onClick={() => setIsVelvetMode(!isVelvetMode)} 
+          className={`flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-bold uppercase transition-all shadow-lg cursor-pointer
+            ${isVelvetMode 
+              ? 'bg-red-950 border-red-500 text-red-400 shadow-[0_0_10px_rgba(220,38,38,0.2)]' 
+              : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+        >
+          {isVelvetMode ? <Moon size={12} /> : <Sun size={12} />}
+          {isVelvetMode ? 'Velvet Mode' : 'Standard'}
+        </button>
+      </div>
 
-            <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{partner.username}'s Activity</h3>
-                <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase animate-pulse">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Live
+      {!isVelvetMode ? (
+        <div className="space-y-6 animate-in fade-in">
+          {partner ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <BigButton icon={<List />} label="Assign Tasks" sub={`${partnerTasks.length} protocols`} color="text-blue-500" onClick={() => setModal('dom_tasks')} />
+                <BigButton icon={<Gift />} label="Grant Reward" sub={`${rewards.length} rewards`} color="text-purple-500" onClick={() => setModal('dom_rewards')} />
+                <BigButton icon={<Gavel />} label="Punish" sub="Assign Penalty" color="text-red-600" onClick={() => setModal('dom_punish')} />
+                <BigButton icon={<MessageSquare />} label="Review Logs" sub={`${partnerCheckIns.filter(c => c.status === 'pending').length} Pending`} color="text-emerald-500" onClick={() => setModal('dom_review')} />
+              </div>
+
+              <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{partner.username}'s Activity</h3>
+                  <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Live
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {partnerActivity.slice(0, 5).map((log) => (
+                    <div key={log.id} className="flex gap-3 items-start text-xs text-slate-300">
+                      <span className="font-mono text-slate-600 min-w-[50px]">{formatTime(log.createdAt)}</span>
+                      <div className="mt-0.5">
+                        {log.action.includes('task') ? <CheckCircle size={12} className="text-green-500" /> :
+                         log.action.includes('dare') ? <Dices size={12} className="text-purple-500" /> :
+                         <FileText size={12} className="text-blue-500" />}
+                      </div>
+                      <span>{log.detail || log.action}</span>
+                    </div>
+                  ))}
+                  {partnerActivity.length === 0 && (
+                    <div className="text-xs text-slate-600 text-center py-4">No activity yet</div>
+                  )}
                 </div>
               </div>
-              <div className="space-y-3">
-                {partnerActivity.slice(0, 5).map((log) => (
-                  <div key={log.id} className="flex gap-3 items-start text-xs text-slate-300">
-                    <span className="font-mono text-slate-600 min-w-[50px]">{formatTime(log.createdAt)}</span>
-                    <div className="mt-0.5">
-                      {log.action.includes('task') ? <CheckCircle size={12} className="text-green-500" /> :
-                       log.action.includes('dare') ? <Dices size={12} className="text-purple-500" /> :
-                       <FileText size={12} className="text-blue-500" />}
-                    </div>
-                    <span>{log.detail || log.action}</span>
-                  </div>
-                ))}
-                {partnerActivity.length === 0 && (
-                  <div className="text-xs text-slate-600 text-center py-4">No activity yet</div>
-                )}
+            </>
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl bg-black/20">
+              <Heart size={48} className="mx-auto text-slate-700 mb-4" />
+              <div className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">No Sub Connected</div>
+              <div className="text-xs text-slate-600 mb-6">Generate an invite code or have your sub enter yours to link accounts.</div>
+              <Button data-testid="button-connect-sub" onClick={() => setModal('pair')} className="bg-red-600 hover:bg-red-500">Connect Partner</Button>
+            </div>
+          )}
+
+          <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <ShieldAlert size={28} className="text-red-500" />
+              <div>
+                <div className="font-bold text-white text-sm uppercase tracking-wider">Force Crisis Mode</div>
+                <div className="text-[10px] text-slate-500">Override Sub's interface immediately</div>
               </div>
             </div>
-          </>
-        ) : (
-          <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-2xl bg-black/20">
-            <Heart size={48} className="mx-auto text-slate-700 mb-4" />
-            <div className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">No Sub Connected</div>
-            <div className="text-xs text-slate-600 mb-6">Generate an invite code or have your sub enter yours to link accounts.</div>
-            <Button data-testid="button-connect-sub" onClick={() => setModal('pair')} className="bg-red-600 hover:bg-red-500">Connect Partner</Button>
+            <Button data-testid="button-crisis" variant="destructive" size="sm" onClick={() => setIsCrisisMode(true)}>ACTIVATE</Button>
           </div>
-        )}
-
-        <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <ShieldAlert size={28} className="text-red-500" />
-            <div>
-              <div className="font-bold text-white text-sm uppercase tracking-wider">Force Crisis Mode</div>
-              <div className="text-[10px] text-slate-500">Override Sub's interface immediately</div>
-            </div>
-          </div>
-          <Button data-testid="button-crisis" variant="destructive" size="sm" onClick={() => setIsCrisisMode(true)}>ACTIVATE</Button>
         </div>
-      </div>
+      ) : (
+        <div className="relative h-[450px] w-full flex items-center justify-center animate-in zoom-in-95 duration-700">
+          <div className="absolute inset-0 bg-red-900/10 blur-[80px] rounded-full pointer-events-none" />
+          <button className="w-28 h-28 rounded-full bg-gradient-to-br from-red-800 to-black border-2 border-red-500/30 shadow-[0_0_40px_rgba(220,38,38,0.3)] flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer">
+            <Shield className="text-white mb-1 group-hover:text-red-200" size={32} />
+            <span className="text-[10px] font-black text-white uppercase tracking-widest">Command</span>
+          </button>
+          
+          <div className="absolute w-[260px] h-[260px] border border-white/5 rounded-full pointer-events-none" />
+          <SanctuaryNode icon={<List />} label="Protocols" angle={270} color="bg-blue-600" onClick={() => setModal('dom_tasks')} />
+          <SanctuaryNode icon={<Eye />} label="Observe" angle={315} color="bg-emerald-600" onClick={() => setModal('dom_review')} />
+          <SanctuaryNode icon={<Gavel />} label="Punish" angle={0} color="bg-red-600" onClick={() => setModal('dom_punish')} />
+          <SanctuaryNode icon={<Gift />} label="Reward" angle={45} color="bg-purple-600" onClick={() => setModal('dom_rewards')} />
+          <SanctuaryNode icon={<Target />} label="Training" angle={90} color="bg-rose-600" onClick={() => setModal('training')} />
+          <SanctuaryNode icon={<Film />} label="Scene" angle={135} color="bg-pink-600" onClick={() => setModal('scene')} />
+          <SanctuaryNode icon={<Sliders />} label="Sensory" angle={180} color="bg-slate-700" onClick={() => setModal('sensory')} />
+          <SanctuaryNode icon={<ShieldAlert />} label="Crisis" angle={225} color="bg-yellow-600" onClick={() => setIsCrisisMode(true)} />
+        </div>
+      )}
     </div>
   );
 
