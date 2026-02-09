@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from "wouter";
 import { 
   Lock, Key, Shield, AlertCircle, CheckCircle, 
@@ -29,7 +29,7 @@ import {
   usePunishments, useCreatePunishment,
   useJournal, useCreateJournal,
   useNotifications, useDismissNotification,
-  useActivityLog,
+  useActivityLog, useLogActivity,
   usePartner, usePartnerStats, useGeneratePairCode, useJoinPairCode, useUnlinkPartner,
   usePartnerTasks, useCreatePartnerTask, usePartnerCheckIns, useReviewPartnerCheckIn,
   useCreatePartnerPunishment, useCreatePartnerReward, usePartnerActivity,
@@ -54,6 +54,22 @@ export default function BondedAscentApp() {
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [pairError, setPairError] = useState<string | null>(null);
   const [pairSuccess, setPairSuccess] = useState<string | null>(null);
+
+  const [trainingActive, setTrainingActive] = useState<string | null>(null);
+  const [trainingTimer, setTrainingTimer] = useState(0);
+  const [trainingCompleted, setTrainingCompleted] = useState<string[]>([]);
+  const trainingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [scenePhase, setScenePhase] = useState<number>(-1);
+  const [sceneTimer, setSceneTimer] = useState(0);
+  const sceneIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [ladderLevel, setLadderLevel] = useState(1);
+
+  const [sensoryToggles, setSensoryToggles] = useState<Record<string, boolean>>({ noise: false, visual: false, temp: false });
+
+  const [worshipDone, setWorshipDone] = useState(false);
+  const [aftercareActions, setAftercareActions] = useState<string[]>([]);
 
   const { data: user } = useAuth();
   const logoutMutation = useLogout();
@@ -90,6 +106,7 @@ export default function BondedAscentApp() {
   const createPartnerPunishmentMutation = useCreatePartnerPunishment();
   const createPartnerRewardMutation = useCreatePartnerReward();
   const { data: partnerActivity = [] } = usePartnerActivity();
+  const logActivityMutation = useLogActivity();
 
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const xp = stats?.xp ?? 0;
@@ -157,6 +174,74 @@ export default function BondedAscentApp() {
     if (!journalContent.trim()) return;
     createJournalMutation.mutate(journalContent);
     setJournalContent('');
+  };
+
+  const startTraining = useCallback((exercise: string) => {
+    if (trainingIntervalRef.current) clearInterval(trainingIntervalRef.current);
+    setTrainingActive(exercise);
+    setTrainingTimer(0);
+    trainingIntervalRef.current = setInterval(() => {
+      setTrainingTimer(prev => prev + 1);
+    }, 1000);
+    logActivityMutation.mutate({ action: 'training_started', detail: exercise });
+  }, [logActivityMutation]);
+
+  const stopTraining = useCallback(() => {
+    if (trainingIntervalRef.current) clearInterval(trainingIntervalRef.current);
+    trainingIntervalRef.current = null;
+    if (trainingActive && !trainingCompleted.includes(trainingActive)) {
+      setTrainingCompleted(prev => [...prev, trainingActive]);
+      logActivityMutation.mutate({ action: 'training_completed', detail: `${trainingActive} — ${formatTimerDisplay(trainingTimer)}` });
+    }
+    setTrainingActive(null);
+    setTrainingTimer(0);
+  }, [trainingActive, trainingCompleted, trainingTimer, logActivityMutation]);
+
+  useEffect(() => {
+    return () => {
+      if (trainingIntervalRef.current) clearInterval(trainingIntervalRef.current);
+      if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
+    };
+  }, []);
+
+  const scenePhases = ['Warm-Up', 'Main Scene', 'Cooldown'];
+
+  const startScene = useCallback(() => {
+    if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
+    setScenePhase(0);
+    setSceneTimer(0);
+    sceneIntervalRef.current = setInterval(() => {
+      setSceneTimer(prev => prev + 1);
+    }, 1000);
+    logActivityMutation.mutate({ action: 'scene_started', detail: 'Warm-Up phase' });
+  }, [logActivityMutation]);
+
+  const advanceScene = useCallback(() => {
+    const nextPhase = scenePhase + 1;
+    if (nextPhase >= scenePhases.length) {
+      if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
+      sceneIntervalRef.current = null;
+      logActivityMutation.mutate({ action: 'scene_ended', detail: `Completed all phases — ${formatTimerDisplay(sceneTimer)}` });
+      setScenePhase(-1);
+      setSceneTimer(0);
+    } else {
+      setScenePhase(nextPhase);
+      logActivityMutation.mutate({ action: 'scene_phase', detail: `Entered ${scenePhases[nextPhase]} phase` });
+    }
+  }, [scenePhase, sceneTimer, logActivityMutation]);
+
+  const endScene = useCallback(() => {
+    if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
+    sceneIntervalRef.current = null;
+    logActivityMutation.mutate({ action: 'scene_ended', detail: `Ended during ${scenePhases[scenePhase] || 'prep'} — ${formatTimerDisplay(sceneTimer)}` });
+    setScenePhase(-1);
+    setSceneTimer(0);
+  }, [scenePhase, sceneTimer, logActivityMutation]);
+
+  const formatTimerDisplay = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   const formatTime = (date: Date | string | null) => {
@@ -238,6 +323,13 @@ export default function BondedAscentApp() {
 
       {!isVelvetMode ? (
         <div className="space-y-6 animate-in fade-in">
+          <div className="grid grid-cols-4 gap-3">
+            <QuickAction icon={<Clock />} label="Balance" color="yellow" onClick={() => setModal('balance')} />
+            <QuickAction icon={<Settings />} label="Config" color="slate" onClick={() => setActiveView('profile')} />
+            <QuickAction icon={<Award />} label="Badges" color="green" onClick={() => setModal('badges')} />
+            <QuickAction icon={<Zap />} label="Timers" color="red" onClick={() => setModal('countdowns')} />
+          </div>
+
           {partner ? (
             <>
               <div className="grid grid-cols-2 gap-4">
@@ -280,6 +372,11 @@ export default function BondedAscentApp() {
               <Button data-testid="button-connect-sub" onClick={() => setModal('pair')} className="bg-red-600 hover:bg-red-500">Connect Partner</Button>
             </div>
           )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <BigButton icon={<Dices />} label="Wheel of Dares" sub={`${dares.length} dares`} onClick={() => setModal('wheel')} color="text-purple-500" />
+            <BigButton icon={<BookOpen />} label="Journal" sub={`${journalEntries.length} entries`} color="text-blue-500" onClick={() => setActiveView('journal')} />
+          </div>
 
           <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
             <div className="flex items-center gap-4">

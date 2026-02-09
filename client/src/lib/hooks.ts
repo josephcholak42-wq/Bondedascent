@@ -269,6 +269,20 @@ export function useActivityLog() {
   return useQuery<ActivityLogEntry[]>({ queryKey: ["/api/activity"] });
 }
 
+export function useLogActivity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { action: string; detail?: string }) => {
+      const res = await apiRequest("POST", "/api/activity", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/activity"] });
+    },
+  });
+}
+
 export function usePartner() {
   return useQuery<SafeUser | null>({
     queryKey: ["/api/pair/partner"],

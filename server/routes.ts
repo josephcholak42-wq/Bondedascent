@@ -296,6 +296,14 @@ export async function registerRoutes(
     res.json(list);
   });
 
+  app.post("/api/activity", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { action, detail } = req.body;
+    if (!action || typeof action !== "string") return res.status(400).json({ message: "Action is required" });
+    const entry = await storage.logActivity(user.id, action, detail || undefined);
+    res.status(201).json(entry);
+  });
+
   // --- USER / XP ---
   app.get("/api/user/stats", requireAuth, async (req, res) => {
     const user = req.user as User;
