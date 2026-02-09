@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { FileSignature, Plus, Trash2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator, ActionBadge } from '@/components/ui/role-gate';
 import { useStandingOrders, useCreateStandingOrder, useUpdateStandingOrder, useDeleteStandingOrder, useAuth } from '@/lib/hooks';
 
 const priorityColors: Record<string, string> = {
@@ -77,16 +78,16 @@ export default function StandingOrdersPage() {
         </div>
       </div>
 
-      {userRole === 'dom' && (
-        <Button
-          data-testid="button-toggle-form"
-          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} className="mr-2" />
-          Issue Order
-        </Button>
-      )}
+      <RoleGatedButton
+        data-testid="button-toggle-form"
+        allowed={userRole === 'dom'}
+        tooltipText="Only your Dom can issue orders"
+        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+        onClick={() => setShowForm(!showForm)}
+      >
+        <Plus size={16} className="mr-2" />
+        Issue Order
+      </RoleGatedButton>
 
       {showForm && userRole === 'dom' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-order">
@@ -179,9 +180,10 @@ export default function StandingOrdersPage() {
                 >
                   {order.active ? 'Active' : 'Inactive'}
                 </span>
+                {userRole === 'sub' && order.assignedBy && order.active && <PulseIndicator show className="ml-1" />}
               </div>
-              {userRole === 'dom' && (
-                <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1">
+                <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can toggle orders">
                   <Button
                     data-testid={`button-toggle-order-${order.id}`}
                     variant="ghost"
@@ -192,6 +194,8 @@ export default function StandingOrdersPage() {
                   >
                     {order.active ? <Check size={16} /> : <X size={16} />}
                   </Button>
+                </RoleGatedAction>
+                <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can delete orders">
                   <Button
                     data-testid={`button-delete-order-${order.id}`}
                     variant="ghost"
@@ -202,8 +206,8 @@ export default function StandingOrdersPage() {
                   >
                     <Trash2 size={16} />
                   </Button>
-                </div>
-              )}
+                </RoleGatedAction>
+              </div>
             </div>
           </div>
         ))}

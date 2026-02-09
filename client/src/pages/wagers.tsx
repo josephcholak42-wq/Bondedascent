@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Dices, Plus, Trophy, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useWagers, useCreateWager, useUpdateWager, useAuth } from '@/lib/hooks';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -67,16 +68,16 @@ export default function WagersPage() {
         {userRole === 'dom' ? 'Set stakes and challenges' : 'Wagers set by your Dom'}
       </p>
 
-      {userRole === 'dom' && (
-        <Button
-          data-testid="button-toggle-form"
-          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} className="mr-2" />
-          Propose Wager
-        </Button>
-      )}
+      <RoleGatedButton
+        data-testid="button-toggle-form"
+        allowed={userRole === 'dom'}
+        tooltipText="Only your Dom can propose wagers"
+        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+        onClick={() => setShowForm(!showForm)}
+      >
+        <Plus size={16} className="mr-2" />
+        Propose Wager
+      </RoleGatedButton>
 
       {userRole === 'dom' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-wager">
@@ -146,6 +147,7 @@ export default function WagersPage() {
                   >
                     {wager.status}
                   </span>
+                  {userRole === 'sub' && wager.status === 'active' && <PulseIndicator show className="ml-1" />}
                 </div>
                 {wager.description && (
                   <p className="text-slate-400 text-sm mb-2" data-testid={`text-wager-desc-${wager.id}`}>
@@ -160,38 +162,23 @@ export default function WagersPage() {
                 )}
               </div>
             </div>
-            {userRole === 'dom' && wager.status === 'active' && (
+            {wager.status === 'active' && (
               <div className="flex gap-2 mt-3 pt-3 border-t border-slate-800">
-                <Button
-                  data-testid={`button-resolve-won-${wager.id}`}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700 text-white text-xs uppercase tracking-wider"
-                  onClick={() => handleResolve(wager.id, 'won')}
-                  disabled={updateWagerMutation.isPending}
-                >
-                  <Trophy size={14} className="mr-1" />
-                  Won
-                </Button>
-                <Button
-                  data-testid={`button-resolve-lost-${wager.id}`}
-                  size="sm"
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs uppercase tracking-wider"
-                  onClick={() => handleResolve(wager.id, 'lost')}
-                  disabled={updateWagerMutation.isPending}
-                >
-                  <X size={14} className="mr-1" />
-                  Lost
-                </Button>
-                <Button
-                  data-testid={`button-resolve-draw-${wager.id}`}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs uppercase tracking-wider"
-                  onClick={() => handleResolve(wager.id, 'draw')}
-                  disabled={updateWagerMutation.isPending}
-                >
-                  <Dices size={14} className="mr-1" />
-                  Draw
-                </Button>
+                <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can resolve wagers">
+                  <Button data-testid={`button-resolve-won-${wager.id}`} size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs uppercase tracking-wider" onClick={() => handleResolve(wager.id, 'won')} disabled={updateWagerMutation.isPending}>
+                    <Trophy size={14} className="mr-1" /> Won
+                  </Button>
+                </RoleGatedAction>
+                <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can resolve wagers">
+                  <Button data-testid={`button-resolve-lost-${wager.id}`} size="sm" className="bg-red-600 hover:bg-red-700 text-white text-xs uppercase tracking-wider" onClick={() => handleResolve(wager.id, 'lost')} disabled={updateWagerMutation.isPending}>
+                    <X size={14} className="mr-1" /> Lost
+                  </Button>
+                </RoleGatedAction>
+                <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can resolve wagers">
+                  <Button data-testid={`button-resolve-draw-${wager.id}`} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs uppercase tracking-wider" onClick={() => handleResolve(wager.id, 'draw')} disabled={updateWagerMutation.isPending}>
+                    <Dices size={14} className="mr-1" /> Draw
+                  </Button>
+                </RoleGatedAction>
               </div>
             )}
           </div>

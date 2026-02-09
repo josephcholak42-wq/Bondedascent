@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { Heart, Plus, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useDevotions, useCreateDevotion, useUpdateDevotion, useAuth } from '@/lib/hooks';
 
 const typeColors: Record<string, string> = {
@@ -59,16 +60,16 @@ export default function DevotionsPage() {
         {userRole === 'dom' ? "View your sub's expressions of devotion" : 'Express your devotion and commitment'}
       </p>
 
-      {userRole === 'sub' && (
-        <Button
-          data-testid="button-toggle-form"
-          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} className="mr-2" />
-          New Devotion
-        </Button>
-      )}
+      <RoleGatedButton
+        data-testid="button-toggle-form"
+        allowed={userRole === 'sub'}
+        tooltipText="Only your sub can create devotions"
+        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+        onClick={() => setShowForm(!showForm)}
+      >
+        <Plus size={16} className="mr-2" />
+        New Devotion
+      </RoleGatedButton>
 
       {userRole === 'sub' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-devotion">
@@ -138,12 +139,13 @@ export default function DevotionsPage() {
                       Completed
                     </span>
                   )}
+                  {userRole === 'dom' && !devotion.completed && <PulseIndicator show className="ml-1" />}
                 </div>
                 <p className="text-white text-sm" data-testid={`text-devotion-content-${devotion.id}`}>
                   {devotion.content}
                 </p>
               </div>
-              {userRole === 'sub' && (
+              <RoleGatedAction allowed={userRole === 'sub'} tooltipText="Only your sub can mark devotions complete">
                 <Button
                   data-testid={`button-toggle-devotion-${devotion.id}`}
                   variant="ghost"
@@ -154,7 +156,7 @@ export default function DevotionsPage() {
                 >
                   <Check size={16} />
                 </Button>
-              )}
+              </RoleGatedAction>
             </div>
           </div>
         ))}

@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Flame, Plus, Trash2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator, ActionBadge } from '@/components/ui/role-gate';
 import { useRituals, useCreateRitual, useUpdateRitual, useDeleteRitual, useAuth } from '@/lib/hooks';
 
 export default function RitualsPage() {
@@ -66,16 +67,16 @@ export default function RitualsPage() {
         </div>
       </div>
 
-      {userRole === 'dom' && (
-        <Button
-          data-testid="button-toggle-form"
-          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} className="mr-2" />
-          Assign Ritual
-        </Button>
-      )}
+      <RoleGatedButton
+        data-testid="button-toggle-form"
+        allowed={userRole === 'dom'}
+        tooltipText="Only your Dom can assign rituals"
+        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+        onClick={() => setShowForm(!showForm)}
+      >
+        <Plus size={16} className="mr-2" />
+        Assign Ritual
+      </RoleGatedButton>
 
       {showForm && userRole === 'dom' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-ritual">
@@ -179,6 +180,7 @@ export default function RitualsPage() {
                   >
                     {ritual.active ? 'Active' : 'Inactive'}
                   </span>
+                  {userRole === 'sub' && ritual.active && ritual.assignedBy && <PulseIndicator show className="ml-1" />}
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -192,7 +194,7 @@ export default function RitualsPage() {
                 >
                   {ritual.active ? <Check size={16} /> : <X size={16} />}
                 </Button>
-                {userRole === 'dom' && (
+                <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can delete rituals">
                   <Button
                     data-testid={`button-delete-ritual-${ritual.id}`}
                     variant="ghost"
@@ -203,7 +205,7 @@ export default function RitualsPage() {
                   >
                     <Trash2 size={16} />
                   </Button>
-                )}
+                </RoleGatedAction>
               </div>
             </div>
           </div>

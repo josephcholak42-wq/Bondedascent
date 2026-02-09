@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { Star, BarChart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { Slider } from '@/components/ui/slider';
 import { useRatings, useRatingsReceived, useCreateRating, useAuth, usePartner } from '@/lib/hooks';
 import type { Rating } from '@shared/schema';
@@ -114,15 +115,17 @@ export default function RatingsPage() {
         </Button>
       </div>
 
-      {userRole === 'dom' && partner && (
-        <Button
+      {partner && (
+        <RoleGatedButton
           data-testid="button-toggle-form"
+          allowed={userRole === 'dom'}
+          tooltipText="Only your Dom can rate performance"
           className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
           onClick={() => setShowForm(!showForm)}
         >
           <Plus size={16} className="mr-2" />
           New Rating
-        </Button>
+        </RoleGatedButton>
       )}
 
       {userRole === 'dom' && showForm && (

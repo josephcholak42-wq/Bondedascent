@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Play, Plus, Clock, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { usePlaySessions, useCreatePlaySession, useUpdatePlaySession, useAuth } from '@/lib/hooks';
 
 export default function PlaySessionsPage() {
@@ -89,16 +90,16 @@ export default function PlaySessionsPage() {
             {userRole === 'dom' ? 'Play Sessions' : 'Scheduled Sessions'}
           </h1>
         </div>
-        {userRole === 'dom' && (
-          <Button
-            data-testid="button-toggle-form"
-            variant="outline"
-            className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white"
-            onClick={() => setShowForm(!showForm)}
-          >
-            <Plus size={16} className="mr-1" /> Plan Session
-          </Button>
-        )}
+        <RoleGatedButton
+          data-testid="button-toggle-form"
+          allowed={userRole === 'dom'}
+          tooltipText="Only your Dom can plan sessions"
+          variant="outline"
+          className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-1" /> Plan Session
+        </RoleGatedButton>
       </div>
       <p className="text-sm text-slate-400 mb-8" data-testid="text-page-description">
         {userRole === 'dom' ? 'Plan and manage sessions' : 'Sessions planned by your Dom'}
@@ -217,6 +218,7 @@ export default function PlaySessionsPage() {
               >
                 {session.status}
               </span>
+              {userRole === 'sub' && session.status === 'planned' && <PulseIndicator show className="ml-1" />}
             </div>
 
             {session.mood && (
@@ -258,17 +260,12 @@ export default function PlaySessionsPage() {
               </div>
             )}
 
-            {userRole === 'dom' && session.status !== 'completed' && (
-              <Button
-                data-testid={`button-complete-${session.id}`}
-                variant="outline"
-                size="sm"
-                className="border-green-600 text-green-500 hover:bg-green-600 hover:text-white mt-2"
-                onClick={() => handleComplete(session.id)}
-                disabled={updateMutation.isPending}
-              >
-                <Check size={14} className="mr-1" /> Complete
-              </Button>
+            {session.status !== 'completed' && (
+              <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can complete sessions">
+                <Button data-testid={`button-complete-${session.id}`} variant="outline" size="sm" className="border-green-600 text-green-500 hover:bg-green-600 hover:text-white mt-2" onClick={() => handleComplete(session.id)} disabled={updateMutation.isPending}>
+                  <Check size={14} className="mr-1" /> Complete
+                </Button>
+              </RoleGatedAction>
             )}
 
             {session.completedAt && (

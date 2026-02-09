@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Shield, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useLimits, useCreateLimit, useDeleteLimit, useAuth } from '@/lib/hooks';
 
 const CATEGORIES = ['general', 'physical', 'emotional', 'sexual'] as const;

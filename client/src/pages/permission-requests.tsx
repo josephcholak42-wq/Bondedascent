@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Hand, Plus, Check, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator, ActionBadge } from '@/components/ui/role-gate';
 import { usePermissionRequests, useCreatePermissionRequest, useUpdatePermissionRequest, useAuth } from '@/lib/hooks';
 
 const statusColors: Record<string, string> = {
@@ -60,19 +61,22 @@ export default function PermissionRequestsPage() {
           <p className="text-slate-400 text-sm" data-testid="text-page-description">
             {userRole === 'sub' ? 'Ask your Dom for permission' : "Review your sub's requests"}
           </p>
+          {userRole === 'dom' && requests.filter(r => r.status === 'pending').length > 0 && (
+            <ActionBadge count={requests.filter(r => r.status === 'pending').length} label="pending" className="ml-2" />
+          )}
         </div>
       </div>
 
-      {userRole === 'sub' && (
-        <Button
-          data-testid="button-toggle-form"
-          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} className="mr-2" />
-          Request Permission
-        </Button>
-      )}
+      <RoleGatedButton
+        data-testid="button-toggle-form"
+        allowed={userRole === 'sub'}
+        tooltipText="Only your sub can request permissions"
+        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+        onClick={() => setShowForm(!showForm)}
+      >
+        <Plus size={16} className="mr-2" />
+        Request Permission
+      </RoleGatedButton>
 
       {showForm && userRole === 'sub' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-request">
@@ -138,6 +142,7 @@ export default function PermissionRequestsPage() {
                     {statusIcons[request.status]}
                     {request.status}
                   </span>
+                  {userRole === 'dom' && request.status === 'pending' && <PulseIndicator show className="ml-1" />}
                 </div>
                 {request.description && (
                   <p className="text-slate-400 text-sm" data-testid={`text-request-desc-${request.id}`}>
@@ -145,28 +150,32 @@ export default function PermissionRequestsPage() {
                   </p>
                 )}
               </div>
-              {userRole === 'dom' && request.status === 'pending' && (
+              {request.status === 'pending' && (
                 <div className="flex items-center gap-1">
-                  <Button
-                    data-testid={`button-approve-request-${request.id}`}
-                    variant="ghost"
-                    size="sm"
-                    className="text-green-500 hover:text-green-400"
-                    onClick={() => updateMutation.mutate({ id: request.id, status: 'approved' })}
-                    disabled={updateMutation.isPending}
-                  >
-                    <Check size={16} />
-                  </Button>
-                  <Button
-                    data-testid={`button-deny-request-${request.id}`}
-                    variant="ghost"
-                    size="sm"
-                    className="text-red-500 hover:text-red-400"
-                    onClick={() => updateMutation.mutate({ id: request.id, status: 'denied' })}
-                    disabled={updateMutation.isPending}
-                  >
-                    <X size={16} />
-                  </Button>
+                  <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can approve requests">
+                    <Button
+                      data-testid={`button-approve-request-${request.id}`}
+                      variant="ghost"
+                      size="sm"
+                      className="text-green-500 hover:text-green-400"
+                      onClick={() => updateMutation.mutate({ id: request.id, status: 'approved' })}
+                      disabled={updateMutation.isPending}
+                    >
+                      <Check size={16} />
+                    </Button>
+                  </RoleGatedAction>
+                  <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can deny requests">
+                    <Button
+                      data-testid={`button-deny-request-${request.id}`}
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-400"
+                      onClick={() => updateMutation.mutate({ id: request.id, status: 'denied' })}
+                      disabled={updateMutation.isPending}
+                    >
+                      <X size={16} />
+                    </Button>
+                  </RoleGatedAction>
                 </div>
               )}
             </div>

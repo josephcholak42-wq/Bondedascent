@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { AlertTriangle, Plus, Check, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useConflicts, useCreateConflict, useUpdateConflict, useAuth } from '@/lib/hooks';
 
 const statusColors: Record<string, string> = {
@@ -137,6 +138,7 @@ export default function ConflictsPage() {
                   >
                     {conflict.status}
                   </span>
+                  {userRole === 'dom' && conflict.status !== 'resolved' && <PulseIndicator show className="ml-1" />}
                 </div>
                 {conflict.description && (
                   <p className="text-slate-400 text-sm mb-2" data-testid={`text-conflict-desc-${conflict.id}`}>
@@ -163,7 +165,7 @@ export default function ConflictsPage() {
                       <MessageSquare size={16} />
                     </Button>
                   )}
-                  {userRole === 'dom' && (
+                  <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can resolve conflicts">
                     <Button
                       data-testid={`button-resolve-conflict-${conflict.id}`}
                       variant="ghost"
@@ -173,7 +175,7 @@ export default function ConflictsPage() {
                     >
                       <Check size={16} />
                     </Button>
-                  )}
+                  </RoleGatedAction>
                 </div>
               )}
             </div>

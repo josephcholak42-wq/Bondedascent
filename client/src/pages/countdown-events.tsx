@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Timer, Plus, Trash2, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useCountdownEvents, useCreateCountdownEvent, useDeleteCountdownEvent, useAuth } from '@/lib/hooks';
 
 function getCountdown(targetDate: string | Date) {
@@ -80,16 +81,16 @@ export default function CountdownEventsPage() {
             {userRole === 'dom' ? 'Countdown Events' : 'Upcoming Events'}
           </h1>
         </div>
-        {userRole === 'dom' && (
-          <Button
-            data-testid="button-toggle-form"
-            variant="outline"
-            className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white"
-            onClick={() => setShowForm(!showForm)}
-          >
-            <Plus size={16} className="mr-1" /> New Event
-          </Button>
-        )}
+        <RoleGatedButton
+          data-testid="button-toggle-form"
+          allowed={userRole === 'dom'}
+          tooltipText="Only your Dom can create events"
+          variant="outline"
+          className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-1" /> New Event
+        </RoleGatedButton>
       </div>
       <p className="text-sm text-slate-400 mb-8" data-testid="text-page-description">
         {userRole === 'dom' ? 'Set deadlines and milestones' : 'Events and deadlines set by your Dom'}
@@ -197,18 +198,11 @@ export default function CountdownEventsPage() {
                   >
                     {event.category}
                   </span>
-                  {userRole === 'dom' && (
-                    <Button
-                      data-testid={`button-delete-${event.id}`}
-                      variant="ghost"
-                      size="sm"
-                      className="text-slate-500 hover:text-red-500"
-                      onClick={() => handleDelete(event.id)}
-                      disabled={deleteMutation.isPending}
-                    >
+                  <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can delete events">
+                    <Button data-testid={`button-delete-${event.id}`} variant="ghost" size="sm" className="text-slate-500 hover:text-red-500" onClick={() => handleDelete(event.id)} disabled={deleteMutation.isPending}>
                       <Trash2 size={16} />
                     </Button>
-                  )}
+                  </RoleGatedAction>
                 </div>
               </div>
 

@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Eye, EyeOff, Lock, Plus, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useSecrets, useSecretsForMe, useCreateSecret, useRevealSecret, useAuth } from '@/lib/hooks';
 
 const TIER_COLORS: Record<string, string> = {
@@ -79,17 +80,20 @@ export default function SecretsPage() {
           ) : (
             <>
               <EyeOff size={16} className="text-slate-600" data-testid={`icon-hidden-${secret.id}`} />
-              {isShared && userRole === 'dom' && (
-                <Button
-                  data-testid={`button-reveal-secret-${secret.id}`}
-                  variant="ghost"
-                  size="sm"
-                  className="text-amber-400 hover:text-amber-300"
-                  onClick={() => handleReveal(secret.id)}
-                  disabled={revealSecretMutation.isPending}
-                >
-                  <Eye size={16} />
-                </Button>
+              {!secret.revealed && isShared && userRole === 'dom' && <PulseIndicator show className="ml-1" />}
+              {isShared && (
+                <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can reveal secrets">
+                  <Button
+                    data-testid={`button-reveal-secret-${secret.id}`}
+                    variant="ghost"
+                    size="sm"
+                    className="text-amber-400 hover:text-amber-300"
+                    onClick={() => handleReveal(secret.id)}
+                    disabled={revealSecretMutation.isPending}
+                  >
+                    <Eye size={16} />
+                  </Button>
+                </RoleGatedAction>
               )}
             </>
           )}

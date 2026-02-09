@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Target, Plus, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RoleGatedButton, RoleGatedAction, PulseIndicator, ActionBadge } from '@/components/ui/role-gate';
 import { useDesiredChanges, useCreateDesiredChange, useUpdateDesiredChange, useAuth } from '@/lib/hooks';
 
 const categoryColors: Record<string, string> = {
@@ -72,16 +73,16 @@ export default function DesiredChangesPage() {
         </div>
       </div>
 
-      {userRole === 'dom' && (
-        <Button
-          data-testid="button-toggle-form"
-          className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} className="mr-2" />
-          Request Change
-        </Button>
-      )}
+      <RoleGatedButton
+        data-testid="button-toggle-form"
+        allowed={userRole === 'dom'}
+        tooltipText="Only your Dom can request changes"
+        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+        onClick={() => setShowForm(!showForm)}
+      >
+        <Plus size={16} className="mr-2" />
+        Request Change
+      </RoleGatedButton>
 
       {showForm && userRole === 'dom' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-change">
@@ -170,29 +171,34 @@ export default function DesiredChangesPage() {
                 >
                   {change.status}
                 </span>
+                {userRole === 'sub' && change.status === 'active' && <PulseIndicator show className="ml-1" />}
               </div>
-              {userRole === 'dom' && change.status === 'active' && (
+              {change.status === 'active' && (
                 <div className="flex items-center gap-1">
-                  <Button
-                    data-testid={`button-achieve-change-${change.id}`}
-                    variant="ghost"
-                    size="sm"
-                    className="text-green-500 hover:text-green-400"
-                    onClick={() => handleStatusUpdate(change.id, 'achieved')}
-                    disabled={updateMutation.isPending}
-                  >
-                    <Check size={16} />
-                  </Button>
-                  <Button
-                    data-testid={`button-dismiss-change-${change.id}`}
-                    variant="ghost"
-                    size="sm"
-                    className="text-slate-500 hover:text-slate-400"
-                    onClick={() => handleStatusUpdate(change.id, 'dismissed')}
-                    disabled={updateMutation.isPending}
-                  >
-                    <X size={16} />
-                  </Button>
+                  <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can mark changes achieved">
+                    <Button
+                      data-testid={`button-achieve-change-${change.id}`}
+                      variant="ghost"
+                      size="sm"
+                      className="text-green-500 hover:text-green-400"
+                      onClick={() => handleStatusUpdate(change.id, 'achieved')}
+                      disabled={updateMutation.isPending}
+                    >
+                      <Check size={16} />
+                    </Button>
+                  </RoleGatedAction>
+                  <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can dismiss changes">
+                    <Button
+                      data-testid={`button-dismiss-change-${change.id}`}
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-500 hover:text-slate-400"
+                      onClick={() => handleStatusUpdate(change.id, 'dismissed')}
+                      disabled={updateMutation.isPending}
+                    >
+                      <X size={16} />
+                    </Button>
+                  </RoleGatedAction>
                 </div>
               )}
             </div>
