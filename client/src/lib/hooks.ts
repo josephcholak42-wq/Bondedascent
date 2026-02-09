@@ -905,3 +905,38 @@ export function useUpdatePlaySession() {
     },
   });
 }
+
+export function useVapidPublicKey() {
+  return useQuery<{ publicKey: string }>({
+    queryKey: ["/api/push/vapid-public-key"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    staleTime: Infinity,
+  });
+}
+
+export function useSubscribePush() {
+  return useMutation({
+    mutationFn: async (subscription: PushSubscriptionJSON) => {
+      const res = await apiRequest("POST", "/api/push/subscribe", { subscription });
+      return res.json();
+    },
+  });
+}
+
+export function useUnsubscribePush() {
+  return useMutation({
+    mutationFn: async (endpoint: string) => {
+      const res = await apiRequest("POST", "/api/push/unsubscribe", { endpoint });
+      return res.json();
+    },
+  });
+}
+
+export function useTestPush() {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/push/test");
+      return res.json();
+    },
+  });
+}

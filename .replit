@@ -50,3 +50,10 @@ waitForPort = 5000
 [agent]
 stack = "MOCKUP_JS"
 mockupState = "FULLSTACK"
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BKi6tnrbYRaQe3IH0CG_Ysn7JU1PQX8Sr7RnIwwVZLbxERiA5SR2SM2bJZ__fIacYTUvCSf7owJIruDq92DTVfc"
+VAPID_PRIVATE_KEY = "DotE5IvCy90NzFfy_bH_Iur83i_jvk5FYeLK9NW-GJc"
+VAPID_SUBJECT = "mailto:bonded@ascent.app"

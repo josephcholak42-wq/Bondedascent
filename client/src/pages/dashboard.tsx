@@ -33,6 +33,7 @@ import {
   usePartner, usePartnerStats, useGeneratePairCode, useJoinPairCode, useUnlinkPartner,
   usePartnerTasks, useCreatePartnerTask, usePartnerCheckIns, useReviewPartnerCheckIn,
   useCreatePartnerPunishment, useCreatePartnerReward, usePartnerActivity,
+  useVapidPublicKey, useSubscribePush, useUnsubscribePush, useTestPush,
 } from '@/lib/hooks';
 
 export default function BondedAscentApp() {
@@ -619,6 +620,8 @@ export default function BondedAscentApp() {
               <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${isCrisisMode ? 'translate-x-6' : 'translate-x-0'}`} />
             </button>
           </div>
+
+          <PushNotificationToggle />
 
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">Partner Bond</h3>
@@ -2242,6 +2245,116 @@ function SanctuaryNode({ icon, label, angle, color, onClick }: { icon: React.Rea
       <span className="text-[7px] font-black text-white uppercase absolute -bottom-5 w-24 text-center bg-black/80 px-1 py-0.5 rounded backdrop-blur-sm border border-white/10">{label}</span>
     </button>
   );
+}
+
+function PushNotificationToggle() {
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { data: vapidData } = useVapidPublicKey();
+  const subscribeMutation = useSubscribePush();
+  const unsubscribeMutation = useUnsubscribePush();
+  const testMutation = useTestPush();
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      navigator.serviceWorker.getRegistration('/sw.js').then(reg => {
+        if (reg) {
+          reg.pushManager.getSubscription().then(sub => {
+            setPushEnabled(!!sub);
+          });
+        }
+      });
+    }
+  }, []);
+
+  const handleToggle = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications are not supported in this browser.');
+      return;
+    }
+    setLoading(true);
+    try {
+      if (pushEnabled) {
+        const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+        if (reg) {
+          const sub = await reg.pushManager.getSubscription();
+          if (sub) {
+            await unsubscribeMutation.mutateAsync(sub.endpoint);
+            await sub.unsubscribe();
+          }
+        }
+        setPushEnabled(false);
+      } else {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          setLoading(false);
+          return;
+        }
+        if (!vapidData?.publicKey) {
+          setLoading(false);
+          return;
+        }
+        const applicationServerKey = urlBase64ToUint8Array(vapidData.publicKey);
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        });
+        await subscribeMutation.mutateAsync(sub.toJSON());
+        setPushEnabled(true);
+      }
+    } catch (err) {
+      console.error('Push toggle error:', err);
+    }
+    setLoading(false);
+  };
+
+  const supported = typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
+  if (!supported) return null;
+
+  return (
+    <div className="bg-gradient-to-r from-blue-950/50 to-black border border-blue-900/50 p-6 rounded-2xl flex items-center justify-between shadow-lg">
+      <div className="flex items-center gap-5">
+        <div className="bg-blue-900/30 p-3 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.2)]"><Bell size={24} className="text-blue-400" /></div>
+        <div>
+          <div className="font-bold text-blue-400 text-lg uppercase tracking-wide">Push Notifications</div>
+          <div className="text-xs text-blue-400/50 font-mono">Get alerts for tasks, messages & more</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {pushEnabled && (
+          <button
+            data-testid="button-test-push"
+            onClick={() => testMutation.mutate()}
+            disabled={testMutation.isPending}
+            className="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/30 hover:bg-blue-900/50 cursor-pointer"
+          >
+            Test
+          </button>
+        )}
+        <button 
+          data-testid="button-push-toggle"
+          onClick={handleToggle}
+          disabled={loading}
+          className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 shadow-inner cursor-pointer ${pushEnabled ? 'bg-blue-600 shadow-[0_0_10px_blue]' : 'bg-slate-900 border border-slate-700'}`}
+        >
+          <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${pushEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 function FeatureLink({ icon, label, href, color }: { icon: React.ReactElement<any>, label: string, href: string, color: string }) {

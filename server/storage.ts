@@ -5,7 +5,7 @@ import {
   journalEntries, notifications, activityLog, pairCodes,
   rituals, limits, secrets, wagers, ratings, countdownEvents,
   standingOrders, permissionRequests, devotions, conflicts,
-  desiredChanges, achievements, playSessions,
+  desiredChanges, achievements, playSessions, pushSubscriptions,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -18,6 +18,7 @@ import {
   type Devotion, type InsertDevotion, type Conflict, type InsertConflict,
   type DesiredChange, type InsertDesiredChange, type Achievement, type InsertAchievement,
   type PlaySession, type InsertPlaySession,
+  type PushSubscription, type InsertPushSubscription,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -121,6 +122,11 @@ export interface IStorage {
   getPlaySessions(userId: string): Promise<PlaySession[]>;
   createPlaySession(session: InsertPlaySession): Promise<PlaySession>;
   updatePlaySession(id: string, data: Partial<PlaySession>): Promise<PlaySession | undefined>;
+
+  getPushSubscriptions(userId: string): Promise<PushSubscription[]>;
+  createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
+  deletePushSubscription(endpoint: string): Promise<void>;
+  deletePushSubscriptionForUser(userId: string, endpoint: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -490,6 +496,27 @@ export class DatabaseStorage implements IStorage {
   async updatePlaySession(id: string, data: Partial<PlaySession>): Promise<PlaySession | undefined> {
     const [s] = await db.update(playSessions).set(data).where(eq(playSessions.id, id)).returning();
     return s;
+  }
+  async getPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  }
+
+  async createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {
+    await db.delete(pushSubscriptions).where(
+      and(eq(pushSubscriptions.userId, sub.userId), eq(pushSubscriptions.endpoint, sub.endpoint))
+    );
+    const [s] = await db.insert(pushSubscriptions).values(sub).returning();
+    return s;
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  }
+
+  async deletePushSubscriptionForUser(userId: string, endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(
+      and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpoint, endpoint))
+    );
   }
 }
 

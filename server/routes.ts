@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
+import { sendPushToUser, getVapidPublicKey } from "./push";
 import { type User } from "@shared/schema";
 import { z } from "zod";
 
@@ -10,6 +11,12 @@ function requireAuth(req: any, res: any, next: any) {
     return res.status(401).json({ message: "Not authenticated" });
   }
   next();
+}
+
+async function notifyUser(userId: string, text: string, type: string = "info") {
+  await storage.createNotification({ userId, text, type });
+  const title = type === "alert" ? "BondedAscent Alert" : "BondedAscent";
+  sendPushToUser(userId, title, text, type).catch(() => {});
 }
 
 const checkInBodySchema = z.object({
@@ -70,7 +77,7 @@ export async function registerRoutes(
         await storage.updateUserXp(user.id, newXp);
       }
       await storage.logActivity(user.id, "task_completed", task.text);
-      await storage.createNotification({ userId: user.id, text: `Completed: ${task.text} (+5 XP)`, type: "info" });
+      await notifyUser(user.id, `Completed: ${task.text} (+5 XP)`, "info");
     }
 
     res.json(task);
@@ -103,7 +110,7 @@ export async function registerRoutes(
     const { mood, obedience, notes } = parsed.data;
     const checkIn = await storage.createCheckIn({ userId: user.id, mood, obedience, notes });
     await storage.logActivity(user.id, "checkin_submitted", `Mood: ${mood}, Obedience: ${obedience}`);
-    await storage.createNotification({ userId: user.id, text: "Check-in submitted successfully", type: "info" });
+    await notifyUser(user.id, "Check-in submitted successfully", "info");
 
     const freshUser = await storage.getUser(user.id);
     if (freshUser) {
@@ -164,7 +171,7 @@ export async function registerRoutes(
     const text = dareOptions[Math.floor(Math.random() * dareOptions.length)];
     const dare = await storage.createDare(user.id, text);
     await storage.logActivity(user.id, "dare_spun", text);
-    await storage.createNotification({ userId: user.id, text: `New Dare: ${text}`, type: "info" });
+    await notifyUser(user.id, `New Dare: ${text}`, "info");
     res.status(201).json(dare);
   });
 
@@ -234,7 +241,7 @@ export async function registerRoutes(
       name: name.trim(),
     });
     await storage.logActivity(user.id, "punishment_assigned", name.trim());
-    await storage.createNotification({ userId: user.id, text: `Punishment assigned: ${name.trim()}`, type: "alert" });
+    await notifyUser(user.id, `Punishment assigned: ${name.trim()}`, "alert");
     res.status(201).json(punishment);
   });
 
@@ -387,8 +394,8 @@ export async function registerRoutes(
 
     await storage.logActivity(user.id, "partner_linked", `Paired with ${codeOwner.username}`);
     await storage.logActivity(pairCode.userId, "partner_linked", `Paired with ${user.username}`);
-    await storage.createNotification({ userId: user.id, text: `You are now bonded with ${codeOwner.username}`, type: "info" });
-    await storage.createNotification({ userId: pairCode.userId, text: `You are now bonded with ${user.username}`, type: "info" });
+    await notifyUser(user.id, `You are now bonded with ${codeOwner.username}`, "info");
+    await notifyUser(pairCode.userId, `You are now bonded with ${user.username}`, "info");
 
     res.json({ message: "Successfully paired!", partnerUsername: codeOwner.username });
   });
@@ -403,7 +410,7 @@ export async function registerRoutes(
     await storage.logActivity(user.id, "partner_unlinked", partner ? `Unlinked from ${partner.username}` : "Partner unlinked");
     if (partner) {
       await storage.logActivity(partner.id, "partner_unlinked", `${user.username} ended the bond`);
-      await storage.createNotification({ userId: partner.id, text: `${user.username} has ended the bond`, type: "alert" });
+      await notifyUser(partner.id, `${user.username} has ended the bond`, "alert");
     }
     res.json({ message: "Bond dissolved" });
   });
@@ -466,7 +473,7 @@ export async function registerRoutes(
     }
     const task = await storage.createTask({ text: text.trim(), userId: partner.id, assignedBy: user.id });
     await storage.logActivity(user.id, "task_assigned", `Assigned "${text.trim()}" to ${partner.username}`);
-    await storage.createNotification({ userId: partner.id, text: `New task from ${user.username}: ${text.trim()}`, type: "info" });
+    await notifyUser(partner.id, `New task from ${user.username}: ${text.trim()}`, "info");
     res.status(201).json(task);
   });
 
@@ -502,7 +509,7 @@ export async function registerRoutes(
     }
 
     await storage.logActivity(user.id, "checkin_reviewed", `${status} check-in for ${partner.username}`);
-    await storage.createNotification({ userId: partner.id, text: `Check-in ${status} by ${user.username}${xpAwarded > 0 ? ` (+${xpAwarded} XP)` : ''}`, type: "info" });
+    await notifyUser(partner.id, `Check-in ${status} by ${user.username}${xpAwarded > 0 ? ` (+${xpAwarded} XP)` : ''}`, "info");
     res.json(checkIn);
   });
 
@@ -516,7 +523,7 @@ export async function registerRoutes(
     }
     const punishment = await storage.createPunishment({ userId: partner.id, assignedBy: user.id, name: name.trim() });
     await storage.logActivity(user.id, "punishment_assigned", `Assigned "${name.trim()}" to ${partner.username}`);
-    await storage.createNotification({ userId: partner.id, text: `Punishment from ${user.username}: ${name.trim()}`, type: "alert" });
+    await notifyUser(partner.id, `Punishment from ${user.username}: ${name.trim()}`, "alert");
     res.status(201).json(punishment);
   });
 
@@ -531,7 +538,7 @@ export async function registerRoutes(
     const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
     const reward = await storage.createReward({ userId: partner.id, name: name.trim(), unlockLevel: lvl });
     await storage.logActivity(user.id, "reward_granted", `Granted "${name.trim()}" to ${partner.username}`);
-    await storage.createNotification({ userId: partner.id, text: `Reward from ${user.username}: ${name.trim()}`, type: "info" });
+    await notifyUser(partner.id, `Reward from ${user.username}: ${name.trim()}`, "info");
     res.status(201).json(reward);
   });
 
@@ -584,7 +591,7 @@ export async function registerRoutes(
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
     const ritual = await storage.createRitual({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, frequency, timeOfDay });
     await storage.logActivity(user.id, "ritual_assigned", `Assigned "${title.trim()}" to ${partner.username}`);
-    await storage.createNotification({ userId: partner.id, text: `New ritual from ${user.username}: ${title.trim()}`, type: "info" });
+    await notifyUser(partner.id, `New ritual from ${user.username}: ${title.trim()}`, "info");
     res.status(201).json(ritual);
   });
 
@@ -639,7 +646,7 @@ export async function registerRoutes(
     const secret = await storage.createSecret({ userId: user.id, forUserId, title: title.trim(), content: content.trim(), tier });
     await storage.logActivity(user.id, "secret_created", title.trim());
     if (forUserId) {
-      await storage.createNotification({ userId: forUserId, text: `${user.username} shared a secret with you`, type: "info" });
+      await notifyUser(forUserId, `${user.username} shared a secret with you`, "info");
     }
     res.status(201).json(secret);
   });
@@ -663,7 +670,7 @@ export async function registerRoutes(
     const wager = await storage.createWager({ userId: user.id, partnerId, title: title.trim(), description, stakes });
     await storage.logActivity(user.id, "wager_created", title.trim());
     if (partnerId) {
-      await storage.createNotification({ userId: partnerId, text: `${user.username} proposed a wager: ${title.trim()}`, type: "info" });
+      await notifyUser(partnerId, `${user.username} proposed a wager: ${title.trim()}`, "info");
     }
     res.status(201).json(wager);
   });
@@ -691,7 +698,7 @@ export async function registerRoutes(
     if (!ratedUserId || typeof overall !== "number") return res.status(400).json({ message: "Rated user and overall score required" });
     const rating = await storage.createRating({ userId: user.id, ratedUserId, overall, communication, obedience, effort, notes });
     await storage.logActivity(user.id, "rating_given", `Rated partner ${overall}/10`);
-    await storage.createNotification({ userId: ratedUserId, text: `${user.username} rated you ${overall}/10`, type: "info" });
+    await notifyUser(ratedUserId, `${user.username} rated you ${overall}/10`, "info");
     res.status(201).json(rating);
   });
 
@@ -749,7 +756,7 @@ export async function registerRoutes(
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
     const order = await storage.createStandingOrder({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, priority });
     await storage.logActivity(user.id, "standing_order_assigned", `Assigned "${title.trim()}" to ${partner.username}`);
-    await storage.createNotification({ userId: partner.id, text: `New standing order from ${user.username}: ${title.trim()}`, type: "info" });
+    await notifyUser(partner.id, `New standing order from ${user.username}: ${title.trim()}`, "info");
     res.status(201).json(order);
   });
 
@@ -767,7 +774,7 @@ export async function registerRoutes(
     await storage.logActivity(user.id, "permission_requested", title.trim());
     const partner = await storage.getPartner(user.id);
     if (partner) {
-      await storage.createNotification({ userId: partner.id, text: `${user.username} is requesting permission: ${title.trim()}`, type: "info" });
+      await notifyUser(partner.id, `${user.username} is requesting permission: ${title.trim()}`, "info");
     }
     res.status(201).json(request);
   });
@@ -887,6 +894,39 @@ export async function registerRoutes(
     const session = await storage.updatePlaySession(req.params.id, data);
     if (!session) return res.status(404).json({ message: "Not found" });
     res.json(session);
+  });
+
+  app.get("/api/push/vapid-public-key", (_req, res) => {
+    res.json({ publicKey: getVapidPublicKey() });
+  });
+
+  app.post("/api/push/subscribe", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { subscription } = req.body;
+    if (!subscription || !subscription.endpoint || !subscription.keys) {
+      return res.status(400).json({ message: "Invalid subscription" });
+    }
+    const sub = await storage.createPushSubscription({
+      userId: user.id,
+      endpoint: subscription.endpoint,
+      p256dh: subscription.keys.p256dh,
+      auth: subscription.keys.auth,
+    });
+    res.status(201).json(sub);
+  });
+
+  app.post("/api/push/unsubscribe", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ message: "Endpoint required" });
+    await storage.deletePushSubscriptionForUser(user.id, endpoint);
+    res.json({ message: "Unsubscribed" });
+  });
+
+  app.post("/api/push/test", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    await sendPushToUser(user.id, "BondedAscent", "Push notifications are working!", "test");
+    res.json({ message: "Test notification sent" });
   });
 
   return httpServer;
