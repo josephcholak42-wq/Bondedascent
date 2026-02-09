@@ -13,11 +13,14 @@ import {
   Dices, List, Play, Pause, AlertTriangle, Smile, Meh, Frown, 
   Music, Eye, Coffee, Thermometer, Info, HeartPulse,
   FlameKindling, Sparkles, BookHeart, UserRoundCheck, 
-  HandMetal, Ear, Hand, Gavel, FileSignature, Timer
+  HandMetal, Ear, Hand, Gavel, FileSignature, Timer,
+  Unlock, Ban, Search, Check, XCircle
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function BondedAscentApp() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -93,7 +96,7 @@ export default function BondedAscentApp() {
 
   // --- DOM DASHBOARD COMPONENT ---
   const DomDashboard = () => (
-    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
       
       {/* DOM HEADER */}
       <div className="flex flex-col items-center gap-6 pt-4">
@@ -120,10 +123,14 @@ export default function BondedAscentApp() {
             <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
                <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Compliance</div>
                <div className="text-2xl font-black text-green-500">92%</div>
+               <div className="text-[9px] text-green-500/50 mt-1">+4% this week</div>
             </div>
             <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-700 p-4 rounded-xl text-center">
                <div className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">XP Level</div>
                <div className="text-2xl font-black text-red-500">Lv 1</div>
+               <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
+                  <div className="h-full bg-red-600 w-[35%]"></div>
+               </div>
             </div>
          </div>
       </div>
@@ -138,31 +145,55 @@ export default function BondedAscentApp() {
               label="Assign Tasks" 
               sub="Manage Protocols" 
               color="text-blue-500" 
-              onClick={() => addNotification("Task assignment interface loaded")} 
+              onClick={() => setModal('dom_tasks')} 
             />
             <BigButton 
               icon={<Gift />} 
               label="Grant Reward" 
               sub="Unlock Vault Item" 
               color="text-purple-500" 
-              onClick={() => addNotification("Reward sent to Sub")} 
+              onClick={() => setModal('dom_rewards')} 
             />
             <BigButton 
               icon={<Gavel />} 
               label="Punish" 
               sub="Assign Penalty" 
               color="text-red-600" 
-              onClick={() => addNotification("Punishment protocol initiated")} 
+              onClick={() => setModal('dom_punish')} 
             />
             <BigButton 
               icon={<MessageSquare />} 
               label="Review Logs" 
-              sub="Read Check-ins" 
+              sub="3 Pending" 
               color="text-emerald-500" 
-              onClick={() => addNotification("Opening daily logs...")} 
+              onClick={() => setModal('dom_review')} 
             />
          </div>
 
+         {/* LIVE FEED WIDGET */}
+         <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
+            <div className="flex justify-between items-center mb-4">
+               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Live Activity Feed</h3>
+               <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Live
+               </div>
+            </div>
+            <div className="space-y-3">
+               {[
+                  { time: '2m ago', text: 'Sub checked "Hydration Protocol"', icon: <CheckCircle size={12} className="text-green-500" /> },
+                  { time: '15m ago', text: 'Wheel of Dares spun: "Plank"', icon: <Dices size={12} className="text-purple-500" /> },
+                  { time: '1h ago', text: 'Morning Check-in submitted', icon: <FileText size={12} className="text-blue-500" /> },
+               ].map((log, i) => (
+                  <div key={i} className="flex gap-3 items-start text-xs text-slate-300">
+                     <span className="font-mono text-slate-600 min-w-[50px]">{log.time}</span>
+                     <div className="mt-0.5">{log.icon}</div>
+                     <span>{log.text}</span>
+                  </div>
+               ))}
+            </div>
+         </div>
+
+         {/* OVERRIDE CONTROLS */}
          <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
             <div className="flex items-center gap-4">
                <ShieldAlert size={28} className="text-red-500" />
@@ -172,6 +203,23 @@ export default function BondedAscentApp() {
                </div>
             </div>
             <Button variant="destructive" size="sm" onClick={() => setIsCrisisMode(true)}>ACTIVATE</Button>
+         </div>
+
+         {/* MODULE LOCKS */}
+         <div className="bg-black/20 border border-white/5 p-4 rounded-xl space-y-4">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Module Access</h3>
+            <div className="space-y-2">
+               {[
+                  { label: "Wheel of Dares", active: true },
+                  { label: "Velvet Sanctuary", active: false },
+                  { label: "Community Chat", active: false }
+               ].map((mod, i) => (
+                  <div key={i} className="flex justify-between items-center p-2 rounded bg-white/5">
+                     <span className="text-sm font-bold text-slate-300">{mod.label}</span>
+                     <Switch checked={mod.active} onCheckedChange={() => addNotification(`${mod.label} permissions updated`)} />
+                  </div>
+               ))}
+            </div>
          </div>
       </div>
     </div>
@@ -342,6 +390,7 @@ export default function BondedAscentApp() {
                 const newRole = userRole === 'sub' ? 'dom' : 'sub';
                 setUserRole(newRole);
                 localStorage.setItem('userRole', newRole);
+                setActiveView('dashboard');
                 addNotification(`Switched to ${newRole.toUpperCase()} view`);
               }} />
               <ProfileItem icon={<LogOut size={20} />} label="Log Out" onClick={handleLogout} />
@@ -633,6 +682,99 @@ export default function BondedAscentApp() {
                 
                 {modal === 'safeword' && <div className="text-center p-4"><ShieldAlert size={64} className="mx-auto text-yellow-500 mb-6 animate-bounce" /><h2 className="text-2xl font-black text-white uppercase mb-4">Safeword Triggered</h2><p className="text-slate-400 mb-8">Alert sent to Partner. App paused.</p><button onClick={() => setModal(null)} className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold uppercase rounded-lg cursor-pointer">Resume</button></div>}
                 
+                {/* --- DOM SPECIFIC MODALS --- */}
+                {modal === 'dom_tasks' && (
+                  <div className="p-4 space-y-6">
+                    <div className="text-center mb-4">
+                      <List size={48} className="mx-auto text-blue-500 mb-2" />
+                      <h2 className="text-xl font-bold text-white uppercase">Assign Protocols</h2>
+                    </div>
+                    <div className="space-y-4">
+                       <div className="flex gap-2">
+                          <input type="text" placeholder="New Task Description..." className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500" />
+                          <Button className="bg-blue-600 hover:bg-blue-500"><Check size={16} /></Button>
+                       </div>
+                       <div className="space-y-2">
+                          <Label className="text-xs uppercase text-slate-500 font-bold tracking-widest pl-1">Active Protocols</Label>
+                          {tasks.map(t => (
+                             <div key={t.id} className="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-white/5">
+                                <span className="text-sm text-slate-300">{t.text}</span>
+                                <button className="text-slate-600 hover:text-red-500"><XCircle size={16} /></button>
+                             </div>
+                          ))}
+                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {modal === 'dom_rewards' && (
+                   <div className="p-4 space-y-6">
+                      <div className="text-center mb-4">
+                         <Gift size={48} className="mx-auto text-purple-500 mb-2" />
+                         <h2 className="text-xl font-bold text-white uppercase">Manage Rewards</h2>
+                      </div>
+                      <div className="space-y-3">
+                         {['Private Video Access', 'Extended Curfew', 'Wish Grant', 'Special Request'].map((r, i) => (
+                            <div key={i} className="flex justify-between items-center p-3 bg-slate-900/50 border border-white/5 rounded-xl">
+                               <div className="flex items-center gap-3">
+                                  <div className="p-2 bg-purple-500/10 rounded-full text-purple-400"><Star size={14} /></div>
+                                  <span className="text-sm font-bold text-slate-300">{r}</span>
+                               </div>
+                               <Switch />
+                            </div>
+                         ))}
+                      </div>
+                      <Button className="w-full bg-purple-600 hover:bg-purple-500 mt-4">Create Custom Reward</Button>
+                   </div>
+                )}
+
+                {modal === 'dom_punish' && (
+                   <div className="p-4 space-y-6">
+                      <div className="text-center mb-4">
+                         <Gavel size={48} className="mx-auto text-red-600 mb-2" />
+                         <h2 className="text-xl font-bold text-white uppercase">Discipline</h2>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                         {['Corner Time', 'Writing Lines', 'Cold Shower', 'Privilege Revoked'].map((p, i) => (
+                            <button key={i} className="p-4 bg-red-950/20 border border-red-900/30 hover:bg-red-900/40 hover:border-red-500/50 rounded-xl text-center transition-all group">
+                               <div className="text-red-500 font-bold text-xs uppercase mb-1 group-hover:text-white transition-colors">{p}</div>
+                               <div className="text-[9px] text-red-500/50">Assign Immediately</div>
+                            </button>
+                         ))}
+                      </div>
+                   </div>
+                )}
+
+                {modal === 'dom_review' && (
+                   <div className="p-4 space-y-6">
+                      <div className="text-center mb-4">
+                         <FileSignature size={48} className="mx-auto text-emerald-500 mb-2" />
+                         <h2 className="text-xl font-bold text-white uppercase">Pending Reviews</h2>
+                      </div>
+                      <div className="space-y-4">
+                         {[
+                            { type: 'Check-In', user: 'Sub', time: '1h ago', content: 'Morning protocol complete. Feeling compliant.' },
+                            { type: 'Photo Log', user: 'Sub', time: '3h ago', content: '[Image Attachment]' }
+                         ].map((rev, i) => (
+                            <div key={i} className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3">
+                               <div className="flex justify-between items-start">
+                                  <div className="flex gap-2 items-center">
+                                     <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">{rev.type}</span>
+                                     <span className="text-[10px] text-slate-500">{rev.time}</span>
+                                  </div>
+                               </div>
+                               <p className="text-sm text-slate-300 italic">"{rev.content}"</p>
+                               <div className="flex gap-2 pt-2 border-t border-white/5">
+                                  <Button size="sm" variant="ghost" className="flex-1 text-red-400 hover:text-red-300 hover:bg-red-950/30">Reject</Button>
+                                  <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white">Approve (+XP)</Button>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                )}
+
+                {/* --- SUB SPECIFIC MODALS --- */}
                 {modal === 'bond' && <div className="text-center p-4"><Anchor size={48} className="mx-auto text-red-600 mb-4" /><h2 className="text-xl font-black text-white uppercase">Level 1</h2><p className="text-red-400 font-bold uppercase text-xs mb-6">Emerging Bond</p><div className="w-full h-4 bg-black rounded-full overflow-hidden border border-white/20 mb-2"><div className="h-full bg-red-600" style={{ width: `${xp}%` }} /></div><div className="flex justify-between text-[10px] text-slate-500 uppercase"><span>0 XP</span><span>{xp} / 100</span><span>Level 2</span></div></div>}
                 
                 {modal === 'wheel' && (
