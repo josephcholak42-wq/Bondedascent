@@ -14,7 +14,7 @@ import {
   Music, Eye, Coffee, Thermometer, Info, HeartPulse,
   FlameKindling, Sparkles, BookHeart, UserRoundCheck, 
   HandMetal, Ear, Hand, Gavel, FileSignature, Timer,
-  Unlock, Ban, Search, Check, XCircle, Loader2, Plus
+  Unlock, Ban, Search, Check, XCircle, Loader2, Plus, Square
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -1373,17 +1373,43 @@ export default function BondedAscentApp() {
                 <div className="text-center">
                   <Heart size={48} className="mx-auto text-pink-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">Aftercare Protocol</h2>
+                  <p className="text-xs text-slate-500 mt-1">{aftercareActions.length}/4 steps completed</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <button className="flex flex-col items-center gap-2 p-4 bg-slate-900/50 border border-white/5 rounded-xl hover:border-pink-500/50 transition-all cursor-pointer">
-                    <Coffee size={24} className="text-pink-400" />
-                    <span className="text-[10px] font-bold uppercase text-slate-300">Hydrate</span>
-                  </button>
-                  <button className="flex flex-col items-center gap-2 p-4 bg-slate-900/50 border border-white/5 rounded-xl hover:border-pink-500/50 transition-all cursor-pointer">
-                    <Music size={24} className="text-pink-400" />
-                    <span className="text-[10px] font-bold uppercase text-slate-300">Soothe</span>
-                  </button>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { icon: <Coffee size={24} />, label: "Hydrate", key: "hydrate", desc: "Drink water" },
+                    { icon: <Music size={24} />, label: "Soothe", key: "soothe", desc: "Calming sounds" },
+                    { icon: <Heart size={24} />, label: "Comfort", key: "comfort", desc: "Physical comfort" },
+                    { icon: <MessageSquare size={24} />, label: "Debrief", key: "debrief", desc: "Talk it through" },
+                  ].map((item) => {
+                    const done = aftercareActions.includes(item.key);
+                    return (
+                      <button
+                        key={item.key}
+                        data-testid={`button-aftercare-${item.key}`}
+                        onClick={() => {
+                          if (!done) {
+                            setAftercareActions(prev => [...prev, item.key]);
+                            logActivityMutation.mutate({ action: 'aftercare', detail: item.label });
+                          }
+                        }}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all cursor-pointer
+                          ${done ? 'bg-pink-900/20 border-pink-500/30' : 'bg-slate-900/50 border-white/5 hover:border-pink-500/50'}`}
+                      >
+                        <div className={done ? 'text-pink-300' : 'text-pink-400'}>{item.icon}</div>
+                        <span className="text-[10px] font-bold uppercase text-slate-300">{item.label}</span>
+                        <span className="text-[9px] text-slate-600">{done ? 'Done' : item.desc}</span>
+                        {done && <Check size={12} className="text-pink-400" />}
+                      </button>
+                    );
+                  })}
                 </div>
+                {aftercareActions.length === 4 && (
+                  <div className="text-center bg-pink-900/20 border border-pink-500/20 p-4 rounded-xl">
+                    <div className="text-xs text-pink-400 font-bold uppercase">Aftercare Complete</div>
+                    <div className="text-[10px] text-slate-500 mt-1">All steps finished. You're safe.</div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1392,12 +1418,34 @@ export default function BondedAscentApp() {
                 <div className="text-center">
                   <Star size={48} className="mx-auto text-amber-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">Altar of Worship</h2>
+                  <p className="text-xs text-slate-500 mt-1">{worshipDone ? 'Devotion complete' : 'Daily devotion awaits'}</p>
                 </div>
-                <div className="bg-amber-900/10 border border-amber-500/20 p-6 rounded-2xl text-center">
+                <div className={`border p-6 rounded-2xl text-center transition-all ${worshipDone ? 'bg-amber-900/20 border-amber-500/30' : 'bg-amber-900/10 border-amber-500/20'}`}>
                   <div className="text-xs text-amber-400/70 uppercase tracking-widest mb-2 font-bold">Daily Devotion</div>
                   <div className="text-sm italic text-amber-200">"Your guidance is my only path."</div>
-                  <Button className="mt-6 w-full bg-amber-600 hover:bg-amber-500 text-black font-black uppercase tracking-widest text-xs">Acknowledge</Button>
+                  {worshipDone ? (
+                    <div className="mt-6 flex items-center justify-center gap-2 text-amber-400">
+                      <Check size={18} /> <span className="text-xs font-bold uppercase">Acknowledged</span>
+                    </div>
+                  ) : (
+                    <Button
+                      data-testid="button-worship-acknowledge"
+                      onClick={() => {
+                        setWorshipDone(true);
+                        logActivityMutation.mutate({ action: 'worship', detail: 'Daily devotion acknowledged' });
+                      }}
+                      className="mt-6 w-full bg-amber-600 hover:bg-amber-500 text-black font-black uppercase tracking-widest text-xs cursor-pointer"
+                    >
+                      Acknowledge
+                    </Button>
+                  )}
                 </div>
+                {partner && (
+                  <div className="bg-amber-950/20 border border-amber-800/20 p-4 rounded-xl text-center">
+                    <div className="text-[10px] text-amber-600 uppercase font-bold tracking-widest mb-1">Devoted to</div>
+                    <div className="text-lg font-black text-amber-400 uppercase">{partner.username}</div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1406,21 +1454,35 @@ export default function BondedAscentApp() {
                 <div className="text-center">
                   <Sliders size={48} className="mx-auto text-slate-400 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">Sensory Override</h2>
+                  <p className="text-xs text-slate-500 mt-1">{Object.values(sensoryToggles).filter(Boolean).length} active overrides</p>
                 </div>
                 <div className="space-y-4">
                   {[
-                    { icon: <Music size={14} />, label: "White Noise" },
-                    { icon: <Eye size={14} />, label: "Visual Dampening" },
-                    { icon: <Thermometer size={14} />, label: "Temp Control" }
-                  ].map((item, i) => (
-                    <div key={i} className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
+                    { icon: <Music size={14} />, label: "White Noise", key: "noise" as const },
+                    { icon: <Eye size={14} />, label: "Visual Dampening", key: "visual" as const },
+                    { icon: <Thermometer size={14} />, label: "Temp Control", key: "temp" as const }
+                  ].map((item) => (
+                    <div key={item.key} className={`flex justify-between items-center p-3 rounded-xl border transition-all
+                      ${sensoryToggles[item.key] ? 'bg-slate-800/60 border-slate-500/30' : 'bg-black/40 border-white/5'}`}>
                       <div className="flex items-center gap-3 text-sm font-bold text-slate-300 uppercase">
-                        {item.icon} {item.label}
+                        <span className={sensoryToggles[item.key] ? 'text-white' : 'text-slate-500'}>{item.icon}</span> {item.label}
                       </div>
-                      <Switch />
+                      <Switch
+                        data-testid={`switch-sensory-${item.key}`}
+                        checked={sensoryToggles[item.key]}
+                        onCheckedChange={(checked) => {
+                          setSensoryToggles(prev => ({ ...prev, [item.key]: checked }));
+                          logActivityMutation.mutate({ action: 'sensory_toggle', detail: `${item.label} ${checked ? 'enabled' : 'disabled'}` });
+                        }}
+                      />
                     </div>
                   ))}
                 </div>
+                {Object.values(sensoryToggles).some(Boolean) && (
+                  <div className="text-center bg-slate-800/40 border border-slate-600/20 p-3 rounded-xl">
+                    <div className="text-[10px] text-slate-400 uppercase font-bold">Override Active</div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1459,20 +1521,47 @@ export default function BondedAscentApp() {
                   <h2 className="text-xl font-bold text-white uppercase">Training Grounds</h2>
                   <p className="text-xs text-slate-500 mt-1">Structured exercises and drills</p>
                 </div>
+                {trainingActive && (
+                  <div className="bg-red-950/30 border border-red-500/30 p-4 rounded-2xl text-center space-y-3">
+                    <div className="text-[10px] text-red-400 uppercase font-bold tracking-widest">{trainingActive} Active</div>
+                    <div className="text-3xl font-black text-red-500 font-mono tracking-widest">{formatTimerDisplay(trainingTimer)}</div>
+                    <Button data-testid="button-stop-training" variant="destructive" size="sm" onClick={stopTraining} className="cursor-pointer">
+                      <Square size={14} className="mr-2" /> Stop & Record
+                    </Button>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { icon: <Timer size={20} />, label: "Endurance", desc: "Timed hold exercises" },
-                    { icon: <Hand size={20} />, label: "Posture", desc: "Position training" },
-                    { icon: <Ear size={20} />, label: "Obedience", desc: "Response drills" },
-                    { icon: <HeartPulse size={20} />, label: "Breathing", desc: "Controlled breathing" },
-                  ].map((item, i) => (
-                    <button key={i} className="flex flex-col items-center gap-2 p-4 bg-slate-900/50 border border-white/5 rounded-xl hover:border-red-500/50 transition-all cursor-pointer">
-                      <div className="text-red-400">{item.icon}</div>
-                      <span className="text-[10px] font-bold uppercase text-slate-300">{item.label}</span>
-                      <span className="text-[9px] text-slate-600">{item.desc}</span>
-                    </button>
-                  ))}
+                    { icon: <Timer size={20} />, label: "Endurance", key: "endurance", desc: "Timed hold exercises" },
+                    { icon: <Hand size={20} />, label: "Posture", key: "posture", desc: "Position training" },
+                    { icon: <Ear size={20} />, label: "Obedience", key: "obedience", desc: "Response drills" },
+                    { icon: <HeartPulse size={20} />, label: "Breathing", key: "breathing", desc: "Controlled breathing" },
+                  ].map((item) => {
+                    const completed = trainingCompleted.includes(item.key);
+                    const active = trainingActive === item.key;
+                    return (
+                      <button
+                        key={item.key}
+                        data-testid={`button-training-${item.key}`}
+                        onClick={() => !active && startTraining(item.key)}
+                        disabled={!!trainingActive && !active}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all cursor-pointer
+                          ${active ? 'bg-red-900/30 border-red-500/50 ring-1 ring-red-500/30' :
+                            completed ? 'bg-green-900/20 border-green-500/30' :
+                            'bg-slate-900/50 border-white/5 hover:border-red-500/50'}
+                          ${!!trainingActive && !active ? 'opacity-40' : ''}`}
+                      >
+                        <div className={active ? 'text-red-400 animate-pulse' : completed ? 'text-green-400' : 'text-red-400'}>{item.icon}</div>
+                        <span className="text-[10px] font-bold uppercase text-slate-300">{item.label}</span>
+                        <span className="text-[9px] text-slate-600">{completed ? 'Completed' : item.desc}</span>
+                        {completed && <Check size={12} className="text-green-500" />}
+                      </button>
+                    );
+                  })}
                 </div>
+                {trainingCompleted.length > 0 && (
+                  <div className="text-center text-[10px] text-emerald-500 font-bold uppercase">{trainingCompleted.length}/4 Exercises Complete</div>
+                )}
               </div>
             )}
 
@@ -1483,18 +1572,41 @@ export default function BondedAscentApp() {
                   <h2 className="text-xl font-bold text-white uppercase">Scene Builder</h2>
                   <p className="text-xs text-slate-500 mt-1">Plan and track scenes</p>
                 </div>
+                {scenePhase >= 0 && (
+                  <div className="bg-purple-950/30 border border-purple-500/30 p-4 rounded-2xl text-center space-y-3">
+                    <div className="text-[10px] text-purple-400 uppercase font-bold tracking-widest">Scene Active — {scenePhases[scenePhase]}</div>
+                    <div className="text-3xl font-black text-purple-400 font-mono tracking-widest">{formatTimerDisplay(sceneTimer)}</div>
+                    <div className="flex gap-2 justify-center">
+                      <Button data-testid="button-advance-scene" size="sm" onClick={advanceScene} className="bg-purple-600 hover:bg-purple-500 cursor-pointer">
+                        {scenePhase < scenePhases.length - 1 ? `Next: ${scenePhases[scenePhase + 1]}` : 'Complete Scene'}
+                      </Button>
+                      <Button data-testid="button-end-scene" variant="outline" size="sm" onClick={endScene} className="border-red-800 text-red-400 hover:bg-red-950 cursor-pointer">End</Button>
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-3">
                   {[
-                    { label: "Warm-Up", color: "bg-green-500/10 border-green-500/20 text-green-400" },
-                    { label: "Main Scene", color: "bg-purple-500/10 border-purple-500/20 text-purple-400" },
-                    { label: "Cooldown", color: "bg-blue-500/10 border-blue-500/20 text-blue-400" },
+                    { label: "Warm-Up", color: "bg-green-500/10 border-green-500/20 text-green-400", activeColor: "bg-green-500/30 border-green-500/50 text-green-300 ring-1 ring-green-500/30" },
+                    { label: "Main Scene", color: "bg-purple-500/10 border-purple-500/20 text-purple-400", activeColor: "bg-purple-500/30 border-purple-500/50 text-purple-300 ring-1 ring-purple-500/30" },
+                    { label: "Cooldown", color: "bg-blue-500/10 border-blue-500/20 text-blue-400", activeColor: "bg-blue-500/30 border-blue-500/50 text-blue-300 ring-1 ring-blue-500/30" },
                   ].map((phase, i) => (
-                    <div key={i} className={`p-4 rounded-xl border ${phase.color}`}>
-                      <div className="text-xs font-bold uppercase tracking-widest">{phase.label}</div>
-                      <div className="text-[10px] opacity-60 mt-1">Tap to configure phase details</div>
+                    <div key={i} className={`p-4 rounded-xl border transition-all ${scenePhase === i ? phase.activeColor : scenePhase > i ? 'bg-white/5 border-white/10 text-slate-600' : phase.color}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold uppercase tracking-widest">{phase.label}</div>
+                        {scenePhase > i && <Check size={14} className="text-green-500" />}
+                        {scenePhase === i && <div className="w-2 h-2 rounded-full bg-current animate-pulse" />}
+                      </div>
+                      <div className="text-[10px] opacity-60 mt-1">
+                        {scenePhase === i ? 'Currently active' : scenePhase > i ? 'Completed' : 'Pending'}
+                      </div>
                     </div>
                   ))}
                 </div>
+                {scenePhase < 0 && (
+                  <Button data-testid="button-start-scene" onClick={startScene} className="w-full bg-purple-600 hover:bg-purple-500 font-bold uppercase cursor-pointer">
+                    <Play size={16} className="mr-2" /> Start Scene
+                  </Button>
+                )}
               </div>
             )}
 
@@ -1503,15 +1615,47 @@ export default function BondedAscentApp() {
                 <div className="text-center">
                   <Activity size={48} className="mx-auto text-rose-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">Escalation Ladders</h2>
-                  <p className="text-xs text-slate-500 mt-1">Progressive intensity levels</p>
+                  <p className="text-xs text-slate-500 mt-1">Current intensity: Level {ladderLevel}</p>
                 </div>
                 <div className="space-y-2">
-                  {['Level 1 — Gentle', 'Level 2 — Moderate', 'Level 3 — Intense', 'Level 4 — Advanced', 'Level 5 — Expert'].map((lvl, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-slate-900/50 border border-white/5 rounded-xl">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${i < 2 ? 'bg-green-900/30 text-green-400' : i < 4 ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-400'}`}>{i + 1}</div>
-                      <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">{lvl}</span>
-                    </div>
-                  ))}
+                  {[
+                    { label: 'Level 1 — Gentle', desc: 'Light play, soft touch' },
+                    { label: 'Level 2 — Moderate', desc: 'Standard intensity' },
+                    { label: 'Level 3 — Intense', desc: 'Elevated sensations' },
+                    { label: 'Level 4 — Advanced', desc: 'High intensity play' },
+                    { label: 'Level 5 — Expert', desc: 'Maximum escalation' },
+                  ].map((lvl, i) => {
+                    const lvlNum = i + 1;
+                    const selected = ladderLevel === lvlNum;
+                    const unlocked = lvlNum <= level + 1;
+                    return (
+                      <button
+                        key={i}
+                        data-testid={`button-ladder-${lvlNum}`}
+                        onClick={() => {
+                          if (unlocked) {
+                            setLadderLevel(lvlNum);
+                            logActivityMutation.mutate({ action: 'ladder_set', detail: lvl.label });
+                          }
+                        }}
+                        disabled={!unlocked}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
+                          ${selected ? 'bg-rose-900/30 border-rose-500/50 ring-1 ring-rose-500/30' :
+                            unlocked ? 'bg-slate-900/50 border-white/5 hover:border-rose-500/30' :
+                            'bg-black/30 border-white/5 opacity-30 cursor-not-allowed'}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black
+                          ${selected ? 'bg-rose-500 text-white' : i < 2 ? 'bg-green-900/30 text-green-400' : i < 4 ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-400'}`}>
+                          {selected ? <Check size={14} /> : lvlNum}
+                        </div>
+                        <div className="text-left">
+                          <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">{lvl.label}</span>
+                          <div className="text-[9px] text-slate-600">{unlocked ? lvl.desc : 'Reach higher level to unlock'}</div>
+                        </div>
+                        {!unlocked && <Lock size={12} className="ml-auto text-slate-700" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1568,9 +1712,31 @@ export default function BondedAscentApp() {
               <div className="p-4 space-y-6 text-center">
                 <Zap size={48} className="mx-auto text-red-500 mb-2" />
                 <h2 className="text-xl font-bold text-white uppercase">Active Timers</h2>
-                <div className="bg-black/40 p-6 rounded-2xl border border-red-500/20">
-                  <div className="text-4xl font-black text-red-500 font-mono tracking-widest">00:00</div>
-                  <p className="text-[10px] text-slate-600 mt-2 uppercase">No active timers</p>
+                <div className="bg-black/40 p-6 rounded-2xl border border-red-500/20 space-y-3">
+                  {trainingActive ? (
+                    <>
+                      <div className="text-[10px] text-red-400 uppercase font-bold tracking-widest">Training: {trainingActive}</div>
+                      <div className="text-4xl font-black text-red-500 font-mono tracking-widest">{formatTimerDisplay(trainingTimer)}</div>
+                      <Button data-testid="button-timer-stop-training" variant="destructive" size="sm" onClick={stopTraining} className="cursor-pointer">Stop</Button>
+                    </>
+                  ) : scenePhase >= 0 ? (
+                    <>
+                      <div className="text-[10px] text-purple-400 uppercase font-bold tracking-widest">Scene: {scenePhases[scenePhase]}</div>
+                      <div className="text-4xl font-black text-purple-400 font-mono tracking-widest">{formatTimerDisplay(sceneTimer)}</div>
+                      <div className="flex gap-2 justify-center">
+                        <Button data-testid="button-timer-advance" size="sm" onClick={advanceScene} className="bg-purple-600 hover:bg-purple-500 cursor-pointer">
+                          {scenePhase < scenePhases.length - 1 ? 'Next Phase' : 'Complete'}
+                        </Button>
+                        <Button data-testid="button-timer-end" variant="outline" size="sm" onClick={endScene} className="border-red-800 text-red-400 cursor-pointer">End</Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-4xl font-black text-slate-700 font-mono tracking-widest">00:00</div>
+                      <p className="text-[10px] text-slate-600 uppercase">No active timers</p>
+                      <p className="text-[9px] text-slate-700">Start a training exercise or scene to see timers here</p>
+                    </>
+                  )}
                 </div>
                 <Button variant="outline" onClick={() => setModal(null)} className="border-slate-800 cursor-pointer">Close</Button>
               </div>
