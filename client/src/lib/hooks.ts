@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, getQueryFn } from "./queryClient";
-import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession } from "@shared/schema";
+import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession, Accusation } from "@shared/schema";
 
 type SafeUser = Omit<User, "password">;
 
@@ -1051,5 +1051,122 @@ export function useLockdownStatus() {
     queryKey: ["/api/partner/lockdown"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     refetchInterval: 10000,
+  });
+}
+
+export function useSetEnforcementLevel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (level: number) => {
+      const res = await apiRequest("POST", "/api/partner/enforcement", { level });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/partner/enforcement"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function usePartnerEnforcementLevel() {
+  return useQuery<{ enforcementLevel: number }>({
+    queryKey: ["/api/partner/enforcement"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchInterval: 10000,
+  });
+}
+
+export function useMyEnforcementLevel() {
+  return useQuery<{ enforcementLevel: number }>({
+    queryKey: ["/api/user/enforcement"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    refetchInterval: 10000,
+  });
+}
+
+export function useOverrideRevokeRewards() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/partner/override/revoke-rewards");
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/activity"] });
+    },
+  });
+}
+
+export function useOverrideClearTasks() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/partner/override/clear-tasks");
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/activity"] });
+    },
+  });
+}
+
+export function useOverrideForceCheckIn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/partner/override/force-checkin");
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/demand-timers"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/activity"] });
+    },
+  });
+}
+
+export function useAccusations() {
+  return useQuery<Accusation[]>({ queryKey: ["/api/accusations"] });
+}
+
+export function usePartnerAccusations() {
+  return useQuery<Accusation[]>({ queryKey: ["/api/partner/accusations"] });
+}
+
+export function useCreateAccusation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { accusation: string }) => {
+      const res = await apiRequest("POST", "/api/accusations", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/partner/accusations"] });
+      qc.invalidateQueries({ queryKey: ["/api/accusations"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/activity"] });
+    },
+  });
+}
+
+export function useRespondToAccusation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { id: string; response: string }) => {
+      const res = await apiRequest("POST", `/api/accusations/${data.id}/respond`, { response: data.response });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/accusations"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/accusations"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
   });
 }

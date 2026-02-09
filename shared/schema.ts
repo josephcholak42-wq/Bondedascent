@@ -13,6 +13,7 @@ export const users = pgTable("users", {
   level: integer("level").notNull().default(1),
   partnerId: varchar("partner_id"),
   lockedDown: boolean("locked_down").notNull().default(false),
+  enforcementLevel: integer("enforcement_level").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -436,6 +437,20 @@ export type Achievement = typeof achievements.$inferSelect;
 export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
 export type PlaySession = typeof playSessions.$inferSelect;
 export type InsertPlaySession = z.infer<typeof insertPlaySessionSchema>;
+
+export const accusations = pgTable("accusations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromUserId: varchar("from_user_id").notNull(),
+  toUserId: varchar("to_user_id").notNull(),
+  accusation: text("accusation").notNull(),
+  response: text("response"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAccusationSchema = createInsertSchema(accusations).omit({ id: true, createdAt: true, response: true, status: true });
+export type Accusation = typeof accusations.$inferSelect;
+export type InsertAccusation = z.infer<typeof insertAccusationSchema>;
 
 export const demandTimers = pgTable("demand_timers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

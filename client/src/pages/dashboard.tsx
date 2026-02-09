@@ -39,6 +39,9 @@ import {
   useQuickCommands, useSendQuickCommand, useAcknowledgeCommand,
   usePresenceHeartbeat, usePartnerPresence,
   useToggleLockdown, useLockdownStatus,
+  useSetEnforcementLevel, usePartnerEnforcementLevel, useMyEnforcementLevel,
+  useOverrideRevokeRewards, useOverrideClearTasks, useOverrideForceCheckIn,
+  useAccusations, usePartnerAccusations, useCreateAccusation, useRespondToAccusation,
 } from '@/lib/hooks';
 
 const PARTICLE_DATA = Array.from({ length: 20 }).map(() => ({
@@ -155,6 +158,18 @@ export default function BondedAscentApp() {
   const { data: partnerPresence } = usePartnerPresence(partner?.id);
   const toggleLockdownMutation = useToggleLockdown();
   const { data: lockdownStatus } = useLockdownStatus();
+  const setEnforcementLevelMutation = useSetEnforcementLevel();
+  const { data: partnerEnforcement } = usePartnerEnforcementLevel();
+  const { data: myEnforcement } = useMyEnforcementLevel();
+  const overrideRevokeRewardsMutation = useOverrideRevokeRewards();
+  const overrideClearTasksMutation = useOverrideClearTasks();
+  const overrideForceCheckInMutation = useOverrideForceCheckIn();
+  const { data: accusations = [] } = useAccusations();
+  const { data: partnerAccusations = [] } = usePartnerAccusations();
+  const createAccusationMutation = useCreateAccusation();
+  const respondToAccusationMutation = useRespondToAccusation();
+  const [accusationInput, setAccusationInput] = useState('');
+  const [accusationResponses, setAccusationResponses] = useState<Record<string, string>>({});
 
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const xp = stats?.xp ?? 0;
@@ -1612,44 +1627,96 @@ export default function BondedAscentApp() {
             {modal === 'dom_inspect' && (
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center">
-                  <Eye size={48} className="mx-auto text-emerald-500 mb-4" />
-                  <h2 className="text-xl font-bold text-white uppercase">Inspection</h2>
-                  <p className="text-xs text-slate-500 mt-1">{partner ? `Reviewing ${partner.username}'s reports` : 'No sub connected'}</p>
+                  <Crosshair size={48} className="mx-auto text-emerald-500 mb-4" />
+                  <h2 className="text-xl font-bold text-white uppercase">Interrogation</h2>
+                  <p className="text-xs text-slate-500 mt-1">{partner ? `Interrogating ${partner.username}` : 'No sub connected'}</p>
                 </div>
                 {!partner ? (
                   <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a sub first</div>
                 ) : (
-                  <div className="space-y-4">
-                    {partnerCheckIns.filter(c => c.status === 'pending').length > 0 && (
-                      <div className="bg-emerald-950/20 border border-emerald-500/20 p-3 rounded-xl text-center">
-                        <div className="text-xs text-emerald-400 font-bold uppercase">{partnerCheckIns.filter(c => c.status === 'pending').length} Pending Review</div>
+                  <div className="space-y-6">
+                    <div className="bg-emerald-950/20 border border-emerald-500/20 p-4 rounded-xl space-y-3">
+                      <div className="text-[10px] text-emerald-400 uppercase font-bold tracking-widest">Make an Accusation</div>
+                      <div className="flex gap-2">
+                        <input
+                          data-testid="input-accusation"
+                          type="text"
+                          value={accusationInput}
+                          onChange={(e) => setAccusationInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && accusationInput.trim()) {
+                              createAccusationMutation.mutate({ accusation: accusationInput });
+                              setAccusationInput('');
+                            }
+                          }}
+                          placeholder="State your accusation..."
+                          className="flex-1 bg-black/60 border border-emerald-900/50 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                        />
+                        <Button
+                          data-testid="button-send-accusation"
+                          className="bg-emerald-600 hover:bg-emerald-500 cursor-pointer"
+                          onClick={() => { if (accusationInput.trim()) { createAccusationMutation.mutate({ accusation: accusationInput }); setAccusationInput(''); } }}
+                          disabled={createAccusationMutation.isPending}
+                        >
+                          {createAccusationMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <SendHorizonal size={16} />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {partnerAccusations.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="text-[10px] text-emerald-400 uppercase font-bold tracking-widest">Accusations Log</div>
+                        {partnerAccusations.map((acc) => (
+                          <div key={acc.id} className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-2">
+                            <div className="flex gap-2 items-center">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${acc.status === 'pending' ? 'bg-red-900/30 text-red-400' : 'bg-emerald-900/30 text-emerald-400'}`}>
+                                {acc.status === 'pending' ? 'Awaiting Response' : 'Responded'}
+                              </span>
+                              <span className="text-[10px] text-slate-500">{formatTime(acc.createdAt)}</span>
+                            </div>
+                            <div className="text-sm text-white font-bold">"{acc.accusation}"</div>
+                            {acc.response && (
+                              <div className="bg-emerald-950/20 border border-emerald-500/10 p-3 rounded-lg">
+                                <div className="text-[9px] text-emerald-500 uppercase font-bold mb-1">Response</div>
+                                <div className="text-xs text-slate-300 italic">"{acc.response}"</div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
-                    {partnerCheckIns.filter(c => c.status === 'pending').map((rev) => (
-                      <div key={rev.id} className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3">
-                        <div className="flex gap-2 items-center">
-                          <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">Check-In</span>
-                          <span className="text-[10px] text-slate-500">{formatTime(rev.createdAt)}</span>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Mood:</span> <span className="text-white font-bold">{rev.mood}/10</span></div>
-                          <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Obedience:</span> <span className="text-white font-bold">{rev.obedience}/10</span></div>
-                        </div>
-                        {rev.notes && <p className="text-sm text-slate-300 italic">"{rev.notes}"</p>}
-                        <div className="flex gap-2">
-                          <Button data-testid={`button-vinspect-approve-${rev.id}`} size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-500 cursor-pointer" onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'approved', xpAwarded: 10 })} disabled={reviewPartnerCheckInMutation.isPending}>
-                            <Check size={14} className="mr-1" /> Approve (+10 XP)
-                          </Button>
-                          <Button data-testid={`button-vinspect-reject-${rev.id}`} size="sm" variant="outline" className="flex-1 border-red-900/50 text-red-400 hover:bg-red-950/50 cursor-pointer" onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'rejected', xpAwarded: 0 })} disabled={reviewPartnerCheckInMutation.isPending}>
-                            <XCircle size={14} className="mr-1" /> Reject
-                          </Button>
-                        </div>
+
+                    {partnerCheckIns.filter(c => c.status === 'pending').length > 0 && (
+                      <div className="space-y-3">
+                        <div className="text-[10px] text-emerald-400 uppercase font-bold tracking-widest">Pending Check-Ins</div>
+                        {partnerCheckIns.filter(c => c.status === 'pending').map((rev) => (
+                          <div key={rev.id} className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3">
+                            <div className="flex gap-2 items-center">
+                              <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">Check-In</span>
+                              <span className="text-[10px] text-slate-500">{formatTime(rev.createdAt)}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Mood:</span> <span className="text-white font-bold">{rev.mood}/10</span></div>
+                              <div className="bg-black/30 p-2 rounded"><span className="text-slate-500">Obedience:</span> <span className="text-white font-bold">{rev.obedience}/10</span></div>
+                            </div>
+                            {rev.notes && <p className="text-sm text-slate-300 italic">"{rev.notes}"</p>}
+                            <div className="flex gap-2">
+                              <Button data-testid={`button-vinspect-approve-${rev.id}`} size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-500 cursor-pointer" onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'approved', xpAwarded: 10 })} disabled={reviewPartnerCheckInMutation.isPending}>
+                                <Check size={14} className="mr-1" /> Approve (+10 XP)
+                              </Button>
+                              <Button data-testid={`button-vinspect-reject-${rev.id}`} size="sm" variant="outline" className="flex-1 border-red-900/50 text-red-400 hover:bg-red-950/50 cursor-pointer" onClick={() => reviewPartnerCheckInMutation.mutate({ checkInId: rev.id, status: 'rejected', xpAwarded: 0 })} disabled={reviewPartnerCheckInMutation.isPending}>
+                                <XCircle size={14} className="mr-1" /> Reject
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                    {partnerCheckIns.filter(c => c.status === 'pending').length === 0 && (
+                    )}
+
+                    {partnerCheckIns.filter(c => c.status === 'pending').length === 0 && partnerAccusations.length === 0 && (
                       <div className="text-center py-6">
                         <CheckCircle size={32} className="mx-auto text-emerald-700 mb-2" />
-                        <div className="text-xs text-slate-600 uppercase tracking-widest">All reports reviewed</div>
+                        <div className="text-xs text-slate-600 uppercase tracking-widest">No pending items</div>
                       </div>
                     )}
                   </div>
@@ -1748,30 +1815,32 @@ export default function BondedAscentApp() {
                 <div className="text-center">
                   <Activity size={48} className="mx-auto text-rose-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">Enforcement</h2>
-                  <p className="text-xs text-slate-500 mt-1">Set intensity and rules</p>
+                  <p className="text-xs text-slate-500 mt-1">Set intensity — auto-assigns tasks and restrictions</p>
                 </div>
                 <div className="bg-rose-950/20 border border-rose-500/20 p-4 rounded-xl text-center space-y-2">
                   <div className="text-[10px] text-rose-400 uppercase font-bold tracking-widest">Current Intensity</div>
-                  <div className="text-3xl font-black text-rose-500">Level {ladderLevel}</div>
+                  <div className="text-3xl font-black text-rose-500">Level {partnerEnforcement?.enforcementLevel ?? ladderLevel}</div>
                 </div>
                 <div className="space-y-2">
                   {[
-                    { label: 'Level 1 — Gentle', desc: 'Soft guidance, light rules' },
-                    { label: 'Level 2 — Moderate', desc: 'Standard expectations' },
-                    { label: 'Level 3 — Intense', desc: 'Strict adherence required' },
-                    { label: 'Level 4 — Advanced', desc: 'Full protocol enforcement' },
-                    { label: 'Level 5 — Absolute', desc: 'Total authority mode' },
+                    { label: 'Level 1 — Gentle', desc: 'Soft guidance, no auto-tasks', tasks: 0 },
+                    { label: 'Level 2 — Moderate', desc: 'Standard expectations, +2 tasks', tasks: 2 },
+                    { label: 'Level 3 — Intense', desc: 'Strict adherence, +3 tasks, timed check-ins', tasks: 3 },
+                    { label: 'Level 4 — Advanced', desc: 'Full protocol, +4 tasks, frequent reports', tasks: 4 },
+                    { label: 'Level 5 — Absolute', desc: 'Total authority, +5 tasks, permission required', tasks: 5 },
                   ].map((lvl, i) => {
                     const lvlNum = i + 1;
-                    const selected = ladderLevel === lvlNum;
+                    const currentLevel = partnerEnforcement?.enforcementLevel ?? ladderLevel;
+                    const selected = currentLevel === lvlNum;
                     return (
                       <button
                         key={i}
                         data-testid={`button-dom-enforce-${lvlNum}`}
                         onClick={() => {
                           setLadderLevel(lvlNum);
-                          logActivityMutation.mutate({ action: 'enforcement_set', detail: lvl.label });
+                          setEnforcementLevelMutation.mutate(lvlNum);
                         }}
+                        disabled={setEnforcementLevelMutation.isPending}
                         className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer
                           ${selected ? 'bg-rose-900/30 border-rose-500/50 ring-1 ring-rose-500/30' :
                             'bg-slate-900/50 border-white/5 hover:border-rose-500/30'}`}
@@ -1780,13 +1849,32 @@ export default function BondedAscentApp() {
                           ${selected ? 'bg-rose-500 text-white' : i < 2 ? 'bg-green-900/30 text-green-400' : i < 4 ? 'bg-yellow-900/30 text-yellow-400' : 'bg-red-900/30 text-red-400'}`}>
                           {selected ? <Check size={14} /> : lvlNum}
                         </div>
-                        <div className="text-left">
+                        <div className="text-left flex-1">
                           <span className="text-sm font-bold text-slate-300 uppercase tracking-wider">{lvl.label}</span>
                           <div className="text-[9px] text-slate-600">{lvl.desc}</div>
                         </div>
+                        {lvl.tasks > 0 && (
+                          <span className="text-[9px] font-bold text-rose-400 bg-rose-950/50 px-2 py-0.5 rounded-full">+{lvl.tasks}</span>
+                        )}
                       </button>
                     );
                   })}
+                </div>
+                {setEnforcementLevelMutation.isPending && (
+                  <div className="text-center py-2">
+                    <Loader2 size={18} className="mx-auto text-rose-500 animate-spin" />
+                    <div className="text-[10px] text-rose-400 mt-1 uppercase tracking-widest">Applying enforcement...</div>
+                  </div>
+                )}
+                <div className="bg-slate-900/40 border border-white/5 p-3 rounded-xl">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">What Happens at Each Level</div>
+                  <div className="space-y-1 text-[9px] text-slate-600">
+                    <div><span className="text-green-400 font-bold">Lv1:</span> No automatic tasks — gentle guidance only</div>
+                    <div><span className="text-green-400 font-bold">Lv2:</span> 2 reflection/devotion tasks auto-assigned</div>
+                    <div><span className="text-yellow-400 font-bold">Lv3:</span> 3 tasks + timed check-in requirements</div>
+                    <div><span className="text-orange-400 font-bold">Lv4:</span> 4 tasks + frequent reports + standing orders</div>
+                    <div><span className="text-red-400 font-bold">Lv5:</span> 5 tasks + permission required for all activities</div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1920,26 +2008,42 @@ export default function BondedAscentApp() {
                 </div>
                 <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl space-y-3">
                   <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Quick Overrides</div>
-                  {[
-                    { label: 'Revoke All Rewards', desc: 'Reset earned privileges', action: 'rewards_revoked' },
-                    { label: 'Clear Task Queue', desc: 'Remove all pending orders', action: 'tasks_cleared' },
-                    { label: 'Force Check-In', desc: 'Demand immediate report', action: 'checkin_forced' },
-                  ].map((item, i) => (
-                    <button
-                      key={i}
-                      data-testid={`button-dom-override-${i}`}
-                      onClick={() => {
-                        logActivityMutation.mutate({ action: item.action, detail: item.label });
-                      }}
-                      className="w-full flex items-center justify-between bg-black/30 border border-white/5 p-3 rounded-xl hover:border-red-500/30 transition-all cursor-pointer group"
-                    >
-                      <div className="text-left">
-                        <div className="text-xs font-bold text-slate-300 uppercase group-hover:text-white">{item.label}</div>
-                        <div className="text-[9px] text-slate-600">{item.desc}</div>
-                      </div>
-                      <ChevronRight size={14} className="text-slate-700 group-hover:text-red-500" />
-                    </button>
-                  ))}
+                  <button
+                    data-testid="button-dom-override-0"
+                    onClick={() => overrideRevokeRewardsMutation.mutate()}
+                    disabled={overrideRevokeRewardsMutation.isPending}
+                    className="w-full flex items-center justify-between bg-black/30 border border-white/5 p-3 rounded-xl hover:border-red-500/30 transition-all cursor-pointer group"
+                  >
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-300 uppercase group-hover:text-white">Revoke All Rewards</div>
+                      <div className="text-[9px] text-slate-600">Reset all earned privileges immediately</div>
+                    </div>
+                    {overrideRevokeRewardsMutation.isPending ? <Loader2 size={14} className="text-red-500 animate-spin" /> : <ChevronRight size={14} className="text-slate-700 group-hover:text-red-500" />}
+                  </button>
+                  <button
+                    data-testid="button-dom-override-1"
+                    onClick={() => overrideClearTasksMutation.mutate()}
+                    disabled={overrideClearTasksMutation.isPending}
+                    className="w-full flex items-center justify-between bg-black/30 border border-white/5 p-3 rounded-xl hover:border-red-500/30 transition-all cursor-pointer group"
+                  >
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-300 uppercase group-hover:text-white">Clear Task Queue</div>
+                      <div className="text-[9px] text-slate-600">Remove all pending orders from sub</div>
+                    </div>
+                    {overrideClearTasksMutation.isPending ? <Loader2 size={14} className="text-red-500 animate-spin" /> : <ChevronRight size={14} className="text-slate-700 group-hover:text-red-500" />}
+                  </button>
+                  <button
+                    data-testid="button-dom-override-2"
+                    onClick={() => overrideForceCheckInMutation.mutate()}
+                    disabled={overrideForceCheckInMutation.isPending}
+                    className="w-full flex items-center justify-between bg-black/30 border border-white/5 p-3 rounded-xl hover:border-red-500/30 transition-all cursor-pointer group"
+                  >
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-300 uppercase group-hover:text-white">Force Check-In</div>
+                      <div className="text-[9px] text-slate-600">Demand immediate report with 5-min timer</div>
+                    </div>
+                    {overrideForceCheckInMutation.isPending ? <Loader2 size={14} className="text-red-500 animate-spin" /> : <ChevronRight size={14} className="text-slate-700 group-hover:text-red-500" />}
+                  </button>
                 </div>
               </div>
             )}

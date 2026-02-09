@@ -6,7 +6,7 @@ import {
   rituals, limits, secrets, wagers, ratings, countdownEvents,
   standingOrders, permissionRequests, devotions, conflicts,
   desiredChanges, achievements, playSessions, pushSubscriptions,
-  demandTimers, quickCommands, presenceHeartbeats,
+  demandTimers, quickCommands, presenceHeartbeats, accusations,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -23,6 +23,7 @@ import {
   type DemandTimer, type InsertDemandTimer,
   type QuickCommand, type InsertQuickCommand,
   type PresenceHeartbeat,
+  type Accusation, type InsertAccusation,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -144,6 +145,14 @@ export interface IStorage {
   getPresence(userId: string): Promise<PresenceHeartbeat | undefined>;
 
   updateUserLockdown(userId: string, lockedDown: boolean): Promise<User | undefined>;
+  updateUserEnforcementLevel(userId: string, level: number): Promise<User | undefined>;
+
+  deleteAllTasksForUser(userId: string): Promise<void>;
+  revokeAllRewardsForUser(userId: string): Promise<void>;
+
+  getAccusations(toUserId: string): Promise<Accusation[]>;
+  createAccusation(accusation: InsertAccusation): Promise<Accusation>;
+  respondToAccusation(id: string, response: string): Promise<Accusation | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -581,6 +590,33 @@ export class DatabaseStorage implements IStorage {
   async updateUserLockdown(userId: string, lockedDown: boolean): Promise<User | undefined> {
     const [user] = await db.update(users).set({ lockedDown }).where(eq(users.id, userId)).returning();
     return user;
+  }
+
+  async updateUserEnforcementLevel(userId: string, level: number): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ enforcementLevel: level }).where(eq(users.id, userId)).returning();
+    return user;
+  }
+
+  async deleteAllTasksForUser(userId: string): Promise<void> {
+    await db.delete(tasks).where(eq(tasks.userId, userId));
+  }
+
+  async revokeAllRewardsForUser(userId: string): Promise<void> {
+    await db.update(rewards).set({ unlocked: false }).where(eq(rewards.userId, userId));
+  }
+
+  async getAccusations(toUserId: string): Promise<Accusation[]> {
+    return db.select().from(accusations).where(eq(accusations.toUserId, toUserId)).orderBy(desc(accusations.createdAt));
+  }
+
+  async createAccusation(accusation: InsertAccusation): Promise<Accusation> {
+    const [a] = await db.insert(accusations).values(accusation).returning();
+    return a;
+  }
+
+  async respondToAccusation(id: string, response: string): Promise<Accusation | undefined> {
+    const [a] = await db.update(accusations).set({ response, status: "responded" }).where(eq(accusations.id, id)).returning();
+    return a;
   }
 }
 

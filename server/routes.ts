@@ -1009,6 +1009,145 @@ export async function registerRoutes(
     res.json({ online: isOnline, lastSeen: presence.lastSeen });
   });
 
+  // --- ENFORCEMENT LEVEL ---
+  app.post("/api/partner/enforcement", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    const { level } = req.body;
+    if (typeof level !== "number" || level < 1 || level > 5) {
+      return res.status(400).json({ message: "Level must be between 1 and 5" });
+    }
+    const updated = await storage.updateUserEnforcementLevel(user.partnerId, level);
+    if (!updated) return res.status(404).json({ message: "Partner not found" });
+
+    const levelNames: Record<number, string> = {
+      1: "Gentle", 2: "Moderate", 3: "Intense", 4: "Advanced", 5: "Absolute"
+    };
+
+    const intensityTasks: Record<number, string[]> = {
+      1: [],
+      2: ["Write a 50-word reflection on your day", "Complete one devotion exercise"],
+      3: ["Write a 100-word reflection on your behavior today", "Complete two devotion exercises", "Submit a check-in within 1 hour"],
+      4: ["Write a 200-word detailed confession", "Complete three devotion exercises", "Submit check-ins every 4 hours", "Complete all standing orders before end of day"],
+      5: ["Write a 300-word detailed confession and self-assessment", "Complete all devotion exercises twice", "Submit check-ins every 2 hours", "Complete all standing orders immediately", "Request permission for any leisure activity"],
+    };
+
+    const tasksToCreate = intensityTasks[level] || [];
+    for (const taskText of tasksToCreate) {
+      await storage.createTask({ text: taskText, userId: user.partnerId, assignedBy: user.id });
+    }
+
+    if (level >= 3) {
+      await storage.updateUserLockdown(user.partnerId, false);
+    }
+
+    await notifyUser(user.partnerId, `Enforcement level changed to Level ${level} — ${levelNames[level]}. ${tasksToCreate.length > 0 ? `${tasksToCreate.length} new tasks assigned.` : ''}`, "alert");
+    await storage.logActivity(user.id, "enforcement_set", `Level ${level} — ${levelNames[level]}`);
+    await storage.logActivity(user.partnerId, "enforcement_received", `Level ${level} — ${levelNames[level]}${tasksToCreate.length > 0 ? ` (+${tasksToCreate.length} tasks)` : ''}`);
+
+    res.json({ enforcementLevel: updated.enforcementLevel, tasksCreated: tasksToCreate.length });
+  });
+
+  app.get("/api/partner/enforcement", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (user.partnerId) {
+      const partnerUser = await storage.getUser(user.partnerId);
+      res.json({ enforcementLevel: partnerUser?.enforcementLevel ?? 1 });
+    } else {
+      res.json({ enforcementLevel: 1 });
+    }
+  });
+
+  app.get("/api/user/enforcement", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    res.json({ enforcementLevel: user.enforcementLevel ?? 1 });
+  });
+
+  // --- OVERRIDE ACTIONS ---
+  app.post("/api/partner/override/revoke-rewards", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    await storage.revokeAllRewardsForUser(user.partnerId);
+    await notifyUser(user.partnerId, "All your rewards have been revoked by your Dom.", "alert");
+    await storage.logActivity(user.id, "rewards_revoked", "All partner rewards revoked");
+    await storage.logActivity(user.partnerId, "rewards_revoked_received", "All rewards have been revoked");
+    res.json({ message: "All rewards revoked" });
+  });
+
+  app.post("/api/partner/override/clear-tasks", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    await storage.deleteAllTasksForUser(user.partnerId);
+    await notifyUser(user.partnerId, "All your tasks have been cleared by your Dom.", "alert");
+    await storage.logActivity(user.id, "tasks_cleared", "All partner tasks cleared");
+    await storage.logActivity(user.partnerId, "tasks_cleared_received", "All tasks have been cleared");
+    res.json({ message: "All tasks cleared" });
+  });
+
+  app.post("/api/partner/override/force-checkin", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    await notifyUser(user.partnerId, "IMMEDIATE CHECK-IN REQUIRED. Submit your report now.", "alert");
+    await storage.logActivity(user.id, "checkin_forced", "Forced immediate check-in from partner");
+    await storage.logActivity(user.partnerId, "checkin_forced_received", "Immediate check-in demanded");
+    const expiresAt = new Date(Date.now() + 300000);
+    await storage.createDemandTimer({
+      fromUserId: user.id,
+      toUserId: user.partnerId,
+      message: "Immediate check-in required",
+      durationSeconds: 300,
+      expiresAt,
+    });
+    res.json({ message: "Check-in forced" });
+  });
+
+  // --- ACCUSATIONS ---
+  app.get("/api/accusations", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getAccusations(user.id);
+    res.json(list);
+  });
+
+  app.get("/api/partner/accusations", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    const list = await storage.getAccusations(user.partnerId);
+    res.json(list);
+  });
+
+  app.post("/api/accusations", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
+    const { accusation } = req.body;
+    if (!accusation || typeof accusation !== "string" || !accusation.trim()) {
+      return res.status(400).json({ message: "Accusation text required" });
+    }
+    const acc = await storage.createAccusation({
+      fromUserId: user.id,
+      toUserId: user.partnerId,
+      accusation: accusation.trim(),
+    });
+    await notifyUser(user.partnerId, `You have been accused: "${accusation.trim()}" — Respond immediately.`, "alert");
+    await storage.logActivity(user.id, "accusation_made", accusation.trim());
+    await storage.logActivity(user.partnerId, "accusation_received", accusation.trim());
+    res.status(201).json(acc);
+  });
+
+  app.post("/api/accusations/:id/respond", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { response } = req.body;
+    if (!response || typeof response !== "string" || !response.trim()) {
+      return res.status(400).json({ message: "Response required" });
+    }
+    const acc = await storage.respondToAccusation(req.params.id, response.trim());
+    if (!acc) return res.status(404).json({ message: "Accusation not found" });
+    if (acc.fromUserId) {
+      await notifyUser(acc.fromUserId, `Response to accusation "${acc.accusation}": "${response.trim()}"`, "info");
+    }
+    await storage.logActivity(user.id, "accusation_responded", `Re: "${acc.accusation}" — "${response.trim()}"`);
+    res.json(acc);
+  });
+
   app.post("/api/partner/lockdown", requireAuth, async (req, res) => {
     const user = req.user as User;
     if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
