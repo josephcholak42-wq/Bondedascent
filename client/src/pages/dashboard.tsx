@@ -10,7 +10,9 @@ import {
   LogOut, Trash2, Bell, ShieldAlert,
   Moon, Sun, RefreshCw, MessageSquare, RotateCcw,
   Dices, List, Play, Pause, AlertTriangle, Smile, Meh, Frown, 
-  Music, Eye, Coffee, Thermometer, Info, HeartPulse
+  Music, Eye, Coffee, Thermometer, Info, HeartPulse,
+  FlameKindling, Sparkles, BookHeart, UserRoundCheck, 
+  HandMetal, Ear, Hand
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -116,7 +118,7 @@ export default function BondedAscentApp() {
                 </div>
              </div>
              
-             <button onClick={() => setModal('bond')} className="w-full max-w-sm bg-gradient-to-b from-red-700 to-red-950 border-t border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.4)] px-6 py-4 rounded-full flex justify-between items-center group active:scale-95 transition-all cursor-pointer">
+             <button onClick={() => setModal('bond')} className="w-full max-sm px-6 py-4 rounded-full flex justify-between items-center group active:scale-95 transition-all cursor-pointer bg-gradient-to-b from-red-700 to-red-950 border-t border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.4)]">
                 <div className="flex items-center gap-3">
                    <Anchor size={20} className="text-white drop-shadow-md" />
                    <span className="font-black uppercase text-sm tracking-wider text-white">Level 1 <span className="opacity-70 font-bold text-[10px] ml-1">Emerging Bond</span></span>
@@ -668,17 +670,115 @@ export default function BondedAscentApp() {
 
                 {modal === 'training' && (
                    <div className="p-4 text-center">
-                      <Target size={48} className="mx-auto text-red-500 mb-4" />
-                      <h2 className="text-xl font-bold text-white uppercase mb-4">Training Session</h2>
+                      <FlameKindling size={48} className="mx-auto text-red-500 mb-4" />
+                      <h2 className="text-xl font-bold text-white uppercase mb-4">Fire Training</h2>
                       <div className="space-y-4">
                          <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 text-left">
-                            <div className="text-xs font-bold text-red-500 uppercase mb-1">Current Focus</div>
-                            <div className="text-sm text-slate-200 font-mono">Endurance & Compliance</div>
+                            <div className="text-xs font-bold text-red-500 uppercase mb-1">Session Target</div>
+                            <div className="text-sm text-slate-200 font-mono">Heat tolerance: 3 mins</div>
                          </div>
                          <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" className="border-slate-800" onClick={() => addNotification("Training protocol started")}><Play size={14} className="mr-2" /> Start</Button>
+                            <Button variant="default" className="bg-red-600 hover:bg-red-500" onClick={() => addNotification("Training protocol started")}><Play size={14} className="mr-2" /> Start</Button>
                             <Button variant="outline" className="border-slate-800"><RefreshCw size={14} className="mr-2" /> Reset</Button>
                          </div>
+                      </div>
+                   </div>
+                )}
+
+                {modal === 'scene' && (
+                  <div className="p-4 space-y-6">
+                    <div className="text-center">
+                       <Sparkles size={48} className="mx-auto text-purple-400 mb-4" />
+                       <h2 className="text-xl font-bold text-white uppercase">Scene Sync</h2>
+                    </div>
+                    <div className="space-y-4 bg-slate-900/30 p-4 rounded-xl border border-white/5">
+                       <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-slate-400">
+                          <span>Connection</span>
+                          <span className="text-green-500">Linked</span>
+                       </div>
+                       <div className="flex justify-between items-center text-sm font-bold uppercase tracking-widest text-slate-400">
+                          <span>Protocol</span>
+                          <span className="text-purple-400">Heavy Impact</span>
+                       </div>
+                       <Button className="w-full bg-purple-600 hover:bg-purple-500">Initiate Protocol</Button>
+                    </div>
+                  </div>
+                )}
+
+                {modal === 'ladders' && (
+                  <div className="p-4 space-y-6">
+                    <div className="text-center">
+                       <Activity size={48} className="mx-auto text-rose-500 mb-4" />
+                       <h2 className="text-xl font-bold text-white uppercase">Protocol Ladder</h2>
+                    </div>
+                    <div className="space-y-3">
+                       {[
+                         { label: "Novice Protocol", xp: "0", status: "Complete" },
+                         { label: "Intermediate Rigor", xp: "100", status: "Active" },
+                         { label: "Elite Compliance", xp: "500", status: "Locked" }
+                       ].map((step, i) => (
+                         <div key={i} className="flex justify-between items-center p-3 rounded-lg border border-white/5 bg-black/20">
+                           <div className="text-left">
+                              <div className="text-xs font-bold text-slate-200 uppercase">{step.label}</div>
+                              <div className="text-[9px] text-slate-500 font-mono">{step.xp} XP Requirement</div>
+                           </div>
+                           <div className={`text-[9px] font-bold uppercase ${step.status === 'Complete' ? 'text-green-500' : step.status === 'Active' ? 'text-rose-500' : 'text-slate-700'}`}>
+                              {step.status}
+                           </div>
+                         </div>
+                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {modal === 'logbook' && (
+                  <div className="p-4 space-y-6">
+                    <div className="text-center">
+                       <BookHeart size={48} className="mx-auto text-pink-400 mb-4" />
+                       <h2 className="text-xl font-bold text-white uppercase">The Logbook</h2>
+                    </div>
+                    <div className="bg-black/40 border border-white/5 p-4 rounded-xl text-left space-y-4">
+                       <div>
+                          <Label className="text-[10px] uppercase font-bold text-slate-500">Summary of Submissions</Label>
+                          <div className="text-sm text-slate-200 mt-1">Total Logs: 42</div>
+                       </div>
+                       <div>
+                          <Label className="text-[10px] uppercase font-bold text-slate-500">Last Reflection</Label>
+                          <div className="text-sm italic text-slate-400 mt-1">"The cold shower protocol was challenging but rewarding."</div>
+                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {modal === 'aftercare' && (
+                  <div className="p-4 space-y-6">
+                    <div className="text-center">
+                       <Heart size={48} className="mx-auto text-pink-500 mb-4" />
+                       <h2 className="text-xl font-bold text-white uppercase">Aftercare Protocol</h2>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <button className="flex flex-col items-center gap-2 p-4 bg-slate-900/50 border border-white/5 rounded-xl hover:border-pink-500/50 transition-all">
+                          <Coffee size={24} className="text-pink-400" />
+                          <span className="text-[10px] font-bold uppercase text-slate-300">Hydrate</span>
+                       </button>
+                       <button className="flex flex-col items-center gap-2 p-4 bg-slate-900/50 border border-white/5 rounded-xl hover:border-pink-500/50 transition-all">
+                          <Music size={24} className="text-pink-400" />
+                          <span className="text-[10px] font-bold uppercase text-slate-300">Soothe</span>
+                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {modal === 'worship' && (
+                   <div className="p-4 space-y-6">
+                      <div className="text-center">
+                         <Star size={48} className="mx-auto text-amber-500 mb-4" />
+                         <h2 className="text-xl font-bold text-white uppercase">Altar of Worship</h2>
+                      </div>
+                      <div className="bg-amber-900/10 border border-amber-500/20 p-6 rounded-2xl text-center">
+                         <div className="text-xs text-amber-400/70 uppercase tracking-widest mb-2 font-bold">Daily Devotion</div>
+                         <div className="text-sm italic text-amber-200">"Your guidance is my only path."</div>
+                         <Button className="mt-6 w-full bg-amber-600 hover:bg-amber-500 text-black font-black uppercase tracking-widest text-xs">Acknowledge</Button>
                       </div>
                    </div>
                 )}
@@ -736,7 +836,7 @@ export default function BondedAscentApp() {
                   </div>
                 )}
                 
-                {['scene', 'ladders', 'logbook', 'aftercare', 'worship', 'countdowns'].includes(modal) && (
+                {['countdowns'].includes(modal) && (
                    <div className="text-center py-8">
                       <Target size={48} className="mx-auto text-red-500 mb-4" />
                       <h2 className="text-2xl font-black text-white uppercase mb-4">{modal.replace('_', ' ')}</h2>
