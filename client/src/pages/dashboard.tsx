@@ -378,6 +378,26 @@ export default function BondedAscentApp() {
             <BigButton icon={<BookOpen />} label="Journal" sub={`${journalEntries.length} entries`} color="text-blue-500" onClick={() => setActiveView('journal')} />
           </div>
 
+          <div className="border-t border-white/5 pt-6">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">Features</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              <FeatureLink icon={<Flame />} label="Rituals" href="/rituals" color="text-orange-400" />
+              <FeatureLink icon={<Shield />} label="Limits" href="/limits" color="text-blue-400" />
+              <FeatureLink icon={<Eye />} label="Secrets" href="/secrets" color="text-purple-400" />
+              <FeatureLink icon={<Dices />} label="Wagers" href="/wagers" color="text-yellow-400" />
+              <FeatureLink icon={<Star />} label="Ratings" href="/ratings" color="text-amber-400" />
+              <FeatureLink icon={<HeartPulse />} label="Pulse" href="/connection-pulse" color="text-pink-400" />
+              <FeatureLink icon={<Play />} label="Sessions" href="/play-sessions" color="text-green-400" />
+              <FeatureLink icon={<Timer />} label="Countdown" href="/countdown-events" color="text-cyan-400" />
+              <FeatureLink icon={<Award />} label="Achieve" href="/achievements" color="text-emerald-400" />
+              <FeatureLink icon={<FileSignature />} label="Orders" href="/standing-orders" color="text-red-400" />
+              <FeatureLink icon={<Hand />} label="Permits" href="/permission-requests" color="text-indigo-400" />
+              <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" />
+              <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" />
+              <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" />
+            </div>
+          </div>
+
           <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
             <div className="flex items-center gap-4">
               <ShieldAlert size={28} className="text-red-500" />
