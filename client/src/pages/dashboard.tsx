@@ -9,7 +9,8 @@ import {
   PieChart, Award, Zap, Settings,
   LogOut, Trash2, Bell, ShieldAlert,
   Moon, Sun, RefreshCw, MessageSquare, RotateCcw,
-  Dices, List, Play, Pause, AlertTriangle, Smile, Meh, Frown
+  Dices, List, Play, Pause, AlertTriangle, Smile, Meh, Frown, 
+  Music, Eye, Coffee, Thermometer
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -223,20 +224,161 @@ export default function BondedAscentApp() {
     }
 
     if (['desired_changes', 'secrets', 'play_sessions', 'conflict', 'punishments'].includes(activeView)) {
+       const viewDetails = {
+          desired_changes: [
+             { title: "Increase Morning Protocol", sub: "Priority: High" },
+             { title: "Add Cold Showers", sub: "Status: Proposed" },
+             { title: "Reduce Screentime", sub: "Mistress Approved" }
+          ],
+          secrets: [
+             { title: "The Locked Drawer", sub: "Shared yesterday" },
+             { title: "Childhood Ambition", sub: "Mistress only" },
+             { title: "Hidden Expense", sub: "Awaiting confession" }
+          ],
+          play_sessions: [
+             { title: "Wednesday Night Training", sub: "Duration: 2h" },
+             { title: "Weekend Retreat", sub: "Status: Planned" },
+             { title: "Spontaneous Scene", sub: "Completed" }
+          ],
+          conflict: [
+             { title: "Communication Gap", sub: "Resolution in progress" },
+             { title: "Protocol Violation", sub: "Punishment served" },
+             { title: "Expectation Reset", sub: "Scheduled for Friday" }
+          ],
+          punishments: [
+             { title: "24h Silence", sub: "Active" },
+             { title: "Extra Protocol Duties", sub: "3 days remaining" },
+             { title: "Access Revoked", sub: "Completed" }
+          ]
+       };
+
       return (
         <div className="animate-in slide-in-from-right duration-500">
            <button onClick={() => setActiveView('profile')} className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 uppercase text-xs font-bold tracking-widest cursor-pointer"><ChevronRight className="rotate-180" size={14} /> Back to Profile</button>
            <h2 className="text-2xl font-black text-white uppercase mb-6">{activeView.replace('_', ' ')}</h2>
            <div className="space-y-4">
-              {[1,2,3].map(i => (
-                 <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-xl">
-                    <div className="h-4 w-3/4 bg-slate-800 rounded mb-2" />
-                    <div className="h-3 w-1/2 bg-slate-800/50 rounded" />
+              {(viewDetails[activeView as keyof typeof viewDetails] || []).map((item, i) => (
+                 <div key={i} className="p-4 bg-slate-900/50 border border-white/5 rounded-xl flex justify-between items-center group hover:border-red-500/30 transition-all">
+                    <div>
+                       <div className="font-bold text-slate-200 uppercase tracking-wide text-sm">{item.title}</div>
+                       <div className="text-xs text-slate-500 font-mono">{item.sub}</div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-700 group-hover:text-red-500" />
                  </div>
               ))}
            </div>
         </div>
       );
+    }
+
+    if (activeView === 'resume') {
+       return (
+          <div className="animate-in slide-in-from-right duration-500 space-y-6">
+             <h2 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-3">
+                <Terminal size={24} className="text-red-600" /> Submission Log
+             </h2>
+             <div className="space-y-3">
+                {[1,2,3,4,5].map(i => (
+                   <div key={i} className="bg-black/40 border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:bg-black/60 transition-colors">
+                      <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 group-hover:text-red-500">
+                            <FileText size={18} />
+                         </div>
+                         <div>
+                            <div className="text-sm font-bold text-white uppercase tracking-wider">Log Entry #{1024 - i}</div>
+                            <div className="text-[10px] text-slate-500">Protocol completed successfully</div>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <div className="text-[10px] font-mono text-slate-600">Feb 0{i}, 2026</div>
+                         <div className="text-[10px] font-bold text-green-500 uppercase">+10 XP</div>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
+       )
+    }
+
+    if (activeView === 'journal') {
+       return (
+          <div className="animate-in slide-in-from-right duration-500 space-y-6">
+             <h2 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-3">
+                <BookOpen size={24} className="text-pink-600" /> Reflection Journal
+             </h2>
+             <div className="bg-slate-900/30 border border-white/5 p-6 rounded-2xl">
+                <div className="mb-6">
+                   <Label className="text-slate-400 mb-2 block uppercase text-[10px] font-bold tracking-widest">Today's Reflection</Label>
+                   <textarea 
+                     className="w-full bg-black/50 border border-slate-800 rounded-xl p-4 text-slate-300 focus:outline-none focus:border-pink-500/50 min-h-[150px]"
+                     placeholder="Write your thoughts here..."
+                   />
+                </div>
+                <Button className="w-full bg-pink-900/50 border border-pink-500/30 text-pink-200 hover:bg-pink-800/50">Save Journal Entry</Button>
+             </div>
+             <div className="space-y-3">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">Previous Entries</h3>
+                {[1,2].map(i => (
+                   <div key={i} className="bg-black/40 border border-white/5 p-4 rounded-xl">
+                      <div className="text-[10px] font-mono text-pink-500 mb-1">Feb 0{7-i}, 2026</div>
+                      <div className="text-sm text-slate-400 line-clamp-2 italic">"I feel like my discipline is improving, though I struggled with the morning posture check today. I will strive to be more present tomorrow..."</div>
+                   </div>
+                ))}
+             </div>
+          </div>
+       )
+    }
+
+    if (activeView === 'stats') {
+       return (
+          <div className="animate-in slide-in-from-right duration-500 space-y-8">
+             <h2 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-3">
+                <Activity size={24} className="text-emerald-500" /> Bond Statistics
+             </h2>
+             
+             <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-center">
+                   <div className="text-2xl font-black text-white">92%</div>
+                   <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Obedience Score</div>
+                </div>
+                <div className="bg-slate-900/50 border border-white/5 p-4 rounded-2xl text-center">
+                   <div className="text-2xl font-black text-white">14</div>
+                   <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Day Streak</div>
+                </div>
+             </div>
+
+             <div className="bg-black/40 border border-white/5 p-6 rounded-2xl">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Activity Timeline</h3>
+                <div className="h-32 flex items-end gap-2 px-2">
+                   {[40, 65, 30, 85, 95, 55, 75].map((h, i) => (
+                      <div key={i} className="flex-1 bg-gradient-to-t from-red-950 to-red-600 rounded-t-sm" style={{ height: `${h}%` }} />
+                   ))}
+                </div>
+                <div className="flex justify-between mt-2 px-2 text-[8px] text-slate-600 font-mono uppercase">
+                   <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+             </div>
+
+             <div className="space-y-4">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">Breakdown</h3>
+                {[
+                   { label: 'Protocols', val: 88, color: 'bg-red-500' },
+                   { label: 'Journaling', val: 100, color: 'bg-emerald-500' },
+                   { label: 'Responsiveness', val: 72, color: 'bg-blue-500' }
+                ].map((stat, i) => (
+                   <div key={i} className="space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                         <span className="text-slate-400">{stat.label}</span>
+                         <span className="text-white">{stat.val}%</span>
+                      </div>
+                      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                         <div className={`h-full ${stat.color}`} style={{ width: `${stat.val}%` }} />
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
+       )
     }
 
     return (
@@ -274,8 +416,8 @@ export default function BondedAscentApp() {
         </div>
         <div className="flex flex-col gap-8 w-full px-2">
            <SidebarIcon icon={<Home />} active={activeView === 'dashboard'} onClick={() => setActiveView('dashboard')} />
-           <SidebarIcon icon={<Key />} active={activeView === 'resume'} onClick={() => setActiveView('resume')} />
-           <SidebarIcon icon={<Heart />} active={activeView === 'journal'} onClick={() => setActiveView('journal')} />
+           <SidebarIcon icon={<Terminal />} active={activeView === 'resume'} onClick={() => setActiveView('resume')} />
+           <SidebarIcon icon={<BookOpen />} active={activeView === 'journal'} onClick={() => setActiveView('journal')} />
            <SidebarIcon icon={<Activity />} active={activeView === 'stats'} onClick={() => setActiveView('stats')} />
            <div className="mt-auto pt-8 border-t border-white/10 w-full flex justify-center">
               <SidebarIcon icon={<Settings />} active={activeView === 'profile'} onClick={() => setActiveView('profile')} />
@@ -451,11 +593,11 @@ export default function BondedAscentApp() {
                            </div>
                            <span className="text-[10px] uppercase font-bold text-yellow-500">First Steps</span>
                         </div>
-                        <div className="flex flex-col items-center gap-2 opacity-50 grayscale">
-                           <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500">
-                              <Lock size={24} />
+                        <div className="flex flex-col items-center gap-2">
+                           <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500 flex items-center justify-center text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
+                              <Flame size={24} fill="currentColor" />
                            </div>
-                           <span className="text-[10px] uppercase font-bold text-slate-600">Locked</span>
+                           <span className="text-[10px] uppercase font-bold text-red-500">Fast Burner</span>
                         </div>
                         <div className="flex flex-col items-center gap-2 opacity-50 grayscale">
                            <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500">
@@ -493,12 +635,55 @@ export default function BondedAscentApp() {
                       </div>
                    </div>
                 )}
-                
-                {['training', 'scene', 'ladders', 'logbook', 'sensory', 'aftercare', 'worship', 'balance', 'countdowns'].includes(modal) && (
+
+                {modal === 'training' && (
+                   <div className="p-4 text-center">
+                      <Target size={48} className="mx-auto text-red-500 mb-4" />
+                      <h2 className="text-xl font-bold text-white uppercase mb-4">Training Session</h2>
+                      <div className="space-y-4">
+                         <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 text-left">
+                            <div className="text-xs font-bold text-red-500 uppercase mb-1">Current Focus</div>
+                            <div className="text-sm text-slate-200 font-mono">Endurance & Compliance</div>
+                         </div>
+                         <div className="grid grid-cols-2 gap-3">
+                            <Button variant="outline" className="border-slate-800"><Play size={14} className="mr-2" /> Start</Button>
+                            <Button variant="outline" className="border-slate-800"><RefreshCw size={14} className="mr-2" /> Reset</Button>
+                         </div>
+                      </div>
+                   </div>
+                )}
+
+                {modal === 'sensory' && (
+                   <div className="p-4 space-y-6">
+                      <div className="text-center">
+                         <Sliders size={48} className="mx-auto text-slate-400 mb-4" />
+                         <h2 className="text-xl font-bold text-white uppercase">Sensory Override</h2>
+                      </div>
+                      <div className="space-y-4">
+                         {[
+                            { icon: <Music size={14} />, label: "White Noise" },
+                            { icon: <Eye size={14} />, label: "Visual Dampening" },
+                            { icon: <Thermometer size={14} />, label: "Temp Control" }
+                         ].map((item, i) => (
+                            <div key={i} className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-white/5">
+                               <div className="flex items-center gap-3 text-sm font-bold text-slate-300 uppercase">
+                                  {item.icon} {item.label}
+                               </div>
+                               <div className="w-10 h-6 bg-slate-900 rounded-full p-1 relative">
+                                  <div className="w-4 h-4 bg-slate-600 rounded-full" />
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                )}
+
+                {['scene', 'ladders', 'logbook', 'aftercare', 'worship', 'balance', 'countdowns'].includes(modal) && (
                    <div className="text-center py-8">
                       <Target size={48} className="mx-auto text-red-500 mb-4" />
                       <h2 className="text-2xl font-black text-white uppercase mb-4">{modal.replace('_', ' ')}</h2>
-                      <p className="text-slate-400">Module loaded. Ready for input.</p>
+                      <p className="text-slate-400 px-8 text-sm">Module initialized. Awaiting partner connection to synchronize data.</p>
+                      <Button variant="outline" onClick={() => setModal(null)} className="mt-6 border-slate-800">Close</Button>
                    </div>
                 )}
            </div>
