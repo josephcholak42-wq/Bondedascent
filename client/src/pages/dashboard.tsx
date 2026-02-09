@@ -874,6 +874,52 @@ export default function BondedAscentApp() {
                 </div>
               )}
 
+              {accusations.filter((a: any) => a.status === 'pending').length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Pending Accusations</h4>
+                  {accusations.filter((a: any) => a.status === 'pending').map((acc: any) => (
+                    <div key={acc.id} className="bg-red-950/40 border border-red-900/50 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Crosshair size={12} className="text-red-400" />
+                        <span className="text-xs font-bold text-white">"{acc.accusation}"</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          data-testid={`input-accusation-response-${acc.id}`}
+                          type="text"
+                          value={accusationResponses[acc.id] || ''}
+                          onChange={(e) => setAccusationResponses(prev => ({ ...prev, [acc.id]: e.target.value }))}
+                          placeholder="Your response..."
+                          className="flex-1 bg-black/60 border border-red-900/50 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
+                        />
+                        <Button
+                          data-testid={`button-respond-accusation-${acc.id}`}
+                          size="sm"
+                          variant="outline"
+                          className="border-red-500/50 text-red-400 text-[10px] uppercase cursor-pointer"
+                          onClick={() => {
+                            if (accusationResponses[acc.id]?.trim()) {
+                              respondToAccusationMutation.mutate({ id: acc.id, response: accusationResponses[acc.id] });
+                              setAccusationResponses(prev => { const n = { ...prev }; delete n[acc.id]; return n; });
+                            }
+                          }}
+                          disabled={respondToAccusationMutation.isPending}
+                        >
+                          Respond
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {myEnforcement && (myEnforcement as any).enforcementLevel > 1 && (
+                <div className="bg-rose-950/30 border border-rose-500/20 rounded-xl p-3 text-center">
+                  <div className="text-[10px] text-rose-400 uppercase font-bold tracking-widest">Enforcement Active</div>
+                  <div className="text-lg font-black text-rose-500">Level {(myEnforcement as any).enforcementLevel}</div>
+                </div>
+              )}
+
               {quickCommands.filter((c: any) => !c.acknowledged).length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Pending Orders</h4>
