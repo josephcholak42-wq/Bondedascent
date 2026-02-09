@@ -10,7 +10,7 @@ import {
   LogOut, Trash2, Bell, ShieldAlert,
   Moon, Sun, RefreshCw, MessageSquare, RotateCcw,
   Dices, List, Play, Pause, AlertTriangle, Smile, Meh, Frown, 
-  Music, Eye, Coffee, Thermometer
+  Music, Eye, Coffee, Thermometer, Info, HeartPulse
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,10 @@ export default function BondedAscentApp() {
   const [isCrisisMode, setIsCrisisMode] = useState(false);
   const [modal, setModal] = useState<string | null>(null);
   const [xp, setXp] = useState(35);
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: "New Dare available on the Wheel", type: "info" },
+    { id: 2, text: "Mistress requested a photo log", type: "alert" }
+  ]);
 
   // --- MODULE STATES ---
   const [isSpinning, setIsSpinning] = useState(false);
@@ -38,7 +42,18 @@ export default function BondedAscentApp() {
 
   const toggleTask = (id: number) => {
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
-    if (tasks.find(t => t.id === id && !t.done)) setXp(curr => Math.min(curr + 5, 100));
+    if (tasks.find(t => t.id === id && !t.done)) {
+      setXp(curr => Math.min(curr + 5, 100));
+      // Achievement notification
+      if (tasks.filter(t => t.done).length + 1 === tasks.length) {
+        addNotification("Daily Protocol Complete! +20 Bonus XP");
+        setXp(curr => Math.min(curr + 20, 100));
+      }
+    }
+  };
+
+  const addNotification = (text: string) => {
+    setNotifications(prev => [{ id: Date.now(), text, type: 'info' }, ...prev].slice(0, 5));
   };
 
   const spinWheel = () => {
@@ -47,7 +62,9 @@ export default function BondedAscentApp() {
     setTimeout(() => {
       setIsSpinning(false);
       const dares = ["Send a photo holding your breath", "Write a poem about obedience", "30 min plank", "No speaking for 1 hour", "Wear the collar for 2 hours", "Cold shower", "Request permission to speak"];
-      setWheelResult(dares[Math.floor(Math.random() * dares.length)]);
+      const result = dares[Math.floor(Math.random() * dares.length)];
+      setWheelResult(result);
+      addNotification(`New Dare: ${result}`);
     }, 2000);
   };
 
@@ -56,7 +73,7 @@ export default function BondedAscentApp() {
      setCheckInStep(0);
      setCheckInData({ mood: 5, obedience: 5, notes: '' });
      setXp(curr => Math.min(curr + 15, 100)); // Bonus XP
-     alert("Check-in submitted. +15 XP");
+     addNotification("Check-in submitted. Reward granted.");
   };
 
   // --- RENDER CONTENT SWITCHER ---
@@ -65,6 +82,19 @@ export default function BondedAscentApp() {
       return (
         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
           
+          {/* NOTIFICATION TOASTS (Compact Inline) */}
+          {notifications.length > 0 && (
+            <div className="space-y-2">
+              {notifications.map(n => (
+                <div key={n.id} className="bg-white/5 border border-white/10 p-3 rounded-xl flex items-center gap-3 animate-in slide-in-from-top-2">
+                  <Info size={14} className="text-red-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">{n.text}</span>
+                  <button onClick={() => setNotifications(prev => prev.filter(x => x.id !== n.id))} className="ml-auto opacity-50 hover:opacity-100"><X size={12}/></button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* HEADER CARD */}
           <div className="flex flex-col items-center gap-6 pt-4">
              <div className="flex items-center gap-8 relative">
@@ -599,11 +629,11 @@ export default function BondedAscentApp() {
                            </div>
                            <span className="text-[10px] uppercase font-bold text-red-500">Fast Burner</span>
                         </div>
-                        <div className="flex flex-col items-center gap-2 opacity-50 grayscale">
-                           <div className="w-16 h-16 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500">
-                              <Lock size={24} />
+                        <div className="flex flex-col items-center gap-2">
+                           <div className="w-16 h-16 rounded-full bg-pink-500/20 border border-pink-500 flex items-center justify-center text-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.2)]">
+                              <HeartPulse size={24} fill="currentColor" />
                            </div>
-                           <span className="text-[10px] uppercase font-bold text-slate-600">Locked</span>
+                           <span className="text-[10px] uppercase font-bold text-pink-500">Committed</span>
                         </div>
                      </div>
                   </div>
@@ -646,7 +676,7 @@ export default function BondedAscentApp() {
                             <div className="text-sm text-slate-200 font-mono">Endurance & Compliance</div>
                          </div>
                          <div className="grid grid-cols-2 gap-3">
-                            <Button variant="outline" className="border-slate-800"><Play size={14} className="mr-2" /> Start</Button>
+                            <Button variant="outline" className="border-slate-800" onClick={() => addNotification("Training protocol started")}><Play size={14} className="mr-2" /> Start</Button>
                             <Button variant="outline" className="border-slate-800"><RefreshCw size={14} className="mr-2" /> Reset</Button>
                          </div>
                       </div>
@@ -669,16 +699,44 @@ export default function BondedAscentApp() {
                                <div className="flex items-center gap-3 text-sm font-bold text-slate-300 uppercase">
                                   {item.icon} {item.label}
                                </div>
-                               <div className="w-10 h-6 bg-slate-900 rounded-full p-1 relative">
+                               <button 
+                                 className="w-10 h-6 bg-slate-900 rounded-full p-1 relative border border-white/10"
+                                 onClick={() => addNotification(`${item.label} toggled`)}
+                               >
                                   <div className="w-4 h-4 bg-slate-600 rounded-full" />
-                               </div>
+                               </button>
                             </div>
                          ))}
                       </div>
                    </div>
                 )}
 
-                {['scene', 'ladders', 'logbook', 'aftercare', 'worship', 'balance', 'countdowns'].includes(modal) && (
+                {modal === 'balance' && (
+                  <div className="p-4 space-y-6 text-center">
+                    <Clock size={48} className="mx-auto text-yellow-500 mb-2" />
+                    <h2 className="text-xl font-bold text-white uppercase">Balance Sheet</h2>
+                    <div className="bg-black/40 p-6 rounded-2xl border border-yellow-500/20 space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-400 uppercase font-bold">Credits</span>
+                        <span className="text-xl font-black text-yellow-500">1,250</span>
+                      </div>
+                      <div className="h-0.5 bg-white/5 w-full" />
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-[10px] text-slate-500">
+                          <span>Pending Debts</span>
+                          <span>-200</span>
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-500">
+                          <span>Mistress Tax</span>
+                          <span>-50</span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button className="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-black">Transfer to Mistress</Button>
+                  </div>
+                )}
+                
+                {['scene', 'ladders', 'logbook', 'aftercare', 'worship', 'countdowns'].includes(modal) && (
                    <div className="text-center py-8">
                       <Target size={48} className="mx-auto text-red-500 mb-4" />
                       <h2 className="text-2xl font-black text-white uppercase mb-4">{modal.replace('_', ' ')}</h2>
