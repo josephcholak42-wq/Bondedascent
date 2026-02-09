@@ -2,12 +2,12 @@ import { eq, desc, and } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, tasks, checkIns, dares, rewards, punishments,
-  journalEntries, notifications, activityLog,
+  journalEntries, notifications, activityLog, pairCodes,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
   type InsertJournal, type Notification, type InsertNotification,
-  type ActivityLogEntry, type Dare,
+  type ActivityLogEntry, type Dare, type PairCode,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -49,6 +49,13 @@ export interface IStorage {
 
   getActivityLog(userId: string): Promise<ActivityLogEntry[]>;
   logActivity(userId: string, action: string, detail?: string): Promise<ActivityLogEntry>;
+
+  createPairCode(userId: string, code: string, expiresAt: Date): Promise<PairCode>;
+  getPairCodeByCode(code: string): Promise<PairCode | undefined>;
+  usePairCode(codeId: string, usedByUserId: string): Promise<PairCode | undefined>;
+  linkPartners(userId1: string, userId2: string): Promise<void>;
+  unlinkPartner(userId: string): Promise<void>;
+  getPartner(userId: string): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -193,6 +200,40 @@ export class DatabaseStorage implements IStorage {
   async logActivity(userId: string, action: string, detail?: string): Promise<ActivityLogEntry> {
     const [entry] = await db.insert(activityLog).values({ userId, action, detail }).returning();
     return entry;
+  }
+
+  async createPairCode(userId: string, code: string, expiresAt: Date): Promise<PairCode> {
+    const [pairCode] = await db.insert(pairCodes).values({ userId, code, expiresAt }).returning();
+    return pairCode;
+  }
+
+  async getPairCodeByCode(code: string): Promise<PairCode | undefined> {
+    const [pairCode] = await db.select().from(pairCodes).where(and(eq(pairCodes.code, code), eq(pairCodes.used, false)));
+    return pairCode;
+  }
+
+  async usePairCode(codeId: string, usedByUserId: string): Promise<PairCode | undefined> {
+    const [updated] = await db.update(pairCodes).set({ used: true, usedBy: usedByUserId }).where(eq(pairCodes.id, codeId)).returning();
+    return updated;
+  }
+
+  async linkPartners(userId1: string, userId2: string): Promise<void> {
+    await db.update(users).set({ partnerId: userId2 }).where(eq(users.id, userId1));
+    await db.update(users).set({ partnerId: userId1 }).where(eq(users.id, userId2));
+  }
+
+  async unlinkPartner(userId: string): Promise<void> {
+    const user = await this.getUser(userId);
+    if (!user?.partnerId) return;
+    const partnerId = user.partnerId;
+    await db.update(users).set({ partnerId: null }).where(eq(users.id, userId));
+    await db.update(users).set({ partnerId: null }).where(eq(users.id, partnerId));
+  }
+
+  async getPartner(userId: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user?.partnerId) return undefined;
+    return this.getUser(user.partnerId);
   }
 }
 

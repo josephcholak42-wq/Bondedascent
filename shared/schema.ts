@@ -85,6 +85,16 @@ export const activityLog = pgTable("activity_log", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const pairCodes = pgTable("pair_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: text("code").notNull().unique(),
+  userId: varchar("user_id").notNull(),
+  used: boolean("used").notNull().default(false),
+  usedBy: varchar("used_by"),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -146,3 +156,4 @@ export type InsertJournal = z.infer<typeof insertJournalSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type ActivityLogEntry = typeof activityLog.$inferSelect;
+export type PairCode = typeof pairCodes.$inferSelect;
