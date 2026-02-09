@@ -301,14 +301,14 @@ export default function BondedAscentApp() {
           </button>
           
           <div className="absolute w-[260px] h-[260px] border border-white/5 rounded-full pointer-events-none" />
-          <SanctuaryNode icon={<List />} label="Protocols" angle={270} color="bg-blue-600" onClick={() => setModal('dom_tasks')} />
-          <SanctuaryNode icon={<Eye />} label="Observe" angle={315} color="bg-emerald-600" onClick={() => setModal('dom_review')} />
-          <SanctuaryNode icon={<Gavel />} label="Punish" angle={0} color="bg-red-600" onClick={() => setModal('dom_punish')} />
-          <SanctuaryNode icon={<Gift />} label="Reward" angle={45} color="bg-purple-600" onClick={() => setModal('dom_rewards')} />
-          <SanctuaryNode icon={<Target />} label="Training" angle={90} color="bg-rose-600" onClick={() => setModal('training')} />
-          <SanctuaryNode icon={<Film />} label="Scene" angle={135} color="bg-pink-600" onClick={() => setModal('scene')} />
-          <SanctuaryNode icon={<Sliders />} label="Sensory" angle={180} color="bg-slate-700" onClick={() => setModal('sensory')} />
-          <SanctuaryNode icon={<ShieldAlert />} label="Crisis" angle={225} color="bg-yellow-600" onClick={() => setIsCrisisMode(true)} />
+          <SanctuaryNode icon={<Target />} label="Direct" angle={270} color="bg-red-600" onClick={() => setModal('training')} />
+          <SanctuaryNode icon={<Film />} label="Scene" angle={315} color="bg-purple-600" onClick={() => setModal('scene')} />
+          <SanctuaryNode icon={<Activity />} label="Ladders" angle={0} color="bg-rose-600" onClick={() => setModal('ladders')} />
+          <SanctuaryNode icon={<FileText />} label="Logbook" angle={45} color="bg-pink-600" onClick={() => setModal('logbook')} />
+          <SanctuaryNode icon={<Sliders />} label="Sensory" angle={90} color="bg-slate-700" onClick={() => setModal('sensory')} />
+          <SanctuaryNode icon={<Box />} label="Vault" angle={135} color="bg-indigo-600" onClick={() => setModal('vault')} />
+          <SanctuaryNode icon={<Heart />} label="Aftercare" angle={180} color="bg-pink-500" onClick={() => setModal('aftercare')} />
+          <SanctuaryNode icon={<Star />} label="Worship" angle={225} color="bg-amber-600" onClick={() => setModal('worship')} />
         </div>
       )}
     </div>
