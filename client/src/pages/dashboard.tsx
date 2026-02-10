@@ -43,6 +43,9 @@ import {
   useSetEnforcementLevel, usePartnerEnforcementLevel, useMyEnforcementLevel,
   useOverrideRevokeRewards, useOverrideClearTasks, useOverrideForceCheckIn,
   useAccusations, usePartnerAccusations, useCreateAccusation, useRespondToAccusation,
+  useStandingOrders, useRituals, useWagers, useDesiredChanges,
+  useObedienceTrials, useEnduranceChallenges, useSealedOrders,
+  useIntensitySessions, useCountdownEvents, usePlaySessions,
 } from '@/lib/hooks';
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
@@ -172,6 +175,17 @@ export default function BondedAscentApp() {
   const respondToAccusationMutation = useRespondToAccusation();
   const [accusationInput, setAccusationInput] = useState('');
   const [accusationResponses, setAccusationResponses] = useState<Record<string, string>>({});
+
+  const { data: standingOrders = [] } = useStandingOrders();
+  const { data: rituals = [] } = useRituals();
+  const { data: wagers = [] } = useWagers();
+  const { data: desiredChanges = [] } = useDesiredChanges();
+  const { data: obedienceTrials = [] } = useObedienceTrials();
+  const { data: enduranceChallenges = [] } = useEnduranceChallenges();
+  const { data: sealedOrders = [] } = useSealedOrders();
+  const { data: intensitySessions = [] } = useIntensitySessions();
+  const { data: countdownEvents = [] } = useCountdownEvents();
+  const { data: playSessions = [] } = usePlaySessions();
 
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const xp = stats?.xp ?? 0;
@@ -355,7 +369,7 @@ export default function BondedAscentApp() {
             <div className="text-sm font-bold text-white uppercase tracking-wider">{user?.username} (Dom)</div>
           </div>
           <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-red-900 to-transparent relative opacity-50">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-red-600 rounded-full shadow-[0_0_15px_red] animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-red-600 rounded-full shadow-[0_0_15px_red]" />
           </div>
           <div className="text-center relative">
             <div className="w-20 h-20 rounded-full border-2 border-slate-700 p-1 mb-2 bg-black">
@@ -434,7 +448,7 @@ export default function BondedAscentApp() {
               <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{partner.username}'s Activity</h3>
-                  <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase animate-pulse">
+                  <div className="flex items-center gap-1 text-[10px] text-red-500 font-bold uppercase">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" /> Live
                   </div>
                 </div>
@@ -470,20 +484,85 @@ export default function BondedAscentApp() {
             <BigButton icon={<BookOpen />} label="Journal" sub={`${journalEntries.length} entries`} color="text-blue-500" onClick={() => setActiveView('journal')} />
           </div>
 
-          <div className="mb-4">
-            <button
-              data-testid="button-dom-overview"
-              onClick={() => setLocation('/dom-overview')}
-              className="w-full bg-gradient-to-r from-amber-950/40 to-slate-900 border border-amber-800/40 rounded-xl p-4 flex items-center gap-3 hover:border-amber-600/50 transition-colors cursor-pointer"
-            >
-              <Crown size={22} className="text-amber-500 shrink-0" />
-              <div className="text-left flex-1">
-                <div className="text-sm font-bold text-white uppercase tracking-wider">Command Center</div>
-                <div className="text-[10px] text-slate-500">Everything you have in place</div>
+          {partner && (() => {
+            const activeOrders = standingOrders.filter((o: any) => o.status === 'active');
+            const activeRituals = rituals.filter((r: any) => !r.completed);
+            const activeTrials = obedienceTrials.filter((t: any) => t.status === 'pending' || t.status === 'active');
+            const activeChallenges = enduranceChallenges.filter((c: any) => c.status === 'active');
+            const pendingSealedOrders = sealedOrders.filter((o: any) => !o.completed);
+            const activeSessions = intensitySessions.filter((s: any) => s.status === 'active');
+            const activeWagers = wagers.filter((w: any) => w.status === 'active' || w.status === 'pending');
+            const pendingChanges = desiredChanges.filter((c: any) => c.status === 'pending');
+            const activeDemandTimers = (demandTimers as any[]).filter((t: any) => !t.responded && new Date(t.expiresAt) > new Date());
+            const upcomingCountdowns = countdownEvents.filter((c: any) => new Date(c.eventDate) > new Date());
+            const upcomingPlaySessions = playSessions.filter((s: any) => s.status === 'planned');
+            const pendingReviewCount = partnerCheckIns.filter((c: any) => c.status === 'pending').length;
+
+            const directiveItems = [
+              { label: 'Tasks', count: partnerTasks.filter((t: any) => !t.done).length, color: 'text-blue-400', href: '/' },
+              { label: 'Orders', count: activeOrders.length, color: 'text-red-400', href: '/standing-orders' },
+              { label: 'Rituals', count: activeRituals.length, color: 'text-orange-400', href: '/rituals' },
+              { label: 'Punishments', count: punishments.filter((p: any) => p.status === 'pending' || p.status === 'active').length, color: 'text-rose-400', href: '/' },
+              { label: 'Trials', count: activeTrials.length, color: 'text-amber-500', href: '/obedience-trials' },
+              { label: 'Challenges', count: activeChallenges.length, color: 'text-orange-500', href: '/endurance-challenges' },
+              { label: 'Sealed', count: pendingSealedOrders.length, color: 'text-violet-400', href: '/protocol-lockbox' },
+              { label: 'Intensity', count: activeSessions.length, color: 'text-red-500', href: '/intensity-ladder' },
+              { label: 'Wagers', count: activeWagers.length, color: 'text-yellow-400', href: '/wagers' },
+              { label: 'Changes', count: pendingChanges.length, color: 'text-teal-400', href: '/desired-changes' },
+              { label: 'Demands', count: activeDemandTimers.length, color: 'text-red-500', href: '/' },
+              { label: 'Events', count: upcomingCountdowns.length, color: 'text-cyan-400', href: '/countdown-events' },
+              { label: 'Sessions', count: upcomingPlaySessions.length, color: 'text-green-400', href: '/play-sessions' },
+            ];
+
+            const totalActive = directiveItems.reduce((sum, d) => sum + d.count, 0);
+            const activeDirectives = directiveItems.filter(d => d.count > 0);
+
+            return (
+              <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4" data-testid="dom-directives-summary">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Your Directives</h3>
+                  <div className="flex items-center gap-2">
+                    {pendingReviewCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-600/20 text-amber-400 border border-amber-600/30">
+                        {pendingReviewCount} to review
+                      </span>
+                    )}
+                    <span className="text-xs font-black text-white">{totalActive} active</span>
+                  </div>
+                </div>
+
+                {activeDirectives.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {activeDirectives.map((d) => (
+                      <button
+                        key={d.label}
+                        data-testid={`directive-${d.label.toLowerCase()}`}
+                        onClick={() => setLocation(d.href)}
+                        className="bg-slate-950/60 border border-white/5 rounded-lg p-2.5 text-center hover:border-red-900/40 transition-colors cursor-pointer"
+                      >
+                        <div className={`text-lg font-black ${d.color}`}>{d.count}</div>
+                        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">{d.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-slate-600 text-xs uppercase tracking-widest">No active directives</div>
+                )}
+
+                <button
+                  data-testid="button-dom-overview"
+                  onClick={() => setLocation('/dom-overview')}
+                  className="w-full mt-2 bg-gradient-to-r from-amber-950/30 to-slate-950 border border-amber-800/30 rounded-lg p-3 flex items-center gap-3 hover:border-amber-600/40 transition-colors cursor-pointer"
+                >
+                  <Crown size={18} className="text-amber-500 shrink-0" />
+                  <div className="text-left flex-1">
+                    <div className="text-xs font-bold text-white uppercase tracking-wider">Full Command Center</div>
+                  </div>
+                  <ChevronRight size={14} className="text-slate-600" />
+                </button>
               </div>
-              <ChevronRight size={16} className="text-slate-600" />
-            </button>
-          </div>
+            );
+          })()}
 
           <div className="border-t border-white/5 pt-6">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">Features</h3>
@@ -555,7 +634,7 @@ export default function BondedAscentApp() {
 
           {partner && partnerPresence && (
             <div className="flex items-center justify-center gap-3 py-2">
-              <div className={`w-3 h-3 rounded-full ${partnerPresence.online ? 'bg-green-500 shadow-[0_0_10px_lime] animate-pulse' : 'bg-slate-600'}`} />
+              <div className={`w-3 h-3 rounded-full ${partnerPresence.online ? 'bg-green-500 shadow-[0_0_10px_lime]' : 'bg-slate-600'}`} />
               <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
                 {partner.username}: {partnerPresence.online ? (
                   <span className="text-green-400">Online Now</span>
@@ -708,7 +787,7 @@ export default function BondedAscentApp() {
                 <div className="text-sm font-bold text-white uppercase tracking-wider">{user?.username}</div>
               </div>
               <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-red-900 to-transparent relative opacity-50">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-red-600 rounded-full shadow-[0_0_15px_red] animate-pulse" />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-red-600 rounded-full shadow-[0_0_15px_red]" />
               </div>
               <div className="text-center relative">
                 <div className="w-20 h-20 rounded-full border-2 border-red-900 p-1 mb-2 bg-black">
@@ -848,7 +927,7 @@ export default function BondedAscentApp() {
 
               {user?.lockedDown && (
                 <div className="bg-red-950/30 border-2 border-red-500/30 rounded-2xl p-6 text-center">
-                  <Lock size={32} className="mx-auto text-red-500 mb-3 animate-pulse" />
+                  <Lock size={32} className="mx-auto text-red-500 mb-3" />
                   <div className="text-sm font-black text-red-400 uppercase tracking-widest">Lockdown Active</div>
                   <div className="text-[10px] text-slate-500 mt-1">Your access is restricted. Focus on your protocols.</div>
                 </div>
@@ -900,7 +979,7 @@ export default function BondedAscentApp() {
                     const remaining = Math.max(0, Math.ceil((new Date(timer.expiresAt).getTime() - Date.now()) / 1000));
                     const mins = Math.floor(remaining / 60);
                     const secs = remaining % 60;
-                    const urgency = remaining < 60 ? 'border-red-500 bg-red-950/60 animate-pulse' : remaining < 180 ? 'border-orange-500 bg-orange-950/40' : 'border-yellow-500/50 bg-yellow-950/30';
+                    const urgency = remaining < 60 ? 'border-red-500 bg-red-950/60' : remaining < 180 ? 'border-orange-500 bg-orange-950/40' : 'border-yellow-500/50 bg-yellow-950/30';
                     return (
                       <div key={timer.id} className={`border rounded-2xl p-4 ${urgency}`}>
                         <div className="flex justify-between items-start mb-2">
@@ -1262,8 +1341,8 @@ export default function BondedAscentApp() {
           50% { opacity: 0.6; transform: translateY(-30px); }
         }
         @keyframes throne-pulse {
-          0%, 100% { box-shadow: 0 0 40px rgba(220,38,38,0.3), 0 0 80px rgba(220,38,38,0.1); }
-          50% { box-shadow: 0 0 60px rgba(220,38,38,0.6), 0 0 120px rgba(220,38,38,0.3); }
+          0%, 100% { box-shadow: 0 0 30px rgba(220,38,38,0.2), 0 0 60px rgba(220,38,38,0.08); }
+          50% { box-shadow: 0 0 40px rgba(220,38,38,0.35), 0 0 80px rgba(220,38,38,0.15); }
         }
         @keyframes chain-flow {
           0% { stroke-dashoffset: 20; }
@@ -1274,15 +1353,15 @@ export default function BondedAscentApp() {
           25%, 100% { opacity: 0; }
         }
         @keyframes devotion-pulse {
-          0%, 100% { box-shadow: 0 0 30px rgba(220,38,38,0.2), 0 0 60px rgba(220,38,38,0.1); }
-          50% { box-shadow: 0 0 50px rgba(220,38,38,0.5), 0 0 100px rgba(220,38,38,0.25); }
+          0%, 100% { box-shadow: 0 0 20px rgba(220,38,38,0.15), 0 0 40px rgba(220,38,38,0.06); }
+          50% { box-shadow: 0 0 30px rgba(220,38,38,0.3), 0 0 60px rgba(220,38,38,0.12); }
         }
       `}</style>
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
       
       {isCrisisMode && (
         <div className="fixed inset-0 z-[100] bg-red-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
-          <ShieldAlert size={80} className="text-white mb-6 animate-pulse" />
+          <ShieldAlert size={80} className="text-white mb-6" />
           <h1 className="text-4xl font-black text-white uppercase tracking-widest mb-4 text-center drop-shadow-lg">Crisis Mode Active</h1>
           <p className="text-red-200 text-center max-w-md mb-12 text-lg font-bold">All protocols suspended.<br/>Focus on grounding and safety.</p>
           <button 
@@ -1318,7 +1397,7 @@ export default function BondedAscentApp() {
                 Bonded<span className="text-red-600">Ascent</span>
               </div>
               {isVelvetMode && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-900/30 text-red-500 border border-red-500/50 uppercase tracking-widest animate-pulse">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-900/30 text-red-500 border border-red-500/50 uppercase tracking-widest">
                   Velvet Mode
                 </span>
               )}
@@ -2104,7 +2183,7 @@ export default function BondedAscentApp() {
             {modal === 'dom_override' && (
               <div className="p-4 space-y-6">
                 <div className="text-center">
-                  <ShieldAlert size={48} className="mx-auto text-red-600 mb-4 animate-pulse" />
+                  <ShieldAlert size={48} className="mx-auto text-red-600 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">Override Control</h2>
                   <p className="text-xs text-slate-500 mt-1">Emergency overrides and forced modes</p>
                 </div>
@@ -2516,7 +2595,7 @@ export default function BondedAscentApp() {
                             'bg-slate-900/50 border-white/5 hover:border-red-500/50'}
                           ${!!trainingActive && !active ? 'opacity-40' : ''}`}
                       >
-                        <div className={active ? 'text-red-400 animate-pulse' : completed ? 'text-green-400' : 'text-red-400'}>{item.icon}</div>
+                        <div className={active ? 'text-red-400' : completed ? 'text-green-400' : 'text-red-400'}>{item.icon}</div>
                         <span className="text-[10px] font-bold uppercase text-slate-300">{item.label}</span>
                         <span className="text-[9px] text-slate-600">{completed ? 'Completed' : item.desc}</span>
                         {completed && <Check size={12} className="text-green-500" />}
