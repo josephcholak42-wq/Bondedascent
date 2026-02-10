@@ -46,6 +46,7 @@ import {
   useStandingOrders, useRituals, useWagers, useDesiredChanges,
   useObedienceTrials, useEnduranceChallenges, useSealedOrders,
   useIntensitySessions, useCountdownEvents, usePlaySessions,
+  useSecrets, useLimits, usePermissionRequests, useDevotions, useConflicts, useRatings,
 } from '@/lib/hooks';
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
@@ -183,6 +184,12 @@ export default function BondedAscentApp() {
   const { data: obedienceTrials = [] } = useObedienceTrials();
   const { data: enduranceChallenges = [] } = useEnduranceChallenges();
   const { data: sealedOrders = [] } = useSealedOrders();
+  const { data: secrets = [] } = useSecrets();
+  const { data: limitsList = [] } = useLimits();
+  const { data: permissionRequests = [] } = usePermissionRequests();
+  const { data: devotionsList = [] } = useDevotions();
+  const { data: conflictsList = [] } = useConflicts();
+  const { data: ratingsList = [] } = useRatings();
   const { data: intensitySessions = [] } = useIntensitySessions();
   const { data: countdownEvents = [] } = useCountdownEvents();
   const { data: playSessions = [] } = usePlaySessions();
@@ -567,25 +574,25 @@ export default function BondedAscentApp() {
           <div className="border-t border-white/5 pt-6">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">Features</h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              <FeatureLink icon={<Flame />} label="Rituals" href="/rituals" color="text-orange-400" />
-              <FeatureLink icon={<Shield />} label="Limits" href="/limits" color="text-blue-400" />
-              <FeatureLink icon={<Eye />} label="Secrets" href="/secrets" color="text-purple-400" />
-              <FeatureLink icon={<Dices />} label="Wagers" href="/wagers" color="text-yellow-400" />
-              <FeatureLink icon={<Star />} label="Ratings" href="/ratings" color="text-amber-400" />
+              <FeatureLink icon={<Flame />} label="Rituals" href="/rituals" color="text-orange-400" badge={rituals.filter((r: any) => !r.completed).length} />
+              <FeatureLink icon={<Shield />} label="Limits" href="/limits" color="text-blue-400" badge={limitsList.length} />
+              <FeatureLink icon={<Eye />} label="Secrets" href="/secrets" color="text-purple-400" badge={secrets.length} />
+              <FeatureLink icon={<Dices />} label="Wagers" href="/wagers" color="text-yellow-400" badge={wagers.filter((w: any) => w.status === 'active' || w.status === 'pending').length} />
+              <FeatureLink icon={<Star />} label="Ratings" href="/ratings" color="text-amber-400" badge={ratingsList.length} />
               <FeatureLink icon={<HeartPulse />} label="Pulse" href="/connection-pulse" color="text-pink-400" />
-              <FeatureLink icon={<Play />} label="Sessions" href="/play-sessions" color="text-green-400" />
-              <FeatureLink icon={<Timer />} label="Countdown" href="/countdown-events" color="text-cyan-400" />
+              <FeatureLink icon={<Play />} label="Sessions" href="/play-sessions" color="text-green-400" badge={playSessions.filter((s: any) => s.status === 'planned').length} />
+              <FeatureLink icon={<Timer />} label="Countdown" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} />
               <FeatureLink icon={<Award />} label="Achieve" href="/achievements" color="text-emerald-400" />
-              <FeatureLink icon={<FileSignature />} label="Orders" href="/standing-orders" color="text-red-400" />
-              <FeatureLink icon={<Hand />} label="Permits" href="/permission-requests" color="text-indigo-400" />
-              <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" />
-              <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" />
-              <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" />
-              <FeatureLink icon={<Layers />} label="Intensity" href="/intensity-ladder" color="text-red-500" />
-              <FeatureLink icon={<ListChecks />} label="Trials" href="/obedience-trials" color="text-amber-500" />
+              <FeatureLink icon={<FileSignature />} label="Orders" href="/standing-orders" color="text-red-400" badge={standingOrders.filter((o: any) => o.status === 'active').length} />
+              <FeatureLink icon={<Hand />} label="Permits" href="/permission-requests" color="text-indigo-400" badge={permissionRequests.filter((p: any) => p.status === 'pending').length} />
+              <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" badge={conflictsList.filter((c: any) => c.status !== 'resolved').length} />
+              <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" badge={desiredChanges.filter((c: any) => c.status === 'pending').length} />
+              <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" badge={devotionsList.length} />
+              <FeatureLink icon={<Layers />} label="Intensity" href="/intensity-ladder" color="text-red-500" badge={intensitySessions.filter((s: any) => s.status === 'active').length} />
+              <FeatureLink icon={<ListChecks />} label="Trials" href="/obedience-trials" color="text-amber-500" badge={obedienceTrials.filter((t: any) => t.status === 'pending' || t.status === 'active').length} />
               <FeatureLink icon={<RotateCcw />} label="Roulette" href="/sensation-roulette" color="text-fuchsia-400" />
-              <FeatureLink icon={<Lock />} label="Lockbox" href="/protocol-lockbox" color="text-violet-400" />
-              <FeatureLink icon={<Hourglass />} label="Endurance" href="/endurance-challenges" color="text-orange-500" />
+              <FeatureLink icon={<Lock />} label="Lockbox" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} />
+              <FeatureLink icon={<Hourglass />} label="Endurance" href="/endurance-challenges" color="text-orange-500" badge={enduranceChallenges.filter((c: any) => c.status === 'active').length} />
             </div>
           </div>
 
@@ -901,25 +908,25 @@ export default function BondedAscentApp() {
               <div className="border-t border-white/5 pt-6">
                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">Features</h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  <FeatureLink icon={<Flame />} label="Rituals" href="/rituals" color="text-orange-400" />
-                  <FeatureLink icon={<Shield />} label="Limits" href="/limits" color="text-blue-400" />
-                  <FeatureLink icon={<Eye />} label="Secrets" href="/secrets" color="text-purple-400" />
-                  <FeatureLink icon={<Dices />} label="Wagers" href="/wagers" color="text-yellow-400" />
-                  <FeatureLink icon={<Star />} label="Ratings" href="/ratings" color="text-amber-400" />
+                  <FeatureLink icon={<Flame />} label="Rituals" href="/rituals" color="text-orange-400" badge={rituals.filter((r: any) => !r.completed).length} />
+                  <FeatureLink icon={<Shield />} label="Limits" href="/limits" color="text-blue-400" badge={limitsList.length} />
+                  <FeatureLink icon={<Eye />} label="Secrets" href="/secrets" color="text-purple-400" badge={secrets.length} />
+                  <FeatureLink icon={<Dices />} label="Wagers" href="/wagers" color="text-yellow-400" badge={wagers.filter((w: any) => w.status === 'active' || w.status === 'pending').length} />
+                  <FeatureLink icon={<Star />} label="Ratings" href="/ratings" color="text-amber-400" badge={ratingsList.length} />
                   <FeatureLink icon={<HeartPulse />} label="Pulse" href="/connection-pulse" color="text-pink-400" />
-                  <FeatureLink icon={<Play />} label="Sessions" href="/play-sessions" color="text-green-400" />
-                  <FeatureLink icon={<Timer />} label="Countdown" href="/countdown-events" color="text-cyan-400" />
+                  <FeatureLink icon={<Play />} label="Sessions" href="/play-sessions" color="text-green-400" badge={playSessions.filter((s: any) => s.status === 'planned').length} />
+                  <FeatureLink icon={<Timer />} label="Countdown" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} />
                   <FeatureLink icon={<Award />} label="Achieve" href="/achievements" color="text-emerald-400" />
-                  <FeatureLink icon={<FileSignature />} label="Orders" href="/standing-orders" color="text-red-400" />
-                  <FeatureLink icon={<Hand />} label="Permits" href="/permission-requests" color="text-indigo-400" />
-                  <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" />
-                  <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" />
-                  <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" />
-                  <FeatureLink icon={<Layers />} label="Intensity" href="/intensity-ladder" color="text-red-500" />
-                  <FeatureLink icon={<ListChecks />} label="Trials" href="/obedience-trials" color="text-amber-500" />
+                  <FeatureLink icon={<FileSignature />} label="Orders" href="/standing-orders" color="text-red-400" badge={standingOrders.filter((o: any) => o.status === 'active').length} />
+                  <FeatureLink icon={<Hand />} label="Permits" href="/permission-requests" color="text-indigo-400" badge={permissionRequests.filter((p: any) => p.status === 'pending').length} />
+                  <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" badge={conflictsList.filter((c: any) => c.status !== 'resolved').length} />
+                  <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" badge={desiredChanges.filter((c: any) => c.status === 'pending').length} />
+                  <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" badge={devotionsList.length} />
+                  <FeatureLink icon={<Layers />} label="Intensity" href="/intensity-ladder" color="text-red-500" badge={intensitySessions.filter((s: any) => s.status === 'active').length} />
+                  <FeatureLink icon={<ListChecks />} label="Trials" href="/obedience-trials" color="text-amber-500" badge={obedienceTrials.filter((t: any) => t.status === 'pending' || t.status === 'active').length} />
                   <FeatureLink icon={<RotateCcw />} label="Roulette" href="/sensation-roulette" color="text-fuchsia-400" />
-                  <FeatureLink icon={<Lock />} label="Lockbox" href="/protocol-lockbox" color="text-violet-400" />
-                  <FeatureLink icon={<Hourglass />} label="Endurance" href="/endurance-challenges" color="text-orange-500" />
+                  <FeatureLink icon={<Lock />} label="Lockbox" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} />
+                  <FeatureLink icon={<Hourglass />} label="Endurance" href="/endurance-challenges" color="text-orange-500" badge={enduranceChallenges.filter((c: any) => c.status === 'active').length} />
                 </div>
               </div>
               </>
@@ -2971,18 +2978,23 @@ function urlBase64ToUint8Array(base64String: string) {
   return outputArray;
 }
 
-function FeatureLink({ icon, label, href, color }: { icon: React.ReactElement<any>, label: string, href: string, color: string }) {
+function FeatureLink({ icon, label, href, color, badge }: { icon: React.ReactElement<any>, label: string, href: string, color: string, badge?: number }) {
   const [, setLocation] = useLocation();
   return (
     <button 
       data-testid={`link-feature-${label.toLowerCase()}`}
       onClick={() => setLocation(href)} 
-      className="flex flex-col items-center gap-2 p-2 hover:scale-105 transition-transform cursor-pointer group"
+      className="flex flex-col items-center gap-2 p-2 hover:scale-105 transition-transform cursor-pointer group relative"
     >
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center border border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50 transition-all ${color}`}>
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all ${color} ${badge && badge > 0 ? 'border-red-500/40 bg-slate-900/80 shadow-[0_0_8px_rgba(220,38,38,0.15)]' : 'border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50'}`}>
         {React.cloneElement(icon, { size: 20 })}
+        {badge !== undefined && badge > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white px-1 shadow-[0_0_6px_rgba(220,38,38,0.5)]">
+            {badge}
+          </span>
+        )}
       </div>
-      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide group-hover:text-white transition-colors">{label}</span>
+      <span className={`text-[9px] font-bold uppercase tracking-wide transition-colors ${badge && badge > 0 ? 'text-white' : 'text-slate-500 group-hover:text-white'}`}>{label}</span>
     </button>
   );
 }
