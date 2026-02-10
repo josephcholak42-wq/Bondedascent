@@ -125,4 +125,67 @@ export function setupAuth(app: Express) {
     const { password: _, ...safeUser } = req.user as User;
     res.json(safeUser);
   });
+
+  app.post("/api/auth/forgot-password", async (req, res, next) => {
+    try {
+      const { username } = req.body;
+      if (!username) {
+        return res.status(400).json({ message: "Username is required" });
+      }
+
+      const user = await storage.getUserByUsername(username);
+      if (!user) {
+        return res.status(404).json({ message: "No account found with that username" });
+      }
+
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      const { pool: dbPool } = await import("./db");
+      await dbPool.query(
+        "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
+        [user.id, token, expiresAt]
+      );
+
+      res.json({ token, message: "Reset token generated" });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res, next) => {
+    try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token and new password are required" });
+      }
+
+      if (newPassword.length < 4) {
+        return res.status(400).json({ message: "Password must be at least 4 characters" });
+      }
+
+      const { pool: dbPool } = await import("./db");
+      const result = await dbPool.query(
+        "SELECT * FROM password_reset_tokens WHERE token = $1 AND used = false AND expires_at > NOW()",
+        [token]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(400).json({ message: "Invalid or expired reset token" });
+      }
+
+      const resetToken = result.rows[0];
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(resetToken.user_id, hashedPassword);
+
+      await dbPool.query(
+        "UPDATE password_reset_tokens SET used = true WHERE id = $1",
+        [resetToken.id]
+      );
+
+      res.json({ message: "Password has been reset successfully" });
+    } catch (err) {
+      next(err);
+    }
+  });
 }

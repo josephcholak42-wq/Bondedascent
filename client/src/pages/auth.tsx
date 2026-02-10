@@ -165,7 +165,17 @@ export default function AuthPage() {
             </Button>
           </form>
 
-          <div className="mt-8 text-center">
+          <div className="mt-6 text-center">
+            <button
+              data-testid="link-forgot-password"
+              onClick={() => setLocation('/reset-password')}
+              className="text-xs text-slate-500 hover:text-red-400 uppercase tracking-wider font-bold transition-colors cursor-pointer"
+            >
+              Forgot Password?
+            </button>
+          </div>
+
+          <div className="mt-4 text-center">
             <p className="text-[10px] text-slate-600 font-mono uppercase">
               Secure Connection • End-to-End Encryption • Protocol v2.4
             </p>
