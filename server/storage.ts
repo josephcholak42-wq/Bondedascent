@@ -1,4 +1,4 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, tasks, checkIns, dares, rewards, punishments,
@@ -199,6 +199,25 @@ export interface IStorage {
   updateEnduranceChallenge(id: string, data: Partial<EnduranceChallenge>): Promise<EnduranceChallenge | undefined>;
   getEnduranceCheckins(challengeId: string): Promise<EnduranceCheckin[]>;
   createEnduranceCheckin(checkin: InsertEnduranceCheckin): Promise<EnduranceCheckin>;
+
+  getTasksForPair(userIds: string[]): Promise<Task[]>;
+  getCheckInsForPair(userIds: string[]): Promise<CheckIn[]>;
+  getRitualsForPair(userIds: string[]): Promise<Ritual[]>;
+  getLimitsForPair(userIds: string[]): Promise<Limit[]>;
+  getSecretsForPair(userIds: string[]): Promise<Secret[]>;
+  getWagersForPair(userIds: string[]): Promise<Wager[]>;
+  getRatingsForPair(userIds: string[]): Promise<Rating[]>;
+  getCountdownEventsForPair(userIds: string[]): Promise<CountdownEvent[]>;
+  getStandingOrdersForPair(userIds: string[]): Promise<StandingOrder[]>;
+  getPermissionRequestsForPair(userIds: string[]): Promise<PermissionRequest[]>;
+  getDevotionsForPair(userIds: string[]): Promise<Devotion[]>;
+  getConflictsForPair(userIds: string[]): Promise<Conflict[]>;
+  getDesiredChangesForPair(userIds: string[]): Promise<DesiredChange[]>;
+  getPlaySessionsForPair(userIds: string[]): Promise<PlaySession[]>;
+  getIntensitySessionsForPair(userIds: string[]): Promise<IntensitySession[]>;
+  getObedienceTrialsForPair(userIds: string[]): Promise<ObedienceTrial[]>;
+  getSensationCardsForPair(userIds: string[]): Promise<SensationCard[]>;
+  getSensationSpinsForPair(userIds: string[]): Promise<SensationSpin[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -771,6 +790,61 @@ export class DatabaseStorage implements IStorage {
   async createEnduranceCheckin(checkin: InsertEnduranceCheckin): Promise<EnduranceCheckin> {
     const [c] = await db.insert(enduranceCheckins).values(checkin).returning();
     return c;
+  }
+
+  async getTasksForPair(userIds: string[]): Promise<Task[]> {
+    return db.select().from(tasks).where(inArray(tasks.userId, userIds)).orderBy(desc(tasks.createdAt));
+  }
+  async getCheckInsForPair(userIds: string[]): Promise<CheckIn[]> {
+    return db.select().from(checkIns).where(inArray(checkIns.userId, userIds)).orderBy(desc(checkIns.createdAt));
+  }
+  async getRitualsForPair(userIds: string[]): Promise<Ritual[]> {
+    return db.select().from(rituals).where(inArray(rituals.userId, userIds)).orderBy(desc(rituals.createdAt));
+  }
+  async getLimitsForPair(userIds: string[]): Promise<Limit[]> {
+    return db.select().from(limits).where(inArray(limits.userId, userIds)).orderBy(desc(limits.createdAt));
+  }
+  async getSecretsForPair(userIds: string[]): Promise<Secret[]> {
+    return db.select().from(secrets).where(inArray(secrets.userId, userIds)).orderBy(desc(secrets.createdAt));
+  }
+  async getWagersForPair(userIds: string[]): Promise<Wager[]> {
+    return db.select().from(wagers).where(inArray(wagers.userId, userIds)).orderBy(desc(wagers.createdAt));
+  }
+  async getRatingsForPair(userIds: string[]): Promise<Rating[]> {
+    return db.select().from(ratings).where(inArray(ratings.userId, userIds)).orderBy(desc(ratings.createdAt));
+  }
+  async getCountdownEventsForPair(userIds: string[]): Promise<CountdownEvent[]> {
+    return db.select().from(countdownEvents).where(inArray(countdownEvents.userId, userIds)).orderBy(desc(countdownEvents.createdAt));
+  }
+  async getStandingOrdersForPair(userIds: string[]): Promise<StandingOrder[]> {
+    return db.select().from(standingOrders).where(inArray(standingOrders.userId, userIds)).orderBy(desc(standingOrders.createdAt));
+  }
+  async getPermissionRequestsForPair(userIds: string[]): Promise<PermissionRequest[]> {
+    return db.select().from(permissionRequests).where(inArray(permissionRequests.userId, userIds)).orderBy(desc(permissionRequests.createdAt));
+  }
+  async getDevotionsForPair(userIds: string[]): Promise<Devotion[]> {
+    return db.select().from(devotions).where(inArray(devotions.userId, userIds)).orderBy(desc(devotions.createdAt));
+  }
+  async getConflictsForPair(userIds: string[]): Promise<Conflict[]> {
+    return db.select().from(conflicts).where(inArray(conflicts.userId, userIds)).orderBy(desc(conflicts.createdAt));
+  }
+  async getDesiredChangesForPair(userIds: string[]): Promise<DesiredChange[]> {
+    return db.select().from(desiredChanges).where(inArray(desiredChanges.userId, userIds)).orderBy(desc(desiredChanges.createdAt));
+  }
+  async getPlaySessionsForPair(userIds: string[]): Promise<PlaySession[]> {
+    return db.select().from(playSessions).where(inArray(playSessions.userId, userIds)).orderBy(desc(playSessions.createdAt));
+  }
+  async getIntensitySessionsForPair(userIds: string[]): Promise<IntensitySession[]> {
+    return db.select().from(intensitySessions).where(inArray(intensitySessions.userId, userIds)).orderBy(desc(intensitySessions.createdAt));
+  }
+  async getObedienceTrialsForPair(userIds: string[]): Promise<ObedienceTrial[]> {
+    return db.select().from(obedienceTrials).where(inArray(obedienceTrials.userId, userIds)).orderBy(desc(obedienceTrials.createdAt));
+  }
+  async getSensationCardsForPair(userIds: string[]): Promise<SensationCard[]> {
+    return db.select().from(sensationCards).where(inArray(sensationCards.userId, userIds)).orderBy(desc(sensationCards.createdAt));
+  }
+  async getSensationSpinsForPair(userIds: string[]): Promise<SensationSpin[]> {
+    return db.select().from(sensationSpins).where(inArray(sensationSpins.userId, userIds)).orderBy(desc(sensationSpins.createdAt));
   }
 }
 

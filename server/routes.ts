@@ -40,7 +40,9 @@ export async function registerRoutes(
   // --- TASKS ---
   app.get("/api/tasks", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const taskList = await storage.getTasks(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const taskList = await storage.getTasksForPair(userIds);
     res.json(taskList);
   });
 
@@ -96,7 +98,9 @@ export async function registerRoutes(
   // --- CHECK-INS ---
   app.get("/api/checkins", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getCheckIns(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const list = await storage.getCheckInsForPair(userIds);
     res.json(list);
   });
 
@@ -553,7 +557,9 @@ export async function registerRoutes(
   // --- RITUALS ---
   app.get("/api/rituals", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getRituals(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getRitualsForPair(userIds));
   });
 
   app.post("/api/rituals", requireAuth, async (req, res) => {
@@ -598,7 +604,9 @@ export async function registerRoutes(
   // --- LIMITS ---
   app.get("/api/limits", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getLimits(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getLimitsForPair(userIds));
   });
 
   app.post("/api/limits", requireAuth, async (req, res) => {
@@ -631,7 +639,9 @@ export async function registerRoutes(
   // --- SECRETS ---
   app.get("/api/secrets", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getSecrets(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getSecretsForPair(userIds));
   });
 
   app.get("/api/secrets/for-me", requireAuth, async (req, res) => {
@@ -660,7 +670,9 @@ export async function registerRoutes(
   // --- WAGERS ---
   app.get("/api/wagers", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getWagers(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getWagersForPair(userIds));
   });
 
   app.post("/api/wagers", requireAuth, async (req, res) => {
@@ -684,7 +696,9 @@ export async function registerRoutes(
   // --- RATINGS ---
   app.get("/api/ratings", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getRatings(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getRatingsForPair(userIds));
   });
 
   app.get("/api/ratings/received", requireAuth, async (req, res) => {
@@ -705,7 +719,9 @@ export async function registerRoutes(
   // --- COUNTDOWN EVENTS ---
   app.get("/api/countdown-events", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getCountdownEvents(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getCountdownEventsForPair(userIds));
   });
 
   app.post("/api/countdown-events", requireAuth, async (req, res) => {
@@ -725,7 +741,9 @@ export async function registerRoutes(
   // --- STANDING ORDERS ---
   app.get("/api/standing-orders", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getStandingOrders(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getStandingOrdersForPair(userIds));
   });
 
   app.post("/api/standing-orders", requireAuth, async (req, res) => {
@@ -763,7 +781,9 @@ export async function registerRoutes(
   // --- PERMISSION REQUESTS ---
   app.get("/api/permission-requests", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getPermissionRequests(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getPermissionRequestsForPair(userIds));
   });
 
   app.post("/api/permission-requests", requireAuth, async (req, res) => {
@@ -795,7 +815,9 @@ export async function registerRoutes(
   // --- DEVOTIONS ---
   app.get("/api/devotions", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getDevotions(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getDevotionsForPair(userIds));
   });
 
   app.post("/api/devotions", requireAuth, async (req, res) => {
@@ -816,7 +838,9 @@ export async function registerRoutes(
   // --- CONFLICTS ---
   app.get("/api/conflicts", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getConflicts(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getConflictsForPair(userIds));
   });
 
   app.post("/api/conflicts", requireAuth, async (req, res) => {
@@ -837,7 +861,9 @@ export async function registerRoutes(
   // --- DESIRED CHANGES ---
   app.get("/api/desired-changes", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getDesiredChanges(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getDesiredChangesForPair(userIds));
   });
 
   app.post("/api/desired-changes", requireAuth, async (req, res) => {
@@ -873,7 +899,9 @@ export async function registerRoutes(
   // --- PLAY SESSIONS ---
   app.get("/api/play-sessions", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getPlaySessions(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getPlaySessionsForPair(userIds));
   });
 
   app.post("/api/play-sessions", requireAuth, async (req, res) => {
@@ -1175,7 +1203,9 @@ export async function registerRoutes(
   // --- INTENSITY LADDER ---
   app.get("/api/intensity-sessions", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const sessions = await storage.getIntensitySessions(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const sessions = await storage.getIntensitySessionsForPair(userIds);
     res.json(sessions);
   });
 
@@ -1217,7 +1247,9 @@ export async function registerRoutes(
   // --- OBEDIENCE TRIALS ---
   app.get("/api/obedience-trials", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const trials = await storage.getObedienceTrials(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const trials = await storage.getObedienceTrialsForPair(userIds);
     res.json(trials);
   });
 
@@ -1295,7 +1327,9 @@ export async function registerRoutes(
   // --- SENSATION ROULETTE ---
   app.get("/api/sensation-cards", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const cards = await storage.getSensationCards(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const cards = await storage.getSensationCardsForPair(userIds);
     res.json(cards);
   });
 
@@ -1322,7 +1356,9 @@ export async function registerRoutes(
 
   app.get("/api/sensation-spins", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const spins = await storage.getSensationSpins(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const spins = await storage.getSensationSpinsForPair(userIds);
     res.json(spins);
   });
 
