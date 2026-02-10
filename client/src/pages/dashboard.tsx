@@ -641,6 +641,18 @@ export default function BondedAscentApp() {
                       type="text"
                       value={stickerMessage}
                       onChange={(e) => setStickerMessage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && partner) {
+                          e.preventDefault();
+                          sendStickerMutation.mutate({
+                            recipientId: partner.id,
+                            stickerType: selectedStickerType,
+                            message: stickerMessage || undefined,
+                          });
+                          setSelectedStickerType('');
+                          setStickerMessage('');
+                        }
+                      }}
                       placeholder="Add a message (optional)"
                       className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50"
                     />
