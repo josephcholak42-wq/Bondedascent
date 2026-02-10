@@ -315,7 +315,7 @@ export default function BondedAscentApp() {
     presenceHeartbeatMutation.mutate();
     const interval = setInterval(() => {
       presenceHeartbeatMutation.mutate();
-    }, 30000);
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
