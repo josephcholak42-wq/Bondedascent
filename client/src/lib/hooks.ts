@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, getQueryFn } from "./queryClient";
-import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession, Accusation } from "@shared/schema";
+import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession, Accusation, IntensitySession, ObedienceTrial, TrialStep, SensationCard, SensationSpin, SealedOrder, EnduranceChallenge, EnduranceCheckin } from "@shared/schema";
 
 type SafeUser = Omit<User, "password">;
 
@@ -1167,6 +1167,264 @@ export function useRespondToAccusation() {
       qc.invalidateQueries({ queryKey: ["/api/accusations"] });
       qc.invalidateQueries({ queryKey: ["/api/partner/accusations"] });
       qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+// --- INTENSITY LADDER ---
+export function useIntensitySessions() {
+  return useQuery<IntensitySession[]>({
+    queryKey: ["/api/intensity-sessions"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useCreateIntensitySession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { currentTier?: number; notes?: string; status?: string }) => {
+      const res = await apiRequest("POST", "/api/intensity-sessions", data);
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/intensity-sessions"] }); },
+  });
+}
+
+export function useUpdateIntensitySession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; currentTier?: number; maxTierReached?: number; status?: string; durationSeconds?: number; notes?: string; completedAt?: string }) => {
+      const res = await apiRequest("PATCH", `/api/intensity-sessions/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/intensity-sessions"] }); },
+  });
+}
+
+// --- OBEDIENCE TRIALS ---
+export function useObedienceTrials() {
+  return useQuery<ObedienceTrial[]>({
+    queryKey: ["/api/obedience-trials"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useCreateObedienceTrial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; timeLimitSeconds?: number; steps: string[]; autoReward?: string; autoPunishment?: string }) => {
+      const res = await apiRequest("POST", "/api/obedience-trials", data);
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/obedience-trials"] }); },
+  });
+}
+
+export function useUpdateObedienceTrial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; status?: string; score?: number; completedSteps?: number; startedAt?: string; completedAt?: string }) => {
+      const res = await apiRequest("PATCH", `/api/obedience-trials/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/obedience-trials"] }); },
+  });
+}
+
+export function useTrialSteps(trialId: string | null) {
+  return useQuery<TrialStep[]>({
+    queryKey: ["/api/obedience-trials", trialId, "steps"],
+    queryFn: async () => {
+      const res = await fetch(`/api/obedience-trials/${trialId}/steps`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch steps");
+      return res.json();
+    },
+    enabled: !!trialId,
+  });
+}
+
+export function useUpdateTrialStep() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/trial-steps/${id}`, { status });
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/obedience-trials"] }); },
+  });
+}
+
+// --- SENSATION ROULETTE ---
+export function useSensationCards() {
+  return useQuery<SensationCard[]>({
+    queryKey: ["/api/sensation-cards"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useCreateSensationCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { label: string; description?: string; intensity?: number; cardType?: string; durationMinutes?: number }) => {
+      const res = await apiRequest("POST", "/api/sensation-cards", data);
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/sensation-cards"] }); },
+  });
+}
+
+export function useDeleteSensationCard() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/sensation-cards/${id}`);
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/sensation-cards"] }); },
+  });
+}
+
+export function useSensationSpins() {
+  return useQuery<SensationSpin[]>({
+    queryKey: ["/api/sensation-spins"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useCreateSensationSpin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { cardId: string; result: string; cardType?: string }) => {
+      const res = await apiRequest("POST", "/api/sensation-spins", data);
+      return res.json();
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/sensation-spins"] }); },
+  });
+}
+
+export function useCompleteSensationSpin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("PATCH", `/api/sensation-spins/${id}`, { completed: true });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/sensation-spins"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+  });
+}
+
+// --- PROTOCOL LOCKBOX ---
+export function useSealedOrders() {
+  return useQuery<SealedOrder[]>({
+    queryKey: ["/api/sealed-orders"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useSealedOrdersCreated() {
+  return useQuery<SealedOrder[]>({
+    queryKey: ["/api/sealed-orders/created"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useCreateSealedOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; content: string; unlockAt: string; chainOrder?: number; previousOrderId?: string; xpCost?: number }) => {
+      const res = await apiRequest("POST", "/api/sealed-orders", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/sealed-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/sealed-orders/created"] });
+    },
+  });
+}
+
+export function useUpdateSealedOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; revealed?: boolean; completed?: boolean; emergencyUnsealed?: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/sealed-orders/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/sealed-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/sealed-orders/created"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+  });
+}
+
+// --- ENDURANCE CHALLENGES ---
+export function useEnduranceChallenges() {
+  return useQuery<EnduranceChallenge[]>({
+    queryKey: ["/api/endurance-challenges"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useEnduranceChallengesCreated() {
+  return useQuery<EnduranceChallenge[]>({
+    queryKey: ["/api/endurance-challenges/created"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useCreateEnduranceChallenge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { title: string; description?: string; durationHours: number; checkinIntervalMinutes?: number; xpPerCheckin?: number; autoPunishment?: string }) => {
+      const res = await apiRequest("POST", "/api/endurance-challenges", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/endurance-challenges"] });
+      qc.invalidateQueries({ queryKey: ["/api/endurance-challenges/created"] });
+    },
+  });
+}
+
+export function useUpdateEnduranceChallenge() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; status?: string; completedAt?: string; completedCheckins?: number; missedCheckins?: number }) => {
+      const res = await apiRequest("PATCH", `/api/endurance-challenges/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/endurance-challenges"] });
+      qc.invalidateQueries({ queryKey: ["/api/endurance-challenges/created"] });
+    },
+  });
+}
+
+export function useEnduranceCheckins(challengeId: string | null) {
+  return useQuery<EnduranceCheckin[]>({
+    queryKey: ["/api/endurance-challenges", challengeId, "checkins"],
+    queryFn: async () => {
+      const res = await fetch(`/api/endurance-challenges/${challengeId}/checkins`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch checkins");
+      return res.json();
+    },
+    enabled: !!challengeId,
+  });
+}
+
+export function useCreateEnduranceCheckin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ challengeId, gateNumber }: { challengeId: string; gateNumber: number }) => {
+      const res = await apiRequest("POST", `/api/endurance-challenges/${challengeId}/checkins`, { gateNumber });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/endurance-challenges"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
     },
   });
 }

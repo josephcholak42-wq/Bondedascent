@@ -20,6 +20,11 @@ import PermissionRequestsPage from "@/pages/permission-requests";
 import ConflictsPage from "@/pages/conflicts";
 import DesiredChangesPage from "@/pages/desired-changes";
 import DevotionsPage from "@/pages/devotions";
+import IntensityLadderPage from "@/pages/intensity-ladder";
+import ObedienceTrialsPage from "@/pages/obedience-trials";
+import SensationRoulettePage from "@/pages/sensation-roulette";
+import ProtocolLockboxPage from "@/pages/protocol-lockbox";
+import EnduranceChallengesPage from "@/pages/endurance-challenges";
 import { useAuth } from "@/lib/hooks";
 import { Loader2 } from "lucide-react";
 
@@ -77,6 +82,11 @@ function Router() {
       <Route path="/conflicts" component={() => <ProtectedRoute component={ConflictsPage} />} />
       <Route path="/desired-changes" component={() => <ProtectedRoute component={DesiredChangesPage} />} />
       <Route path="/devotions" component={() => <ProtectedRoute component={DevotionsPage} />} />
+      <Route path="/intensity-ladder" component={() => <ProtectedRoute component={IntensityLadderPage} />} />
+      <Route path="/obedience-trials" component={() => <ProtectedRoute component={ObedienceTrialsPage} />} />
+      <Route path="/sensation-roulette" component={() => <ProtectedRoute component={SensationRoulettePage} />} />
+      <Route path="/protocol-lockbox" component={() => <ProtectedRoute component={ProtocolLockboxPage} />} />
+      <Route path="/endurance-challenges" component={() => <ProtectedRoute component={EnduranceChallengesPage} />} />
       <Route path="/auth" component={AuthRoute} />
       <Route component={NotFound} />
     </Switch>

@@ -15,7 +15,8 @@ import {
   FlameKindling, Sparkles, BookHeart, UserRoundCheck, 
   HandMetal, Ear, Hand, Gavel, FileSignature, Timer,
   Unlock, Ban, Search, Check, XCircle, Loader2, Plus, Square,
-  Link, Crown, Crosshair, Skull, Siren, SendHorizonal, CircleDot
+  Link, Crown, Crosshair, Skull, Siren, SendHorizonal, CircleDot,
+  Layers, ListChecks, Hourglass
 } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -485,6 +486,11 @@ export default function BondedAscentApp() {
               <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" />
               <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" />
               <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" />
+              <FeatureLink icon={<Layers />} label="Intensity" href="/intensity-ladder" color="text-red-500" />
+              <FeatureLink icon={<ListChecks />} label="Trials" href="/obedience-trials" color="text-amber-500" />
+              <FeatureLink icon={<RotateCcw />} label="Roulette" href="/sensation-roulette" color="text-fuchsia-400" />
+              <FeatureLink icon={<Lock />} label="Lockbox" href="/protocol-lockbox" color="text-violet-400" />
+              <FeatureLink icon={<Hourglass />} label="Endurance" href="/endurance-challenges" color="text-orange-500" />
             </div>
           </div>
 
@@ -799,6 +805,11 @@ export default function BondedAscentApp() {
                   <FeatureLink icon={<AlertTriangle />} label="Conflicts" href="/conflicts" color="text-rose-400" />
                   <FeatureLink icon={<Target />} label="Changes" href="/desired-changes" color="text-teal-400" />
                   <FeatureLink icon={<Heart />} label="Devotions" href="/devotions" color="text-pink-300" />
+                  <FeatureLink icon={<Layers />} label="Intensity" href="/intensity-ladder" color="text-red-500" />
+                  <FeatureLink icon={<ListChecks />} label="Trials" href="/obedience-trials" color="text-amber-500" />
+                  <FeatureLink icon={<RotateCcw />} label="Roulette" href="/sensation-roulette" color="text-fuchsia-400" />
+                  <FeatureLink icon={<Lock />} label="Lockbox" href="/protocol-lockbox" color="text-violet-400" />
+                  <FeatureLink icon={<Hourglass />} label="Endurance" href="/endurance-challenges" color="text-orange-500" />
                 </div>
               </div>
               </>

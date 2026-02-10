@@ -1172,5 +1172,352 @@ export async function registerRoutes(
     }
   });
 
+  // --- INTENSITY LADDER ---
+  app.get("/api/intensity-sessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const sessions = await storage.getIntensitySessions(user.id);
+    res.json(sessions);
+  });
+
+  app.post("/api/intensity-sessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "No partner linked" });
+    const { currentTier, notes, status } = req.body;
+    const session = await storage.createIntensitySession({
+      userId: user.id,
+      partnerId: user.partnerId,
+      currentTier: currentTier || 1,
+      notes: notes || null,
+      status: status || "active",
+    });
+    await storage.logActivity(user.id, "intensity_session_started", `Tier ${currentTier || 1}`);
+    await notifyUser(user.partnerId, `Intensity session started at Tier ${currentTier || 1}`, "alert");
+    res.json(session);
+  });
+
+  app.patch("/api/intensity-sessions/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { currentTier, maxTierReached, status, durationSeconds, notes, completedAt } = req.body;
+    const data: any = {};
+    if (currentTier !== undefined) data.currentTier = currentTier;
+    if (maxTierReached !== undefined) data.maxTierReached = maxTierReached;
+    if (status !== undefined) data.status = status;
+    if (durationSeconds !== undefined) data.durationSeconds = durationSeconds;
+    if (notes !== undefined) data.notes = notes;
+    if (completedAt !== undefined) data.completedAt = new Date(completedAt);
+    const session = await storage.updateIntensitySession(req.params.id, data);
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    if (status === "completed" && user.partnerId) {
+      await notifyUser(user.partnerId, `Intensity session completed! Max tier: ${session.maxTierReached}`, "info");
+      await storage.logActivity(user.id, "intensity_session_completed", `Max tier: ${session.maxTierReached}`);
+    }
+    res.json(session);
+  });
+
+  // --- OBEDIENCE TRIALS ---
+  app.get("/api/obedience-trials", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const trials = await storage.getObedienceTrials(user.id);
+    res.json(trials);
+  });
+
+  app.post("/api/obedience-trials", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "No partner linked" });
+    const { title, timeLimitSeconds, steps, autoReward, autoPunishment } = req.body;
+    if (!title || !steps || !Array.isArray(steps) || steps.length === 0) {
+      return res.status(400).json({ message: "Title and at least one step required" });
+    }
+    const trial = await storage.createObedienceTrial({
+      userId: user.id,
+      partnerId: user.partnerId,
+      title,
+      timeLimitSeconds: timeLimitSeconds || 600,
+      totalSteps: steps.length,
+      autoReward: autoReward || null,
+      autoPunishment: autoPunishment || null,
+      status: "pending",
+    });
+    for (let i = 0; i < steps.length; i++) {
+      await storage.createTrialStep({
+        trialId: trial.id,
+        stepOrder: i + 1,
+        instruction: steps[i],
+        status: "pending",
+      });
+    }
+    await notifyUser(user.partnerId, `New trial assigned: "${title}" (${steps.length} steps)`, "alert");
+    await storage.logActivity(user.id, "trial_created", title);
+    res.json(trial);
+  });
+
+  app.get("/api/obedience-trials/:id/steps", requireAuth, async (req, res) => {
+    const steps = await storage.getTrialSteps(req.params.id);
+    res.json(steps);
+  });
+
+  app.patch("/api/obedience-trials/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { status, score, completedSteps, startedAt, completedAt } = req.body;
+    const data: any = {};
+    if (status !== undefined) data.status = status;
+    if (score !== undefined) data.score = score;
+    if (completedSteps !== undefined) data.completedSteps = completedSteps;
+    if (startedAt !== undefined) data.startedAt = new Date(startedAt);
+    if (completedAt !== undefined) data.completedAt = new Date(completedAt);
+    const trial = await storage.updateObedienceTrial(req.params.id, data);
+    if (!trial) return res.status(404).json({ message: "Trial not found" });
+    if (status === "passed") {
+      if (trial.autoReward && trial.partnerId) {
+        await storage.createReward({ userId: trial.partnerId, name: trial.autoReward, unlockLevel: 1 });
+        await notifyUser(trial.partnerId, `Trial passed! Reward earned: ${trial.autoReward}`, "info");
+      }
+      await storage.logActivity(user.id, "trial_passed", trial.title);
+    } else if (status === "failed") {
+      if (trial.autoPunishment && trial.partnerId) {
+        await storage.createPunishment({ userId: trial.partnerId, name: trial.autoPunishment, assignedBy: trial.userId });
+        await notifyUser(trial.partnerId, `Trial failed. Punishment assigned: ${trial.autoPunishment}`, "alert");
+      }
+      await storage.logActivity(user.id, "trial_failed", trial.title);
+    }
+    res.json(trial);
+  });
+
+  app.patch("/api/trial-steps/:id", requireAuth, async (req, res) => {
+    const { status } = req.body;
+    const data: any = { status };
+    if (status === "completed") data.completedAt = new Date();
+    const step = await storage.updateTrialStep(req.params.id, data);
+    if (!step) return res.status(404).json({ message: "Step not found" });
+    res.json(step);
+  });
+
+  // --- SENSATION ROULETTE ---
+  app.get("/api/sensation-cards", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const cards = await storage.getSensationCards(user.id);
+    res.json(cards);
+  });
+
+  app.post("/api/sensation-cards", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { label, description, intensity, cardType, durationMinutes } = req.body;
+    if (!label) return res.status(400).json({ message: "Label required" });
+    const card = await storage.createSensationCard({
+      userId: user.id,
+      label,
+      description: description || null,
+      intensity: intensity || 3,
+      cardType: cardType || "normal",
+      durationMinutes: durationMinutes || null,
+    });
+    await storage.logActivity(user.id, "sensation_card_created", label);
+    res.json(card);
+  });
+
+  app.delete("/api/sensation-cards/:id", requireAuth, async (req, res) => {
+    await storage.deleteSensationCard(req.params.id);
+    res.json({ success: true });
+  });
+
+  app.get("/api/sensation-spins", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const spins = await storage.getSensationSpins(user.id);
+    res.json(spins);
+  });
+
+  app.post("/api/sensation-spins", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { cardId, result, cardType } = req.body;
+    if (!cardId || !result) return res.status(400).json({ message: "Card ID and result required" });
+    const recentSpins = await storage.getSensationSpins(user.id);
+    const consecutiveCompleted = recentSpins.filter(s => s.completed).length;
+    let streakCount = 1;
+    for (const s of recentSpins) {
+      if (s.completed) streakCount++;
+      else break;
+    }
+    const baseXp = 10;
+    const xpAwarded = Math.min(baseXp * streakCount, 50);
+    const spin = await storage.createSensationSpin({
+      userId: user.id,
+      cardId,
+      result,
+      cardType: cardType || "normal",
+    });
+    const updated = await storage.updateSensationSpin(spin.id, { xpAwarded, streakCount });
+    await storage.logActivity(user.id, "sensation_spin", result);
+    res.json(updated || spin);
+  });
+
+  app.patch("/api/sensation-spins/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { completed } = req.body;
+    const spin = await storage.updateSensationSpin(req.params.id, { completed: !!completed });
+    if (!spin) return res.status(404).json({ message: "Spin not found" });
+    if (completed && spin.xpAwarded > 0) {
+      const currentUser = await storage.getUser(user.id);
+      if (currentUser) {
+        await storage.updateUserXp(user.id, (currentUser.xp || 0) + spin.xpAwarded);
+      }
+      await notifyUser(user.id, `Sensation completed! +${spin.xpAwarded} XP (streak: ${spin.streakCount}x)`, "info");
+    }
+    res.json(spin);
+  });
+
+  // --- PROTOCOL LOCKBOX ---
+  app.get("/api/sealed-orders", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const orders = await storage.getSealedOrders(user.id);
+    res.json(orders);
+  });
+
+  app.get("/api/sealed-orders/created", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const orders = await storage.getSealedOrdersByCreator(user.id);
+    res.json(orders);
+  });
+
+  app.post("/api/sealed-orders", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "No partner linked" });
+    const { title, content, unlockAt, chainOrder, previousOrderId, xpCost } = req.body;
+    if (!title || !content || !unlockAt) return res.status(400).json({ message: "Title, content, and unlock time required" });
+    const order = await storage.createSealedOrder({
+      userId: user.id,
+      targetUserId: user.partnerId,
+      title,
+      content,
+      unlockAt: new Date(unlockAt),
+      chainOrder: chainOrder || null,
+      previousOrderId: previousOrderId || null,
+      xpCost: xpCost || 25,
+    });
+    await notifyUser(user.partnerId, `New sealed order: "${title}" — unlocks soon...`, "alert");
+    await storage.logActivity(user.id, "sealed_order_created", title);
+    res.json(order);
+  });
+
+  app.patch("/api/sealed-orders/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { revealed, completed, emergencyUnsealed } = req.body;
+    const data: any = {};
+    if (revealed !== undefined) data.revealed = revealed;
+    if (completed !== undefined) data.completed = completed;
+    if (emergencyUnsealed !== undefined) data.emergencyUnsealed = emergencyUnsealed;
+    const order = await storage.updateSealedOrder(req.params.id, data);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (emergencyUnsealed) {
+      const currentUser = await storage.getUser(user.id);
+      if (currentUser && currentUser.xp >= order.xpCost) {
+        await storage.updateUserXp(user.id, currentUser.xp - order.xpCost);
+        await storage.updateSealedOrder(req.params.id, { revealed: true });
+        await notifyUser(order.userId, `Emergency unseal used on "${order.title}" (-${order.xpCost} XP)`, "alert");
+        await storage.logActivity(user.id, "emergency_unseal", `${order.title} (-${order.xpCost} XP)`);
+      } else {
+        return res.status(400).json({ message: `Not enough XP. Need ${order.xpCost}, have ${currentUser?.xp || 0}` });
+      }
+    }
+    if (completed) {
+      await storage.logActivity(user.id, "sealed_order_completed", order.title);
+    }
+    res.json(order);
+  });
+
+  // --- ENDURANCE CHALLENGES ---
+  app.get("/api/endurance-challenges", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const challenges = await storage.getEnduranceChallenges(user.id);
+    res.json(challenges);
+  });
+
+  app.get("/api/endurance-challenges/created", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const challenges = await storage.getEnduranceChallengesByCreator(user.id);
+    res.json(challenges);
+  });
+
+  app.post("/api/endurance-challenges", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "No partner linked" });
+    const { title, description, durationHours, checkinIntervalMinutes, xpPerCheckin, autoPunishment } = req.body;
+    if (!title || !durationHours) return res.status(400).json({ message: "Title and duration required" });
+    const intervalMins = checkinIntervalMinutes || 60;
+    const totalCheckins = Math.floor((durationHours * 60) / intervalMins);
+    const endsAt = new Date(Date.now() + durationHours * 60 * 60 * 1000);
+    const challenge = await storage.createEnduranceChallenge({
+      userId: user.id,
+      targetUserId: user.partnerId,
+      title,
+      description: description || null,
+      durationHours,
+      checkinIntervalMinutes: intervalMins,
+      xpPerCheckin: xpPerCheckin || 15,
+      autoPunishment: autoPunishment || null,
+      status: "active",
+      startedAt: new Date(),
+      endsAt,
+    });
+    await storage.updateEnduranceChallenge(challenge.id, { totalCheckins });
+    await notifyUser(user.partnerId, `Endurance challenge: "${title}" — ${durationHours}h, check in every ${intervalMins}min`, "alert");
+    await storage.logActivity(user.id, "endurance_challenge_created", title);
+    res.json(challenge);
+  });
+
+  app.patch("/api/endurance-challenges/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { status, completedAt, completedCheckins, missedCheckins } = req.body;
+    const data: any = {};
+    if (status !== undefined) data.status = status;
+    if (completedAt !== undefined) data.completedAt = new Date(completedAt);
+    if (completedCheckins !== undefined) data.completedCheckins = completedCheckins;
+    if (missedCheckins !== undefined) data.missedCheckins = missedCheckins;
+    const challenge = await storage.updateEnduranceChallenge(req.params.id, data);
+    if (!challenge) return res.status(404).json({ message: "Challenge not found" });
+    if (status === "completed") {
+      await storage.logActivity(user.id, "endurance_completed", challenge.title);
+      if (challenge.userId !== user.id) {
+        await notifyUser(challenge.userId, `Endurance challenge "${challenge.title}" completed!`, "info");
+      }
+    }
+    if (status === "failed" && challenge.autoPunishment) {
+      await storage.createPunishment({ userId: challenge.targetUserId, name: challenge.autoPunishment, assignedBy: challenge.userId });
+      await notifyUser(challenge.targetUserId, `Endurance failed. Punishment: ${challenge.autoPunishment}`, "alert");
+    }
+    res.json(challenge);
+  });
+
+  app.get("/api/endurance-challenges/:id/checkins", requireAuth, async (req, res) => {
+    const checkins = await storage.getEnduranceCheckins(req.params.id);
+    res.json(checkins);
+  });
+
+  app.post("/api/endurance-challenges/:id/checkins", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { gateNumber } = req.body;
+    const challenge = await storage.getEnduranceChallenges(user.id);
+    const ch = challenge.find(c => c.id === req.params.id);
+    if (!ch) return res.status(404).json({ message: "Challenge not found" });
+    const checkin = await storage.createEnduranceCheckin({
+      challengeId: req.params.id,
+      userId: user.id,
+      gateNumber: gateNumber || 1,
+      status: "completed",
+    });
+    const updatedCheckin = await storage.updateEnduranceChallenge(req.params.id, {
+      completedCheckins: (ch.completedCheckins || 0) + 1,
+    });
+    const xpPerCheckin = ch.xpPerCheckin || 15;
+    const currentUser = await storage.getUser(user.id);
+    if (currentUser) {
+      await storage.updateUserXp(user.id, (currentUser.xp || 0) + xpPerCheckin);
+    }
+    await notifyUser(user.id, `Endurance check-in #${gateNumber}! +${xpPerCheckin} XP`, "info");
+    if (ch.userId !== user.id) {
+      await notifyUser(ch.userId, `${user.username} checked in for "${ch.title}" (gate #${gateNumber})`, "info");
+    }
+    res.json(checkin);
+  });
+
   return httpServer;
 }

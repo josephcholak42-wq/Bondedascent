@@ -7,6 +7,7 @@ import {
   standingOrders, permissionRequests, devotions, conflicts,
   desiredChanges, achievements, playSessions, pushSubscriptions,
   demandTimers, quickCommands, presenceHeartbeats, accusations,
+  intensitySessions, trialSteps, obedienceTrials, sensationCards, sensationSpins, sealedOrders, enduranceChallenges, enduranceCheckins,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -24,6 +25,14 @@ import {
   type QuickCommand, type InsertQuickCommand,
   type PresenceHeartbeat,
   type Accusation, type InsertAccusation,
+  type IntensitySession, type InsertIntensitySession,
+  type ObedienceTrial, type InsertObedienceTrial,
+  type TrialStep, type InsertTrialStep,
+  type SensationCard, type InsertSensationCard,
+  type SensationSpin, type InsertSensationSpin,
+  type SealedOrder, type InsertSealedOrder,
+  type EnduranceChallenge, type InsertEnduranceChallenge,
+  type EnduranceCheckin, type InsertEnduranceCheckin,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -153,6 +162,42 @@ export interface IStorage {
   getAccusations(toUserId: string): Promise<Accusation[]>;
   createAccusation(accusation: InsertAccusation): Promise<Accusation>;
   respondToAccusation(id: string, response: string): Promise<Accusation | undefined>;
+
+  // Intensity Ladder
+  getIntensitySessions(userId: string): Promise<IntensitySession[]>;
+  createIntensitySession(session: InsertIntensitySession): Promise<IntensitySession>;
+  updateIntensitySession(id: string, data: Partial<IntensitySession>): Promise<IntensitySession | undefined>;
+
+  // Obedience Trials
+  getObedienceTrials(userId: string): Promise<ObedienceTrial[]>;
+  createObedienceTrial(trial: InsertObedienceTrial): Promise<ObedienceTrial>;
+  updateObedienceTrial(id: string, data: Partial<ObedienceTrial>): Promise<ObedienceTrial | undefined>;
+  getTrialSteps(trialId: string): Promise<TrialStep[]>;
+  createTrialStep(step: InsertTrialStep): Promise<TrialStep>;
+  updateTrialStep(id: string, data: Partial<TrialStep>): Promise<TrialStep | undefined>;
+
+  // Sensation Roulette
+  getSensationCards(userId: string): Promise<SensationCard[]>;
+  createSensationCard(card: InsertSensationCard): Promise<SensationCard>;
+  updateSensationCard(id: string, data: Partial<SensationCard>): Promise<SensationCard | undefined>;
+  deleteSensationCard(id: string): Promise<void>;
+  getSensationSpins(userId: string): Promise<SensationSpin[]>;
+  createSensationSpin(spin: InsertSensationSpin): Promise<SensationSpin>;
+  updateSensationSpin(id: string, data: Partial<SensationSpin>): Promise<SensationSpin | undefined>;
+
+  // Protocol Lockbox
+  getSealedOrders(targetUserId: string): Promise<SealedOrder[]>;
+  getSealedOrdersByCreator(userId: string): Promise<SealedOrder[]>;
+  createSealedOrder(order: InsertSealedOrder): Promise<SealedOrder>;
+  updateSealedOrder(id: string, data: Partial<SealedOrder>): Promise<SealedOrder | undefined>;
+
+  // Endurance Challenges
+  getEnduranceChallenges(targetUserId: string): Promise<EnduranceChallenge[]>;
+  getEnduranceChallengesByCreator(userId: string): Promise<EnduranceChallenge[]>;
+  createEnduranceChallenge(challenge: InsertEnduranceChallenge): Promise<EnduranceChallenge>;
+  updateEnduranceChallenge(id: string, data: Partial<EnduranceChallenge>): Promise<EnduranceChallenge | undefined>;
+  getEnduranceCheckins(challengeId: string): Promise<EnduranceCheckin[]>;
+  createEnduranceCheckin(checkin: InsertEnduranceCheckin): Promise<EnduranceCheckin>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -617,6 +662,109 @@ export class DatabaseStorage implements IStorage {
   async respondToAccusation(id: string, response: string): Promise<Accusation | undefined> {
     const [a] = await db.update(accusations).set({ response, status: "responded" }).where(eq(accusations.id, id)).returning();
     return a;
+  }
+
+  // Intensity Ladder
+  async getIntensitySessions(userId: string): Promise<IntensitySession[]> {
+    return db.select().from(intensitySessions).where(eq(intensitySessions.userId, userId)).orderBy(desc(intensitySessions.createdAt));
+  }
+  async createIntensitySession(session: InsertIntensitySession): Promise<IntensitySession> {
+    const [s] = await db.insert(intensitySessions).values(session).returning();
+    return s;
+  }
+  async updateIntensitySession(id: string, data: Partial<IntensitySession>): Promise<IntensitySession | undefined> {
+    const [s] = await db.update(intensitySessions).set(data).where(eq(intensitySessions.id, id)).returning();
+    return s;
+  }
+
+  // Obedience Trials
+  async getObedienceTrials(userId: string): Promise<ObedienceTrial[]> {
+    return db.select().from(obedienceTrials).where(eq(obedienceTrials.userId, userId)).orderBy(desc(obedienceTrials.createdAt));
+  }
+  async createObedienceTrial(trial: InsertObedienceTrial): Promise<ObedienceTrial> {
+    const [t] = await db.insert(obedienceTrials).values(trial).returning();
+    return t;
+  }
+  async updateObedienceTrial(id: string, data: Partial<ObedienceTrial>): Promise<ObedienceTrial | undefined> {
+    const [t] = await db.update(obedienceTrials).set(data).where(eq(obedienceTrials.id, id)).returning();
+    return t;
+  }
+  async getTrialSteps(trialId: string): Promise<TrialStep[]> {
+    return db.select().from(trialSteps).where(eq(trialSteps.trialId, trialId)).orderBy(trialSteps.stepOrder);
+  }
+  async createTrialStep(step: InsertTrialStep): Promise<TrialStep> {
+    const [s] = await db.insert(trialSteps).values(step).returning();
+    return s;
+  }
+  async updateTrialStep(id: string, data: Partial<TrialStep>): Promise<TrialStep | undefined> {
+    const [s] = await db.update(trialSteps).set(data).where(eq(trialSteps.id, id)).returning();
+    return s;
+  }
+
+  // Sensation Roulette
+  async getSensationCards(userId: string): Promise<SensationCard[]> {
+    return db.select().from(sensationCards).where(eq(sensationCards.userId, userId)).orderBy(desc(sensationCards.createdAt));
+  }
+  async createSensationCard(card: InsertSensationCard): Promise<SensationCard> {
+    const [c] = await db.insert(sensationCards).values(card).returning();
+    return c;
+  }
+  async updateSensationCard(id: string, data: Partial<SensationCard>): Promise<SensationCard | undefined> {
+    const [c] = await db.update(sensationCards).set(data).where(eq(sensationCards.id, id)).returning();
+    return c;
+  }
+  async deleteSensationCard(id: string): Promise<void> {
+    await db.delete(sensationCards).where(eq(sensationCards.id, id));
+  }
+  async getSensationSpins(userId: string): Promise<SensationSpin[]> {
+    return db.select().from(sensationSpins).where(eq(sensationSpins.userId, userId)).orderBy(desc(sensationSpins.createdAt));
+  }
+  async createSensationSpin(spin: InsertSensationSpin): Promise<SensationSpin> {
+    const [s] = await db.insert(sensationSpins).values(spin).returning();
+    return s;
+  }
+  async updateSensationSpin(id: string, data: Partial<SensationSpin>): Promise<SensationSpin | undefined> {
+    const [s] = await db.update(sensationSpins).set(data).where(eq(sensationSpins.id, id)).returning();
+    return s;
+  }
+
+  // Protocol Lockbox
+  async getSealedOrders(targetUserId: string): Promise<SealedOrder[]> {
+    return db.select().from(sealedOrders).where(eq(sealedOrders.targetUserId, targetUserId)).orderBy(sealedOrders.unlockAt);
+  }
+  async getSealedOrdersByCreator(userId: string): Promise<SealedOrder[]> {
+    return db.select().from(sealedOrders).where(eq(sealedOrders.userId, userId)).orderBy(desc(sealedOrders.createdAt));
+  }
+  async createSealedOrder(order: InsertSealedOrder): Promise<SealedOrder> {
+    const [o] = await db.insert(sealedOrders).values(order).returning();
+    return o;
+  }
+  async updateSealedOrder(id: string, data: Partial<SealedOrder>): Promise<SealedOrder | undefined> {
+    const [o] = await db.update(sealedOrders).set(data).where(eq(sealedOrders.id, id)).returning();
+    return o;
+  }
+
+  // Endurance Challenges
+  async getEnduranceChallenges(targetUserId: string): Promise<EnduranceChallenge[]> {
+    return db.select().from(enduranceChallenges).where(eq(enduranceChallenges.targetUserId, targetUserId)).orderBy(desc(enduranceChallenges.createdAt));
+  }
+  async getEnduranceChallengesByCreator(userId: string): Promise<EnduranceChallenge[]> {
+    return db.select().from(enduranceChallenges).where(eq(enduranceChallenges.userId, userId)).orderBy(desc(enduranceChallenges.createdAt));
+  }
+  async createEnduranceChallenge(challenge: InsertEnduranceChallenge): Promise<EnduranceChallenge> {
+    const [c] = await db.insert(enduranceChallenges).values(challenge).returning();
+    return c;
+  }
+  async updateEnduranceChallenge(id: string, data: Partial<EnduranceChallenge>): Promise<EnduranceChallenge | undefined> {
+    const [c] = await db.update(enduranceChallenges).set(data).where(eq(enduranceChallenges.id, id)).returning();
+    return c;
+  }
+  async getEnduranceCheckins(challengeId: string): Promise<EnduranceCheckin[]> {
+    return db.select().from(enduranceCheckins).where(eq(enduranceCheckins.challengeId, challengeId)).orderBy(enduranceCheckins.gateNumber);
+  }
+  async createEnduranceCheckin(checkin: InsertEnduranceCheckin): Promise<EnduranceCheckin> {
+    const [c] = await db.insert(enduranceCheckins).values(checkin).returning();
+    return c;
   }
 }
 

@@ -499,3 +499,145 @@ export type PresenceHeartbeat = typeof presenceHeartbeats.$inferSelect;
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true });
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
+
+export const intensitySessions = pgTable("intensity_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  partnerId: varchar("partner_id").notNull(),
+  currentTier: integer("current_tier").notNull().default(1),
+  maxTierReached: integer("max_tier_reached").notNull().default(1),
+  status: text("status").notNull().default("active"),
+  durationSeconds: integer("duration_seconds").default(0),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertIntensitySessionSchema = createInsertSchema(intensitySessions).omit({ id: true, createdAt: true, completedAt: true, durationSeconds: true, maxTierReached: true });
+export type IntensitySession = typeof intensitySessions.$inferSelect;
+export type InsertIntensitySession = z.infer<typeof insertIntensitySessionSchema>;
+
+export const obedienceTrials = pgTable("obedience_trials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  partnerId: varchar("partner_id").notNull(),
+  title: text("title").notNull(),
+  timeLimitSeconds: integer("time_limit_seconds").notNull().default(600),
+  status: text("status").notNull().default("pending"),
+  score: integer("score").default(0),
+  totalSteps: integer("total_steps").notNull().default(0),
+  completedSteps: integer("completed_steps").notNull().default(0),
+  autoReward: text("auto_reward"),
+  autoPunishment: text("auto_punishment"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const trialSteps = pgTable("trial_steps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  trialId: varchar("trial_id").notNull(),
+  stepOrder: integer("step_order").notNull(),
+  instruction: text("instruction").notNull(),
+  status: text("status").notNull().default("pending"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertObedienceTrialSchema = createInsertSchema(obedienceTrials).omit({ id: true, createdAt: true, completedAt: true, startedAt: true, score: true, completedSteps: true });
+export type ObedienceTrial = typeof obedienceTrials.$inferSelect;
+export type InsertObedienceTrial = z.infer<typeof insertObedienceTrialSchema>;
+
+export const insertTrialStepSchema = createInsertSchema(trialSteps).omit({ id: true, createdAt: true, completedAt: true });
+export type TrialStep = typeof trialSteps.$inferSelect;
+export type InsertTrialStep = z.infer<typeof insertTrialStepSchema>;
+
+export const sensationCards = pgTable("sensation_cards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  label: text("label").notNull(),
+  description: text("description"),
+  intensity: integer("intensity").notNull().default(3),
+  cardType: text("card_type").notNull().default("normal"),
+  durationMinutes: integer("duration_minutes"),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const sensationSpins = pgTable("sensation_spins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  cardId: varchar("card_id").notNull(),
+  result: text("result").notNull(),
+  cardType: text("card_type").notNull().default("normal"),
+  xpAwarded: integer("xp_awarded").notNull().default(0),
+  streakCount: integer("streak_count").notNull().default(1),
+  completed: boolean("completed").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSensationCardSchema = createInsertSchema(sensationCards).omit({ id: true, createdAt: true, active: true });
+export type SensationCard = typeof sensationCards.$inferSelect;
+export type InsertSensationCard = z.infer<typeof insertSensationCardSchema>;
+
+export const insertSensationSpinSchema = createInsertSchema(sensationSpins).omit({ id: true, createdAt: true, completed: true, xpAwarded: true, streakCount: true });
+export type SensationSpin = typeof sensationSpins.$inferSelect;
+export type InsertSensationSpin = z.infer<typeof insertSensationSpinSchema>;
+
+export const sealedOrders = pgTable("sealed_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  targetUserId: varchar("target_user_id").notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  unlockAt: timestamp("unlock_at").notNull(),
+  chainOrder: integer("chain_order"),
+  previousOrderId: varchar("previous_order_id"),
+  revealed: boolean("revealed").notNull().default(false),
+  completed: boolean("completed").notNull().default(false),
+  emergencyUnsealed: boolean("emergency_unsealed").notNull().default(false),
+  xpCost: integer("xp_cost").notNull().default(25),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSealedOrderSchema = createInsertSchema(sealedOrders).omit({ id: true, createdAt: true, revealed: true, completed: true, emergencyUnsealed: true });
+export type SealedOrder = typeof sealedOrders.$inferSelect;
+export type InsertSealedOrder = z.infer<typeof insertSealedOrderSchema>;
+
+export const enduranceChallenges = pgTable("endurance_challenges", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  targetUserId: varchar("target_user_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  durationHours: integer("duration_hours").notNull(),
+  checkinIntervalMinutes: integer("checkin_interval_minutes").notNull().default(60),
+  status: text("status").notNull().default("active"),
+  totalCheckins: integer("total_checkins").notNull().default(0),
+  completedCheckins: integer("completed_checkins").notNull().default(0),
+  missedCheckins: integer("missed_checkins").notNull().default(0),
+  xpPerCheckin: integer("xp_per_checkin").notNull().default(15),
+  autoPunishment: text("auto_punishment"),
+  startedAt: timestamp("started_at").defaultNow(),
+  endsAt: timestamp("ends_at").notNull(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const enduranceCheckins = pgTable("endurance_checkins", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  challengeId: varchar("challenge_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  gateNumber: integer("gate_number").notNull(),
+  status: text("status").notNull().default("completed"),
+  xpAwarded: integer("xp_awarded").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertEnduranceChallengeSchema = createInsertSchema(enduranceChallenges).omit({ id: true, createdAt: true, completedAt: true, totalCheckins: true, completedCheckins: true, missedCheckins: true });
+export type EnduranceChallenge = typeof enduranceChallenges.$inferSelect;
+export type InsertEnduranceChallenge = z.infer<typeof insertEnduranceChallengeSchema>;
+
+export const insertEnduranceCheckinSchema = createInsertSchema(enduranceCheckins).omit({ id: true, createdAt: true, xpAwarded: true });
+export type EnduranceCheckin = typeof enduranceCheckins.$inferSelect;
+export type InsertEnduranceCheckin = z.infer<typeof insertEnduranceCheckinSchema>;
