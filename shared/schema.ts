@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   email: text("email"),
   role: text("role").notNull().default("sub"),
+  originalRole: text("original_role").notNull().default("sub"),
   xp: integer("xp").notNull().default(0),
   level: integer("level").notNull().default(1),
   partnerId: varchar("partner_id"),
@@ -249,6 +250,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   password: true,
   email: true,
   role: true,
+  originalRole: true,
 });
 
 export const insertTaskSchema = createInsertSchema(tasks).pick({
@@ -661,12 +663,10 @@ export type InsertMedia = z.infer<typeof insertMediaSchema>;
 
 export const stickers = pgTable("stickers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull(),
   recipientId: varchar("recipient_id").notNull(),
-  givenBy: varchar("given_by").notNull(),
-  label: text("label").notNull(),
-  icon: text("icon").notNull(),
-  note: text("note"),
-  category: text("category").notNull().default("praise"),
+  stickerType: varchar("sticker_type").notNull(),
+  message: text("message"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

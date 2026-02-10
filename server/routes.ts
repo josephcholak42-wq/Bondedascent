@@ -382,6 +382,16 @@ export async function registerRoutes(
     if (!role || !["sub", "dom"].includes(role)) {
       return res.status(400).json({ message: "Invalid role" });
     }
+    if (user.originalRole !== "dom") {
+      const partner = await storage.getPartner(user.id);
+      if (partner && partner.originalRole === "dom") {
+        const settings = await storage.getFeatureSettings(partner.id);
+        const roleSwitchSetting = settings.find(s => s.featureKey === "role_switch");
+        if (roleSwitchSetting && !roleSwitchSetting.enabled) {
+          return res.status(403).json({ message: "Role switching has been disabled by your Dom" });
+        }
+      }
+    }
     const updated = await storage.updateUserRole(user.id, role);
     if (!updated) return res.status(404).json({ message: "User not found" });
     const { password: _, ...safeUser } = updated;
@@ -1654,14 +1664,14 @@ export async function registerRoutes(
   app.get("/api/feature-settings", requireAuth, async (req, res) => {
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
-    const domId = user.role === "dom" ? user.id : (partner ? partner.id : user.id);
+    const domId = user.originalRole === "dom" ? user.id : (partner ? partner.id : user.id);
     const settings = await storage.getFeatureSettings(domId);
     res.json(settings);
   });
 
   app.put("/api/feature-settings/:featureKey", requireAuth, async (req, res) => {
     const user = req.user as User;
-    if (user.role !== "dom") return res.status(403).json({ message: "Only Dom can manage feature settings" });
+    if (user.originalRole !== "dom") return res.status(403).json({ message: "Only original Dom accounts can manage feature settings" });
     const { enabled } = req.body;
     if (typeof enabled !== "boolean") return res.status(400).json({ message: "enabled must be a boolean" });
     const setting = await storage.upsertFeatureSetting(user.id, req.params.featureKey, enabled);

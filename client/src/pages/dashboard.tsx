@@ -48,7 +48,7 @@ import {
   useIntensitySessions, useCountdownEvents, usePlaySessions,
   useSecrets, useLimits, usePermissionRequests, useDevotions, useConflicts, useRatings,
   useStickers, useSendSticker,
-  useFeatureSettings, useToggleFeature,
+  useFeatureSettings, useToggleFeature, useIsFeatureEnabled,
   useUploadMedia, useMedia, useDeleteMedia,
 } from '@/lib/hooks';
 
@@ -201,6 +201,7 @@ export default function BondedAscentApp() {
   const sendStickerMutation = useSendSticker();
   const { data: featureSettingsList = [] } = useFeatureSettings();
   const toggleFeatureMutation = useToggleFeature();
+  const roleSwitchEnabled = useIsFeatureEnabled('role_switch');
   const uploadMediaMutation = useUploadMedia();
   const deleteMediaMutation = useDeleteMedia();
   const [selectedStickerType, setSelectedStickerType] = useState('');
@@ -715,6 +716,7 @@ export default function BondedAscentApp() {
                   { key: 'secrets', label: 'Secrets', icon: <Eye size={14} /> },
                   { key: 'ratings', label: 'Ratings', icon: <Star size={14} /> },
                   { key: 'media_upload', label: 'Media Upload', icon: <Camera size={14} /> },
+                  { key: 'role_switch', label: 'Role Switching', icon: <RefreshCw size={14} /> },
                 ].map(feature => {
                   const setting = featureSettingsList.find((s: any) => s.featureKey === feature.key);
                   const isEnabled = setting ? setting.enabled : true;
@@ -1326,7 +1328,9 @@ export default function BondedAscentApp() {
 
           <div className="space-y-3 pb-8">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">Account</h3>
-            <ProfileItem icon={<RefreshCw size={20} />} label={`Switch to ${userRole === 'sub' ? 'Dom' : 'Sub'} View`} onClick={handleSwitchRole} />
+            {(user?.originalRole === 'dom' || roleSwitchEnabled) && (
+              <ProfileItem icon={<RefreshCw size={20} />} label={`Switch to ${userRole === 'sub' ? 'Dom' : 'Sub'} View`} onClick={handleSwitchRole} />
+            )}
             <ProfileItem icon={<LogOut size={20} />} label="Log Out" onClick={handleLogout} />
           </div>
         </div>
