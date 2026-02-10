@@ -472,14 +472,14 @@ export default function BondedAscentApp() {
 
           <div className="mb-4">
             <button
-              data-testid="button-sub-status"
-              onClick={() => setLocation('/sub-status')}
-              className="w-full bg-gradient-to-r from-red-950/50 to-slate-900 border border-red-800/40 rounded-xl p-4 flex items-center gap-3 hover:border-red-600/50 transition-colors cursor-pointer"
+              data-testid="button-dom-overview"
+              onClick={() => setLocation('/dom-overview')}
+              className="w-full bg-gradient-to-r from-amber-950/40 to-slate-900 border border-amber-800/40 rounded-xl p-4 flex items-center gap-3 hover:border-amber-600/50 transition-colors cursor-pointer"
             >
-              <Eye size={22} className="text-red-500 shrink-0" />
+              <Crown size={22} className="text-amber-500 shrink-0" />
               <div className="text-left flex-1">
-                <div className="text-sm font-bold text-white uppercase tracking-wider">Sub Overview</div>
-                <div className="text-[10px] text-slate-500">Everything currently in place</div>
+                <div className="text-sm font-bold text-white uppercase tracking-wider">Command Center</div>
+                <div className="text-[10px] text-slate-500">Everything you have in place</div>
               </div>
               <ChevronRight size={16} className="text-slate-600" />
             </button>
