@@ -469,6 +469,21 @@ export default function BondedAscentApp() {
             <BigButton icon={<BookOpen />} label="Journal" sub={`${journalEntries.length} entries`} color="text-blue-500" onClick={() => setActiveView('journal')} />
           </div>
 
+          <div className="mb-4">
+            <button
+              data-testid="button-sub-status"
+              onClick={() => setLocation('/sub-status')}
+              className="w-full bg-gradient-to-r from-red-950/50 to-slate-900 border border-red-800/40 rounded-xl p-4 flex items-center gap-3 hover:border-red-600/50 transition-colors cursor-pointer"
+            >
+              <Eye size={22} className="text-red-500 shrink-0" />
+              <div className="text-left flex-1">
+                <div className="text-sm font-bold text-white uppercase tracking-wider">Sub Overview</div>
+                <div className="text-[10px] text-slate-500">Everything currently in place</div>
+              </div>
+              <ChevronRight size={16} className="text-slate-600" />
+            </button>
+          </div>
+
           <div className="border-t border-white/5 pt-6">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">Features</h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
@@ -786,6 +801,21 @@ export default function BondedAscentApp() {
               <div className="grid grid-cols-2 gap-4">
                 <BigButton icon={<Dices />} label="Wheel of Dares" sub={`${dares.length} dares`} onClick={() => setModal('wheel')} color="text-purple-500" />
                 <BigButton icon={<MessageSquare />} label="Daily Check-In" sub="Submit Report" color="text-blue-500" onClick={() => setModal('checkin')} />
+              </div>
+
+              <div className="mb-4">
+                <button
+                  data-testid="button-my-protocols"
+                  onClick={() => setLocation('/sub-status')}
+                  className="w-full bg-gradient-to-r from-red-950/50 to-slate-900 border border-red-800/40 rounded-xl p-4 flex items-center gap-3 hover:border-red-600/50 transition-colors cursor-pointer"
+                >
+                  <Eye size={22} className="text-red-500 shrink-0" />
+                  <div className="text-left flex-1">
+                    <div className="text-sm font-bold text-white uppercase tracking-wider">My Protocols</div>
+                    <div className="text-[10px] text-slate-500">See everything in place for you</div>
+                  </div>
+                  <ChevronRight size={16} className="text-slate-600" />
+                </button>
               </div>
 
               <div className="border-t border-white/5 pt-6">

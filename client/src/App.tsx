@@ -25,6 +25,7 @@ import ObedienceTrialsPage from "@/pages/obedience-trials";
 import SensationRoulettePage from "@/pages/sensation-roulette";
 import ProtocolLockboxPage from "@/pages/protocol-lockbox";
 import EnduranceChallengesPage from "@/pages/endurance-challenges";
+import SubStatusPage from "@/pages/sub-status";
 import { useAuth } from "@/lib/hooks";
 import { Loader2 } from "lucide-react";
 
@@ -87,6 +88,7 @@ function Router() {
       <Route path="/sensation-roulette" component={() => <ProtectedRoute component={SensationRoulettePage} />} />
       <Route path="/protocol-lockbox" component={() => <ProtectedRoute component={ProtocolLockboxPage} />} />
       <Route path="/endurance-challenges" component={() => <ProtectedRoute component={EnduranceChallengesPage} />} />
+      <Route path="/sub-status" component={() => <ProtectedRoute component={SubStatusPage} />} />
       <Route path="/auth" component={AuthRoute} />
       <Route component={NotFound} />
     </Switch>
