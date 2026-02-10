@@ -608,46 +608,18 @@ export default function BondedAscentApp() {
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Send Sticker Reward</h3>
                   <Sparkles size={14} className="text-yellow-500" />
                 </div>
-                <div className="flex gap-2 mb-3">
-                  <input
-                    id="sticker-message-input"
-                    data-testid="input-sticker-message"
-                    type="text"
-                    value={stickerMessage}
-                    onChange={(e) => setStickerMessage(e.target.value)}
-                    placeholder="Message (optional)"
-                    className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50"
-                  />
-                </div>
                 <div className="grid grid-cols-4 gap-2">
                   {['gold-star', 'heart', 'fire', 'crown', 'diamond', 'ribbon', 'trophy', 'sparkle'].map(type => (
                     <button
                       key={type}
                       data-testid={`sticker-${type}`}
-                      onPointerDown={(e) => {
-                        // Prevent the button from taking focus away from the input on mobile
-                        e.preventDefault();
-                      }}
                       onClick={() => {
                         if (partner && !sendStickerMutation.isPending) {
                           sendStickerMutation.mutate({
                             recipientId: partner.id,
                             stickerType: type,
-                            message: stickerMessage || undefined,
-                          }, {
-                            onSuccess: () => {
-                              // Force focus back immediately after mutation succeeds
-                              setTimeout(() => {
-                                const input = document.getElementById('sticker-message-input');
-                                if (input) {
-                                  input.focus();
-                                  // For some mobile browsers, selecting helps keep keyboard up
-                                  (input as HTMLInputElement).setSelectionRange(stickerMessage.length, stickerMessage.length);
-                                }
-                              }, 10);
-                            }
+                            message: undefined,
                           });
-                          setStickerMessage('');
                         }
                       }}
                       className="p-3 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-yellow-900/30 active:bg-yellow-900/30 active:border-yellow-500/50 active:shadow-[0_0_10px_rgba(234,179,8,0.2)]"
