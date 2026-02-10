@@ -1476,7 +1476,7 @@ export default function BondedAscentApp() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
+    <div className="flex h-[100dvh] bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
       <style>{`
         @keyframes float-ember {
           0%, 100% { opacity: 0; transform: translateY(0); }
