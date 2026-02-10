@@ -1243,8 +1243,8 @@ export default function BondedAscentApp() {
           25%, 100% { opacity: 0; }
         }
         @keyframes devotion-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.7; }
-          50% { transform: scale(1.15); opacity: 1; }
+          0%, 100% { box-shadow: 0 0 30px rgba(220,38,38,0.2), 0 0 60px rgba(220,38,38,0.1); }
+          50% { box-shadow: 0 0 50px rgba(220,38,38,0.5), 0 0 100px rgba(220,38,38,0.25); }
         }
       `}</style>
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
