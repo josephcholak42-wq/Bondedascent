@@ -32,6 +32,7 @@ export default function SecretsPage() {
       title: title.trim(),
       content: content.trim(),
       tier,
+      forUserId: user?.partnerId || undefined,
     });
     setTitle('');
     setContent('');
