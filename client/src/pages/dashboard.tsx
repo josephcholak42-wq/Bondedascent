@@ -634,10 +634,20 @@ export default function BondedAscentApp() {
                             recipientId: partner.id,
                             stickerType: type,
                             message: stickerMessage || undefined,
+                          }, {
+                            onSuccess: () => {
+                              // Force focus back immediately after mutation succeeds
+                              setTimeout(() => {
+                                const input = document.getElementById('sticker-message-input');
+                                if (input) {
+                                  input.focus();
+                                  // For some mobile browsers, selecting helps keep keyboard up
+                                  (input as HTMLInputElement).setSelectionRange(stickerMessage.length, stickerMessage.length);
+                                }
+                              }, 10);
+                            }
                           });
                           setStickerMessage('');
-                          // Refocus the input to keep the keyboard open
-                          document.getElementById('sticker-message-input')?.focus();
                         }
                       }}
                       className="p-3 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-yellow-900/30 active:bg-yellow-900/30 active:border-yellow-500/50 active:shadow-[0_0_10px_rgba(234,179,8,0.2)]"
