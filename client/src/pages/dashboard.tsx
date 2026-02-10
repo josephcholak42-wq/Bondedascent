@@ -313,19 +313,9 @@ export default function BondedAscentApp() {
 
   useEffect(() => {
     presenceHeartbeatMutation.mutate();
-    const interval = setInterval(() => {
-      presenceHeartbeatMutation.mutate();
-    }, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   const throneWords = ['OBEY', 'SUBMIT', 'KNEEL', 'SERVE', 'YIELD'];
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setThroneWordIndex(prev => (prev + 1) % throneWords.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
 
   const scenePhases = ['Warm-Up', 'Main Scene', 'Cooldown'];
 
