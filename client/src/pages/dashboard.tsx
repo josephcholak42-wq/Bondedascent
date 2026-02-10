@@ -45,10 +45,10 @@ import {
   useAccusations, usePartnerAccusations, useCreateAccusation, useRespondToAccusation,
 } from '@/lib/hooks';
 
-const PARTICLE_DATA = Array.from({ length: 20 }).map(() => ({
+const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
   left: `${Math.random() * 100}%`,
   top: `${Math.random() * 100}%`,
-  duration: `${3 + Math.random() * 4}s`,
+  duration: `${4 + Math.random() * 4}s`,
   delay: `${Math.random() * 5}s`,
 }));
 
@@ -64,6 +64,7 @@ const VelvetParticles = React.memo(function VelvetParticles() {
             top: p.top,
             animation: `float-ember ${p.duration} ease-in-out infinite`,
             animationDelay: p.delay,
+            willChange: 'opacity, transform',
           }}
         />
       ))}
@@ -846,8 +847,8 @@ export default function BondedAscentApp() {
               )}
 
               {user?.lockedDown && (
-                <div className="bg-red-950/30 border-2 border-red-500/30 rounded-2xl p-6 text-center animate-pulse">
-                  <Lock size={32} className="mx-auto text-red-500 mb-3" />
+                <div className="bg-red-950/30 border-2 border-red-500/30 rounded-2xl p-6 text-center">
+                  <Lock size={32} className="mx-auto text-red-500 mb-3 animate-pulse" />
                   <div className="text-sm font-black text-red-400 uppercase tracking-widest">Lockdown Active</div>
                   <div className="text-[10px] text-slate-500 mt-1">Your access is restricted. Focus on your protocols.</div>
                 </div>
@@ -1257,8 +1258,8 @@ export default function BondedAscentApp() {
     <div className="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
       <style>{`
         @keyframes float-ember {
-          0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
-          50% { opacity: 0.8; transform: translateY(-40px) scale(1.2); }
+          0%, 100% { opacity: 0; transform: translateY(0); }
+          50% { opacity: 0.6; transform: translateY(-30px); }
         }
         @keyframes throne-pulse {
           0%, 100% { box-shadow: 0 0 40px rgba(220,38,38,0.3), 0 0 80px rgba(220,38,38,0.1); }

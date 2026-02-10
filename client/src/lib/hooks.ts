@@ -945,7 +945,8 @@ export function useDemandTimers() {
   return useQuery<any[]>({
     queryKey: ["/api/demand-timers"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 5000,
+    refetchInterval: 15000,
+    staleTime: 10000,
   });
 }
 
@@ -979,7 +980,8 @@ export function useQuickCommands() {
   return useQuery<any[]>({
     queryKey: ["/api/quick-commands"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 5000,
+    refetchInterval: 15000,
+    staleTime: 10000,
   });
 }
 
@@ -1028,7 +1030,8 @@ export function usePartnerPresence(partnerId: string | null | undefined) {
       return res.json();
     },
     enabled: !!partnerId,
-    refetchInterval: 15000,
+    refetchInterval: 30000,
+    staleTime: 20000,
   });
 }
 
@@ -1050,7 +1053,8 @@ export function useLockdownStatus() {
   return useQuery<{ lockedDown: boolean }>({
     queryKey: ["/api/partner/lockdown"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 10000,
+    refetchInterval: 30000,
+    staleTime: 20000,
   });
 }
 
@@ -1074,7 +1078,8 @@ export function usePartnerEnforcementLevel() {
   return useQuery<{ enforcementLevel: number }>({
     queryKey: ["/api/partner/enforcement"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 10000,
+    refetchInterval: 30000,
+    staleTime: 20000,
   });
 }
 
@@ -1082,7 +1087,8 @@ export function useMyEnforcementLevel() {
   return useQuery<{ enforcementLevel: number }>({
     queryKey: ["/api/user/enforcement"],
     queryFn: getQueryFn({ on401: "returnNull" }),
-    refetchInterval: 10000,
+    refetchInterval: 30000,
+    staleTime: 20000,
   });
 }
 
