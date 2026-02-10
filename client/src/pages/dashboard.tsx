@@ -883,7 +883,7 @@ export default function BondedAscentApp() {
 
   const renderContent = () => {
     if (userRole === 'dom' && activeView === 'dashboard') {
-      return <DomDashboard />;
+      return DomDashboard();
     }
 
     if (activeView === 'dashboard') {
