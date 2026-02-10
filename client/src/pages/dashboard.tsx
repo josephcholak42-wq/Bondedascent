@@ -610,6 +610,7 @@ export default function BondedAscentApp() {
                 </div>
                 <div className="flex gap-2 mb-3">
                   <input
+                    id="sticker-message-input"
                     data-testid="input-sticker-message"
                     type="text"
                     value={stickerMessage}
@@ -623,6 +624,10 @@ export default function BondedAscentApp() {
                     <button
                       key={type}
                       data-testid={`sticker-${type}`}
+                      onPointerDown={(e) => {
+                        // Prevent the button from taking focus away from the input on mobile
+                        e.preventDefault();
+                      }}
                       onClick={() => {
                         if (partner && !sendStickerMutation.isPending) {
                           sendStickerMutation.mutate({
@@ -631,6 +636,8 @@ export default function BondedAscentApp() {
                             message: stickerMessage || undefined,
                           });
                           setStickerMessage('');
+                          // Refocus the input to keep the keyboard open
+                          document.getElementById('sticker-message-input')?.focus();
                         }
                       }}
                       className="p-3 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-yellow-900/30 active:bg-yellow-900/30 active:border-yellow-500/50 active:shadow-[0_0_10px_rgba(234,179,8,0.2)]"
