@@ -47,6 +47,9 @@ import {
   useObedienceTrials, useEnduranceChallenges, useSealedOrders,
   useIntensitySessions, useCountdownEvents, usePlaySessions,
   useSecrets, useLimits, usePermissionRequests, useDevotions, useConflicts, useRatings,
+  useStickers, useSendSticker,
+  useFeatureSettings, useToggleFeature,
+  useUploadMedia, useMedia, useDeleteMedia,
 } from '@/lib/hooks';
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
@@ -193,6 +196,18 @@ export default function BondedAscentApp() {
   const { data: intensitySessions = [] } = useIntensitySessions();
   const { data: countdownEvents = [] } = useCountdownEvents();
   const { data: playSessions = [] } = usePlaySessions();
+
+  const { data: stickersList = [] } = useStickers();
+  const sendStickerMutation = useSendSticker();
+  const { data: featureSettingsList = [] } = useFeatureSettings();
+  const toggleFeatureMutation = useToggleFeature();
+  const uploadMediaMutation = useUploadMedia();
+  const deleteMediaMutation = useDeleteMedia();
+  const [selectedStickerType, setSelectedStickerType] = useState('');
+  const [stickerMessage, setStickerMessage] = useState('');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaEntityType, setMediaEntityType] = useState('');
+  const [mediaEntityId, setMediaEntityId] = useState('');
 
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const xp = stats?.xp ?? 0;
@@ -596,6 +611,130 @@ export default function BondedAscentApp() {
             </div>
           </div>
 
+          {partner && (
+            <div className="bg-gradient-to-b from-slate-900 to-black border border-white/5 shadow-xl p-1 rounded-2xl">
+              <div className="bg-slate-950/50 p-5 rounded-xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Send Sticker Reward</h3>
+                  <Sparkles size={14} className="text-yellow-500" />
+                </div>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {['gold-star', 'heart', 'fire', 'crown', 'diamond', 'ribbon', 'trophy', 'sparkle'].map(type => (
+                    <button
+                      key={type}
+                      data-testid={`sticker-${type}`}
+                      onClick={() => setSelectedStickerType(type === selectedStickerType ? '' : type)}
+                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                        selectedStickerType === type
+                          ? 'bg-yellow-900/30 border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.2)]'
+                          : 'bg-slate-900/50 border-white/5 hover:border-yellow-900/30'
+                      }`}
+                    >
+                      <span className="text-2xl">{
+                        type === 'gold-star' ? '⭐' :
+                        type === 'heart' ? '❤️' :
+                        type === 'fire' ? '🔥' :
+                        type === 'crown' ? '👑' :
+                        type === 'diamond' ? '💎' :
+                        type === 'ribbon' ? '🎀' :
+                        type === 'trophy' ? '🏆' : '✨'
+                      }</span>
+                      <div className="text-[8px] text-slate-500 uppercase mt-1">{type.replace('-', ' ')}</div>
+                    </button>
+                  ))}
+                </div>
+                {selectedStickerType && (
+                  <div className="flex gap-2 animate-in slide-in-from-bottom-2">
+                    <input
+                      data-testid="input-sticker-message"
+                      type="text"
+                      value={stickerMessage}
+                      onChange={(e) => setStickerMessage(e.target.value)}
+                      placeholder="Add a message (optional)"
+                      className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                    />
+                    <Button
+                      data-testid="button-send-sticker"
+                      onClick={() => {
+                        if (partner) {
+                          sendStickerMutation.mutate({
+                            recipientId: partner.id,
+                            stickerType: selectedStickerType,
+                            message: stickerMessage || undefined,
+                          });
+                          setSelectedStickerType('');
+                          setStickerMessage('');
+                        }
+                      }}
+                      className="bg-yellow-600 hover:bg-yellow-500"
+                      disabled={sendStickerMutation.isPending}
+                    >
+                      <Send size={14} />
+                    </Button>
+                  </div>
+                )}
+                {stickersList.length > 0 && (
+                  <div className="mt-4 border-t border-white/5 pt-3">
+                    <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Recent Stickers</div>
+                    <div className="flex flex-wrap gap-2">
+                      {stickersList.slice(0, 10).map(s => (
+                        <div key={s.id} data-testid={`sticker-item-${s.id}`} className="bg-slate-900/60 border border-white/5 rounded-lg px-3 py-1.5 flex items-center gap-2">
+                          <span className="text-lg">{
+                            s.stickerType === 'gold-star' ? '⭐' :
+                            s.stickerType === 'heart' ? '❤️' :
+                            s.stickerType === 'fire' ? '🔥' :
+                            s.stickerType === 'crown' ? '👑' :
+                            s.stickerType === 'diamond' ? '💎' :
+                            s.stickerType === 'ribbon' ? '🎀' :
+                            s.stickerType === 'trophy' ? '🏆' : '✨'
+                          }</span>
+                          {s.message && <span className="text-[10px] text-slate-400">{s.message}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-gradient-to-b from-slate-900 to-black border border-white/5 shadow-xl p-1 rounded-2xl">
+            <div className="bg-slate-950/50 p-5 rounded-xl">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Feature Controls</h3>
+                <Sliders size={14} className="text-red-500" />
+              </div>
+              <div className="text-[10px] text-slate-600 mb-4">Toggle which features are available for your Sub</div>
+              <div className="space-y-3">
+                {[
+                  { key: 'dares', label: 'Wheel of Dares', icon: <Dices size={14} /> },
+                  { key: 'journal', label: 'Journal', icon: <BookOpen size={14} /> },
+                  { key: 'rewards', label: 'Rewards', icon: <Gift size={14} /> },
+                  { key: 'stickers', label: 'Stickers', icon: <Sparkles size={14} /> },
+                  { key: 'wagers', label: 'Wagers', icon: <Dices size={14} /> },
+                  { key: 'secrets', label: 'Secrets', icon: <Eye size={14} /> },
+                  { key: 'ratings', label: 'Ratings', icon: <Star size={14} /> },
+                  { key: 'media_upload', label: 'Media Upload', icon: <Camera size={14} /> },
+                ].map(feature => {
+                  const setting = featureSettingsList.find((s: any) => s.featureKey === feature.key);
+                  const isEnabled = setting ? setting.enabled : true;
+                  return (
+                    <div key={feature.key} data-testid={`feature-toggle-${feature.key}`} className="flex items-center justify-between p-3 bg-slate-900/40 border border-white/5 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-400">{feature.icon}</span>
+                        <span className="text-sm font-bold text-white">{feature.label}</span>
+                      </div>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={(checked) => toggleFeatureMutation.mutate({ featureKey: feature.key, enabled: checked })}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 p-6 rounded-2xl flex items-center justify-between">
             <div className="flex items-center gap-4">
               <ShieldAlert size={28} className="text-red-500" />
@@ -883,6 +1022,33 @@ export default function BondedAscentApp() {
                 </div>
               </div>
               
+              {stickersList.length > 0 && (
+                <div className="bg-gradient-to-b from-yellow-950/20 to-black border border-yellow-900/30 shadow-xl p-1 rounded-2xl">
+                  <div className="bg-slate-950/50 p-4 rounded-xl">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-xs font-bold text-yellow-500 uppercase tracking-widest">My Stickers</h3>
+                      <span className="text-[10px] text-slate-600 font-mono">{stickersList.filter((s: any) => s.recipientId === user?.id).length} received</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {stickersList.filter((s: any) => s.recipientId === user?.id).slice(0, 12).map(s => (
+                        <div key={s.id} data-testid={`sticker-received-${s.id}`} className="bg-slate-900/60 border border-yellow-900/20 rounded-lg px-3 py-2 flex items-center gap-2 animate-in zoom-in-95">
+                          <span className="text-xl">{
+                            s.stickerType === 'gold-star' ? '⭐' :
+                            s.stickerType === 'heart' ? '❤️' :
+                            s.stickerType === 'fire' ? '🔥' :
+                            s.stickerType === 'crown' ? '👑' :
+                            s.stickerType === 'diamond' ? '💎' :
+                            s.stickerType === 'ribbon' ? '🎀' :
+                            s.stickerType === 'trophy' ? '🏆' : '✨'
+                          }</span>
+                          {s.message && <span className="text-[10px] text-yellow-200/60">{s.message}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {!(user?.lockedDown) && (
               <>
               <div className="grid grid-cols-2 gap-4">

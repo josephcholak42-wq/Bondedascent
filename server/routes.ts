@@ -1,10 +1,38 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { sendPushToUser, getVapidPublicKey } from "./push";
 import { type User } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const ext = path.extname(file.originalname);
+      const name = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
+      cb(null, name);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = /^(image|video)\//;
+    if (allowed.test(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image and video files are allowed"));
+    }
+  },
+});
 
 function requireAuth(req: any, res: any, next: any) {
   if (!req.isAuthenticated()) {
@@ -154,7 +182,9 @@ export async function registerRoutes(
   // --- DARES ---
   app.get("/api/dares", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getDares(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const list = await storage.getDaresForPair(userIds);
     res.json(list);
   });
 
@@ -200,7 +230,9 @@ export async function registerRoutes(
   // --- REWARDS ---
   app.get("/api/rewards", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getRewards(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const list = await storage.getRewardsForPair(userIds);
     res.json(list);
   });
 
@@ -229,7 +261,9 @@ export async function registerRoutes(
   // --- PUNISHMENTS ---
   app.get("/api/punishments", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getPunishments(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const list = await storage.getPunishmentsForPair(userIds);
     res.json(list);
   });
 
@@ -303,7 +337,9 @@ export async function registerRoutes(
   // --- ACTIVITY LOG ---
   app.get("/api/activity", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getActivityLog(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const list = await storage.getActivityLogForPair(userIds);
     res.json(list);
   });
 
@@ -884,7 +920,9 @@ export async function registerRoutes(
   // --- ACHIEVEMENTS ---
   app.get("/api/achievements", requireAuth, async (req, res) => {
     const user = req.user as User;
-    res.json(await storage.getAchievements(user.id));
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    res.json(await storage.getAchievementsForPair(userIds));
   });
 
   app.post("/api/achievements", requireAuth, async (req, res) => {
@@ -1553,6 +1591,82 @@ export async function registerRoutes(
       await notifyUser(ch.userId, `${user.username} checked in for "${ch.title}" (gate #${gateNumber})`, "info");
     }
     res.json(checkin);
+  });
+
+  // --- MEDIA UPLOADS ---
+  app.use("/uploads", express.static(uploadsDir));
+
+  app.post("/api/media/upload", requireAuth, upload.single("file"), async (req, res) => {
+    const user = req.user as User;
+    const file = req.file;
+    if (!file) return res.status(400).json({ message: "No file uploaded" });
+    const { entityType, entityId } = req.body;
+    if (!entityType || !entityId) return res.status(400).json({ message: "entityType and entityId required" });
+    const mediaItem = await storage.createMedia({
+      userId: user.id,
+      entityType,
+      entityId,
+      filename: file.filename,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      url: `/uploads/${file.filename}`,
+    });
+    await storage.logActivity(user.id, "media_uploaded", `Uploaded ${file.originalname}`);
+    res.json(mediaItem);
+  });
+
+  app.get("/api/media/:entityType/:entityId", requireAuth, async (req, res) => {
+    const list = await storage.getMedia(req.params.entityType, req.params.entityId);
+    res.json(list);
+  });
+
+  app.delete("/api/media/:id", requireAuth, async (req, res) => {
+    await storage.deleteMedia(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  // --- STICKERS ---
+  app.get("/api/stickers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const list = await storage.getStickersForPair(userIds);
+    res.json(list);
+  });
+
+  app.post("/api/stickers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { recipientId, stickerType, message } = req.body;
+    if (!recipientId || !stickerType) return res.status(400).json({ message: "recipientId and stickerType required" });
+    const sticker = await storage.createSticker({
+      senderId: user.id,
+      recipientId,
+      stickerType,
+      message: message || null,
+    });
+    await storage.logActivity(user.id, "sticker_sent", `Sent a ${stickerType} sticker`);
+    await notifyUser(recipientId, `${user.username} sent you a ${stickerType} sticker!`, "info");
+    res.json(sticker);
+  });
+
+  // --- FEATURE SETTINGS ---
+  app.get("/api/feature-settings", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const domId = user.role === "dom" ? user.id : (partner ? partner.id : user.id);
+    const settings = await storage.getFeatureSettings(domId);
+    res.json(settings);
+  });
+
+  app.put("/api/feature-settings/:featureKey", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (user.role !== "dom") return res.status(403).json({ message: "Only Dom can manage feature settings" });
+    const { enabled } = req.body;
+    if (typeof enabled !== "boolean") return res.status(400).json({ message: "enabled must be a boolean" });
+    const setting = await storage.upsertFeatureSetting(user.id, req.params.featureKey, enabled);
+    await storage.logActivity(user.id, "feature_toggled", `${enabled ? "Enabled" : "Disabled"} ${req.params.featureKey}`);
+    res.json(setting);
   });
 
   return httpServer;

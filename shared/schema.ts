@@ -641,3 +641,47 @@ export type InsertEnduranceChallenge = z.infer<typeof insertEnduranceChallengeSc
 export const insertEnduranceCheckinSchema = createInsertSchema(enduranceCheckins).omit({ id: true, createdAt: true, xpAwarded: true });
 export type EnduranceCheckin = typeof enduranceCheckins.$inferSelect;
 export type InsertEnduranceCheckin = z.infer<typeof insertEnduranceCheckinSchema>;
+
+export const media = pgTable("media", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  filename: text("filename").notNull(),
+  originalName: text("original_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  url: text("url").notNull(),
+  entityType: text("entity_type"),
+  entityId: varchar("entity_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMediaSchema = createInsertSchema(media).omit({ id: true, createdAt: true });
+export type Media = typeof media.$inferSelect;
+export type InsertMedia = z.infer<typeof insertMediaSchema>;
+
+export const stickers = pgTable("stickers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  recipientId: varchar("recipient_id").notNull(),
+  givenBy: varchar("given_by").notNull(),
+  label: text("label").notNull(),
+  icon: text("icon").notNull(),
+  note: text("note"),
+  category: text("category").notNull().default("praise"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertStickerSchema = createInsertSchema(stickers).omit({ id: true, createdAt: true });
+export type Sticker = typeof stickers.$inferSelect;
+export type InsertSticker = z.infer<typeof insertStickerSchema>;
+
+export const featureSettings = pgTable("feature_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pairOwnerId: varchar("pair_owner_id").notNull(),
+  featureKey: text("feature_key").notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertFeatureSettingSchema = createInsertSchema(featureSettings).omit({ id: true, updatedAt: true });
+export type FeatureSetting = typeof featureSettings.$inferSelect;
+export type InsertFeatureSetting = z.infer<typeof insertFeatureSettingSchema>;

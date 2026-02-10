@@ -8,6 +8,7 @@ import {
   desiredChanges, achievements, playSessions, pushSubscriptions,
   demandTimers, quickCommands, presenceHeartbeats, accusations,
   intensitySessions, trialSteps, obedienceTrials, sensationCards, sensationSpins, sealedOrders, enduranceChallenges, enduranceCheckins,
+  media, stickers, featureSettings,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -33,6 +34,9 @@ import {
   type SealedOrder, type InsertSealedOrder,
   type EnduranceChallenge, type InsertEnduranceChallenge,
   type EnduranceCheckin, type InsertEnduranceCheckin,
+  type Media, type InsertMedia,
+  type Sticker, type InsertSticker,
+  type FeatureSetting, type InsertFeatureSetting,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -218,6 +222,24 @@ export interface IStorage {
   getObedienceTrialsForPair(userIds: string[]): Promise<ObedienceTrial[]>;
   getSensationCardsForPair(userIds: string[]): Promise<SensationCard[]>;
   getSensationSpinsForPair(userIds: string[]): Promise<SensationSpin[]>;
+
+  getDaresForPair(userIds: string[]): Promise<Dare[]>;
+  getRewardsForPair(userIds: string[]): Promise<Reward[]>;
+  getPunishmentsForPair(userIds: string[]): Promise<Punishment[]>;
+  getAchievementsForPair(userIds: string[]): Promise<Achievement[]>;
+  getActivityLogForPair(userIds: string[]): Promise<ActivityLogEntry[]>;
+
+  getMedia(entityType: string, entityId: string): Promise<Media[]>;
+  getMediaByUser(userId: string): Promise<Media[]>;
+  createMedia(m: InsertMedia): Promise<Media>;
+  deleteMedia(id: string): Promise<void>;
+
+  getStickers(recipientId: string): Promise<Sticker[]>;
+  getStickersForPair(userIds: string[]): Promise<Sticker[]>;
+  createSticker(sticker: InsertSticker): Promise<Sticker>;
+
+  getFeatureSettings(pairOwnerId: string): Promise<FeatureSetting[]>;
+  upsertFeatureSetting(pairOwnerId: string, featureKey: string, enabled: boolean): Promise<FeatureSetting>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -845,6 +867,60 @@ export class DatabaseStorage implements IStorage {
   }
   async getSensationSpinsForPair(userIds: string[]): Promise<SensationSpin[]> {
     return db.select().from(sensationSpins).where(inArray(sensationSpins.userId, userIds)).orderBy(desc(sensationSpins.createdAt));
+  }
+
+  async getDaresForPair(userIds: string[]): Promise<Dare[]> {
+    return db.select().from(dares).where(inArray(dares.userId, userIds)).orderBy(desc(dares.createdAt));
+  }
+  async getRewardsForPair(userIds: string[]): Promise<Reward[]> {
+    return db.select().from(rewards).where(inArray(rewards.userId, userIds)).orderBy(desc(rewards.createdAt));
+  }
+  async getPunishmentsForPair(userIds: string[]): Promise<Punishment[]> {
+    return db.select().from(punishments).where(inArray(punishments.userId, userIds)).orderBy(desc(punishments.createdAt));
+  }
+  async getAchievementsForPair(userIds: string[]): Promise<Achievement[]> {
+    return db.select().from(achievements).where(inArray(achievements.userId, userIds)).orderBy(desc(achievements.unlockedAt));
+  }
+  async getActivityLogForPair(userIds: string[]): Promise<ActivityLogEntry[]> {
+    return db.select().from(activityLog).where(inArray(activityLog.userId, userIds)).orderBy(desc(activityLog.createdAt));
+  }
+
+  async getMedia(entityType: string, entityId: string): Promise<Media[]> {
+    return db.select().from(media).where(and(eq(media.entityType, entityType), eq(media.entityId, entityId))).orderBy(desc(media.createdAt));
+  }
+  async getMediaByUser(userId: string): Promise<Media[]> {
+    return db.select().from(media).where(eq(media.userId, userId)).orderBy(desc(media.createdAt));
+  }
+  async createMedia(m: InsertMedia): Promise<Media> {
+    const [item] = await db.insert(media).values(m).returning();
+    return item;
+  }
+  async deleteMedia(id: string): Promise<void> {
+    await db.delete(media).where(eq(media.id, id));
+  }
+
+  async getStickers(recipientId: string): Promise<Sticker[]> {
+    return db.select().from(stickers).where(eq(stickers.recipientId, recipientId)).orderBy(desc(stickers.createdAt));
+  }
+  async getStickersForPair(userIds: string[]): Promise<Sticker[]> {
+    return db.select().from(stickers).where(inArray(stickers.recipientId, userIds)).orderBy(desc(stickers.createdAt));
+  }
+  async createSticker(sticker: InsertSticker): Promise<Sticker> {
+    const [s] = await db.insert(stickers).values(sticker).returning();
+    return s;
+  }
+
+  async getFeatureSettings(pairOwnerId: string): Promise<FeatureSetting[]> {
+    return db.select().from(featureSettings).where(eq(featureSettings.pairOwnerId, pairOwnerId));
+  }
+  async upsertFeatureSetting(pairOwnerId: string, featureKey: string, enabled: boolean): Promise<FeatureSetting> {
+    const existing = await db.select().from(featureSettings).where(and(eq(featureSettings.pairOwnerId, pairOwnerId), eq(featureSettings.featureKey, featureKey)));
+    if (existing.length > 0) {
+      const [updated] = await db.update(featureSettings).set({ enabled, updatedAt: new Date() }).where(eq(featureSettings.id, existing[0].id)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(featureSettings).values({ pairOwnerId, featureKey, enabled }).returning();
+    return created;
   }
 }
 

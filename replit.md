@@ -97,6 +97,15 @@ All under `/api/`:
 - Notifications: Create, list, dismiss
 - Activity Log: List user activity
 
+### Pair-Aware Data Sharing
+All data endpoints fetch data for both paired users (not just the logged-in user). Routes use `getPartner()` to resolve the pair, then query with both user IDs via `inArray()`. Affected: tasks, check-ins, dares, rewards, punishments, achievements, activity log, standing orders, rituals, wagers, etc.
+
+### New Features (Feb 2026)
+- **Media Upload**: Polymorphic file attachment system. Files stored in `/uploads/` directory, referenced via `media` table with entityType/entityId pattern. Supports images and videos up to 50MB. Reusable `<MediaUpload>` component.
+- **Sticker Rewards**: Dom can send emoji stickers (8 types: gold-star, heart, fire, crown, diamond, ribbon, trophy, sparkle) with optional messages to Sub. Sub sees received stickers on dashboard.
+- **Feature Toggles**: Dom controls which features are accessible to Sub via `feature_settings` table. Toggle UI on Dom dashboard. Sub-side gating via `useIsFeatureEnabled()` hook.
+- **Key Tables**: `media`, `stickers`, `feature_settings`
+
 ## External Dependencies
 
 - **PostgreSQL**: Primary database, required via `DATABASE_URL` environment variable. Used for both application data (via Drizzle ORM) and session storage (via `connect-pg-simple`)

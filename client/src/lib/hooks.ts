@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, getQueryFn } from "./queryClient";
-import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession, Accusation, IntensitySession, ObedienceTrial, TrialStep, SensationCard, SensationSpin, SealedOrder, EnduranceChallenge, EnduranceCheckin } from "@shared/schema";
+import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession, Accusation, IntensitySession, ObedienceTrial, TrialStep, SensationCard, SensationSpin, SealedOrder, EnduranceChallenge, EnduranceCheckin, Media, Sticker, FeatureSetting } from "@shared/schema";
 
 type SafeUser = Omit<User, "password">;
 
@@ -1431,6 +1431,99 @@ export function useCreateEnduranceCheckin() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/endurance-challenges"] });
       qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+  });
+}
+
+export function useMedia(entityType: string, entityId: string) {
+  return useQuery<Media[]>({
+    queryKey: ["/api/media", entityType, entityId],
+    queryFn: async () => {
+      const res = await fetch(`/api/media/${entityType}/${entityId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch media");
+      return res.json();
+    },
+    enabled: !!entityType && !!entityId,
+  });
+}
+
+export function useUploadMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, entityType, entityId }: { file: File; entityType: string; entityId: string }) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("entityType", entityType);
+      formData.append("entityId", entityId);
+      const res = await fetch("/api/media/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ["/api/media", variables.entityType, variables.entityId] });
+    },
+  });
+}
+
+export function useDeleteMedia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("DELETE", `/api/media/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ predicate: (query) => query.queryKey[0] === "/api/media" });
+    },
+  });
+}
+
+export function useStickers() {
+  return useQuery<Sticker[]>({
+    queryKey: ["/api/stickers"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useSendSticker() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { recipientId: string; stickerType: string; message?: string }) => {
+      const res = await apiRequest("POST", "/api/stickers", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/stickers"] });
+    },
+  });
+}
+
+export function useFeatureSettings() {
+  return useQuery<FeatureSetting[]>({
+    queryKey: ["/api/feature-settings"],
+    queryFn: getQueryFn({ on401: "throw" }),
+  });
+}
+
+export function useIsFeatureEnabled(featureKey: string): boolean {
+  const { data: settings = [] } = useFeatureSettings();
+  const setting = settings.find((s: any) => s.featureKey === featureKey);
+  return setting ? setting.enabled : true;
+}
+
+export function useToggleFeature() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ featureKey, enabled }: { featureKey: string; enabled: boolean }) => {
+      const res = await apiRequest("PUT", `/api/feature-settings/${featureKey}`, { enabled });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/feature-settings"] });
     },
   });
 }
