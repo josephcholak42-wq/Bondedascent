@@ -204,7 +204,6 @@ export default function BondedAscentApp() {
   const roleSwitchEnabled = useIsFeatureEnabled('role_switch');
   const uploadMediaMutation = useUploadMedia();
   const deleteMediaMutation = useDeleteMedia();
-  const [selectedStickerType, setSelectedStickerType] = useState('');
   const [stickerMessage, setStickerMessage] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaEntityType, setMediaEntityType] = useState('');
@@ -609,17 +608,32 @@ export default function BondedAscentApp() {
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Send Sticker Reward</h3>
                   <Sparkles size={14} className="text-yellow-500" />
                 </div>
-                <div className="grid grid-cols-4 gap-2 mb-3">
+                <div className="flex gap-2 mb-3">
+                  <input
+                    data-testid="input-sticker-message"
+                    type="text"
+                    value={stickerMessage}
+                    onChange={(e) => setStickerMessage(e.target.value)}
+                    placeholder="Message (optional)"
+                    className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50"
+                  />
+                </div>
+                <div className="grid grid-cols-4 gap-2">
                   {['gold-star', 'heart', 'fire', 'crown', 'diamond', 'ribbon', 'trophy', 'sparkle'].map(type => (
                     <button
                       key={type}
                       data-testid={`sticker-${type}`}
-                      onClick={() => setSelectedStickerType(type === selectedStickerType ? '' : type)}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
-                        selectedStickerType === type
-                          ? 'bg-yellow-900/30 border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.2)]'
-                          : 'bg-slate-900/50 border-white/5 hover:border-yellow-900/30'
-                      }`}
+                      onClick={() => {
+                        if (partner && !sendStickerMutation.isPending) {
+                          sendStickerMutation.mutate({
+                            recipientId: partner.id,
+                            stickerType: type,
+                            message: stickerMessage || undefined,
+                          });
+                          setStickerMessage('');
+                        }
+                      }}
+                      className="p-3 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-yellow-900/30 active:bg-yellow-900/30 active:border-yellow-500/50 active:shadow-[0_0_10px_rgba(234,179,8,0.2)]"
                     >
                       <span className="text-2xl">{
                         type === 'gold-star' ? '⭐' :
@@ -634,48 +648,6 @@ export default function BondedAscentApp() {
                     </button>
                   ))}
                 </div>
-                {selectedStickerType && (
-                  <div className="flex gap-2 animate-in slide-in-from-bottom-2">
-                    <input
-                      data-testid="input-sticker-message"
-                      type="text"
-                      value={stickerMessage}
-                      onChange={(e) => setStickerMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && partner) {
-                          e.preventDefault();
-                          sendStickerMutation.mutate({
-                            recipientId: partner.id,
-                            stickerType: selectedStickerType,
-                            message: stickerMessage || undefined,
-                          });
-                          setSelectedStickerType('');
-                          setStickerMessage('');
-                        }
-                      }}
-                      placeholder="Add a message (optional)"
-                      className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-yellow-500/50"
-                    />
-                    <Button
-                      data-testid="button-send-sticker"
-                      onClick={() => {
-                        if (partner) {
-                          sendStickerMutation.mutate({
-                            recipientId: partner.id,
-                            stickerType: selectedStickerType,
-                            message: stickerMessage || undefined,
-                          });
-                          setSelectedStickerType('');
-                          setStickerMessage('');
-                        }
-                      }}
-                      className="bg-yellow-600 hover:bg-yellow-500"
-                      disabled={sendStickerMutation.isPending}
-                    >
-                      <Send size={14} />
-                    </Button>
-                  </div>
-                )}
                 {stickersList.length > 0 && (
                   <div className="mt-4 border-t border-white/5 pt-3">
                     <div className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-2">Recent Stickers</div>
