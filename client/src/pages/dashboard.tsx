@@ -662,7 +662,7 @@ export default function BondedAscentApp() {
             </div>
           )}
 
-          {user?.role === 'dom' && (
+          {userRole === 'dom' && (
           <div className="bg-gradient-to-b from-slate-900 to-black border border-white/5 shadow-xl p-1 rounded-2xl">
             <div className="bg-slate-950/50 p-5 rounded-xl">
               <div className="flex justify-between items-center mb-4">

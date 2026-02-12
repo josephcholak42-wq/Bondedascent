@@ -1671,7 +1671,7 @@ export async function registerRoutes(
 
   app.put("/api/feature-settings/:featureKey", requireAuth, async (req, res) => {
     const user = req.user as User;
-    if (user.originalRole !== "dom") return res.status(403).json({ message: "Only original Dom accounts can manage feature settings" });
+    if (user.role !== "dom") return res.status(403).json({ message: "Only Dom accounts can manage feature settings" });
     const { enabled } = req.body;
     if (typeof enabled !== "boolean") return res.status(400).json({ message: "enabled must be a boolean" });
     const setting = await storage.upsertFeatureSetting(user.id, req.params.featureKey, enabled);
