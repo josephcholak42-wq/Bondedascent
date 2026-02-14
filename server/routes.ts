@@ -269,7 +269,7 @@ export async function registerRoutes(
 
   app.post("/api/punishments", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { name } = req.body;
+    const { name, category, duration } = req.body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ message: "Punishment name required" });
     }
@@ -277,6 +277,8 @@ export async function registerRoutes(
       userId: user.id,
       assignedBy: user.id,
       name: name.trim(),
+      category: category || null,
+      duration: duration || null,
     });
     await storage.logActivity(user.id, "punishment_assigned", name.trim());
     await notifyUser(user.id, `Punishment assigned: ${name.trim()}`, "alert");
@@ -567,11 +569,11 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     if (!partner) return res.status(404).json({ message: "No partner linked" });
-    const { name } = req.body;
+    const { name, category, duration } = req.body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ message: "Punishment name required" });
     }
-    const punishment = await storage.createPunishment({ userId: partner.id, assignedBy: user.id, name: name.trim() });
+    const punishment = await storage.createPunishment({ userId: partner.id, assignedBy: user.id, name: name.trim(), category: category || null, duration: duration || null });
     await storage.logActivity(user.id, "punishment_assigned", `Assigned "${name.trim()}" to ${partner.username}`);
     await notifyUser(partner.id, `Punishment from ${user.username}: ${name.trim()}`, "alert");
     res.status(201).json(punishment);

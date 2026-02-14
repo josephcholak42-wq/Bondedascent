@@ -60,6 +60,8 @@ export const punishments = pgTable("punishments", {
   userId: varchar("user_id").notNull(),
   assignedBy: varchar("assigned_by"),
   name: text("name").notNull(),
+  category: text("category"),
+  duration: text("duration"),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -281,6 +283,8 @@ export const insertPunishmentSchema = createInsertSchema(punishments).pick({
   userId: true,
   assignedBy: true,
   name: true,
+  category: true,
+  duration: true,
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).pick({

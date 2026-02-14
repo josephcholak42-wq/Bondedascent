@@ -397,7 +397,7 @@ export function useReviewPartnerCheckIn() {
 export function useCreatePartnerPunishment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string }) => {
+    mutationFn: async (data: { name: string; category?: string; duration?: string }) => {
       const res = await apiRequest("POST", "/api/partner/punishments", data);
       return res.json();
     },

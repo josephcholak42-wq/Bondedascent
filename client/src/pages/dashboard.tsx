@@ -51,6 +51,7 @@ import {
   useFeatureSettings, useToggleFeature, useIsFeatureEnabled,
   useUploadMedia, useMedia, useDeleteMedia,
 } from '@/lib/hooks';
+import { PREBUILT_PUNISHMENTS, PUNISHMENT_CATEGORIES, type PrebuiltPunishment } from '@/lib/prebuilt-punishments';
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
   left: `${Math.random() * 100}%`,
@@ -93,6 +94,8 @@ export default function BondedAscentApp() {
   const [newTaskText, setNewTaskText] = useState('');
   const [newRewardName, setNewRewardName] = useState('');
   const [newPunishmentName, setNewPunishmentName] = useState('');
+  const [punishCategoryFilter, setPunishCategoryFilter] = useState<string | null>(null);
+  const [punishSearch, setPunishSearch] = useState('');
   const [journalContent, setJournalContent] = useState('');
   const [pairCodeInput, setPairCodeInput] = useState('');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -1312,11 +1315,15 @@ export default function BondedAscentApp() {
           <div className="space-y-2">
             {punishments.map(p => (
               <div key={p.id} className="p-4 bg-red-950/20 border border-red-900/30 rounded-xl flex justify-between items-center">
-                <div>
+                <div className="flex-1 min-w-0">
                   <div className="font-bold text-slate-200 uppercase tracking-wide text-sm">{p.name}</div>
-                  <div className="text-xs text-slate-500 font-mono">{p.status}</div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-slate-500 font-mono">{p.status}</span>
+                    {p.category && <span className="text-[9px] text-red-500/60 uppercase">{p.category}</span>}
+                    {p.duration && <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Clock size={8} />{p.duration}</span>}
+                  </div>
                 </div>
-                <Gavel size={14} className="text-red-500" />
+                <Gavel size={14} className="text-red-500 shrink-0" />
               </div>
             ))}
             {punishments.length === 0 && <div className="text-xs text-slate-600 text-center py-4">No punishments assigned</div>}
@@ -1609,7 +1616,7 @@ export default function BondedAscentApp() {
       {modal && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-black border border-white/10 p-6 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
-            <button data-testid="button-close-modal" onClick={() => setModal(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors cursor-pointer z-50"><X size={24}/></button>
+            <button data-testid="button-close-modal" onClick={() => { setModal(null); setPunishSearch(''); setPunishCategoryFilter(null); }} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors cursor-pointer z-50"><X size={24}/></button>
             
             {modal === 'safeword' && (
               <div className="text-center p-4">
@@ -1805,8 +1812,8 @@ export default function BondedAscentApp() {
             )}
 
             {modal === 'dom_punish' && (
-              <div className="p-4 space-y-6">
-                <div className="text-center mb-4">
+              <div className="p-4 space-y-4">
+                <div className="text-center mb-2">
                   <Gavel size={48} className="mx-auto text-red-600 mb-2" />
                   <h2 className="text-xl font-bold text-white uppercase">Discipline</h2>
                   {partner && <p className="text-xs text-slate-500 mt-1">For {partner.username}</p>}
@@ -1815,36 +1822,83 @@ export default function BondedAscentApp() {
                   <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a partner first</div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-3">
-                      {['Corner Time', 'Writing Lines', 'Cold Shower', 'Privilege Revoked'].map((p, i) => (
-                        <button 
-                          key={i} 
-                          data-testid={`button-punish-${i}`}
-                          onClick={() => { createPartnerPunishmentMutation.mutate({ name: p }); setModal(null); }}
-                          className="p-4 bg-red-950/20 border border-red-900/30 hover:bg-red-900/40 hover:border-red-500/50 rounded-xl text-center transition-all group cursor-pointer"
-                        >
-                          <div className="text-red-500 font-bold text-xs uppercase mb-1 group-hover:text-white transition-colors">{p}</div>
-                          <div className="text-[9px] text-red-500/50">Assign Immediately</div>
-                        </button>
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        data-testid="input-punishment-search"
+                        type="text"
+                        value={punishSearch}
+                        onChange={(e) => setPunishSearch(e.target.value)}
+                        placeholder="Search punishments..."
+                        className="w-full bg-black/40 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        data-testid="button-punish-cat-all"
+                        onClick={() => setPunishCategoryFilter(null)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!punishCategoryFilter ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                      >All</button>
+                      {PUNISHMENT_CATEGORIES.map(cat => (
+                        <button
+                          key={cat}
+                          data-testid={`button-punish-cat-${cat.toLowerCase().replace(/\s/g, '-')}`}
+                          onClick={() => setPunishCategoryFilter(cat)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${punishCategoryFilter === cat ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        >{cat}</button>
                       ))}
                     </div>
-                    <div className="flex gap-2">
-                      <input
-                        data-testid="input-punishment-name"
-                        type="text"
-                        value={newPunishmentName}
-                        onChange={(e) => setNewPunishmentName(e.target.value)}
-                        placeholder="Custom punishment..."
-                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
-                      />
-                      <Button 
-                        data-testid="button-custom-punish"
-                        className="bg-red-600 hover:bg-red-500" 
-                        onClick={() => { if (newPunishmentName.trim()) { createPartnerPunishmentMutation.mutate({ name: newPunishmentName }); setNewPunishmentName(''); setModal(null); } }}
-                        disabled={createPartnerPunishmentMutation.isPending}
-                      >
-                        <Plus size={16} />
-                      </Button>
+                    <div className="max-h-[45vh] overflow-y-auto space-y-1.5 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                      {PREBUILT_PUNISHMENTS
+                        .filter(p => !punishCategoryFilter || p.category === punishCategoryFilter)
+                        .filter(p => !punishSearch || p.name.toLowerCase().includes(punishSearch.toLowerCase()))
+                        .map((p, i) => (
+                        <button
+                          key={i}
+                          data-testid={`button-prebuilt-punish-${i}`}
+                          onClick={() => { createPartnerPunishmentMutation.mutate({ name: p.name, category: p.category, duration: p.duration }); setModal(null); setPunishSearch(''); setPunishCategoryFilter(null); }}
+                          className="w-full flex items-center gap-3 p-3 bg-red-950/10 border border-red-900/20 hover:bg-red-900/30 hover:border-red-500/40 rounded-xl transition-all cursor-pointer group text-left"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs text-red-400 font-semibold group-hover:text-white transition-colors truncate">{p.name}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[9px] text-slate-600 uppercase">{p.category}</span>
+                              <span className="text-[9px] text-slate-600">•</span>
+                              <span className="text-[9px] text-red-500/60 flex items-center gap-0.5"><Clock size={8} />{p.duration}</span>
+                            </div>
+                          </div>
+                          <Gavel size={12} className="text-red-900 group-hover:text-red-400 transition-colors shrink-0" />
+                        </button>
+                      ))}
+                      {PREBUILT_PUNISHMENTS
+                        .filter(p => !punishCategoryFilter || p.category === punishCategoryFilter)
+                        .filter(p => !punishSearch || p.name.toLowerCase().includes(punishSearch.toLowerCase()))
+                        .length === 0 && (
+                        <div className="text-center py-6 text-slate-600 text-xs">No punishments match your search</div>
+                      )}
+                    </div>
+                    <div className="border-t border-slate-800 pt-3">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Custom Punishment</div>
+                      <div className="flex gap-2">
+                        <input
+                          data-testid="input-punishment-name"
+                          type="text"
+                          value={newPunishmentName}
+                          onChange={(e) => setNewPunishmentName(e.target.value)}
+                          placeholder="Custom punishment..."
+                          className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+                          style={{ fontSize: '16px' }}
+                        />
+                        <Button 
+                          data-testid="button-custom-punish"
+                          className="bg-red-600 hover:bg-red-500 cursor-pointer" 
+                          onClick={() => { if (newPunishmentName.trim()) { createPartnerPunishmentMutation.mutate({ name: newPunishmentName }); setNewPunishmentName(''); setModal(null); } }}
+                          disabled={createPartnerPunishmentMutation.isPending}
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -2259,7 +2313,7 @@ export default function BondedAscentApp() {
             )}
 
             {modal === 'dom_decree' && (
-              <div className="p-4 space-y-6">
+              <div className="p-4 space-y-4">
                 <div className="text-center">
                   <Gavel size={48} className="mx-auto text-orange-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">Issue Decree</h2>
@@ -2269,50 +2323,95 @@ export default function BondedAscentApp() {
                   <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">Connect to a sub first</div>
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-3">
-                      {[
-                        { name: 'Corner Time', icon: <Clock size={18} /> },
-                        { name: 'Writing Lines', icon: <FileText size={18} /> },
-                        { name: 'Cold Shower', icon: <Thermometer size={18} /> },
-                        { name: 'Privilege Revoked', icon: <Ban size={18} /> },
-                      ].map((p, i) => (
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        data-testid="input-decree-search"
+                        type="text"
+                        value={punishSearch}
+                        onChange={(e) => setPunishSearch(e.target.value)}
+                        placeholder="Search decrees..."
+                        className="w-full bg-black/40 border border-orange-900/30 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                        style={{ fontSize: '16px' }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        data-testid="button-decree-cat-all"
+                        onClick={() => setPunishCategoryFilter(null)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!punishCategoryFilter ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                      >All</button>
+                      {PUNISHMENT_CATEGORIES.map(cat => (
                         <button
-                          key={i}
-                          data-testid={`button-dom-decree-${i}`}
-                          onClick={() => { createPartnerPunishmentMutation.mutate({ name: p.name }); logActivityMutation.mutate({ action: 'decree_issued', detail: p.name }); }}
-                          className="flex flex-col items-center gap-2 p-4 bg-orange-950/20 border border-orange-900/30 hover:bg-orange-900/40 hover:border-orange-500/50 rounded-xl transition-all cursor-pointer group"
-                        >
-                          <div className="text-orange-500 group-hover:text-orange-300 transition-colors">{p.icon}</div>
-                          <div className="text-orange-400 font-bold text-[10px] uppercase">{p.name}</div>
-                        </button>
+                          key={cat}
+                          data-testid={`button-decree-cat-${cat.toLowerCase().replace(/\s/g, '-')}`}
+                          onClick={() => setPunishCategoryFilter(cat)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${punishCategoryFilter === cat ? 'bg-orange-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                        >{cat}</button>
                       ))}
                     </div>
-                    <div className="flex gap-2">
-                      <input
-                        data-testid="input-dom-decree-custom"
-                        type="text"
-                        value={newPunishmentName}
-                        onChange={(e) => setNewPunishmentName(e.target.value)}
-                        placeholder="Custom decree..."
-                        className="flex-1 bg-black/40 border border-orange-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
-                      />
-                      <Button
-                        data-testid="button-dom-decree-custom"
-                        className="bg-orange-600 hover:bg-orange-500 cursor-pointer"
-                        onClick={() => { if (newPunishmentName.trim()) { createPartnerPunishmentMutation.mutate({ name: newPunishmentName }); setNewPunishmentName(''); } }}
-                        disabled={createPartnerPunishmentMutation.isPending}
-                      >
-                        <Plus size={16} />
-                      </Button>
+                    <div className="max-h-[40vh] overflow-y-auto space-y-1.5 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                      {PREBUILT_PUNISHMENTS
+                        .filter(p => !punishCategoryFilter || p.category === punishCategoryFilter)
+                        .filter(p => !punishSearch || p.name.toLowerCase().includes(punishSearch.toLowerCase()))
+                        .map((p, i) => (
+                        <button
+                          key={i}
+                          data-testid={`button-prebuilt-decree-${i}`}
+                          onClick={() => { createPartnerPunishmentMutation.mutate({ name: p.name, category: p.category, duration: p.duration }); logActivityMutation.mutate({ action: 'decree_issued', detail: p.name }); setModal(null); setPunishSearch(''); setPunishCategoryFilter(null); }}
+                          className="w-full flex items-center gap-3 p-3 bg-orange-950/10 border border-orange-900/20 hover:bg-orange-900/30 hover:border-orange-500/40 rounded-xl transition-all cursor-pointer group text-left"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs text-orange-400 font-semibold group-hover:text-white transition-colors truncate">{p.name}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[9px] text-slate-600 uppercase">{p.category}</span>
+                              <span className="text-[9px] text-slate-600">•</span>
+                              <span className="text-[9px] text-orange-500/60 flex items-center gap-0.5"><Clock size={8} />{p.duration}</span>
+                            </div>
+                          </div>
+                          <Gavel size={12} className="text-orange-900 group-hover:text-orange-400 transition-colors shrink-0" />
+                        </button>
+                      ))}
+                      {PREBUILT_PUNISHMENTS
+                        .filter(p => !punishCategoryFilter || p.category === punishCategoryFilter)
+                        .filter(p => !punishSearch || p.name.toLowerCase().includes(punishSearch.toLowerCase()))
+                        .length === 0 && (
+                        <div className="text-center py-6 text-slate-600 text-xs">No decrees match your search</div>
+                      )}
+                    </div>
+                    <div className="border-t border-slate-800 pt-3">
+                      <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2">Custom Decree</div>
+                      <div className="flex gap-2">
+                        <input
+                          data-testid="input-dom-decree-custom"
+                          type="text"
+                          value={newPunishmentName}
+                          onChange={(e) => setNewPunishmentName(e.target.value)}
+                          placeholder="Custom decree..."
+                          className="flex-1 bg-black/40 border border-orange-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                          style={{ fontSize: '16px' }}
+                        />
+                        <Button
+                          data-testid="button-dom-decree-custom"
+                          className="bg-orange-600 hover:bg-orange-500 cursor-pointer"
+                          onClick={() => { if (newPunishmentName.trim()) { createPartnerPunishmentMutation.mutate({ name: newPunishmentName }); setNewPunishmentName(''); setModal(null); } }}
+                          disabled={createPartnerPunishmentMutation.isPending}
+                        >
+                          <Plus size={16} />
+                        </Button>
+                      </div>
                     </div>
                     {punishments.length > 0 && (
                       <div className="space-y-2">
                         <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Recent Decrees</div>
                         {punishments.slice(0, 5).map(p => (
                           <div key={p.id} className="flex items-center gap-3 bg-slate-900/30 border border-white/5 p-2 rounded-lg">
-                            <Gavel size={12} className="text-orange-600" />
-                            <span className="text-xs text-slate-400">{p.name}</span>
-                            <span className={`ml-auto text-[9px] uppercase font-bold ${p.status === 'completed' ? 'text-green-500' : 'text-orange-500'}`}>{p.status}</span>
+                            <Gavel size={12} className="text-orange-600 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xs text-slate-400 block truncate">{p.name}</span>
+                              {p.duration && <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Clock size={8} />{p.duration}</span>}
+                            </div>
+                            <span className={`text-[9px] uppercase font-bold shrink-0 ${p.status === 'completed' ? 'text-green-500' : 'text-orange-500'}`}>{p.status}</span>
                           </div>
                         ))}
                       </div>
