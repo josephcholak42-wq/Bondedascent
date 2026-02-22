@@ -693,3 +693,18 @@ export const featureSettings = pgTable("feature_settings", {
 export const insertFeatureSettingSchema = createInsertSchema(featureSettings).omit({ id: true, updatedAt: true });
 export type FeatureSetting = typeof featureSettings.$inferSelect;
 export type InsertFeatureSetting = z.infer<typeof insertFeatureSettingSchema>;
+
+export const bodyMapZones = pgTable("body_map_zones", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  partnerId: varchar("partner_id"),
+  zoneName: text("zone_name").notNull(),
+  status: text("status").notNull().default("desire"),
+  intensity: integer("intensity").notNull().default(50),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertBodyMapZoneSchema = createInsertSchema(bodyMapZones).omit({ id: true, createdAt: true, updatedAt: true });
+export type BodyMapZone = typeof bodyMapZones.$inferSelect;
+export type InsertBodyMapZone = z.infer<typeof insertBodyMapZoneSchema>;
