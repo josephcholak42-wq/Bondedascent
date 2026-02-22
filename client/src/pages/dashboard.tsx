@@ -108,8 +108,10 @@ import {
   useDares,
   useRewards,
   useCreateReward,
+  useToggleReward,
   usePunishments,
   useCreatePunishment,
+  useUpdatePunishmentStatus,
   useJournal,
   useCreateJournal,
   useNotifications,
@@ -283,8 +285,10 @@ export default function BondedAscentApp() {
   const { data: dares = [] } = useDares();
   const { data: rewards = [] } = useRewards();
   const createRewardMutation = useCreateReward();
+  const toggleRewardMutation = useToggleReward();
   const { data: punishments = [] } = usePunishments();
   const createPunishmentMutation = useCreatePunishment();
+  const updatePunishmentStatusMutation = useUpdatePunishmentStatus();
   const { data: journalEntries = [] } = useJournal();
   const createJournalMutation = useCreateJournal();
   const { data: notifications = [] } = useNotifications();
@@ -2544,7 +2548,7 @@ export default function BondedAscentApp() {
             Active Punishments
           </h3>
           <div className="space-y-2">
-            {punishments.map((p) => (
+            {punishments.filter(p => p.status === "active").map((p) => (
               <div
                 key={p.id}
                 className="p-4 bg-red-950/20 border border-red-900/30 rounded-xl flex justify-between items-center"
@@ -2554,9 +2558,6 @@ export default function BondedAscentApp() {
                     {p.name}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-slate-500 font-mono">
-                      {p.status}
-                    </span>
                     {p.category && (
                       <span className="text-[9px] text-red-500/60 uppercase">
                         {p.category}
@@ -2570,9 +2571,32 @@ export default function BondedAscentApp() {
                     )}
                   </div>
                 </div>
-                <Gavel size={14} className="text-red-500 shrink-0" />
+                <button
+                  data-testid={`button-complete-punishment-${p.id}`}
+                  onClick={() => updatePunishmentStatusMutation.mutate({ punishmentId: p.id, status: "completed" })}
+                  className="ml-2 px-3 py-1.5 bg-green-900/30 hover:bg-green-800/50 border border-green-700/30 hover:border-green-500/50 rounded-lg text-[10px] font-bold text-green-400 uppercase tracking-wider transition-all cursor-pointer shrink-0"
+                >
+                  Done
+                </button>
               </div>
             ))}
+            {punishments.filter(p => p.status === "completed").length > 0 && (
+              <div className="mt-3">
+                <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest pl-2 mb-2">Completed</h4>
+                {punishments.filter(p => p.status === "completed").map((p) => (
+                  <div key={p.id} className="p-3 bg-slate-900/30 border border-slate-800/30 rounded-xl flex justify-between items-center opacity-50 mb-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-green-500 uppercase tracking-wide text-sm line-through">{p.name}</div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {p.category && <span className="text-[9px] text-slate-600 uppercase">{p.category}</span>}
+                        {p.duration && <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Clock size={8} />{p.duration}</span>}
+                      </div>
+                    </div>
+                    <CheckCircle size={16} className="text-green-500 shrink-0" />
+                  </div>
+                ))}
+              </div>
+            )}
             {punishments.length === 0 && (
               <div className="text-xs text-slate-600 text-center py-4">
                 No punishments assigned
@@ -2584,29 +2608,46 @@ export default function BondedAscentApp() {
             Rewards
           </h3>
           <div className="space-y-2">
-            {rewards.map((r) => (
+            {rewards.filter(r => !r.unlocked).map((r) => (
               <div
                 key={r.id}
                 className="p-4 bg-purple-950/20 border border-purple-900/30 rounded-xl flex justify-between items-center"
               >
-                <div>
+                <div className="flex-1 min-w-0">
                   <div className="font-bold text-slate-200 uppercase tracking-wide text-sm">
                     {r.name}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     {r.category && <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
                     {r.duration && <span className="text-[9px] text-slate-500">{r.duration}</span>}
-                    <span className="text-xs text-slate-500 font-mono">
-                      {r.unlocked ? "Unlocked" : `Unlock at Level ${r.unlockLevel}`}
-                    </span>
                   </div>
                 </div>
-                <Gift
-                  size={14}
-                  className={r.unlocked ? "text-purple-400" : "text-slate-600"}
-                />
+                <button
+                  data-testid={`button-redeem-reward-${r.id}`}
+                  onClick={() => toggleRewardMutation.mutate(r.id)}
+                  className="ml-2 px-3 py-1.5 bg-purple-900/30 hover:bg-purple-800/50 border border-purple-700/30 hover:border-purple-500/50 rounded-lg text-[10px] font-bold text-purple-400 uppercase tracking-wider transition-all cursor-pointer shrink-0"
+                >
+                  Redeem
+                </button>
               </div>
             ))}
+            {rewards.filter(r => r.unlocked).length > 0 && (
+              <div className="mt-3">
+                <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest pl-2 mb-2">Redeemed</h4>
+                {rewards.filter(r => r.unlocked).map((r) => (
+                  <div key={r.id} className="p-3 bg-slate-900/30 border border-slate-800/30 rounded-xl flex justify-between items-center opacity-50 mb-1.5">
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-green-500 uppercase tracking-wide text-sm line-through">{r.name}</div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {r.category && <span className="text-[9px] text-slate-600">{r.category}</span>}
+                        {r.duration && <span className="text-[9px] text-slate-600">{r.duration}</span>}
+                      </div>
+                    </div>
+                    <CheckCircle size={16} className="text-green-500 shrink-0" />
+                  </div>
+                ))}
+              </div>
+            )}
             {rewards.length === 0 && (
               <div className="text-xs text-slate-600 text-center py-4">
                 No rewards yet

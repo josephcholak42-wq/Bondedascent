@@ -249,12 +249,19 @@ export async function registerRoutes(
 
   app.patch("/api/rewards/:id/toggle", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const rewards = await storage.getRewards(user.id);
-    const owned = rewards.find(r => r.id === req.params.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allRewards = await storage.getRewardsForPair(userIds);
+    const owned = allRewards.find(r => r.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Reward not found" });
 
     const reward = await storage.toggleReward(req.params.id);
     if (!reward) return res.status(404).json({ message: "Reward not found" });
+    const action = reward.unlocked ? "redeemed" : "locked";
+    await storage.logActivity(user.id, `reward_${action}`, reward.name);
+    if (partner) {
+      await notifyUser(partner.id, `${user.username} ${action} reward: ${reward.name}`, "info");
+    }
     res.json(reward);
   });
 
@@ -292,12 +299,18 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Invalid status" });
     }
 
-    const punishments = await storage.getPunishments(user.id);
-    const owned = punishments.find(p => p.id === req.params.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allPunishments = await storage.getPunishmentsForPair(userIds);
+    const owned = allPunishments.find(p => p.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Punishment not found" });
 
     const punishment = await storage.updatePunishmentStatus(req.params.id, status);
     if (!punishment) return res.status(404).json({ message: "Punishment not found" });
+    await storage.logActivity(user.id, `punishment_${status}`, punishment.name);
+    if (partner) {
+      await notifyUser(partner.id, `${user.username} marked punishment "${punishment.name}" as ${status}`, "info");
+    }
     res.json(punishment);
   });
 

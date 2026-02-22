@@ -212,6 +212,36 @@ export function useCreateReward() {
   });
 }
 
+export function useToggleReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rewardId: string) => {
+      const res = await apiRequest("PATCH", `/api/rewards/${rewardId}/toggle`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function useUpdatePunishmentStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ punishmentId, status }: { punishmentId: string; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/punishments/${punishmentId}/status`, { status });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/punishments"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
 export function usePunishments() {
   return useQuery<Punishment[]>({ queryKey: ["/api/punishments"] });
 }
