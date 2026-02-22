@@ -3075,7 +3075,43 @@ export default function BondedAscentApp() {
         </div>
       </div>
 
-      {modal && (
+      {modal === "dom_command" && (
+        <div className="fixed inset-0 z-[60] bg-black animate-in fade-in duration-300" data-testid="body-map-fullscreen">
+          <button
+            data-testid="button-close-body-map"
+            onClick={() => setModal(null)}
+            className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all backdrop-blur-sm cursor-pointer"
+          >
+            <X size={20} />
+          </button>
+          <div className="absolute top-4 left-0 right-0 z-40 flex justify-center pointer-events-none">
+            <h2 className="text-[10px] font-black text-amber-400/60 uppercase tracking-[0.4em]">
+              Map of Desire
+            </h2>
+          </div>
+          <div className="w-full h-full">
+            <React.Suspense fallback={
+              <div className="w-full h-full flex items-center justify-center bg-black">
+                <div className="text-amber-500/50 text-xs uppercase tracking-widest animate-pulse">Loading 3D Model...</div>
+              </div>
+            }>
+              <BodyMap3D
+                zones={(bodyMapZonesRaw as any[]).map((z: any) => ({
+                  zoneName: z.zoneName,
+                  status: z.status as "neutral" | "desire" | "void",
+                  intensity: z.intensity,
+                }))}
+                onZoneUpdate={(zoneName, status, intensity) => {
+                  updateBodyMapZoneMutation.mutate({ zoneName, status, intensity });
+                }}
+                onReset={() => resetBodyMapMutation.mutate()}
+              />
+            </React.Suspense>
+          </div>
+        </div>
+      )}
+
+      {modal && modal !== "dom_command" && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-gradient-to-b from-slate-900 to-black border border-white/10 p-6 rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
             <button
@@ -3703,38 +3739,6 @@ export default function BondedAscentApp() {
                     )}
                   </div>
                 )}
-              </div>
-            )}
-
-            {modal === "dom_command" && (
-              <div className="flex flex-col h-full overflow-hidden">
-                <div className="text-center py-3 px-4 border-b border-white/5">
-                  <h2 className="text-sm font-black text-amber-400 uppercase tracking-[0.3em]">
-                    Map of Desire
-                  </h2>
-                  <p className="text-[9px] text-slate-600 mt-1 uppercase tracking-widest">
-                    Long-press to ignite · Double-tap to forbid
-                  </p>
-                </div>
-                <div className="flex-1 min-h-[420px]">
-                  <React.Suspense fallback={
-                    <div className="w-full h-full flex items-center justify-center bg-black">
-                      <div className="text-amber-500/50 text-xs uppercase tracking-widest animate-pulse">Loading 3D Model...</div>
-                    </div>
-                  }>
-                    <BodyMap3D
-                      zones={(bodyMapZonesRaw as any[]).map((z: any) => ({
-                        zoneName: z.zoneName,
-                        status: z.status as "neutral" | "desire" | "void",
-                        intensity: z.intensity,
-                      }))}
-                      onZoneUpdate={(zoneName, status, intensity) => {
-                        updateBodyMapZoneMutation.mutate({ zoneName, status, intensity });
-                      }}
-                      onReset={() => resetBodyMapMutation.mutate()}
-                    />
-                  </React.Suspense>
-                </div>
               </div>
             )}
 
