@@ -1,0 +1,145 @@
+export interface PrebuiltScene {
+  name: string;
+  category: string;
+  duration: string;
+  intensity: number;
+  activities: string[];
+}
+
+export const SCENE_CATEGORIES = [
+  "Bondage",
+  "Impact Play",
+  "Sensory",
+  "Roleplay",
+  "Service",
+  "Worship",
+  "Discipline",
+  "Edge Play",
+] as const;
+
+export const PREBUILT_SCENES: PrebuiltScene[] = [
+  // Bondage Scenes
+  { name: "Rope harness evening — decorative chest harness under clothes", category: "Bondage", duration: "2-3 hours", intensity: 4, activities: ["shibari", "rope"] },
+  { name: "Spread eagle tie — full bed restraint with blindfold", category: "Bondage", duration: "30-60 min", intensity: 6, activities: ["restraints", "blindfold"] },
+  { name: "Hogtie challenge — bound and left to struggle", category: "Bondage", duration: "20-40 min", intensity: 7, activities: ["rope", "hogtie"] },
+  { name: "Suspension tease — partial suspension with sensation play", category: "Bondage", duration: "30-45 min", intensity: 8, activities: ["suspension", "sensation"] },
+  { name: "Mummification — full body wrap in cling film or bandages", category: "Bondage", duration: "30-60 min", intensity: 7, activities: ["mummification", "wrap"] },
+  { name: "Self-bondage task — sub ties themselves per instructions", category: "Bondage", duration: "20-30 min", intensity: 5, activities: ["self-bondage", "rope"] },
+  { name: "Predicament bondage — choose between two uncomfortable positions", category: "Bondage", duration: "15-30 min", intensity: 8, activities: ["predicament", "rope"] },
+  { name: "Cuff and collar evening — wrists and neck restrained while serving", category: "Bondage", duration: "2-4 hours", intensity: 3, activities: ["cuffs", "collar"] },
+  { name: "Tape bondage — creative restraint with bondage tape", category: "Bondage", duration: "30-45 min", intensity: 5, activities: ["tape", "restraint"] },
+  { name: "Box tie meditation — bound in box tie for mindfulness", category: "Bondage", duration: "20-40 min", intensity: 4, activities: ["rope", "meditation"] },
+  { name: "Frogtie position — legs bound folded with teasing", category: "Bondage", duration: "20-30 min", intensity: 6, activities: ["rope", "tease"] },
+  { name: "Bed post tie — each limb to a corner, slow exploration", category: "Bondage", duration: "45-90 min", intensity: 5, activities: ["restraints", "exploration"] },
+  { name: "Standing bondage — arms above head, feet barely touching", category: "Bondage", duration: "15-25 min", intensity: 7, activities: ["rope", "standing"] },
+  { name: "Leather harness display — worn under outfit for the day", category: "Bondage", duration: "4-8 hours", intensity: 3, activities: ["harness", "leather"] },
+
+  // Impact Play Scenes
+  { name: "Warm-up spanking session — hand only, building intensity", category: "Impact Play", duration: "15-20 min", intensity: 3, activities: ["spanking", "hand"] },
+  { name: "Implement rotation — paddle, flogger, crop, cane in sequence", category: "Impact Play", duration: "30-45 min", intensity: 7, activities: ["paddle", "flogger", "crop", "cane"] },
+  { name: "Counting strokes — sub counts each strike, resets on mistake", category: "Impact Play", duration: "20-30 min", intensity: 6, activities: ["spanking", "counting"] },
+  { name: "Flogging meditation — rhythmic flogging to induce subspace", category: "Impact Play", duration: "30-60 min", intensity: 5, activities: ["flogger", "subspace"] },
+  { name: "Punishment spanking — over the knee, bare, with lecture", category: "Impact Play", duration: "15-25 min", intensity: 6, activities: ["OTK", "spanking"] },
+  { name: "Target practice — marking specific spots with riding crop", category: "Impact Play", duration: "20-30 min", intensity: 5, activities: ["crop", "precision"] },
+  { name: "Thuddy vs stingy — alternating between heavy and sharp impact", category: "Impact Play", duration: "25-40 min", intensity: 6, activities: ["flogger", "cane"] },
+  { name: "Belt discipline — traditional belt spanking scene", category: "Impact Play", duration: "15-20 min", intensity: 7, activities: ["belt", "discipline"] },
+  { name: "Gentle flogging cool-down — soft strokes after intense scene", category: "Impact Play", duration: "10-15 min", intensity: 2, activities: ["flogger", "aftercare"] },
+  { name: "Paddle warm-up to crop finish — escalating implements", category: "Impact Play", duration: "30-40 min", intensity: 7, activities: ["paddle", "crop"] },
+  { name: "Body drumming — percussive impact across back and thighs", category: "Impact Play", duration: "20-30 min", intensity: 4, activities: ["hands", "percussion"] },
+  { name: "Caning protocol — formal caning with position holding", category: "Impact Play", duration: "20-30 min", intensity: 8, activities: ["cane", "protocol"] },
+  { name: "Erotic spanking — pleasure-focused with teasing between strikes", category: "Impact Play", duration: "20-40 min", intensity: 4, activities: ["spanking", "tease"] },
+  { name: "Stress relief impact — therapeutic heavy flogging", category: "Impact Play", duration: "30-45 min", intensity: 5, activities: ["flogger", "therapy"] },
+
+  // Sensory Scenes
+  { name: "Blindfolded taste test — sub identifies foods while blindfolded", category: "Sensory", duration: "20-30 min", intensity: 2, activities: ["blindfold", "food"] },
+  { name: "Ice and wax contrast — alternating cold ice and warm wax", category: "Sensory", duration: "30-45 min", intensity: 6, activities: ["ice", "wax", "temperature"] },
+  { name: "Feather tease marathon — full body feather exploration while bound", category: "Sensory", duration: "30-45 min", intensity: 3, activities: ["feathers", "tease", "bondage"] },
+  { name: "Sensation wheel exploration — Wartenberg wheel across entire body", category: "Sensory", duration: "20-30 min", intensity: 5, activities: ["pinwheel", "sensation"] },
+  { name: "Noise canceling isolation — headphones and blindfold, no senses", category: "Sensory", duration: "20-40 min", intensity: 7, activities: ["blindfold", "headphones", "isolation"] },
+  { name: "Hot oil massage with commands — relaxing but obedient", category: "Sensory", duration: "45-60 min", intensity: 3, activities: ["massage", "oil"] },
+  { name: "Texture play — silk, leather, fur, rough fabric across skin", category: "Sensory", duration: "20-30 min", intensity: 3, activities: ["textures", "sensation"] },
+  { name: "Electro-stimulation introduction — gentle TENS play", category: "Sensory", duration: "20-30 min", intensity: 5, activities: ["electro", "TENS"] },
+  { name: "Scent journey — essential oils and perfumes while blindfolded", category: "Sensory", duration: "15-25 min", intensity: 2, activities: ["blindfold", "scent"] },
+  { name: "Temperature gradient — ice bath hands to warm water immersion", category: "Sensory", duration: "15-20 min", intensity: 4, activities: ["temperature", "water"] },
+  { name: "Sound deprivation with touch — earplugs in, focused touch only", category: "Sensory", duration: "20-30 min", intensity: 4, activities: ["earplugs", "touch"] },
+  { name: "Wax drip canvas — body as art with colored wax", category: "Sensory", duration: "30-45 min", intensity: 5, activities: ["wax", "art"] },
+  { name: "Mint and ice tease — menthol balm with ice cube chase", category: "Sensory", duration: "15-25 min", intensity: 5, activities: ["mint", "ice", "tease"] },
+  { name: "Full sensory overload — every sense stimulated simultaneously", category: "Sensory", duration: "20-30 min", intensity: 8, activities: ["multi-sensory", "overload"] },
+
+  // Roleplay Scenes
+  { name: "Interrogation scene — captive must answer questions or face consequences", category: "Roleplay", duration: "30-60 min", intensity: 6, activities: ["interrogation", "questioning"] },
+  { name: "Master/servant dinner — formal service with strict protocol", category: "Roleplay", duration: "2-3 hours", intensity: 4, activities: ["service", "protocol", "dinner"] },
+  { name: "Stranger at the bar — meeting as strangers, seduction game", category: "Roleplay", duration: "1-2 hours", intensity: 3, activities: ["seduction", "strangers"] },
+  { name: "Royal court — throne room protocol with kneeling subjects", category: "Roleplay", duration: "1-2 hours", intensity: 5, activities: ["protocol", "throne"] },
+  { name: "Professor and student — academic discipline scenario", category: "Roleplay", duration: "30-60 min", intensity: 5, activities: ["discipline", "authority"] },
+  { name: "Pet play afternoon — collar, leash, treats, and commands", category: "Roleplay", duration: "1-3 hours", intensity: 4, activities: ["pet play", "collar", "leash"] },
+  { name: "Doctor examination — clinical inspection and 'treatment'", category: "Roleplay", duration: "30-45 min", intensity: 5, activities: ["medical", "examination"] },
+  { name: "Auction block — sub displayed and 'sold' to highest bidder", category: "Roleplay", duration: "30-45 min", intensity: 6, activities: ["display", "objectification"] },
+  { name: "Boss and employee — performance review with 'consequences'", category: "Roleplay", duration: "30-60 min", intensity: 4, activities: ["authority", "discipline"] },
+  { name: "Kidnap fantasy — planned abduction with safety protocols", category: "Roleplay", duration: "1-2 hours", intensity: 8, activities: ["abduction", "restraint"] },
+  { name: "Doll/mannequin play — sub poses exactly as positioned", category: "Roleplay", duration: "30-60 min", intensity: 4, activities: ["posing", "objectification"] },
+  { name: "Butler/maid service — uniformed domestic service", category: "Roleplay", duration: "2-4 hours", intensity: 3, activities: ["service", "uniform"] },
+  { name: "Confession booth — sub confesses desires for Dom's judgment", category: "Roleplay", duration: "20-40 min", intensity: 4, activities: ["confession", "judgment"] },
+  { name: "Guard and prisoner — cell confinement with inspections", category: "Roleplay", duration: "1-2 hours", intensity: 7, activities: ["confinement", "inspection"] },
+
+  // Service Scenes
+  { name: "Boot worship and polishing — hands-and-knees boot care", category: "Service", duration: "20-30 min", intensity: 3, activities: ["boots", "worship", "polishing"] },
+  { name: "Full body grooming — sub bathes, shaves, and dresses Dom", category: "Service", duration: "45-90 min", intensity: 2, activities: ["grooming", "bathing"] },
+  { name: "Formal tea service — sub prepares and serves tea with protocol", category: "Service", duration: "30-45 min", intensity: 2, activities: ["tea", "service", "protocol"] },
+  { name: "Foot washing ritual — ceremonial foot care and massage", category: "Service", duration: "20-30 min", intensity: 2, activities: ["feet", "washing", "ritual"] },
+  { name: "Personal assistant day — sub manages Dom's schedule and needs", category: "Service", duration: "4-8 hours", intensity: 3, activities: ["service", "management"] },
+  { name: "Cooking under command — sub cooks while Dom directs every step", category: "Service", duration: "1-2 hours", intensity: 3, activities: ["cooking", "commands"] },
+  { name: "Wardrobe service — sub selects, presents, and dresses Dom", category: "Service", duration: "20-30 min", intensity: 2, activities: ["dressing", "service"] },
+  { name: "Desk service — sub kneels beside Dom during work, available", category: "Service", duration: "1-3 hours", intensity: 3, activities: ["kneeling", "availability"] },
+  { name: "Chore inspection — sub completes tasks, Dom inspects with consequences", category: "Service", duration: "1-2 hours", intensity: 4, activities: ["chores", "inspection"] },
+  { name: "Wine service protocol — formal pour, taste, and serve", category: "Service", duration: "30 min", intensity: 2, activities: ["wine", "protocol"] },
+  { name: "Morning routine service — wake Dom, prepare breakfast, lay out clothes", category: "Service", duration: "1-2 hours", intensity: 3, activities: ["morning", "routine"] },
+  { name: "Bath drawing ritual — prepare bath with candles, oils, and attendance", category: "Service", duration: "45-60 min", intensity: 2, activities: ["bath", "candles", "attendance"] },
+  { name: "Massage on demand — sub provides massage whenever signaled", category: "Service", duration: "Variable", intensity: 2, activities: ["massage", "service"] },
+
+  // Worship Scenes
+  { name: "Body worship session — sub worships Dom's entire body with mouth and hands", category: "Worship", duration: "30-60 min", intensity: 4, activities: ["body worship", "oral"] },
+  { name: "Foot worship ritual — kissing, massaging, and adoring feet", category: "Worship", duration: "20-30 min", intensity: 3, activities: ["feet", "worship", "massage"] },
+  { name: "Throne worship — Dom seated, sub kneels and worships below", category: "Worship", duration: "20-40 min", intensity: 4, activities: ["kneeling", "worship"] },
+  { name: "Hand worship — kissing and caressing Dom's hands reverently", category: "Worship", duration: "10-20 min", intensity: 2, activities: ["hands", "worship"] },
+  { name: "Verbal worship — sub recites why they adore Dom, on knees", category: "Worship", duration: "15-20 min", intensity: 3, activities: ["verbal", "kneeling"] },
+  { name: "Morning devotion — wake and worship before anything else", category: "Worship", duration: "15-30 min", intensity: 3, activities: ["morning", "devotion"] },
+  { name: "Collar ceremony — formal collaring with vows and worship", category: "Worship", duration: "30-45 min", intensity: 5, activities: ["collar", "ceremony", "vows"] },
+  { name: "Gratitude ritual — sub lists everything they're grateful for about Dom", category: "Worship", duration: "15-20 min", intensity: 2, activities: ["gratitude", "verbal"] },
+  { name: "Candlelit adoration — worship by candlelight with soft music", category: "Worship", duration: "30-45 min", intensity: 3, activities: ["candles", "music", "worship"] },
+  { name: "Photo worship — sub takes photos of Dom as art, expressing devotion", category: "Worship", duration: "30-45 min", intensity: 2, activities: ["photography", "devotion"] },
+  { name: "Written worship — sub writes poetry or letter of devotion, reads aloud", category: "Worship", duration: "30-45 min", intensity: 2, activities: ["writing", "reading"] },
+  { name: "Shrine building — sub creates a small devotional space for Dom", category: "Worship", duration: "1-2 hours", intensity: 3, activities: ["creation", "devotion"] },
+  { name: "Worship with denial — worship Dom's body but no release for sub", category: "Worship", duration: "30-60 min", intensity: 6, activities: ["worship", "denial"] },
+
+  // Discipline Scenes
+  { name: "Position training — hold positions for increasing durations", category: "Discipline", duration: "20-40 min", intensity: 5, activities: ["positions", "endurance"] },
+  { name: "Protocol drill — practice greetings, responses, and postures", category: "Discipline", duration: "30-45 min", intensity: 3, activities: ["protocol", "practice"] },
+  { name: "Silence exercise — sub may not speak unless spoken to", category: "Discipline", duration: "1-4 hours", intensity: 4, activities: ["silence", "obedience"] },
+  { name: "Eye contact control — sub must maintain or avoid eye contact on command", category: "Discipline", duration: "15-30 min", intensity: 4, activities: ["eye contact", "control"] },
+  { name: "Kneeling endurance — extended kneeling on hard surface", category: "Discipline", duration: "15-30 min", intensity: 6, activities: ["kneeling", "endurance"] },
+  { name: "Obedience test — rapid-fire commands to test response speed", category: "Discipline", duration: "15-20 min", intensity: 5, activities: ["commands", "speed"] },
+  { name: "Corner time — facing the wall in reflection", category: "Discipline", duration: "15-30 min", intensity: 3, activities: ["corner", "reflection"] },
+  { name: "Writing lines — repetitive writing of a rule or mantra", category: "Discipline", duration: "30-60 min", intensity: 2, activities: ["writing", "repetition"] },
+  { name: "Inspection lineup — full body inspection with corrections", category: "Discipline", duration: "15-20 min", intensity: 5, activities: ["inspection", "posture"] },
+  { name: "Edge and deny drill — brought to edge, must ask permission, denied", category: "Discipline", duration: "30-60 min", intensity: 7, activities: ["edging", "denial", "control"] },
+  { name: "Crawling exercises — sub moves only on hands and knees", category: "Discipline", duration: "15-30 min", intensity: 4, activities: ["crawling", "humility"] },
+  { name: "Delayed gratification — sub earns rewards through perfect obedience", category: "Discipline", duration: "1-3 hours", intensity: 5, activities: ["obedience", "earning"] },
+  { name: "Posture correction — wearing posture collar or balancing book on head", category: "Discipline", duration: "30-60 min", intensity: 4, activities: ["posture", "collar"] },
+  { name: "Rule recitation — sub must perfectly recite all rules from memory", category: "Discipline", duration: "10-20 min", intensity: 3, activities: ["rules", "memory"] },
+
+  // Edge Play Scenes
+  { name: "Knife play — blunt blade traced across skin for psychological thrill", category: "Edge Play", duration: "20-30 min", intensity: 8, activities: ["knife", "fear play"] },
+  { name: "Breath play lite — hand over mouth with safe signals established", category: "Edge Play", duration: "10-15 min", intensity: 9, activities: ["breath", "trust"] },
+  { name: "Fire cupping — glass cups heated and placed on back", category: "Edge Play", duration: "20-30 min", intensity: 7, activities: ["fire", "cupping"] },
+  { name: "Needle play — temporary piercings with sterile needles", category: "Edge Play", duration: "30-45 min", intensity: 9, activities: ["needles", "piercing"] },
+  { name: "Fear play — staged scary scenario with safe word prominently available", category: "Edge Play", duration: "15-30 min", intensity: 8, activities: ["fear", "psychology"] },
+  { name: "Blood play — controlled scratching or pricking (sterile)", category: "Edge Play", duration: "15-20 min", intensity: 9, activities: ["blood", "sterile"] },
+  { name: "Extreme bondage — inescapable restraint with constant monitoring", category: "Edge Play", duration: "20-40 min", intensity: 9, activities: ["bondage", "extreme"] },
+  { name: "Consensual non-consent — pre-negotiated resistance scene", category: "Edge Play", duration: "30-60 min", intensity: 9, activities: ["CNC", "resistance"] },
+  { name: "Electrical play — violet wand exploration", category: "Edge Play", duration: "20-30 min", intensity: 7, activities: ["electrical", "violet wand"] },
+  { name: "Hot branding simulation — heated spoon pressed briefly on skin", category: "Edge Play", duration: "10-15 min", intensity: 8, activities: ["heat", "branding"] },
+  { name: "Psychological torment — mind games and emotional control", category: "Edge Play", duration: "30-60 min", intensity: 8, activities: ["psychology", "mind games"] },
+  { name: "Waterboarding lite — cloth over face with controlled water drip", category: "Edge Play", duration: "5-10 min", intensity: 9, activities: ["water", "fear"] },
+  { name: "Extreme temperature — very hot wax or very cold ice in sensitive areas", category: "Edge Play", duration: "15-20 min", intensity: 8, activities: ["temperature", "extreme"] },
+];

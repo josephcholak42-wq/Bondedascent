@@ -164,6 +164,7 @@ import {
   useIntensitySessions,
   useCountdownEvents,
   usePlaySessions,
+  useCreatePlaySession,
   useSecrets,
   useLimits,
   usePermissionRequests,
@@ -189,6 +190,11 @@ import {
   REWARD_CATEGORIES,
   type PrebuiltReward,
 } from "@/lib/prebuilt-rewards";
+import {
+  PREBUILT_SCENES,
+  SCENE_CATEGORIES,
+  type PrebuiltScene,
+} from "@/lib/prebuilt-scenes";
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
   left: `${Math.random() * 100}%`,
@@ -241,6 +247,8 @@ export default function BondedAscentApp() {
   const [punishSearch, setPunishSearch] = useState("");
   const [rewardCategoryFilter, setRewardCategoryFilter] = useState<string | null>(null);
   const [rewardSearch, setRewardSearch] = useState("");
+  const [sceneSearch, setSceneSearch] = useState("");
+  const [sceneCategoryFilter, setSceneCategoryFilter] = useState<string | null>(null);
   const [journalContent, setJournalContent] = useState("");
   const [pairCodeInput, setPairCodeInput] = useState("");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -350,6 +358,7 @@ export default function BondedAscentApp() {
   const { data: intensitySessions = [] } = useIntensitySessions();
   const { data: countdownEvents = [] } = useCountdownEvents();
   const { data: playSessions = [] } = usePlaySessions();
+  const createPlaySessionMutation = useCreatePlaySession();
 
   const { data: stickersList = [] } = useStickers();
   const sendStickerMutation = useSendSticker();
@@ -3070,6 +3079,8 @@ export default function BondedAscentApp() {
                 setPunishCategoryFilter(null);
                 setRewardSearch("");
                 setRewardCategoryFilter(null);
+                setSceneSearch("");
+                setSceneCategoryFilter(null);
               }}
               className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors cursor-pointer z-50"
             >
@@ -5388,16 +5399,17 @@ export default function BondedAscentApp() {
             )}
 
             {modal === "scene" && (
-              <div className="p-4 space-y-6">
+              <div className="p-4 space-y-4 overflow-y-auto">
                 <div className="text-center">
                   <Film size={48} className="mx-auto text-purple-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Scene Builder
                   </h2>
                   <p className="text-xs text-slate-500 mt-1">
-                    Plan and track scenes
+                    Browse 100+ scenes or build your own
                   </p>
                 </div>
+
                 {scenePhase >= 0 && (
                   <div className="bg-purple-950/30 border border-purple-500/30 p-4 rounded-2xl text-center space-y-3">
                     <div className="text-[10px] text-purple-400 uppercase font-bold tracking-widest">
@@ -5429,50 +5441,139 @@ export default function BondedAscentApp() {
                     </div>
                   </div>
                 )}
+
+                {scenePhase < 0 && (
+                  <>
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        data-testid="input-scene-search"
+                        type="text"
+                        value={sceneSearch}
+                        onChange={(e) => setSceneSearch(e.target.value)}
+                        placeholder="Search scenes or activities..."
+                        className="w-full bg-black/40 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                        style={{ fontSize: "16px" }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        data-testid="button-scene-cat-all"
+                        onClick={() => setSceneCategoryFilter(null)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!sceneCategoryFilter ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                      >
+                        All
+                      </button>
+                      {SCENE_CATEGORIES.map((cat) => (
+                        <button
+                          key={cat}
+                          data-testid={`button-scene-cat-${cat.toLowerCase().replace(/\s/g, "-")}`}
+                          onClick={() => setSceneCategoryFilter(cat)}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${sceneCategoryFilter === cat ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="max-h-[40vh] overflow-y-auto space-y-1.5 pr-1" style={{ WebkitOverflowScrolling: "touch" }}>
+                      {PREBUILT_SCENES
+                        .filter((s) => !sceneCategoryFilter || s.category === sceneCategoryFilter)
+                        .filter((s) => !sceneSearch || s.name.toLowerCase().includes(sceneSearch.toLowerCase()) || s.activities.some(a => a.toLowerCase().includes(sceneSearch.toLowerCase())))
+                        .map((s, i) => (
+                          <button
+                            key={i}
+                            data-testid={`button-prebuilt-scene-${i}`}
+                            onClick={() => {
+                              createPlaySessionMutation.mutate({
+                                title: s.name,
+                                notes: `Category: ${s.category}\nSuggested Duration: ${s.duration}\nActivities: ${s.activities.join(", ")}`,
+                                mood: s.intensity >= 7 ? "intense" : s.intensity >= 4 ? "excited" : "relaxed",
+                                intensity: s.intensity,
+                                activities: s.activities,
+                                status: "planned",
+                              });
+                              setModal(null);
+                              setSceneSearch("");
+                              setSceneCategoryFilter(null);
+                            }}
+                            className="w-full flex items-center gap-3 p-3 bg-purple-950/10 border border-purple-900/20 hover:bg-purple-900/30 hover:border-purple-500/40 rounded-xl transition-all cursor-pointer group text-left"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs text-purple-400 font-semibold group-hover:text-white transition-colors truncate">
+                                {s.name}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[9px] text-slate-600 uppercase">{s.category}</span>
+                                <span className="text-[9px] text-slate-600">•</span>
+                                <span className="text-[9px] text-purple-500/60 flex items-center gap-0.5">
+                                  <Clock size={8} />{s.duration}
+                                </span>
+                                <span className="text-[9px] text-slate-600">•</span>
+                                <div className="flex gap-0.5">
+                                  {Array.from({ length: 10 }, (_, j) => (
+                                    <div key={j} className={`w-1 h-1 rounded-full ${j < s.intensity ? (s.intensity >= 8 ? "bg-red-500" : s.intensity >= 5 ? "bg-amber-500" : "bg-green-500") : "bg-slate-800"}`} />
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {s.activities.slice(0, 3).map((a, j) => (
+                                  <span key={j} className="text-[8px] bg-slate-800/80 text-slate-500 px-1.5 py-0.5 rounded">{a}</span>
+                                ))}
+                                {s.activities.length > 3 && (
+                                  <span className="text-[8px] text-slate-600">+{s.activities.length - 3}</span>
+                                )}
+                              </div>
+                            </div>
+                            <Flame size={12} className="text-purple-900 group-hover:text-purple-400 transition-colors shrink-0" />
+                          </button>
+                        ))}
+                      {PREBUILT_SCENES
+                        .filter((s) => !sceneCategoryFilter || s.category === sceneCategoryFilter)
+                        .filter((s) => !sceneSearch || s.name.toLowerCase().includes(sceneSearch.toLowerCase()) || s.activities.some(a => a.toLowerCase().includes(sceneSearch.toLowerCase())))
+                        .length === 0 && (
+                          <div className="text-center py-6 text-slate-600 text-xs">
+                            No scenes match your search
+                          </div>
+                        )}
+                    </div>
+                  </>
+                )}
+
                 <div className="space-y-3">
+                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+                    {scenePhase >= 0 ? "Scene Phases" : "Live Scene Tracker"}
+                  </div>
                   {[
                     {
                       label: "Warm-Up",
-                      color:
-                        "bg-green-500/10 border-green-500/20 text-green-400",
-                      activeColor:
-                        "bg-green-500/30 border-green-500/50 text-green-300 ring-1 ring-green-500/30",
+                      desc: "Ease into the scene",
+                      color: "bg-green-500/10 border-green-500/20 text-green-400",
+                      activeColor: "bg-green-500/30 border-green-500/50 text-green-300 ring-1 ring-green-500/30",
                     },
                     {
                       label: "Main Scene",
-                      color:
-                        "bg-purple-500/10 border-purple-500/20 text-purple-400",
-                      activeColor:
-                        "bg-purple-500/30 border-purple-500/50 text-purple-300 ring-1 ring-purple-500/30",
+                      desc: "Core intensity",
+                      color: "bg-purple-500/10 border-purple-500/20 text-purple-400",
+                      activeColor: "bg-purple-500/30 border-purple-500/50 text-purple-300 ring-1 ring-purple-500/30",
                     },
                     {
                       label: "Cooldown",
+                      desc: "Wind down safely",
                       color: "bg-blue-500/10 border-blue-500/20 text-blue-400",
-                      activeColor:
-                        "bg-blue-500/30 border-blue-500/50 text-blue-300 ring-1 ring-blue-500/30",
+                      activeColor: "bg-blue-500/30 border-blue-500/50 text-blue-300 ring-1 ring-blue-500/30",
                     },
                   ].map((phase, i) => (
                     <div
                       key={i}
-                      className={`p-4 rounded-xl border transition-all ${scenePhase === i ? phase.activeColor : scenePhase > i ? "bg-white/5 border-white/10 text-slate-600" : phase.color}`}
+                      className={`p-3 rounded-xl border transition-all ${scenePhase === i ? phase.activeColor : scenePhase > i ? "bg-white/5 border-white/10 text-slate-600" : phase.color}`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="text-xs font-bold uppercase tracking-widest">
-                          {phase.label}
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-widest">{phase.label}</div>
+                          <div className="text-[9px] opacity-60 mt-0.5">{phase.desc}</div>
                         </div>
-                        {scenePhase > i && (
-                          <Check size={14} className="text-green-500" />
-                        )}
-                        {scenePhase === i && (
-                          <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
-                        )}
-                      </div>
-                      <div className="text-[10px] opacity-60 mt-1">
-                        {scenePhase === i
-                          ? "Currently active"
-                          : scenePhase > i
-                            ? "Completed"
-                            : "Pending"}
+                        {scenePhase > i && <Check size={14} className="text-green-500" />}
+                        {scenePhase === i && <div className="w-2 h-2 rounded-full bg-current animate-pulse" />}
                       </div>
                     </div>
                   ))}
@@ -5483,7 +5584,7 @@ export default function BondedAscentApp() {
                     onClick={startScene}
                     className="w-full bg-purple-600 hover:bg-purple-500 font-bold uppercase cursor-pointer"
                   >
-                    <Play size={16} className="mr-2" /> Start Scene
+                    <Play size={16} className="mr-2" /> Start Live Scene
                   </Button>
                 )}
               </div>

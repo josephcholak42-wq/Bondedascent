@@ -104,6 +104,8 @@ All data endpoints fetch data for both paired users (not just the logged-in user
 - **Media Upload**: Polymorphic file attachment system. Files stored in `/uploads/` directory, referenced via `media` table with entityType/entityId pattern. Supports images and videos up to 50MB. Reusable `<MediaUpload>` component.
 - **Sticker Rewards**: Dom can send emoji stickers (8 types: gold-star, heart, fire, crown, diamond, ribbon, trophy, sparkle) with optional messages to Sub. Sub sees received stickers on dashboard.
 - **Feature Toggles**: Dom controls which features are accessible to Sub via `feature_settings` table. Toggle UI on Dom dashboard. Sub-side gating via `useIsFeatureEnabled()` hook.
+- **Prebuilt Libraries**: Curated catalogs for punishments (140+ items, 8 categories), rewards (140+ items, 8 categories), and scenes (100+ items, 8 categories). Each with searchable/filterable browser UI, category pills, one-tap assignment, and custom entry fallback. Files: `prebuilt-punishments.ts`, `prebuilt-rewards.ts`, `prebuilt-scenes.ts`.
+- **Scene Categories**: Bondage, Impact Play, Sensory, Roleplay, Service, Worship, Discipline, Edge Play
 - **Key Tables**: `media`, `stickers`, `feature_settings`
 
 ## External Dependencies
