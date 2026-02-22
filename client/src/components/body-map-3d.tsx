@@ -1,36 +1,12 @@
 import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import { Canvas, useFrame, useThree, ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, Environment } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
-import { RotateCcw, Share2 } from "lucide-react";
+import { RotateCcw, Share2, Loader2 } from "lucide-react";
 
-const ZONE_NAMES = [
-  "head",
-  "neck",
-  "chest",
-  "abdomen",
-  "left_shoulder",
-  "right_shoulder",
-  "left_upper_arm",
-  "right_upper_arm",
-  "left_forearm",
-  "right_forearm",
-  "left_hand",
-  "right_hand",
-  "hips",
-  "left_thigh",
-  "right_thigh",
-  "left_shin",
-  "right_shin",
-  "left_foot",
-  "right_foot",
-  "upper_back",
-  "lower_back",
-  "inner_thighs",
-] as const;
+const MODEL_URL = "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r169/examples/models/gltf/Xbot.glb";
 
-type ZoneName = (typeof ZONE_NAMES)[number];
 type ZoneStatus = "neutral" | "desire" | "void";
 
 export interface ZoneData {
@@ -45,236 +21,66 @@ interface BodyMap3DProps {
   onReset: () => void;
 }
 
-function createHumanGeometries() {
-  const parts: Record<ZoneName, { geometry: THREE.BufferGeometry; position: [number, number, number] }> = {} as any;
-
-  parts.head = {
-    geometry: new THREE.SphereGeometry(0.22, 24, 24),
-    position: [0, 1.72, 0],
-  };
-  parts.neck = {
-    geometry: new THREE.CylinderGeometry(0.08, 0.1, 0.12, 16),
-    position: [0, 1.48, 0],
-  };
-  parts.chest = {
-    geometry: new THREE.BoxGeometry(0.55, 0.35, 0.28, 4, 4, 4),
-    position: [0, 1.22, 0],
-  };
-  parts.abdomen = {
-    geometry: new THREE.BoxGeometry(0.48, 0.28, 0.24, 4, 4, 4),
-    position: [0, 0.92, 0],
-  };
-  parts.upper_back = {
-    geometry: new THREE.BoxGeometry(0.52, 0.3, 0.08, 4, 4, 4),
-    position: [0, 1.22, -0.14],
-  };
-  parts.lower_back = {
-    geometry: new THREE.BoxGeometry(0.45, 0.24, 0.08, 4, 4, 4),
-    position: [0, 0.92, -0.12],
-  };
-  parts.hips = {
-    geometry: new THREE.BoxGeometry(0.5, 0.18, 0.26, 4, 4, 4),
-    position: [0, 0.72, 0],
-  };
-  parts.left_shoulder = {
-    geometry: new THREE.SphereGeometry(0.1, 16, 16),
-    position: [-0.35, 1.36, 0],
-  };
-  parts.right_shoulder = {
-    geometry: new THREE.SphereGeometry(0.1, 16, 16),
-    position: [0.35, 1.36, 0],
-  };
-  parts.left_upper_arm = {
-    geometry: new THREE.CylinderGeometry(0.06, 0.055, 0.32, 12),
-    position: [-0.38, 1.14, 0],
-  };
-  parts.right_upper_arm = {
-    geometry: new THREE.CylinderGeometry(0.06, 0.055, 0.32, 12),
-    position: [0.38, 1.14, 0],
-  };
-  parts.left_forearm = {
-    geometry: new THREE.CylinderGeometry(0.05, 0.04, 0.3, 12),
-    position: [-0.38, 0.82, 0],
-  };
-  parts.right_forearm = {
-    geometry: new THREE.CylinderGeometry(0.05, 0.04, 0.3, 12),
-    position: [0.38, 0.82, 0],
-  };
-  parts.left_hand = {
-    geometry: new THREE.SphereGeometry(0.05, 12, 12),
-    position: [-0.38, 0.64, 0],
-  };
-  parts.right_hand = {
-    geometry: new THREE.SphereGeometry(0.05, 12, 12),
-    position: [0.38, 0.64, 0],
-  };
-  parts.left_thigh = {
-    geometry: new THREE.CylinderGeometry(0.09, 0.07, 0.42, 14),
-    position: [-0.15, 0.42, 0],
-  };
-  parts.right_thigh = {
-    geometry: new THREE.CylinderGeometry(0.09, 0.07, 0.42, 14),
-    position: [0.15, 0.42, 0],
-  };
-  parts.inner_thighs = {
-    geometry: new THREE.BoxGeometry(0.08, 0.35, 0.12, 4, 4, 4),
-    position: [0, 0.42, 0],
-  };
-  parts.left_shin = {
-    geometry: new THREE.CylinderGeometry(0.06, 0.05, 0.42, 14),
-    position: [-0.15, 0.0, 0],
-  };
-  parts.right_shin = {
-    geometry: new THREE.CylinderGeometry(0.06, 0.05, 0.42, 14),
-    position: [0.15, 0.0, 0],
-  };
-  parts.left_foot = {
-    geometry: new THREE.BoxGeometry(0.08, 0.05, 0.14, 4, 4, 4),
-    position: [-0.15, -0.24, 0.03],
-  };
-  parts.right_foot = {
-    geometry: new THREE.BoxGeometry(0.08, 0.05, 0.14, 4, 4, 4),
-    position: [0.15, -0.24, 0.03],
-  };
-
-  return parts;
+interface ZoneDefinition {
+  name: string;
+  label: string;
+  test: (point: THREE.Vector3) => boolean;
 }
 
-function BodyZone({
-  zoneName,
-  geometry,
-  position,
-  status,
-  intensity,
-  onInteract,
-}: {
-  zoneName: ZoneName;
-  geometry: THREE.BufferGeometry;
-  position: [number, number, number];
-  status: ZoneStatus;
-  intensity: number;
-  onInteract: (zoneName: string, type: "longpress" | "doubletap") => void;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-  const wireRef = useRef<THREE.LineSegments>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
-  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pressStartRef = useRef(0);
-  const lastTapRef = useRef(0);
-  const [hovered, setHovered] = useState(false);
-  const [pressing, setPressing] = useState(false);
+const ZONE_DEFS: ZoneDefinition[] = [
+  { name: "head", label: "Head", test: (p) => p.y > 1.55 },
+  { name: "neck", label: "Neck", test: (p) => p.y > 1.42 && p.y <= 1.55 },
+  { name: "left_shoulder", label: "Left Shoulder", test: (p) => p.y > 1.3 && p.y <= 1.42 && p.x < -0.2 },
+  { name: "right_shoulder", label: "Right Shoulder", test: (p) => p.y > 1.3 && p.y <= 1.42 && p.x > 0.2 },
+  { name: "chest", label: "Chest", test: (p) => p.y > 1.05 && p.y <= 1.42 && p.z > -0.05 && Math.abs(p.x) <= 0.2 },
+  { name: "upper_back", label: "Upper Back", test: (p) => p.y > 1.05 && p.y <= 1.42 && p.z <= -0.05 && Math.abs(p.x) <= 0.2 },
+  { name: "left_upper_arm", label: "Left Upper Arm", test: (p) => p.y > 0.95 && p.y <= 1.3 && p.x < -0.2 },
+  { name: "right_upper_arm", label: "Right Upper Arm", test: (p) => p.y > 0.95 && p.y <= 1.3 && p.x > 0.2 },
+  { name: "abdomen", label: "Abdomen", test: (p) => p.y > 0.85 && p.y <= 1.05 && p.z > -0.05 && Math.abs(p.x) <= 0.25 },
+  { name: "lower_back", label: "Lower Back", test: (p) => p.y > 0.85 && p.y <= 1.05 && p.z <= -0.05 && Math.abs(p.x) <= 0.25 },
+  { name: "left_forearm", label: "Left Forearm", test: (p) => p.y > 0.6 && p.y <= 0.95 && p.x < -0.2 },
+  { name: "right_forearm", label: "Right Forearm", test: (p) => p.y > 0.6 && p.y <= 0.95 && p.x > 0.2 },
+  { name: "hips", label: "Hips", test: (p) => p.y > 0.7 && p.y <= 0.85 && Math.abs(p.x) <= 0.25 },
+  { name: "left_hand", label: "Left Hand", test: (p) => p.y <= 0.6 && p.x < -0.25 },
+  { name: "right_hand", label: "Right Hand", test: (p) => p.y <= 0.6 && p.x > 0.25 },
+  { name: "inner_thighs", label: "Inner Thighs", test: (p) => p.y > 0.4 && p.y <= 0.7 && Math.abs(p.x) < 0.08 },
+  { name: "left_thigh", label: "Left Thigh", test: (p) => p.y > 0.35 && p.y <= 0.7 && p.x <= -0.03 },
+  { name: "right_thigh", label: "Right Thigh", test: (p) => p.y > 0.35 && p.y <= 0.7 && p.x > 0.03 },
+  { name: "left_shin", label: "Left Shin", test: (p) => p.y > 0.08 && p.y <= 0.35 && p.x <= 0 },
+  { name: "right_shin", label: "Right Shin", test: (p) => p.y > 0.08 && p.y <= 0.35 && p.x > 0 },
+  { name: "left_foot", label: "Left Foot", test: (p) => p.y <= 0.08 && p.x <= 0 },
+  { name: "right_foot", label: "Right Foot", test: (p) => p.y <= 0.08 && p.x > 0 },
+];
 
-  const wireGeom = useMemo(() => new THREE.WireframeGeometry(geometry), [geometry]);
-  const glowGeom = useMemo(() => {
-    const s = geometry.clone();
-    s.scale(1.15, 1.15, 1.15);
-    return s;
-  }, [geometry]);
+function getZoneFromPoint(point: THREE.Vector3): string {
+  for (const zone of ZONE_DEFS) {
+    if (zone.test(point)) return zone.name;
+  }
+  return "chest";
+}
 
-  const baseColor = useMemo(() => {
-    if (status === "desire") return new THREE.Color(0xffd700);
-    if (status === "void") return new THREE.Color(0x333333);
-    return new THREE.Color(0xcccccc);
-  }, [status]);
+function getZoneLabel(zoneName: string): string {
+  const def = ZONE_DEFS.find((z) => z.name === zoneName);
+  return def ? def.label : zoneName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-  const baseOpacity = useMemo(() => {
-    if (status === "void") return 0.15;
-    if (status === "desire") return 0.3 + (intensity / 100) * 0.4;
-    return hovered ? 0.12 : 0.05;
-  }, [status, intensity, hovered]);
+function GlowSphere({ position, intensity, time }: { position: THREE.Vector3; intensity: number; time: number }) {
+  const ref = useRef<THREE.Mesh>(null);
 
-  const wireColor = useMemo(() => {
-    if (status === "desire") return new THREE.Color(0xffd700);
-    if (status === "void") return new THREE.Color(0x444444);
-    return hovered ? new THREE.Color(0xffffff) : new THREE.Color(0x888888);
-  }, [status, hovered]);
-
-  useFrame((state) => {
-    if (!meshRef.current || !wireRef.current) return;
-
-    if (status === "desire" && glowRef.current) {
-      const pulse = 0.8 + Math.sin(state.clock.elapsedTime * 2.5) * 0.2;
-      const mat = glowRef.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = (intensity / 100) * 0.25 * pulse;
-    }
-
-    if (pressing) {
-      const elapsed = Date.now() - pressStartRef.current;
-      const scale = 1 + Math.sin(elapsed * 0.005) * 0.03;
-      meshRef.current.scale.setScalar(scale);
-    } else {
-      meshRef.current.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+  useFrame(() => {
+    if (ref.current) {
+      const pulse = 0.8 + Math.sin(time * 2.5) * 0.2;
+      const scale = 0.08 + (intensity / 100) * 0.12;
+      ref.current.scale.setScalar(scale * pulse);
+      (ref.current.material as THREE.MeshBasicMaterial).opacity = (intensity / 100) * 0.5 * pulse;
     }
   });
 
-  const handlePointerDown = useCallback(
-    (e: ThreeEvent<PointerEvent>) => {
-      e.stopPropagation();
-      const now = Date.now();
-      const timeSinceLastTap = now - lastTapRef.current;
-
-      if (timeSinceLastTap < 300) {
-        if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
-        onInteract(zoneName, "doubletap");
-        try { navigator.vibrate?.([30, 20, 30]); } catch {}
-        lastTapRef.current = 0;
-        return;
-      }
-
-      lastTapRef.current = now;
-      pressStartRef.current = now;
-      setPressing(true);
-
-      pressTimerRef.current = setTimeout(() => {
-        onInteract(zoneName, "longpress");
-        try { navigator.vibrate?.([50]); } catch {}
-        setPressing(false);
-      }, 500);
-    },
-    [zoneName, onInteract]
-  );
-
-  const handlePointerUp = useCallback(() => {
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
-    setPressing(false);
-  }, []);
-
   return (
-    <group position={position}>
-      <mesh
-        ref={meshRef}
-        geometry={geometry}
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerUp}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-      >
-        <meshBasicMaterial
-          color={baseColor}
-          transparent
-          opacity={baseOpacity}
-          depthWrite={false}
-        />
-      </mesh>
-      <lineSegments ref={wireRef} geometry={wireGeom}>
-        <lineBasicMaterial color={wireColor} transparent opacity={status === "void" ? 0.3 : 0.7} />
-      </lineSegments>
-      {status === "desire" && (
-        <mesh ref={glowRef} geometry={glowGeom}>
-          <meshBasicMaterial
-            color={0xffd700}
-            transparent
-            opacity={0.15}
-            depthWrite={false}
-            side={THREE.BackSide}
-          />
-        </mesh>
-      )}
-    </group>
+    <mesh ref={ref} position={position}>
+      <sphereGeometry args={[1, 16, 16]} />
+      <meshBasicMaterial color={0xffd700} transparent opacity={0.3} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
   );
 }
 
@@ -286,35 +92,165 @@ function HumanModel({
   onInteract: (zoneName: string, type: "longpress" | "doubletap") => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
-  const parts = useMemo(() => createHumanGeometries(), []);
+  const { scene } = useGLTF(MODEL_URL);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTapRef = useRef(0);
+  const [hoverZone, setHoverZone] = useState<string | null>(null);
+  const [activeGlows, setActiveGlows] = useState<{ position: THREE.Vector3; zone: string }[]>([]);
+
   const zoneMap = useMemo(() => {
     const m: Record<string, ZoneData> = {};
     zones.forEach((z) => (m[z.zoneName] = z));
     return m;
   }, [zones]);
 
+  const clonedScene = useMemo(() => {
+    const clone = scene.clone(true);
+    clone.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        mesh.material = new THREE.MeshStandardMaterial({
+          color: 0xcccccc,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.6,
+          emissive: 0x222222,
+          emissiveIntensity: 0.3,
+        });
+      }
+    });
+    return clone;
+  }, [scene]);
+
+  useEffect(() => {
+    const glows: { position: THREE.Vector3; zone: string }[] = [];
+    zones.forEach((z) => {
+      if (z.status === "desire") {
+        const def = ZONE_DEFS.find((d) => d.name === z.zoneName);
+        if (def) {
+          const positions: Record<string, [number, number, number]> = {
+            head: [0, 1.65, 0], neck: [0, 1.48, 0], chest: [0, 1.22, 0.05],
+            upper_back: [0, 1.22, -0.1], abdomen: [0, 0.95, 0.05], lower_back: [0, 0.95, -0.1],
+            left_shoulder: [-0.3, 1.36, 0], right_shoulder: [0.3, 1.36, 0],
+            left_upper_arm: [-0.38, 1.12, 0], right_upper_arm: [0.38, 1.12, 0],
+            left_forearm: [-0.4, 0.78, 0], right_forearm: [0.4, 0.78, 0],
+            left_hand: [-0.4, 0.55, 0], right_hand: [0.4, 0.55, 0],
+            hips: [0, 0.78, 0], inner_thighs: [0, 0.55, 0],
+            left_thigh: [-0.12, 0.52, 0], right_thigh: [0.12, 0.52, 0],
+            left_shin: [-0.12, 0.22, 0], right_shin: [0.12, 0.22, 0],
+            left_foot: [-0.12, 0.04, 0.05], right_foot: [0.12, 0.04, 0.05],
+          };
+          const pos = positions[z.zoneName];
+          if (pos) glows.push({ position: new THREE.Vector3(...pos), zone: z.zoneName });
+        }
+      }
+    });
+    setActiveGlows(glows);
+  }, [zones]);
+
   useFrame((state) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.15) * 0.05;
-    }
+    if (!groupRef.current) return;
+
+    groupRef.current.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+        const mesh = child as THREE.Mesh;
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        if (!mat.isMeshStandardMaterial) return;
+
+        const bbox = new THREE.Box3().setFromObject(mesh);
+        const center = new THREE.Vector3();
+        bbox.getCenter(center);
+        groupRef.current!.worldToLocal(center);
+
+        const zone = getZoneFromPoint(center);
+        const zoneData = zoneMap[zone];
+        const isHovered = hoverZone === zone;
+
+        if (zoneData?.status === "desire") {
+          const pulse = 0.7 + Math.sin(state.clock.elapsedTime * 2.5) * 0.3;
+          mat.color.set(0xffd700);
+          mat.emissive.set(0xffa500);
+          mat.emissiveIntensity = (zoneData.intensity / 100) * 0.8 * pulse;
+          mat.opacity = 0.5 + (zoneData.intensity / 100) * 0.4;
+        } else if (zoneData?.status === "void") {
+          mat.color.set(0x333333);
+          mat.emissive.set(0x000000);
+          mat.emissiveIntensity = 0;
+          mat.opacity = 0.15;
+        } else {
+          mat.color.set(isHovered ? 0xffffff : 0xcccccc);
+          mat.emissive.set(isHovered ? 0x444444 : 0x222222);
+          mat.emissiveIntensity = isHovered ? 0.5 : 0.3;
+          mat.opacity = isHovered ? 0.8 : 0.6;
+        }
+      }
+    });
   });
 
+  const handlePointerDown = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation();
+      const localPoint = e.point.clone();
+      if (groupRef.current) groupRef.current.worldToLocal(localPoint);
+      const zone = getZoneFromPoint(localPoint);
+
+      const now = Date.now();
+      const timeSinceLastTap = now - lastTapRef.current;
+
+      if (timeSinceLastTap < 350) {
+        if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+        onInteract(zone, "doubletap");
+        try { navigator.vibrate?.([30, 20, 30]); } catch {}
+        lastTapRef.current = 0;
+        return;
+      }
+
+      lastTapRef.current = now;
+
+      pressTimerRef.current = setTimeout(() => {
+        onInteract(zone, "longpress");
+        try { navigator.vibrate?.([50]); } catch {}
+      }, 500);
+    },
+    [onInteract]
+  );
+
+  const handlePointerUp = useCallback(() => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  }, []);
+
+  const handlePointerMove = useCallback(
+    (e: ThreeEvent<PointerEvent>) => {
+      const localPoint = e.point.clone();
+      if (groupRef.current) groupRef.current.worldToLocal(localPoint);
+      setHoverZone(getZoneFromPoint(localPoint));
+    },
+    []
+  );
+
   return (
-    <group ref={groupRef} position={[0, -0.7, 0]}>
-      {ZONE_NAMES.map((name) => {
-        const part = parts[name];
-        const zone = zoneMap[name] || { zoneName: name, status: "neutral" as ZoneStatus, intensity: 50 };
-        return (
-          <BodyZone
-            key={name}
-            zoneName={name}
-            geometry={part.geometry}
-            position={part.position}
-            status={zone.status}
-            intensity={zone.intensity}
-            onInteract={onInteract}
+    <group ref={groupRef} position={[0, -0.9, 0]} scale={0.95}>
+      <primitive
+        object={clonedScene}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onPointerMove={handlePointerMove}
+        onPointerOut={() => setHoverZone(null)}
+      />
+      {activeGlows.map((g) => {
+        const zd = zoneMap[g.zone];
+        return zd ? (
+          <GlowSphere
+            key={g.zone}
+            position={g.position}
+            intensity={zd.intensity}
+            time={0}
           />
-        );
+        ) : null;
       })}
     </group>
   );
@@ -330,10 +266,10 @@ function ZoneLabel({
   const activeZone = zones.find((z) => z.zoneName === lastInteracted);
   if (!activeZone) return null;
 
-  const label = activeZone.zoneName.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const label = getZoneLabel(activeZone.zoneName);
 
   return (
-    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+    <div className="absolute bottom-28 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
       <div
         className={`px-4 py-2 rounded-full backdrop-blur-xl text-xs font-bold uppercase tracking-[0.2em] border transition-all duration-500 ${
           activeZone.status === "desire"
@@ -357,6 +293,7 @@ function ZoneLabel({
 
 export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DProps) {
   const [lastInteracted, setLastInteracted] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const handleInteract = useCallback(
     (zoneName: string, type: "longpress" | "doubletap") => {
@@ -388,7 +325,7 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
     if (desireZones.length > 0) {
       lines.push("Desire zones:");
       desireZones.forEach((z) => {
-        const label = z.zoneName.replace(/_/g, " ");
+        const label = getZoneLabel(z.zoneName);
         lines.push(`  ${label} (${z.intensity}%)`);
       });
     }
@@ -396,7 +333,7 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
       lines.push("");
       lines.push("Off-limits:");
       voidZones.forEach((z) => {
-        lines.push(`  ${z.zoneName.replace(/_/g, " ")}`);
+        lines.push(`  ${getZoneLabel(z.zoneName)}`);
       });
     }
     if (desireZones.length === 0 && voidZones.length === 0) {
@@ -417,28 +354,40 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
     <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden" data-testid="body-map-3d">
       <div className="absolute top-3 left-0 right-0 z-30 flex justify-center pointer-events-none">
         <div className="flex items-center gap-3 text-[9px] uppercase tracking-[0.2em] font-bold">
-          <span className="text-amber-400/70 flex items-center gap-1">
+          <span className="text-amber-400/70 flex items-center gap-1" data-testid="text-desire-count">
             <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(255,215,0,0.5)]" />
             {desireCount} desire
           </span>
           <span className="text-slate-600">|</span>
-          <span className="text-slate-500 flex items-center gap-1">
+          <span className="text-slate-500 flex items-center gap-1" data-testid="text-void-count">
             <span className="w-2 h-2 rounded-full bg-slate-600" />
             {voidCount} void
           </span>
         </div>
       </div>
 
+      {loading && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 size={24} className="text-amber-500/50 animate-spin" />
+            <span className="text-amber-500/50 text-[10px] uppercase tracking-[0.3em] font-bold">Loading Model</span>
+          </div>
+        </div>
+      )}
+
       <Canvas
-        camera={{ position: [0, 0.3, 2.5], fov: 45 }}
+        camera={{ position: [0, 0.5, 2.8], fov: 40 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
         dpr={[1, 2]}
         style={{ background: "#000000" }}
+        onCreated={() => {
+          setTimeout(() => setLoading(false), 1500);
+        }}
       >
         <color attach="background" args={["#000000"]} />
-        <ambientLight intensity={0.15} />
-        <pointLight position={[2, 3, 2]} intensity={0.3} color="#ffffff" />
-        <pointLight position={[-2, 1, -2]} intensity={0.1} color="#ffd700" />
+        <ambientLight intensity={0.2} />
+        <directionalLight position={[3, 5, 3]} intensity={0.4} color="#ffffff" />
+        <pointLight position={[-3, 2, -2]} intensity={0.15} color="#ffd700" />
 
         <HumanModel zones={zones} onInteract={handleInteract} />
 
@@ -447,17 +396,17 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
           enableDamping
           dampingFactor={0.08}
           minDistance={1.5}
-          maxDistance={4}
-          minPolarAngle={Math.PI * 0.15}
-          maxPolarAngle={Math.PI * 0.85}
+          maxDistance={5}
+          minPolarAngle={Math.PI * 0.1}
+          maxPolarAngle={Math.PI * 0.9}
           rotateSpeed={0.5}
           touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_ROTATE }}
         />
 
         <EffectComposer>
           <Bloom
-            intensity={1.2}
-            luminanceThreshold={0.2}
+            intensity={1.5}
+            luminanceThreshold={0.15}
             luminanceSmoothing={0.9}
             mipmapBlur
           />
@@ -493,3 +442,5 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
     </div>
   );
 }
+
+useGLTF.preload(MODEL_URL);
