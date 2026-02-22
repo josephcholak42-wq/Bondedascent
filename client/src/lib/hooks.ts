@@ -1545,3 +1545,33 @@ export function useToggleFeature() {
     },
   });
 }
+
+export function useBodyMapZones() {
+  return useQuery({ queryKey: ["/api/body-map-zones"], queryFn: getQueryFn({ on401: "returnNull" }) });
+}
+
+export function useUpdateBodyMapZone() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ zoneName, status, intensity }: { zoneName: string; status: string; intensity: number }) => {
+      const res = await apiRequest("PUT", `/api/body-map-zones/${zoneName}`, { status, intensity });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/body-map-zones"] });
+    },
+  });
+}
+
+export function useResetBodyMap() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("DELETE", "/api/body-map-zones");
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/body-map-zones"] });
+    },
+  });
+}

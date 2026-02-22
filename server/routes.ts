@@ -1694,5 +1694,37 @@ export async function registerRoutes(
     res.json(setting);
   });
 
+  app.get("/api/body-map-zones", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const zones = await storage.getBodyMapZones(user.id);
+    res.json(zones);
+  });
+
+  app.put("/api/body-map-zones/:zoneName", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const bodyMapSchema = z.object({
+      status: z.enum(["neutral", "desire", "void"]),
+      intensity: z.number().int().min(0).max(100),
+    });
+    const parsed = bodyMapSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid body map zone data", errors: parsed.error.errors });
+    const { status, intensity } = parsed.data;
+    const partner = await storage.getPartner(user.id);
+    const zone = await storage.upsertBodyMapZone(
+      user.id,
+      partner?.id || null,
+      req.params.zoneName,
+      status,
+      intensity
+    );
+    res.json(zone);
+  });
+
+  app.delete("/api/body-map-zones", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    await storage.deleteBodyMapZones(user.id);
+    res.json({ success: true });
+  });
+
   return httpServer;
 }

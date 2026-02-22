@@ -179,6 +179,9 @@ import {
   useUploadMedia,
   useMedia,
   useDeleteMedia,
+  useBodyMapZones,
+  useUpdateBodyMapZone,
+  useResetBodyMap,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -195,6 +198,7 @@ import {
   SCENE_CATEGORIES,
   type PrebuiltScene,
 } from "@/lib/prebuilt-scenes";
+const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
   left: `${Math.random() * 100}%`,
@@ -364,6 +368,9 @@ export default function BondedAscentApp() {
   const sendStickerMutation = useSendSticker();
   const { data: featureSettingsList = [] } = useFeatureSettings();
   const toggleFeatureMutation = useToggleFeature();
+  const { data: bodyMapZonesRaw = [] } = useBodyMapZones();
+  const updateBodyMapZoneMutation = useUpdateBodyMapZone();
+  const resetBodyMapMutation = useResetBodyMap();
   const roleSwitchEnabled = useIsFeatureEnabled("role_switch");
   const uploadMediaMutation = useUploadMedia();
   const deleteMediaMutation = useDeleteMedia();
@@ -1411,10 +1418,10 @@ export default function BondedAscentApp() {
             </div>
 
             <SanctuaryNode
-              icon={<Terminal />}
-              label="Command"
+              icon={<Map />}
+              label="Desire Map"
               angle={270}
-              color="bg-red-600"
+              color="bg-amber-600"
               onClick={() => setModal("dom_command")}
             />
             <SanctuaryNode
@@ -3700,112 +3707,34 @@ export default function BondedAscentApp() {
             )}
 
             {modal === "dom_command" && (
-              <div className="p-4 space-y-6 overflow-y-auto">
-                <div className="text-center">
-                  <Terminal size={48} className="mx-auto text-red-500 mb-4" />
-                  <h2 className="text-xl font-bold text-white uppercase">
-                    Command Center
+              <div className="flex flex-col h-full overflow-hidden">
+                <div className="text-center py-3 px-4 border-b border-white/5">
+                  <h2 className="text-sm font-black text-amber-400 uppercase tracking-[0.3em]">
+                    Map of Desire
                   </h2>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {partner
-                      ? `Commanding ${partner.username}`
-                      : "No sub connected"}
+                  <p className="text-[9px] text-slate-600 mt-1 uppercase tracking-widest">
+                    Long-press to ignite · Double-tap to forbid
                   </p>
                 </div>
-                {!partner ? (
-                  <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">
-                    Connect to a sub first
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex gap-2">
-                      <input
-                        data-testid="input-dom-command-task"
-                        type="text"
-                        value={newTaskText}
-                        onChange={(e) => setNewTaskText(e.target.value)}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" &&
-                          newTaskText.trim() &&
-                          (() => {
-                            createPartnerTaskMutation.mutate({
-                              text: newTaskText,
-                            });
-                            setNewTaskText("");
-                          })()
-                        }
-                        placeholder="Issue a new command..."
-                        className="flex-1 bg-black/40 border border-red-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
-                      />
-                      <Button
-                        data-testid="button-dom-command-send"
-                        className="bg-red-600 hover:bg-red-500 cursor-pointer"
-                        onClick={() => {
-                          if (newTaskText.trim()) {
-                            createPartnerTaskMutation.mutate({
-                              text: newTaskText,
-                            });
-                            setNewTaskText("");
-                          }
-                        }}
-                        disabled={createPartnerTaskMutation.isPending}
-                      >
-                        <Send size={16} />
-                      </Button>
+                <div className="flex-1 min-h-[420px]">
+                  <React.Suspense fallback={
+                    <div className="w-full h-full flex items-center justify-center bg-black">
+                      <div className="text-amber-500/50 text-xs uppercase tracking-widest animate-pulse">Loading 3D Model...</div>
                     </div>
-                    <div className="space-y-2">
-                      <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                        Active Orders (
-                        {partnerTasks.filter((t) => !t.done).length})
-                      </div>
-                      {partnerTasks
-                        .filter((t) => !t.done)
-                        .map((t) => (
-                          <div
-                            key={t.id}
-                            className="flex items-center gap-3 bg-red-950/20 border border-red-900/20 p-3 rounded-xl"
-                          >
-                            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                            <span className="text-sm text-white font-bold flex-1">
-                              {t.text}
-                            </span>
-                            <span className="text-[9px] text-red-500/50 uppercase">
-                              Pending
-                            </span>
-                          </div>
-                        ))}
-                      {partnerTasks.filter((t) => t.done).length > 0 && (
-                        <>
-                          <div className="text-[10px] text-slate-600 uppercase tracking-widest font-bold mt-4">
-                            Completed (
-                            {partnerTasks.filter((t) => t.done).length})
-                          </div>
-                          {partnerTasks
-                            .filter((t) => t.done)
-                            .map((t) => (
-                              <div
-                                key={t.id}
-                                className="flex items-center gap-3 bg-slate-900/30 border border-white/5 p-3 rounded-xl opacity-50"
-                              >
-                                <CheckCircle
-                                  size={14}
-                                  className="text-green-500"
-                                />
-                                <span className="text-sm text-slate-400 line-through">
-                                  {t.text}
-                                </span>
-                              </div>
-                            ))}
-                        </>
-                      )}
-                      {partnerTasks.length === 0 && (
-                        <div className="text-xs text-slate-600 text-center py-4">
-                          No commands issued yet
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  }>
+                    <BodyMap3D
+                      zones={(bodyMapZonesRaw as any[]).map((z: any) => ({
+                        zoneName: z.zoneName,
+                        status: z.status as "neutral" | "desire" | "void",
+                        intensity: z.intensity,
+                      }))}
+                      onZoneUpdate={(zoneName, status, intensity) => {
+                        updateBodyMapZoneMutation.mutate({ zoneName, status, intensity });
+                      }}
+                      onReset={() => resetBodyMapMutation.mutate()}
+                    />
+                  </React.Suspense>
+                </div>
               </div>
             )}
 

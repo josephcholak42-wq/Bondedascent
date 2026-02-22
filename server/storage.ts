@@ -8,7 +8,7 @@ import {
   desiredChanges, achievements, playSessions, pushSubscriptions,
   demandTimers, quickCommands, presenceHeartbeats, accusations,
   intensitySessions, trialSteps, obedienceTrials, sensationCards, sensationSpins, sealedOrders, enduranceChallenges, enduranceCheckins,
-  media, stickers, featureSettings,
+  media, stickers, featureSettings, bodyMapZones,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -37,6 +37,7 @@ import {
   type Media, type InsertMedia,
   type Sticker, type InsertSticker,
   type FeatureSetting, type InsertFeatureSetting,
+  type BodyMapZone, type InsertBodyMapZone,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -240,6 +241,10 @@ export interface IStorage {
 
   getFeatureSettings(pairOwnerId: string): Promise<FeatureSetting[]>;
   upsertFeatureSetting(pairOwnerId: string, featureKey: string, enabled: boolean): Promise<FeatureSetting>;
+
+  getBodyMapZones(userId: string): Promise<BodyMapZone[]>;
+  upsertBodyMapZone(userId: string, partnerId: string | null, zoneName: string, status: string, intensity: number): Promise<BodyMapZone>;
+  deleteBodyMapZones(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -921,6 +926,29 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(featureSettings).values({ pairOwnerId, featureKey, enabled }).returning();
     return created;
+  }
+
+  async getBodyMapZones(userId: string): Promise<BodyMapZone[]> {
+    return db.select().from(bodyMapZones).where(eq(bodyMapZones.userId, userId));
+  }
+
+  async upsertBodyMapZone(userId: string, partnerId: string | null, zoneName: string, status: string, intensity: number): Promise<BodyMapZone> {
+    const existing = await db.select().from(bodyMapZones).where(and(eq(bodyMapZones.userId, userId), eq(bodyMapZones.zoneName, zoneName)));
+    if (existing.length > 0) {
+      if (status === "neutral") {
+        await db.delete(bodyMapZones).where(eq(bodyMapZones.id, existing[0].id));
+        return { ...existing[0], status, intensity };
+      }
+      const [updated] = await db.update(bodyMapZones).set({ status, intensity, partnerId, updatedAt: new Date() }).where(eq(bodyMapZones.id, existing[0].id)).returning();
+      return updated;
+    }
+    if (status === "neutral") return { id: "", userId, partnerId, zoneName, status, intensity, createdAt: new Date(), updatedAt: new Date() };
+    const [created] = await db.insert(bodyMapZones).values({ userId, partnerId, zoneName, status, intensity }).returning();
+    return created;
+  }
+
+  async deleteBodyMapZones(userId: string): Promise<void> {
+    await db.delete(bodyMapZones).where(eq(bodyMapZones.userId, userId));
   }
 }
 
