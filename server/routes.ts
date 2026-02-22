@@ -238,12 +238,12 @@ export async function registerRoutes(
 
   app.post("/api/rewards", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { name, unlockLevel } = req.body;
+    const { name, unlockLevel, category, duration } = req.body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ message: "Reward name required" });
     }
     const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
-    const reward = await storage.createReward({ userId: user.id, name: name.trim(), unlockLevel: lvl });
+    const reward = await storage.createReward({ userId: user.id, name: name.trim(), unlockLevel: lvl, category: category || null, duration: duration || null });
     res.status(201).json(reward);
   });
 
@@ -583,12 +583,12 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     if (!partner) return res.status(404).json({ message: "No partner linked" });
-    const { name, unlockLevel } = req.body;
+    const { name, unlockLevel, category, duration } = req.body;
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ message: "Reward name required" });
     }
     const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
-    const reward = await storage.createReward({ userId: partner.id, name: name.trim(), unlockLevel: lvl });
+    const reward = await storage.createReward({ userId: partner.id, name: name.trim(), unlockLevel: lvl, category: category || null, duration: duration || null });
     await storage.logActivity(user.id, "reward_granted", `Granted "${name.trim()}" to ${partner.username}`);
     await notifyUser(partner.id, `Reward from ${user.username}: ${name.trim()}`, "info");
     res.status(201).json(reward);

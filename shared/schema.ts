@@ -50,6 +50,8 @@ export const rewards = pgTable("rewards", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
   name: text("name").notNull(),
+  category: text("category"),
+  duration: text("duration"),
   unlocked: boolean("unlocked").notNull().default(false),
   unlockLevel: integer("unlock_level").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
@@ -276,6 +278,8 @@ export const insertJournalSchema = createInsertSchema(journalEntries).pick({
 export const insertRewardSchema = createInsertSchema(rewards).pick({
   userId: true,
   name: true,
+  category: true,
+  duration: true,
   unlockLevel: true,
 });
 

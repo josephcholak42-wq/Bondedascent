@@ -202,7 +202,7 @@ export function useRewards() {
 export function useCreateReward() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; unlockLevel?: number; targetUserId?: string }) => {
+    mutationFn: async (data: { name: string; unlockLevel?: number; targetUserId?: string; category?: string; duration?: string }) => {
       const res = await apiRequest("POST", "/api/rewards", data);
       return res.json();
     },
@@ -411,7 +411,7 @@ export function useCreatePartnerPunishment() {
 export function useCreatePartnerReward() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; unlockLevel?: number }) => {
+    mutationFn: async (data: { name: string; unlockLevel?: number; category?: string; duration?: string }) => {
       const res = await apiRequest("POST", "/api/partner/rewards", data);
       return res.json();
     },
