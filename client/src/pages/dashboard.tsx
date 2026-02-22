@@ -182,6 +182,11 @@ import {
   PUNISHMENT_CATEGORIES,
   type PrebuiltPunishment,
 } from "@/lib/prebuilt-punishments";
+import {
+  PREBUILT_REWARDS,
+  REWARD_CATEGORIES,
+  type PrebuiltReward,
+} from "@/lib/prebuilt-rewards";
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
   left: `${Math.random() * 100}%`,
@@ -232,6 +237,8 @@ export default function BondedAscentApp() {
     string | null
   >(null);
   const [punishSearch, setPunishSearch] = useState("");
+  const [rewardCategoryFilter, setRewardCategoryFilter] = useState<string | null>(null);
+  const [rewardSearch, setRewardSearch] = useState("");
   const [journalContent, setJournalContent] = useState("");
   const [pairCodeInput, setPairCodeInput] = useState("");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
@@ -2586,10 +2593,12 @@ export default function BondedAscentApp() {
                   <div className="font-bold text-slate-200 uppercase tracking-wide text-sm">
                     {r.name}
                   </div>
-                  <div className="text-xs text-slate-500 font-mono">
-                    {r.unlocked
-                      ? "Unlocked"
-                      : `Unlock at Level ${r.unlockLevel}`}
+                  <div className="flex items-center gap-2 mt-1">
+                    {r.category && <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
+                    {r.duration && <span className="text-[9px] text-slate-500">{r.duration}</span>}
+                    <span className="text-xs text-slate-500 font-mono">
+                      {r.unlocked ? "Unlocked" : `Unlock at Level ${r.unlockLevel}`}
+                    </span>
                   </div>
                 </div>
                 <Gift
@@ -3018,6 +3027,8 @@ export default function BondedAscentApp() {
                 setModal(null);
                 setPunishSearch("");
                 setPunishCategoryFilter(null);
+                setRewardSearch("");
+                setRewardCategoryFilter(null);
               }}
               className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors cursor-pointer z-50"
             >
@@ -3291,8 +3302,8 @@ export default function BondedAscentApp() {
             )}
 
             {modal === "dom_rewards" && (
-              <div className="p-4 space-y-6 overflow-y-auto">
-                <div className="text-center mb-4">
+              <div className="p-4 space-y-4 overflow-y-auto">
+                <div className="text-center mb-2">
                   <Gift size={48} className="mx-auto text-purple-500 mb-2" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Grant Rewards
@@ -3309,60 +3320,61 @@ export default function BondedAscentApp() {
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-3">
-                      {rewards.map((r) => (
-                        <div
-                          key={r.id}
-                          className="flex justify-between items-center p-3 bg-slate-900/50 border border-white/5 rounded-xl"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-purple-500/10 rounded-full text-purple-400">
-                              <Star size={14} />
+                    {rewards.length > 0 && (
+                      <div className="space-y-2 mb-2">
+                        <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Granted Rewards</h3>
+                        {rewards.map((r) => (
+                          <div key={r.id} className="flex justify-between items-center p-3 bg-slate-900/50 border border-white/5 rounded-xl">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-purple-500/10 rounded-full text-purple-400"><Star size={14} /></div>
+                              <div>
+                                <span className="text-sm font-bold text-slate-300">{r.name}</span>
+                                {(r.category || r.duration) && (
+                                  <div className="flex gap-2 mt-0.5">
+                                    {r.category && <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
+                                    {r.duration && <span className="text-[9px] text-slate-500">{r.duration}</span>}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            <span className="text-sm font-bold text-slate-300">
-                              {r.name}
-                            </span>
+                            <span className="text-[10px] text-slate-500">{r.unlocked ? "Unlocked" : `Lv ${r.unlockLevel}`}</span>
                           </div>
-                          <span className="text-[10px] text-slate-500">
-                            {r.unlocked ? "Unlocked" : `Lv ${r.unlockLevel}`}
-                          </span>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    )}
+                    <div className="border-t border-white/5 pt-3">
+                      <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Browse Pre-built Rewards</h3>
+                      <input data-testid="input-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-2" style={{ fontSize: '16px' }} />
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        <button onClick={() => setRewardCategoryFilter(null)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!rewardCategoryFilter ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>All</button>
+                        {REWARD_CATEGORIES.map((cat) => (
+                          <button key={cat} onClick={() => setRewardCategoryFilter(rewardCategoryFilter === cat ? null : cat)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${rewardCategoryFilter === cat ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>{cat}</button>
+                        ))}
+                      </div>
+                      <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
+                        {PREBUILT_REWARDS.filter((r) => (!rewardCategoryFilter || r.category === rewardCategoryFilter) && (!rewardSearch || r.name.toLowerCase().includes(rewardSearch.toLowerCase()))).map((r, i) => (
+                          <button key={i} data-testid={`button-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-slate-900/50 hover:bg-purple-950/30 border border-white/5 hover:border-purple-500/30 rounded-lg transition-all cursor-pointer group">
+                            <div className="flex justify-between items-start">
+                              <span className="text-xs font-medium text-slate-300 group-hover:text-purple-300 leading-tight">{r.name}</span>
+                              <Plus size={12} className="text-slate-600 group-hover:text-purple-400 shrink-0 ml-2 mt-0.5" />
+                            </div>
+                            <div className="flex gap-2 mt-1">
+                              <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{r.category}</span>
+                              <span className="text-[9px] text-slate-500">{r.duration}</span>
+                            </div>
+                          </button>
+                        ))}
+                        {PREBUILT_REWARDS.filter((r) => (!rewardCategoryFilter || r.category === rewardCategoryFilter) && (!rewardSearch || r.name.toLowerCase().includes(rewardSearch.toLowerCase()))).length === 0 && (
+                          <div className="text-xs text-slate-600 text-center py-4">No matching rewards found</div>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <input
-                        data-testid="input-reward-name"
-                        type="text"
-                        value={newRewardName}
-                        onChange={(e) => setNewRewardName(e.target.value)}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" &&
-                          newRewardName.trim() &&
-                          (() => {
-                            createPartnerRewardMutation.mutate({
-                              name: newRewardName,
-                            });
-                            setNewRewardName("");
-                          })()
-                        }
-                        placeholder="New reward name..."
-                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
-                      />
-                      <Button
-                        data-testid="button-create-reward"
-                        className="bg-purple-600 hover:bg-purple-500"
-                        onClick={() => {
-                          if (newRewardName.trim()) {
-                            createPartnerRewardMutation.mutate({
-                              name: newRewardName,
-                            });
-                            setNewRewardName("");
-                          }
-                        }}
-                        disabled={createPartnerRewardMutation.isPending}
-                      >
-                        <Plus size={16} />
-                      </Button>
+                    <div className="border-t border-white/5 pt-3">
+                      <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Custom Reward</h3>
+                      <div className="flex gap-2">
+                        <input data-testid="input-reward-name" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward name..." className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500" style={{ fontSize: '16px' }} />
+                        <Button data-testid="button-create-reward" className="bg-purple-600 hover:bg-purple-500 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
+                      </div>
                     </div>
                   </>
                 )}
@@ -4263,16 +4275,14 @@ export default function BondedAscentApp() {
             )}
 
             {modal === "dom_bestow" && (
-              <div className="p-4 space-y-6 overflow-y-auto">
+              <div className="p-4 space-y-4 overflow-y-auto">
                 <div className="text-center">
                   <Gift size={48} className="mx-auto text-amber-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Bestow Rewards
                   </h2>
                   <p className="text-xs text-slate-500 mt-1">
-                    {partner
-                      ? `Rewarding ${partner.username}`
-                      : "No sub connected"}
+                    {partner ? `Rewarding ${partner.username}` : "No sub connected"}
                   </p>
                 </div>
                 {!partner ? (
@@ -4281,75 +4291,61 @@ export default function BondedAscentApp() {
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-3">
-                      {rewards.map((r) => (
-                        <div
-                          key={r.id}
-                          className="flex justify-between items-center p-3 bg-amber-950/10 border border-amber-900/20 rounded-xl"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-amber-500/10 rounded-full text-amber-400">
-                              <Star size={14} />
-                            </div>
-                            <div>
-                              <span className="text-sm font-bold text-amber-200">
-                                {r.name}
-                              </span>
-                              <div className="text-[9px] text-amber-600">
-                                {r.unlocked
-                                  ? "Bestowed"
-                                  : `Requires Lv ${r.unlockLevel}`}
+                    {rewards.length > 0 && (
+                      <div className="space-y-2 mb-2">
+                        <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Bestowed Rewards</h3>
+                        {rewards.map((r) => (
+                          <div key={r.id} className="flex justify-between items-center p-3 bg-amber-950/10 border border-amber-900/20 rounded-xl">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-amber-500/10 rounded-full text-amber-400"><Star size={14} /></div>
+                              <div>
+                                <span className="text-sm font-bold text-amber-200">{r.name}</span>
+                                <div className="flex gap-2 mt-0.5">
+                                  {r.category && <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
+                                  {r.duration && <span className="text-[9px] text-amber-600">{r.duration}</span>}
+                                  <span className="text-[9px] text-amber-600">{r.unlocked ? "Bestowed" : `Requires Lv ${r.unlockLevel}`}</span>
+                                </div>
                               </div>
                             </div>
+                            {r.unlocked ? <Check size={14} className="text-amber-400" /> : <Lock size={14} className="text-slate-600" />}
                           </div>
-                          {r.unlocked ? (
-                            <Check size={14} className="text-amber-400" />
-                          ) : (
-                            <Lock size={14} className="text-slate-600" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <input
-                        data-testid="input-dom-bestow-reward"
-                        type="text"
-                        value={newRewardName}
-                        onChange={(e) => setNewRewardName(e.target.value)}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" &&
-                          newRewardName.trim() &&
-                          (() => {
-                            createPartnerRewardMutation.mutate({
-                              name: newRewardName,
-                            });
-                            setNewRewardName("");
-                          })()
-                        }
-                        placeholder="New reward to bestow..."
-                        className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
-                      />
-                      <Button
-                        data-testid="button-dom-bestow-create"
-                        className="bg-amber-600 hover:bg-amber-500 cursor-pointer"
-                        onClick={() => {
-                          if (newRewardName.trim()) {
-                            createPartnerRewardMutation.mutate({
-                              name: newRewardName,
-                            });
-                            setNewRewardName("");
-                          }
-                        }}
-                        disabled={createPartnerRewardMutation.isPending}
-                      >
-                        <Plus size={16} />
-                      </Button>
-                    </div>
-                    {rewards.length === 0 && (
-                      <div className="text-xs text-slate-600 text-center py-4">
-                        No rewards created yet
+                        ))}
                       </div>
                     )}
+                    <div className="border-t border-amber-900/20 pt-3">
+                      <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Browse Pre-built Rewards</h3>
+                      <input data-testid="input-bestow-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 mb-2" style={{ fontSize: '16px' }} />
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        <button onClick={() => setRewardCategoryFilter(null)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!rewardCategoryFilter ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>All</button>
+                        {REWARD_CATEGORIES.map((cat) => (
+                          <button key={cat} onClick={() => setRewardCategoryFilter(rewardCategoryFilter === cat ? null : cat)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${rewardCategoryFilter === cat ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>{cat}</button>
+                        ))}
+                      </div>
+                      <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
+                        {PREBUILT_REWARDS.filter((r) => (!rewardCategoryFilter || r.category === rewardCategoryFilter) && (!rewardSearch || r.name.toLowerCase().includes(rewardSearch.toLowerCase()))).map((r, i) => (
+                          <button key={i} data-testid={`button-bestow-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-amber-950/10 hover:bg-amber-950/30 border border-amber-900/10 hover:border-amber-500/30 rounded-lg transition-all cursor-pointer group">
+                            <div className="flex justify-between items-start">
+                              <span className="text-xs font-medium text-amber-200 group-hover:text-amber-100 leading-tight">{r.name}</span>
+                              <Plus size={12} className="text-amber-700 group-hover:text-amber-400 shrink-0 ml-2 mt-0.5" />
+                            </div>
+                            <div className="flex gap-2 mt-1">
+                              <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">{r.category}</span>
+                              <span className="text-[9px] text-amber-600">{r.duration}</span>
+                            </div>
+                          </button>
+                        ))}
+                        {PREBUILT_REWARDS.filter((r) => (!rewardCategoryFilter || r.category === rewardCategoryFilter) && (!rewardSearch || r.name.toLowerCase().includes(rewardSearch.toLowerCase()))).length === 0 && (
+                          <div className="text-xs text-slate-600 text-center py-4">No matching rewards found</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="border-t border-amber-900/20 pt-3">
+                      <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Custom Reward</h3>
+                      <div className="flex gap-2">
+                        <input data-testid="input-dom-bestow-reward" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward to bestow..." className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500" style={{ fontSize: '16px' }} />
+                        <Button data-testid="button-dom-bestow-create" className="bg-amber-600 hover:bg-amber-500 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
