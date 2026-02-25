@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
+import { SexyIcon } from "@/components/sexy-icon";
 import {
   Lock,
   Key,
@@ -680,24 +681,28 @@ export default function BondedAscentApp() {
               label="Balance"
               color="yellow"
               onClick={() => setModal("balance")}
+              sexyIcon="balance"
             />
             <QuickAction
               icon={<Settings />}
               label="Config"
               color="slate"
               onClick={() => setActiveView("profile")}
+              sexyIcon="config"
             />
             <QuickAction
               icon={<Award />}
               label="Badges"
               color="green"
               onClick={() => setModal("badges")}
+              sexyIcon="badges"
             />
             <QuickAction
               icon={<Zap />}
               label="Timers"
               color="red"
               onClick={() => setModal("countdowns")}
+              sexyIcon="timers"
             />
           </div>
 
@@ -710,6 +715,7 @@ export default function BondedAscentApp() {
                   sub={`${partnerTasks.length} protocols`}
                   color="text-blue-500"
                   onClick={() => setModal("dom_tasks")}
+                  sexyIcon="assign-tasks"
                 />
                 <BigButton
                   icon={<Gift />}
@@ -717,6 +723,7 @@ export default function BondedAscentApp() {
                   sub={`${rewards.length} rewards`}
                   color="text-purple-500"
                   onClick={() => setModal("dom_rewards")}
+                  sexyIcon="grant-reward"
                 />
                 <BigButton
                   icon={<Gavel />}
@@ -724,6 +731,7 @@ export default function BondedAscentApp() {
                   sub="Assign Penalty"
                   color="text-red-600"
                   onClick={() => setModal("dom_punish")}
+                  sexyIcon="punish"
                 />
                 <BigButton
                   icon={<MessageSquare />}
@@ -731,6 +739,7 @@ export default function BondedAscentApp() {
                   sub={`${partnerCheckIns.filter((c) => c.status === "pending").length} Pending`}
                   color="text-emerald-500"
                   onClick={() => setModal("dom_review")}
+                  sexyIcon="review-logs"
                 />
               </div>
 
@@ -800,6 +809,7 @@ export default function BondedAscentApp() {
               sub={`${dares.length} dares`}
               onClick={() => setModal("wheel")}
               color="text-purple-500"
+              sexyIcon="wheel-of-dares"
             />
             <BigButton
               icon={<BookOpen />}
@@ -807,6 +817,7 @@ export default function BondedAscentApp() {
               sub={`${journalEntries.length} entries`}
               color="text-blue-500"
               onClick={() => setActiveView("journal")}
+              sexyIcon="journal"
             />
           </div>
 
@@ -1011,6 +1022,7 @@ export default function BondedAscentApp() {
                 href="/rituals"
                 color="text-orange-400"
                 badge={rituals.filter((r: any) => !r.completed).length}
+                sexyIcon="rituals"
               />
               <FeatureLink
                 icon={<Shield />}
@@ -1018,6 +1030,7 @@ export default function BondedAscentApp() {
                 href="/limits"
                 color="text-blue-400"
                 badge={limitsList.length}
+                sexyIcon="limits"
               />
               <FeatureLink
                 icon={<Eye />}
@@ -1025,6 +1038,7 @@ export default function BondedAscentApp() {
                 href="/secrets"
                 color="text-purple-400"
                 badge={secrets.length}
+                sexyIcon="secrets"
               />
               <FeatureLink
                 icon={<Dices />}
@@ -1036,6 +1050,7 @@ export default function BondedAscentApp() {
                     (w: any) => w.status === "active" || w.status === "pending",
                   ).length
                 }
+                sexyIcon="wagers"
               />
               <FeatureLink
                 icon={<Star />}
@@ -1043,12 +1058,14 @@ export default function BondedAscentApp() {
                 href="/ratings"
                 color="text-amber-400"
                 badge={ratingsList.length}
+                sexyIcon="ratings"
               />
               <FeatureLink
                 icon={<HeartPulse />}
                 label="Pulse"
                 href="/connection-pulse"
                 color="text-pink-400"
+                sexyIcon="connection-pulse"
               />
               <FeatureLink
                 icon={<Play />}
@@ -1058,6 +1075,7 @@ export default function BondedAscentApp() {
                 badge={
                   playSessions.filter((s: any) => s.status === "planned").length
                 }
+                sexyIcon="play-sessions"
               />
               <FeatureLink
                 icon={<Timer />}
@@ -1065,12 +1083,14 @@ export default function BondedAscentApp() {
                 href="/countdown-events"
                 color="text-cyan-400"
                 badge={countdownEvents.length}
+                sexyIcon="countdown-events"
               />
               <FeatureLink
                 icon={<Award />}
                 label="Achieve"
                 href="/achievements"
                 color="text-emerald-400"
+                sexyIcon="achievements"
               />
               <FeatureLink
                 icon={<FileSignature />}
@@ -1081,6 +1101,7 @@ export default function BondedAscentApp() {
                   standingOrders.filter((o: any) => o.status === "active")
                     .length
                 }
+                sexyIcon="standing-orders"
               />
               <FeatureLink
                 icon={<Hand />}
@@ -1091,6 +1112,7 @@ export default function BondedAscentApp() {
                   permissionRequests.filter((p: any) => p.status === "pending")
                     .length
                 }
+                sexyIcon="permission-requests"
               />
               <FeatureLink
                 icon={<AlertTriangle />}
@@ -1101,6 +1123,7 @@ export default function BondedAscentApp() {
                   conflictsList.filter((c: any) => c.status !== "resolved")
                     .length
                 }
+                sexyIcon="conflicts"
               />
               <FeatureLink
                 icon={<Target />}
@@ -1111,6 +1134,7 @@ export default function BondedAscentApp() {
                   desiredChanges.filter((c: any) => c.status === "pending")
                     .length
                 }
+                sexyIcon="standing-orders"
               />
               <FeatureLink
                 icon={<Heart />}
@@ -1118,6 +1142,7 @@ export default function BondedAscentApp() {
                 href="/devotions"
                 color="text-pink-300"
                 badge={devotionsList.length}
+                sexyIcon="devotions"
               />
               <FeatureLink
                 icon={<Layers />}
@@ -1128,6 +1153,7 @@ export default function BondedAscentApp() {
                   intensitySessions.filter((s: any) => s.status === "active")
                     .length
                 }
+                sexyIcon="endurance"
               />
               <FeatureLink
                 icon={<ListChecks />}
@@ -1139,12 +1165,14 @@ export default function BondedAscentApp() {
                     (t: any) => t.status === "pending" || t.status === "active",
                   ).length
                 }
+                sexyIcon="enforce"
               />
               <FeatureLink
                 icon={<RotateCcw />}
                 label="Roulette"
                 href="/sensation-roulette"
                 color="text-fuchsia-400"
+                sexyIcon="wheel-of-dares"
               />
               <FeatureLink
                 icon={<Lock />}
@@ -1152,6 +1180,7 @@ export default function BondedAscentApp() {
                 href="/protocol-lockbox"
                 color="text-violet-400"
                 badge={sealedOrders.filter((o: any) => !o.completed).length}
+                sexyIcon="config"
               />
               <FeatureLink
                 icon={<Hourglass />}
@@ -1162,6 +1191,7 @@ export default function BondedAscentApp() {
                   enduranceChallenges.filter((c: any) => c.status === "active")
                     .length
                 }
+                sexyIcon="endurance"
               />
             </div>
           </div>
@@ -1423,6 +1453,7 @@ export default function BondedAscentApp() {
               angle={270}
               color="bg-amber-600"
               onClick={() => setModal("dom_command")}
+              sexyIcon="map-of-desire"
             />
             <SanctuaryNode
               icon={<Crosshair />}
@@ -1430,6 +1461,7 @@ export default function BondedAscentApp() {
               angle={315}
               color="bg-emerald-600"
               onClick={() => setModal("dom_inspect")}
+              sexyIcon="interrogate"
             />
             <SanctuaryNode
               icon={<Film />}
@@ -1437,6 +1469,7 @@ export default function BondedAscentApp() {
               angle={0}
               color="bg-purple-600"
               onClick={() => setModal("dom_direct")}
+              sexyIcon="play-sessions"
             />
             <SanctuaryNode
               icon={<Eye />}
@@ -1444,6 +1477,7 @@ export default function BondedAscentApp() {
               angle={45}
               color="bg-cyan-600"
               onClick={() => setModal("dom_surveil")}
+              sexyIcon="watch"
             />
             <SanctuaryNode
               icon={<Siren />}
@@ -1451,6 +1485,7 @@ export default function BondedAscentApp() {
               angle={90}
               color="bg-rose-600"
               onClick={() => setModal("dom_enforce")}
+              sexyIcon="enforce"
             />
             <SanctuaryNode
               icon={<Unlock />}
@@ -1458,6 +1493,7 @@ export default function BondedAscentApp() {
               angle={135}
               color="bg-amber-600"
               onClick={() => setModal("dom_bestow")}
+              sexyIcon="permit"
             />
             <SanctuaryNode
               icon={<Skull />}
@@ -1465,6 +1501,7 @@ export default function BondedAscentApp() {
               angle={180}
               color="bg-orange-600"
               onClick={() => setModal("dom_decree")}
+              sexyIcon="sentence"
             />
             <SanctuaryNode
               icon={<ShieldAlert />}
@@ -1472,6 +1509,7 @@ export default function BondedAscentApp() {
               angle={225}
               color="bg-red-900"
               onClick={() => setModal("dom_override")}
+              sexyIcon="endurance"
             />
           </div>
 
@@ -1742,24 +1780,28 @@ export default function BondedAscentApp() {
                   label="Balance"
                   color="yellow"
                   onClick={() => setModal("balance")}
+                  sexyIcon="balance"
                 />
                 <QuickAction
                   icon={<Settings />}
                   label="Config"
                   color="slate"
                   onClick={() => setActiveView("profile")}
+                  sexyIcon="config"
                 />
                 <QuickAction
                   icon={<Award />}
                   label="Badges"
                   color="green"
                   onClick={() => setModal("badges")}
+                  sexyIcon="badges"
                 />
                 <QuickAction
                   icon={<Zap />}
                   label="Timers"
                   color="red"
                   onClick={() => setModal("countdowns")}
+                  sexyIcon="timers"
                 />
               </div>
 
@@ -1891,6 +1933,7 @@ export default function BondedAscentApp() {
                       sub={`${dares.length} dares`}
                       onClick={() => setModal("wheel")}
                       color="text-purple-500"
+                      sexyIcon="wheel-of-dares"
                     />
                     <BigButton
                       icon={<MessageSquare />}
@@ -1898,6 +1941,7 @@ export default function BondedAscentApp() {
                       sub="Submit Report"
                       color="text-blue-500"
                       onClick={() => setModal("checkin")}
+                      sexyIcon="review-logs"
                     />
                   </div>
 
@@ -1931,6 +1975,7 @@ export default function BondedAscentApp() {
                         href="/rituals"
                         color="text-orange-400"
                         badge={rituals.filter((r: any) => !r.completed).length}
+                        sexyIcon="rituals"
                       />
                       <FeatureLink
                         icon={<Shield />}
@@ -1938,6 +1983,7 @@ export default function BondedAscentApp() {
                         href="/limits"
                         color="text-blue-400"
                         badge={limitsList.length}
+                        sexyIcon="limits"
                       />
                       <FeatureLink
                         icon={<Eye />}
@@ -1945,6 +1991,7 @@ export default function BondedAscentApp() {
                         href="/secrets"
                         color="text-purple-400"
                         badge={secrets.length}
+                        sexyIcon="secrets"
                       />
                       <FeatureLink
                         icon={<Dices />}
@@ -1957,6 +2004,7 @@ export default function BondedAscentApp() {
                               w.status === "active" || w.status === "pending",
                           ).length
                         }
+                        sexyIcon="wagers"
                       />
                       <FeatureLink
                         icon={<Star />}
@@ -1964,12 +2012,14 @@ export default function BondedAscentApp() {
                         href="/ratings"
                         color="text-amber-400"
                         badge={ratingsList.length}
+                        sexyIcon="ratings"
                       />
                       <FeatureLink
                         icon={<HeartPulse />}
                         label="Pulse"
                         href="/connection-pulse"
                         color="text-pink-400"
+                        sexyIcon="connection-pulse"
                       />
                       <FeatureLink
                         icon={<Play />}
@@ -1981,6 +2031,7 @@ export default function BondedAscentApp() {
                             (s: any) => s.status === "planned",
                           ).length
                         }
+                        sexyIcon="play-sessions"
                       />
                       <FeatureLink
                         icon={<Timer />}
@@ -1988,12 +2039,14 @@ export default function BondedAscentApp() {
                         href="/countdown-events"
                         color="text-cyan-400"
                         badge={countdownEvents.length}
+                        sexyIcon="countdown-events"
                       />
                       <FeatureLink
                         icon={<Award />}
                         label="Achieve"
                         href="/achievements"
                         color="text-emerald-400"
+                        sexyIcon="achievements"
                       />
                       <FeatureLink
                         icon={<FileSignature />}
@@ -2005,6 +2058,7 @@ export default function BondedAscentApp() {
                             (o: any) => o.status === "active",
                           ).length
                         }
+                        sexyIcon="standing-orders"
                       />
                       <FeatureLink
                         icon={<Hand />}
@@ -2016,6 +2070,7 @@ export default function BondedAscentApp() {
                             (p: any) => p.status === "pending",
                           ).length
                         }
+                        sexyIcon="permission-requests"
                       />
                       <FeatureLink
                         icon={<AlertTriangle />}
@@ -2027,6 +2082,7 @@ export default function BondedAscentApp() {
                             (c: any) => c.status !== "resolved",
                           ).length
                         }
+                        sexyIcon="conflicts"
                       />
                       <FeatureLink
                         icon={<Target />}
@@ -2038,6 +2094,7 @@ export default function BondedAscentApp() {
                             (c: any) => c.status === "pending",
                           ).length
                         }
+                        sexyIcon="standing-orders"
                       />
                       <FeatureLink
                         icon={<Heart />}
@@ -2045,6 +2102,7 @@ export default function BondedAscentApp() {
                         href="/devotions"
                         color="text-pink-300"
                         badge={devotionsList.length}
+                        sexyIcon="devotions"
                       />
                       <FeatureLink
                         icon={<Layers />}
@@ -2056,6 +2114,7 @@ export default function BondedAscentApp() {
                             (s: any) => s.status === "active",
                           ).length
                         }
+                        sexyIcon="endurance"
                       />
                       <FeatureLink
                         icon={<ListChecks />}
@@ -2068,12 +2127,14 @@ export default function BondedAscentApp() {
                               t.status === "pending" || t.status === "active",
                           ).length
                         }
+                        sexyIcon="enforce"
                       />
                       <FeatureLink
                         icon={<RotateCcw />}
                         label="Roulette"
                         href="/sensation-roulette"
                         color="text-fuchsia-400"
+                        sexyIcon="wheel-of-dares"
                       />
                       <FeatureLink
                         icon={<Lock />}
@@ -2083,6 +2144,7 @@ export default function BondedAscentApp() {
                         badge={
                           sealedOrders.filter((o: any) => !o.completed).length
                         }
+                        sexyIcon="config"
                       />
                       <FeatureLink
                         icon={<Hourglass />}
@@ -2094,6 +2156,7 @@ export default function BondedAscentApp() {
                             (c: any) => c.status === "active",
                           ).length
                         }
+                        sexyIcon="endurance"
                       />
                     </div>
                   </div>
@@ -2155,6 +2218,7 @@ export default function BondedAscentApp() {
                   angle={270}
                   color="bg-red-600"
                   onClick={() => setModal("training")}
+                  sexyIcon="assign-tasks"
                 />
                 <SanctuaryNode
                   icon={<MessageSquare />}
@@ -2162,6 +2226,7 @@ export default function BondedAscentApp() {
                   angle={315}
                   color="bg-purple-600"
                   onClick={() => setModal("checkin")}
+                  sexyIcon="secrets"
                 />
                 <SanctuaryNode
                   icon={<Flame />}
@@ -2169,6 +2234,7 @@ export default function BondedAscentApp() {
                   angle={0}
                   color="bg-rose-600"
                   onClick={() => setModal("ladders")}
+                  sexyIcon="endurance"
                 />
                 <SanctuaryNode
                   icon={<BookOpen />}
@@ -2176,6 +2242,7 @@ export default function BondedAscentApp() {
                   angle={45}
                   color="bg-pink-600"
                   onClick={() => setModal("logbook")}
+                  sexyIcon="journal"
                 />
                 <SanctuaryNode
                   icon={<Heart />}
@@ -2183,6 +2250,7 @@ export default function BondedAscentApp() {
                   angle={90}
                   color="bg-red-700"
                   onClick={() => setModal("worship")}
+                  sexyIcon="devotions"
                 />
                 <SanctuaryNode
                   icon={<Star />}
@@ -2190,6 +2258,7 @@ export default function BondedAscentApp() {
                   angle={135}
                   color="bg-amber-600"
                   onClick={() => setModal("scene")}
+                  sexyIcon="achievements"
                 />
                 <SanctuaryNode
                   icon={<Sliders />}
@@ -2197,6 +2266,7 @@ export default function BondedAscentApp() {
                   angle={180}
                   color="bg-slate-700"
                   onClick={() => setModal("sensory")}
+                  sexyIcon="rituals"
                 />
                 <SanctuaryNode
                   icon={<Box />}
@@ -2204,6 +2274,7 @@ export default function BondedAscentApp() {
                   angle={225}
                   color="bg-indigo-600"
                   onClick={() => setModal("vault")}
+                  sexyIcon="config"
                 />
               </div>
 
@@ -5854,11 +5925,13 @@ function QuickAction({
   label,
   color,
   onClick,
+  sexyIcon,
 }: {
   icon: React.ReactElement<any>;
   label: string;
   color: "yellow" | "slate" | "green" | "red";
   onClick: () => void;
+  sexyIcon?: string;
 }) {
   const colors = {
     yellow: "text-amber-400 bg-amber-900/20 border-amber-700/50",
@@ -5872,9 +5945,9 @@ function QuickAction({
       className="flex flex-col items-center gap-2 p-1 hover:scale-105 transition-transform cursor-pointer"
     >
       <div
-        className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-lg ${colors[color]}`}
+        className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-lg ${colors[color]} overflow-hidden`}
       >
-        {React.cloneElement(icon, { size: 24 })}
+        {sexyIcon ? <SexyIcon name={sexyIcon} size={40} glow="gold" /> : React.cloneElement(icon, { size: 24 })}
       </div>
       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">
         {label}
@@ -5889,12 +5962,14 @@ function BigButton({
   sub,
   onClick,
   color,
+  sexyIcon,
 }: {
   icon: React.ReactElement<any>;
   label: string;
   sub: string;
   onClick?: () => void;
   color: string;
+  sexyIcon?: string;
 }) {
   return (
     <button
@@ -5902,9 +5977,9 @@ function BigButton({
       className="bg-gradient-to-b from-slate-800 to-slate-950 border-t border-white/10 border-b border-black shadow-lg active:scale-95 transition-all p-6 rounded-2xl text-center cursor-pointer group flex flex-col items-center justify-center h-32 w-full"
     >
       <div
-        className={`mb-3 ${color} group-hover:scale-110 transition-transform duration-300 filter drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]`}
+        className={`mb-3 ${sexyIcon ? "" : color} group-hover:scale-110 transition-transform duration-300`}
       >
-        {React.cloneElement(icon, { size: 36 })}
+        {sexyIcon ? <SexyIcon name={sexyIcon} size={56} glow="gold" /> : React.cloneElement(icon, { size: 36 })}
       </div>
       <div className="text-sm font-black text-white uppercase tracking-wider">
         {label}
@@ -5920,12 +5995,14 @@ function SanctuaryNode({
   angle,
   color,
   onClick,
+  sexyIcon,
 }: {
   icon: React.ReactElement<any>;
   label: string;
   angle: number;
   color: string;
   onClick: () => void;
+  sexyIcon?: string;
 }) {
   const rad = (angle - 90) * (Math.PI / 180);
   const radius = 130;
@@ -5933,16 +6010,20 @@ function SanctuaryNode({
   return (
     <button
       onClick={onClick}
-      className={`absolute w-12 h-12 rounded-full ${color} shadow-[0_0_15px_currentColor] flex flex-col items-center justify-center hover:scale-125 hover:z-50 transition-all duration-300 border-2 border-white/20 cursor-pointer`}
+      className={`absolute w-14 h-14 rounded-full ${sexyIcon ? "bg-black/60 backdrop-blur-sm" : color} shadow-[0_0_15px_currentColor] flex flex-col items-center justify-center hover:scale-125 hover:z-50 transition-all duration-300 border-2 border-white/20 cursor-pointer overflow-hidden`}
       style={{
         left: `calc(50% + ${radius * Math.cos(rad)}px)`,
         top: `calc(50% + ${radius * Math.sin(rad)}px)`,
         transform: "translate(-50%, -50%)",
       }}
     >
-      <div className="text-white drop-shadow-md">
-        {React.cloneElement(icon, { size: 18 })}
-      </div>
+      {sexyIcon ? (
+        <SexyIcon name={sexyIcon} size={36} glow="gold" />
+      ) : (
+        <div className="text-white drop-shadow-md">
+          {React.cloneElement(icon, { size: 18 })}
+        </div>
+      )}
       <span className="text-[7px] font-black text-white uppercase absolute -bottom-5 w-24 text-center bg-black/80 px-1 py-0.5 rounded backdrop-blur-sm border border-white/10">
         {label}
       </span>
@@ -6077,12 +6158,14 @@ function FeatureLink({
   href,
   color,
   badge,
+  sexyIcon,
 }: {
   icon: React.ReactElement<any>;
   label: string;
   href: string;
   color: string;
   badge?: number;
+  sexyIcon?: string;
 }) {
   const [, setLocation] = useLocation();
   return (
@@ -6092,9 +6175,9 @@ function FeatureLink({
       className="flex flex-col items-center gap-2 p-2 hover:scale-105 transition-transform cursor-pointer group relative"
     >
       <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all ${color} ${badge && badge > 0 ? "border-red-500/40 bg-slate-900/80 shadow-[0_0_8px_rgba(220,38,38,0.15)]" : "border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50"}`}
+        className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all overflow-hidden ${sexyIcon ? "" : color} ${badge && badge > 0 ? "border-red-500/40 bg-slate-900/80 shadow-[0_0_8px_rgba(220,38,38,0.15)]" : "border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50"}`}
       >
-        {React.cloneElement(icon, { size: 20 })}
+        {sexyIcon ? <SexyIcon name={sexyIcon} size={36} glow="gold" /> : React.cloneElement(icon, { size: 20 })}
         {badge !== undefined && badge > 0 && (
           <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white px-1 shadow-[0_0_6px_rgba(220,38,38,0.5)]">
             {badge}
