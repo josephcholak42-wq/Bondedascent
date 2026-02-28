@@ -5945,7 +5945,7 @@ function QuickAction({
       className="flex flex-col items-center gap-2 p-1 hover:scale-105 transition-transform cursor-pointer"
     >
       <div
-        className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-lg ${colors[color]} overflow-hidden`}
+        className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-lg ${colors[color]} ${sexyIcon ? "overflow-visible" : "overflow-hidden"}`}
       >
         {sexyIcon ? <SexyIcon name={sexyIcon} size={40} glow="gold" /> : React.cloneElement(icon, { size: 24 })}
       </div>
@@ -5977,7 +5977,7 @@ function BigButton({
       className="bg-gradient-to-b from-slate-800 to-slate-950 border-t border-white/10 border-b border-black shadow-lg active:scale-95 transition-all p-6 rounded-2xl text-center cursor-pointer group flex flex-col items-center justify-center h-32 w-full"
     >
       <div
-        className={`mb-3 ${sexyIcon ? "" : color} group-hover:scale-110 transition-transform duration-300`}
+        className={`mb-3 ${sexyIcon ? "overflow-visible" : `${color} group-hover:scale-110`} transition-transform duration-300`}
       >
         {sexyIcon ? <SexyIcon name={sexyIcon} size={56} glow="gold" /> : React.cloneElement(icon, { size: 36 })}
       </div>
@@ -6010,7 +6010,7 @@ function SanctuaryNode({
   return (
     <button
       onClick={onClick}
-      className={`absolute w-14 h-14 rounded-full ${sexyIcon ? "bg-black/60 backdrop-blur-sm" : color} shadow-[0_0_15px_currentColor] flex flex-col items-center justify-center hover:scale-125 hover:z-50 transition-all duration-300 border-2 border-white/20 cursor-pointer overflow-hidden`}
+      className={`absolute w-14 h-14 rounded-full ${sexyIcon ? "bg-black/60 backdrop-blur-sm" : color} shadow-[0_0_15px_currentColor] flex flex-col items-center justify-center ${sexyIcon ? "hover:z-50" : "hover:scale-125 hover:z-50"} transition-all duration-300 border-2 border-white/20 cursor-pointer ${sexyIcon ? "overflow-visible" : "overflow-hidden"}`}
       style={{
         left: `calc(50% + ${radius * Math.cos(rad)}px)`,
         top: `calc(50% + ${radius * Math.sin(rad)}px)`,
@@ -6175,7 +6175,7 @@ function FeatureLink({
       className="flex flex-col items-center gap-2 p-2 hover:scale-105 transition-transform cursor-pointer group relative"
     >
       <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all overflow-hidden ${sexyIcon ? "" : color} ${badge && badge > 0 ? "border-red-500/40 bg-slate-900/80 shadow-[0_0_8px_rgba(220,38,38,0.15)]" : "border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50"}`}
+        className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all ${sexyIcon ? "overflow-visible" : "overflow-hidden"} ${sexyIcon ? "" : color} ${badge && badge > 0 ? "border-red-500/40 bg-slate-900/80 shadow-[0_0_8px_rgba(220,38,38,0.15)]" : "border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50"}`}
       >
         {sexyIcon ? <SexyIcon name={sexyIcon} size={36} glow="gold" /> : React.cloneElement(icon, { size: 20 })}
         {badge !== undefined && badge > 0 && (
