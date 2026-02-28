@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
 import { Play, Plus, Clock, Check, Search, Flame, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +7,6 @@ import { usePlaySessions, useCreatePlaySession, useUpdatePlaySession, useAuth } 
 import { PREBUILT_SCENES, SCENE_CATEGORIES, type PrebuiltScene } from '@/lib/prebuilt-scenes';
 
 export default function PlaySessionsPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: sessions = [] } = usePlaySessions();

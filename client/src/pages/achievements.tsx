@@ -1,5 +1,4 @@
 import React from 'react';
-import { useLocation } from 'wouter';
 import { Award, Trophy, Star, Medal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAchievements, useAuth } from '@/lib/hooks';
@@ -21,7 +20,6 @@ const tierIcons: Record<string, React.ReactNode> = {
 };
 
 export default function AchievementsPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: achievements = [] } = useAchievements();

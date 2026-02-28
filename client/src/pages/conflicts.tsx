@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
 import { AlertTriangle, Plus, Check, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +12,6 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ConflictsPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: conflicts = [] } = useConflicts();

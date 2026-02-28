@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
 import { Star, BarChart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
@@ -8,7 +7,6 @@ import { useRatings, useRatingsReceived, useCreateRating, useAuth, usePartner } 
 import type { Rating } from '@shared/schema';
 
 export default function RatingsPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: ratingsGiven = [] } = useRatings();

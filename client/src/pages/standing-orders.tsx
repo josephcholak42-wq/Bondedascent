@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
 import { FileSignature, Plus, Trash2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +20,6 @@ const priorityBgColors: Record<string, string> = {
 };
 
 export default function StandingOrdersPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: orders = [] } = useStandingOrders();

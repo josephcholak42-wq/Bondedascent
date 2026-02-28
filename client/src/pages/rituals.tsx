@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
 import { Flame, Plus, Trash2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { RoleGatedButton, RoleGatedAction, PulseIndicator, ActionBadge } from '@
 import { useRituals, useCreateRitual, useUpdateRitual, useDeleteRitual, useAuth } from '@/lib/hooks';
 
 export default function RitualsPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: rituals = [] } = useRituals();

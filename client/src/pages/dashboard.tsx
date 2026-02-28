@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link as WouterLink } from "wouter";
 import { SexyIcon } from "@/components/sexy-icon";
 import {
   Lock,
@@ -994,10 +994,10 @@ export default function BondedAscentApp() {
                     </div>
                   )}
 
-                  <button
+                  <WouterLink
+                    href="/dom-overview"
                     data-testid="button-dom-overview"
-                    onClick={() => setLocation("/dom-overview")}
-                    className="w-full mt-2 bg-gradient-to-r from-amber-950/30 to-slate-950 border border-amber-800/30 rounded-lg p-3 flex items-center gap-3 hover:border-amber-600/40 transition-colors cursor-pointer"
+                    className="w-full mt-2 bg-gradient-to-r from-amber-950/30 to-slate-950 border border-amber-800/30 rounded-lg p-3 flex items-center gap-3 hover:border-amber-600/40 transition-colors cursor-pointer no-underline"
                   >
                     <Crown size={18} className="text-amber-500 shrink-0" />
                     <div className="text-left flex-1">
@@ -1006,7 +1006,7 @@ export default function BondedAscentApp() {
                       </div>
                     </div>
                     <ChevronRight size={14} className="text-slate-600" />
-                  </button>
+                  </WouterLink>
                 </div>
               );
             })()}
@@ -1771,10 +1771,10 @@ export default function BondedAscentApp() {
                   </div>
 
                   <div className="mb-4">
-                    <button
+                    <WouterLink
+                      href="/sub-status"
                       data-testid="button-my-protocols"
-                      onClick={() => setLocation("/sub-status")}
-                      className="w-full bg-gradient-to-r from-red-950/50 to-slate-900 border border-red-800/40 rounded-xl p-4 flex items-center gap-3 hover:border-red-600/50 transition-colors cursor-pointer"
+                      className="w-full bg-gradient-to-r from-red-950/50 to-slate-900 border border-red-800/40 rounded-xl p-4 flex items-center gap-3 hover:border-red-600/50 transition-colors cursor-pointer no-underline"
                     >
                       <Eye size={22} className="text-red-500 shrink-0" />
                       <div className="text-left flex-1">
@@ -1786,7 +1786,7 @@ export default function BondedAscentApp() {
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-slate-600" />
-                    </button>
+                    </WouterLink>
                   </div>
 
                   <div className="border-t border-white/5 pt-6 space-y-5">
@@ -5799,12 +5799,11 @@ function FeatureLink({
   badge?: number;
   sexyIcon?: string;
 }) {
-  const [, setLocation] = useLocation();
   return (
-    <button
+    <WouterLink
+      href={href}
       data-testid={`link-feature-${label.toLowerCase()}`}
-      onClick={() => setLocation(href)}
-      className="relative flex items-center gap-3 p-3 bg-gradient-to-r from-slate-900/80 to-slate-950/60 border border-white/5 rounded-xl hover:border-white/15 hover:from-slate-800/80 hover:to-slate-900/60 transition-all cursor-pointer group"
+      className="relative flex items-center gap-3 p-3 bg-gradient-to-r from-slate-900/80 to-slate-950/60 border border-white/5 rounded-xl hover:border-white/15 hover:from-slate-800/80 hover:to-slate-900/60 transition-all cursor-pointer group no-underline"
     >
       <div
         className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${sexyIcon ? "overflow-visible" : "overflow-hidden"} ${sexyIcon ? "" : `${color} bg-slate-900/80`}`}
@@ -5825,7 +5824,7 @@ function FeatureLink({
         </span>
       )}
       <ChevronRight size={14} className="text-slate-700 group-hover:text-slate-400 transition-colors shrink-0" />
-    </button>
+    </WouterLink>
   );
 }
 

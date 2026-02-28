@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'wouter';
 import { Shield, Plus, X, Check, Play, Trash2, Clock, Trophy, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +19,6 @@ function formatTime(seconds: number) {
 }
 
 export default function ObedienceTrialsPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
   const { data: trials = [] } = useObedienceTrials();

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
 import { Lock, Unlock, Plus, Check, X, AlertTriangle, Link2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +6,6 @@ import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/u
 import { useSealedOrders, useSealedOrdersCreated, useCreateSealedOrder, useUpdateSealedOrder, useAuth, useStats } from '@/lib/hooks';
 
 export default function ProtocolLockboxPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const { data: stats } = useStats();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';

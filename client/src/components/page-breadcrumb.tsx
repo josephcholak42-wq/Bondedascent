@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { Link } from "wouter";
 import { Home } from "lucide-react";
 import {
   Breadcrumb,
@@ -10,18 +10,19 @@ import {
 } from "@/components/ui/breadcrumb";
 
 export function PageBreadcrumb({ current }: { current: string }) {
-  const [, setLocation] = useLocation();
   return (
     <Breadcrumb className="mb-6" data-testid="breadcrumb-nav">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer transition-colors text-xs"
-            onClick={() => setLocation("/")}
-            data-testid="breadcrumb-dashboard"
-          >
-            <Home size={13} />
-            Dashboard
+          <BreadcrumbLink asChild>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-slate-400 hover:text-white cursor-pointer transition-colors text-xs no-underline"
+              data-testid="breadcrumb-dashboard"
+            >
+              <Home size={13} />
+              Dashboard
+            </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator className="text-slate-600" />

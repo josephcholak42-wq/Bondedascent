@@ -1,5 +1,4 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { useLocation } from 'wouter';
 import { Sparkles, Plus, X, Trash2, EyeOff, ChevronDown, ChevronUp, Check, Zap, RotateCcw, Search, Library, Flame, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +36,6 @@ function IntensityDots({ level }: { level: number }) {
 }
 
 export default function SensationRoulettePage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
 

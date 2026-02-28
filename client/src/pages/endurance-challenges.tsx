@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
 import { Shield, Plus, Clock, Trophy, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,7 +65,6 @@ function GatesVisual({ total, completed, missed }: { total: number; completed: n
 }
 
 export default function EnduranceChallengesPage() {
-  const [, setLocation] = useLocation();
   const { data: user } = useAuth();
   const userRole = (user?.role || 'sub') as 'sub' | 'dom';
 
