@@ -71,14 +71,7 @@ export default function RatingsPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-6 max-w-2xl mx-auto">
-      <Button
-        data-testid="button-back"
-        variant="ghost"
-        className="text-slate-400 hover:text-white mb-6"
-        onClick={() => setLocation('/')}
-      >
-        ← Back
-      </Button>
+      <PageBreadcrumb current="Ratings" />
 
       <div className="flex items-center gap-3 mb-2">
         <Star className="text-red-600" size={28} />

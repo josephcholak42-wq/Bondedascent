@@ -172,14 +172,7 @@ export default function SensationRoulettePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-4 sm:p-6 max-w-2xl mx-auto pb-20">
-      <Button
-        data-testid="button-back"
-        variant="ghost"
-        className="text-slate-400 hover:text-white mb-4"
-        onClick={() => setLocation('/')}
-      >
-        ← Back
-      </Button>
+      <PageBreadcrumb current="Sensation Roulette" />
 
       <div className="flex items-center gap-3 mb-2">
         <RotateCcw className="text-red-600" size={28} />

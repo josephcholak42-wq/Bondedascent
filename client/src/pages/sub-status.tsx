@@ -1,7 +1,6 @@
 import React from 'react';
 import { useLocation } from 'wouter';
-import {
-  ArrowLeft, Shield, ListChecks, Flame, FileSignature, Clock,
+import { Shield, ListChecks, Flame, FileSignature, Clock,
   Lock, Hourglass, Layers, AlertTriangle, Siren, ChevronRight,
   Target, Eye, Dices, Activity
 } from 'lucide-react';
@@ -261,15 +260,7 @@ export default function SubStatusPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-6 max-w-2xl mx-auto">
-      <Button
-        data-testid="button-back"
-        variant="ghost"
-        className="text-slate-400 hover:text-white mb-6"
-        onClick={() => setLocation('/')}
-      >
-        <ArrowLeft size={16} className="mr-2" />
-        Back
-      </Button>
+      <PageBreadcrumb current="Sub Status" />
 
       <div className="flex items-center gap-3 mb-2">
         <Eye className="text-red-600" size={28} />

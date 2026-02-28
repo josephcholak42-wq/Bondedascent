@@ -52,14 +52,7 @@ export default function DesiredChangesPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-6 max-w-2xl mx-auto">
-      <Button
-        data-testid="button-back"
-        variant="ghost"
-        className="text-slate-400 hover:text-white mb-6"
-        onClick={() => setLocation('/')}
-      >
-        ← Back
-      </Button>
+      <PageBreadcrumb current="Desired Changes" />
 
       <div className="flex items-center gap-3 mb-8">
         <Target className="text-red-600" size={28} />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Plus, Flame, ChevronUp, Check, Clock, Zap, Trophy } from 'lucide-react';
+import { Plus, Flame, ChevronUp, Check, Clock, Zap, Trophy } from 'lucide-react';
 import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useIntensitySessions, useCreateIntensitySession, useUpdateIntensitySession, useAuth } from '@/lib/hooks';
 
@@ -80,14 +80,7 @@ export default function IntensityLadderPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 p-6 max-w-2xl mx-auto">
-      <Button
-        data-testid="button-back"
-        variant="ghost"
-        className="text-slate-400 hover:text-white mb-6"
-        onClick={() => setLocation('/')}
-      >
-        <ArrowLeft size={16} className="mr-1" /> Back
-      </Button>
+      <PageBreadcrumb current="Intensity Ladder" />
 
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
