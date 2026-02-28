@@ -1011,188 +1011,45 @@ export default function BondedAscentApp() {
               );
             })()}
 
-          <div className="border-t border-white/5 pt-6">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">
-              Features
-            </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-              <FeatureLink
-                icon={<Flame />}
-                label="Rituals"
-                href="/rituals"
-                color="text-orange-400"
-                badge={rituals.filter((r: any) => !r.completed).length}
-                sexyIcon="rituals"
-              />
-              <FeatureLink
-                icon={<Shield />}
-                label="Limits"
-                href="/limits"
-                color="text-blue-400"
-                badge={limitsList.length}
-                sexyIcon="limits"
-              />
-              <FeatureLink
-                icon={<Eye />}
-                label="Secrets"
-                href="/secrets"
-                color="text-purple-400"
-                badge={secrets.length}
-                sexyIcon="secrets"
-              />
-              <FeatureLink
-                icon={<Dices />}
-                label="Wagers"
-                href="/wagers"
-                color="text-yellow-400"
-                badge={
-                  wagers.filter(
-                    (w: any) => w.status === "active" || w.status === "pending",
-                  ).length
-                }
-                sexyIcon="wagers"
-              />
-              <FeatureLink
-                icon={<Star />}
-                label="Ratings"
-                href="/ratings"
-                color="text-amber-400"
-                badge={ratingsList.length}
-                sexyIcon="ratings"
-              />
-              <FeatureLink
-                icon={<HeartPulse />}
-                label="Pulse"
-                href="/connection-pulse"
-                color="text-pink-400"
-                sexyIcon="connection-pulse"
-              />
-              <FeatureLink
-                icon={<Play />}
-                label="Sessions"
-                href="/play-sessions"
-                color="text-green-400"
-                badge={
-                  playSessions.filter((s: any) => s.status === "planned").length
-                }
-                sexyIcon="play-sessions"
-              />
-              <FeatureLink
-                icon={<Timer />}
-                label="Countdown"
-                href="/countdown-events"
-                color="text-cyan-400"
-                badge={countdownEvents.length}
-                sexyIcon="countdown-events"
-              />
-              <FeatureLink
-                icon={<Award />}
-                label="Achieve"
-                href="/achievements"
-                color="text-emerald-400"
-                sexyIcon="achievements"
-              />
-              <FeatureLink
-                icon={<FileSignature />}
-                label="Orders"
-                href="/standing-orders"
-                color="text-red-400"
-                badge={
-                  standingOrders.filter((o: any) => o.status === "active")
-                    .length
-                }
-                sexyIcon="standing-orders"
-              />
-              <FeatureLink
-                icon={<Hand />}
-                label="Permits"
-                href="/permission-requests"
-                color="text-indigo-400"
-                badge={
-                  permissionRequests.filter((p: any) => p.status === "pending")
-                    .length
-                }
-                sexyIcon="permission-requests"
-              />
-              <FeatureLink
-                icon={<AlertTriangle />}
-                label="Conflicts"
-                href="/conflicts"
-                color="text-rose-400"
-                badge={
-                  conflictsList.filter((c: any) => c.status !== "resolved")
-                    .length
-                }
-                sexyIcon="conflicts"
-              />
-              <FeatureLink
-                icon={<Target />}
-                label="Changes"
-                href="/desired-changes"
-                color="text-teal-400"
-                badge={
-                  desiredChanges.filter((c: any) => c.status === "pending")
-                    .length
-                }
-                sexyIcon="standing-orders"
-              />
-              <FeatureLink
-                icon={<Heart />}
-                label="Devotions"
-                href="/devotions"
-                color="text-pink-300"
-                badge={devotionsList.length}
-                sexyIcon="devotions"
-              />
-              <FeatureLink
-                icon={<Layers />}
-                label="Intensity"
-                href="/intensity-ladder"
-                color="text-red-500"
-                badge={
-                  intensitySessions.filter((s: any) => s.status === "active")
-                    .length
-                }
-                sexyIcon="endurance"
-              />
-              <FeatureLink
-                icon={<ListChecks />}
-                label="Trials"
-                href="/obedience-trials"
-                color="text-amber-500"
-                badge={
-                  obedienceTrials.filter(
-                    (t: any) => t.status === "pending" || t.status === "active",
-                  ).length
-                }
-                sexyIcon="enforce"
-              />
-              <FeatureLink
-                icon={<RotateCcw />}
-                label="Roulette"
-                href="/sensation-roulette"
-                color="text-fuchsia-400"
-                sexyIcon="wheel-of-dares"
-              />
-              <FeatureLink
-                icon={<Lock />}
-                label="Lockbox"
-                href="/protocol-lockbox"
-                color="text-violet-400"
-                badge={sealedOrders.filter((o: any) => !o.completed).length}
-                sexyIcon="config"
-              />
-              <FeatureLink
-                icon={<Hourglass />}
-                label="Endurance"
-                href="/endurance-challenges"
-                color="text-orange-500"
-                badge={
-                  enduranceChallenges.filter((c: any) => c.status === "active")
-                    .length
-                }
-                sexyIcon="endurance"
-              />
+          <div className="border-t border-white/5 pt-6 space-y-5">
+            <div>
+              <h3 className="text-[10px] font-bold text-red-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Protocol & Structure</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FeatureLink icon={<Flame />} label="Rituals" desc="Daily routines & habits" href="/rituals" color="text-orange-400" badge={rituals.filter((r: any) => !r.completed).length} sexyIcon="rituals" />
+                <FeatureLink icon={<FileSignature />} label="Standing Orders" desc="Permanent directives" href="/standing-orders" color="text-red-400" badge={standingOrders.filter((o: any) => o.status === "active").length} sexyIcon="standing-orders" />
+                <FeatureLink icon={<Shield />} label="Limits" desc="Boundaries & safety" href="/limits" color="text-blue-400" badge={limitsList.length} sexyIcon="limits" />
+                <FeatureLink icon={<Hand />} label="Permissions" desc="Requests & approvals" href="/permission-requests" color="text-indigo-400" badge={permissionRequests.filter((p: any) => p.status === "pending").length} sexyIcon="permission-requests" />
+                <FeatureLink icon={<Target />} label="Desired Changes" desc="Growth requests" href="/desired-changes" color="text-teal-400" badge={desiredChanges.filter((c: any) => c.status === "pending").length} sexyIcon="standing-orders" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-[10px] font-bold text-amber-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Challenges & Games</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FeatureLink icon={<Play />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-green-400" badge={playSessions.filter((s: any) => s.status === "planned").length} sexyIcon="play-sessions" />
+                <FeatureLink icon={<Layers />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" badge={intensitySessions.filter((s: any) => s.status === "active").length} sexyIcon="endurance" />
+                <FeatureLink icon={<ListChecks />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-amber-500" badge={obedienceTrials.filter((t: any) => t.status === "pending" || t.status === "active").length} sexyIcon="enforce" />
+                <FeatureLink icon={<RotateCcw />} label="Sensation Roulette" desc="Random card spins" href="/sensation-roulette" color="text-fuchsia-400" sexyIcon="wheel-of-dares" />
+                <FeatureLink icon={<Dices />} label="Wagers" desc="Bets & stakes" href="/wagers" color="text-yellow-400" badge={wagers.filter((w: any) => w.status === "active" || w.status === "pending").length} sexyIcon="wagers" />
+                <FeatureLink icon={<Hourglass />} label="Endurance" desc="Timed challenges" href="/endurance-challenges" color="text-orange-500" badge={enduranceChallenges.filter((c: any) => c.status === "active").length} sexyIcon="endurance" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-[10px] font-bold text-pink-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Connection & Reflection</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FeatureLink icon={<HeartPulse />} label="Connection Pulse" desc="Bond health" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
+                <FeatureLink icon={<Heart />} label="Devotions" desc="Acts of service" href="/devotions" color="text-pink-300" badge={devotionsList.length} sexyIcon="devotions" />
+                <FeatureLink icon={<Eye />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-purple-400" badge={secrets.length} sexyIcon="secrets" />
+                <FeatureLink icon={<AlertTriangle />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-rose-400" badge={conflictsList.filter((c: any) => c.status !== "resolved").length} sexyIcon="conflicts" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Tracking & Progress</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <FeatureLink icon={<Star />} label="Ratings" desc="Performance scores" href="/ratings" color="text-amber-400" badge={ratingsList.length} sexyIcon="ratings" />
+                <FeatureLink icon={<Award />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
+                <FeatureLink icon={<Timer />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} sexyIcon="countdown-events" />
+                <FeatureLink icon={<Lock />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} sexyIcon="config" />
+              </div>
             </div>
           </div>
 
@@ -1458,26 +1315,10 @@ export default function BondedAscentApp() {
             <SanctuaryNode
               icon={<Crosshair />}
               label="Interrogate"
-              angle={315}
+              angle={0}
               color="bg-emerald-600"
               onClick={() => setModal("dom_inspect")}
               sexyIcon="interrogate"
-            />
-            <SanctuaryNode
-              icon={<Film />}
-              label="Direct"
-              angle={0}
-              color="bg-purple-600"
-              onClick={() => setModal("dom_direct")}
-              sexyIcon="play-sessions"
-            />
-            <SanctuaryNode
-              icon={<Eye />}
-              label="Watch"
-              angle={45}
-              color="bg-cyan-600"
-              onClick={() => setModal("dom_surveil")}
-              sexyIcon="watch"
             />
             <SanctuaryNode
               icon={<Siren />}
@@ -1488,25 +1329,9 @@ export default function BondedAscentApp() {
               sexyIcon="enforce"
             />
             <SanctuaryNode
-              icon={<Unlock />}
-              label="Permit"
-              angle={135}
-              color="bg-amber-600"
-              onClick={() => setModal("dom_bestow")}
-              sexyIcon="permit"
-            />
-            <SanctuaryNode
-              icon={<Skull />}
-              label="Sentence"
-              angle={180}
-              color="bg-orange-600"
-              onClick={() => setModal("dom_decree")}
-              sexyIcon="sentence"
-            />
-            <SanctuaryNode
               icon={<ShieldAlert />}
               label="Override"
-              angle={225}
+              angle={180}
               color="bg-red-900"
               onClick={() => setModal("dom_override")}
               sexyIcon="endurance"
@@ -1964,200 +1789,45 @@ export default function BondedAscentApp() {
                     </button>
                   </div>
 
-                  <div className="border-t border-white/5 pt-6">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 pl-2">
-                      Features
-                    </h3>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      <FeatureLink
-                        icon={<Flame />}
-                        label="Rituals"
-                        href="/rituals"
-                        color="text-orange-400"
-                        badge={rituals.filter((r: any) => !r.completed).length}
-                        sexyIcon="rituals"
-                      />
-                      <FeatureLink
-                        icon={<Shield />}
-                        label="Limits"
-                        href="/limits"
-                        color="text-blue-400"
-                        badge={limitsList.length}
-                        sexyIcon="limits"
-                      />
-                      <FeatureLink
-                        icon={<Eye />}
-                        label="Secrets"
-                        href="/secrets"
-                        color="text-purple-400"
-                        badge={secrets.length}
-                        sexyIcon="secrets"
-                      />
-                      <FeatureLink
-                        icon={<Dices />}
-                        label="Wagers"
-                        href="/wagers"
-                        color="text-yellow-400"
-                        badge={
-                          wagers.filter(
-                            (w: any) =>
-                              w.status === "active" || w.status === "pending",
-                          ).length
-                        }
-                        sexyIcon="wagers"
-                      />
-                      <FeatureLink
-                        icon={<Star />}
-                        label="Ratings"
-                        href="/ratings"
-                        color="text-amber-400"
-                        badge={ratingsList.length}
-                        sexyIcon="ratings"
-                      />
-                      <FeatureLink
-                        icon={<HeartPulse />}
-                        label="Pulse"
-                        href="/connection-pulse"
-                        color="text-pink-400"
-                        sexyIcon="connection-pulse"
-                      />
-                      <FeatureLink
-                        icon={<Play />}
-                        label="Sessions"
-                        href="/play-sessions"
-                        color="text-green-400"
-                        badge={
-                          playSessions.filter(
-                            (s: any) => s.status === "planned",
-                          ).length
-                        }
-                        sexyIcon="play-sessions"
-                      />
-                      <FeatureLink
-                        icon={<Timer />}
-                        label="Countdown"
-                        href="/countdown-events"
-                        color="text-cyan-400"
-                        badge={countdownEvents.length}
-                        sexyIcon="countdown-events"
-                      />
-                      <FeatureLink
-                        icon={<Award />}
-                        label="Achieve"
-                        href="/achievements"
-                        color="text-emerald-400"
-                        sexyIcon="achievements"
-                      />
-                      <FeatureLink
-                        icon={<FileSignature />}
-                        label="Orders"
-                        href="/standing-orders"
-                        color="text-red-400"
-                        badge={
-                          standingOrders.filter(
-                            (o: any) => o.status === "active",
-                          ).length
-                        }
-                        sexyIcon="standing-orders"
-                      />
-                      <FeatureLink
-                        icon={<Hand />}
-                        label="Permits"
-                        href="/permission-requests"
-                        color="text-indigo-400"
-                        badge={
-                          permissionRequests.filter(
-                            (p: any) => p.status === "pending",
-                          ).length
-                        }
-                        sexyIcon="permission-requests"
-                      />
-                      <FeatureLink
-                        icon={<AlertTriangle />}
-                        label="Conflicts"
-                        href="/conflicts"
-                        color="text-rose-400"
-                        badge={
-                          conflictsList.filter(
-                            (c: any) => c.status !== "resolved",
-                          ).length
-                        }
-                        sexyIcon="conflicts"
-                      />
-                      <FeatureLink
-                        icon={<Target />}
-                        label="Changes"
-                        href="/desired-changes"
-                        color="text-teal-400"
-                        badge={
-                          desiredChanges.filter(
-                            (c: any) => c.status === "pending",
-                          ).length
-                        }
-                        sexyIcon="standing-orders"
-                      />
-                      <FeatureLink
-                        icon={<Heart />}
-                        label="Devotions"
-                        href="/devotions"
-                        color="text-pink-300"
-                        badge={devotionsList.length}
-                        sexyIcon="devotions"
-                      />
-                      <FeatureLink
-                        icon={<Layers />}
-                        label="Intensity"
-                        href="/intensity-ladder"
-                        color="text-red-500"
-                        badge={
-                          intensitySessions.filter(
-                            (s: any) => s.status === "active",
-                          ).length
-                        }
-                        sexyIcon="endurance"
-                      />
-                      <FeatureLink
-                        icon={<ListChecks />}
-                        label="Trials"
-                        href="/obedience-trials"
-                        color="text-amber-500"
-                        badge={
-                          obedienceTrials.filter(
-                            (t: any) =>
-                              t.status === "pending" || t.status === "active",
-                          ).length
-                        }
-                        sexyIcon="enforce"
-                      />
-                      <FeatureLink
-                        icon={<RotateCcw />}
-                        label="Roulette"
-                        href="/sensation-roulette"
-                        color="text-fuchsia-400"
-                        sexyIcon="wheel-of-dares"
-                      />
-                      <FeatureLink
-                        icon={<Lock />}
-                        label="Lockbox"
-                        href="/protocol-lockbox"
-                        color="text-violet-400"
-                        badge={
-                          sealedOrders.filter((o: any) => !o.completed).length
-                        }
-                        sexyIcon="config"
-                      />
-                      <FeatureLink
-                        icon={<Hourglass />}
-                        label="Endurance"
-                        href="/endurance-challenges"
-                        color="text-orange-500"
-                        badge={
-                          enduranceChallenges.filter(
-                            (c: any) => c.status === "active",
-                          ).length
-                        }
-                        sexyIcon="endurance"
-                      />
+                  <div className="border-t border-white/5 pt-6 space-y-5">
+                    <div>
+                      <h3 className="text-[10px] font-bold text-red-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Protocol & Structure</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <FeatureLink icon={<Flame />} label="Rituals" desc="Daily routines & habits" href="/rituals" color="text-orange-400" badge={rituals.filter((r: any) => !r.completed).length} sexyIcon="rituals" />
+                        <FeatureLink icon={<FileSignature />} label="Standing Orders" desc="Active directives" href="/standing-orders" color="text-red-400" badge={standingOrders.filter((o: any) => o.status === "active").length} sexyIcon="standing-orders" />
+                        <FeatureLink icon={<Shield />} label="Limits" desc="Boundaries & safety" href="/limits" color="text-blue-400" badge={limitsList.length} sexyIcon="limits" />
+                        <FeatureLink icon={<Hand />} label="Permissions" desc="Request & track" href="/permission-requests" color="text-indigo-400" badge={permissionRequests.filter((p: any) => p.status === "pending").length} sexyIcon="permission-requests" />
+                        <FeatureLink icon={<Target />} label="Required Changes" desc="Assigned growth" href="/desired-changes" color="text-teal-400" badge={desiredChanges.filter((c: any) => c.status === "pending").length} sexyIcon="standing-orders" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-[10px] font-bold text-amber-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Challenges & Games</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <FeatureLink icon={<Play />} label="Scheduled Sessions" desc="Upcoming scenes" href="/play-sessions" color="text-green-400" badge={playSessions.filter((s: any) => s.status === "planned").length} sexyIcon="play-sessions" />
+                        <FeatureLink icon={<Layers />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" badge={intensitySessions.filter((s: any) => s.status === "active").length} sexyIcon="endurance" />
+                        <FeatureLink icon={<ListChecks />} label="Obedience Trials" desc="Active tests" href="/obedience-trials" color="text-amber-500" badge={obedienceTrials.filter((t: any) => t.status === "pending" || t.status === "active").length} sexyIcon="enforce" />
+                        <FeatureLink icon={<RotateCcw />} label="Sensation Roulette" desc="Random card spins" href="/sensation-roulette" color="text-fuchsia-400" sexyIcon="wheel-of-dares" />
+                        <FeatureLink icon={<Dices />} label="Wagers" desc="Bets & stakes" href="/wagers" color="text-yellow-400" badge={wagers.filter((w: any) => w.status === "active" || w.status === "pending").length} sexyIcon="wagers" />
+                        <FeatureLink icon={<Hourglass />} label="Endurance" desc="Timed challenges" href="/endurance-challenges" color="text-orange-500" badge={enduranceChallenges.filter((c: any) => c.status === "active").length} sexyIcon="endurance" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-[10px] font-bold text-pink-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Connection & Reflection</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <FeatureLink icon={<HeartPulse />} label="Connection Pulse" desc="Bond health" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
+                        <FeatureLink icon={<Heart />} label="Devotions" desc="Acts of devotion" href="/devotions" color="text-pink-300" badge={devotionsList.length} sexyIcon="devotions" />
+                        <FeatureLink icon={<Eye />} label="Confessions" desc="Secrets & truths" href="/secrets" color="text-purple-400" badge={secrets.length} sexyIcon="secrets" />
+                        <FeatureLink icon={<AlertTriangle />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-rose-400" badge={conflictsList.filter((c: any) => c.status !== "resolved").length} sexyIcon="conflicts" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Tracking & Progress</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <FeatureLink icon={<Star />} label="Ratings" desc="Performance scores" href="/ratings" color="text-amber-400" badge={ratingsList.length} sexyIcon="ratings" />
+                        <FeatureLink icon={<Award />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
+                        <FeatureLink icon={<Timer />} label="Upcoming Events" desc="Countdowns" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} sexyIcon="countdown-events" />
+                        <FeatureLink icon={<Lock />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} sexyIcon="config" />
+                      </div>
                     </div>
                   </div>
                 </>
@@ -2223,58 +1893,18 @@ export default function BondedAscentApp() {
                 <SanctuaryNode
                   icon={<MessageSquare />}
                   label="Confess"
-                  angle={315}
+                  angle={30}
                   color="bg-purple-600"
                   onClick={() => setModal("checkin")}
                   sexyIcon="secrets"
                 />
                 <SanctuaryNode
-                  icon={<Flame />}
-                  label="Endure"
-                  angle={0}
-                  color="bg-rose-600"
-                  onClick={() => setModal("ladders")}
-                  sexyIcon="endurance"
-                />
-                <SanctuaryNode
-                  icon={<BookOpen />}
-                  label="Reflect"
-                  angle={45}
-                  color="bg-pink-600"
-                  onClick={() => setModal("logbook")}
-                  sexyIcon="journal"
-                />
-                <SanctuaryNode
-                  icon={<Heart />}
-                  label="Serve"
-                  angle={90}
-                  color="bg-red-700"
-                  onClick={() => setModal("worship")}
-                  sexyIcon="devotions"
-                />
-                <SanctuaryNode
-                  icon={<Star />}
-                  label="Earn"
-                  angle={135}
-                  color="bg-amber-600"
-                  onClick={() => setModal("scene")}
-                  sexyIcon="achievements"
-                />
-                <SanctuaryNode
                   icon={<Sliders />}
                   label="Sensory"
-                  angle={180}
+                  angle={150}
                   color="bg-slate-700"
                   onClick={() => setModal("sensory")}
                   sexyIcon="rituals"
-                />
-                <SanctuaryNode
-                  icon={<Box />}
-                  label="Vault"
-                  angle={225}
-                  color="bg-indigo-600"
-                  onClick={() => setModal("vault")}
-                  sexyIcon="config"
                 />
               </div>
 
@@ -6155,6 +5785,7 @@ function urlBase64ToUint8Array(base64String: string) {
 function FeatureLink({
   icon,
   label,
+  desc,
   href,
   color,
   badge,
@@ -6162,6 +5793,7 @@ function FeatureLink({
 }: {
   icon: React.ReactElement<any>;
   label: string;
+  desc?: string;
   href: string;
   color: string;
   badge?: number;
@@ -6172,23 +5804,27 @@ function FeatureLink({
     <button
       data-testid={`link-feature-${label.toLowerCase()}`}
       onClick={() => setLocation(href)}
-      className="flex flex-col items-center gap-2 p-2 hover:scale-105 transition-transform cursor-pointer group relative"
+      className="relative flex items-center gap-3 p-3 bg-gradient-to-r from-slate-900/80 to-slate-950/60 border border-white/5 rounded-xl hover:border-white/15 hover:from-slate-800/80 hover:to-slate-900/60 transition-all cursor-pointer group"
     >
       <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center border transition-all ${sexyIcon ? "overflow-visible" : "overflow-hidden"} ${sexyIcon ? "" : color} ${badge && badge > 0 ? "border-red-500/40 bg-slate-900/80 shadow-[0_0_8px_rgba(220,38,38,0.15)]" : "border-white/10 bg-slate-900/50 group-hover:border-white/20 group-hover:bg-slate-800/50"}`}
+        className={`w-11 h-11 rounded-lg flex items-center justify-center shrink-0 ${sexyIcon ? "overflow-visible" : "overflow-hidden"} ${sexyIcon ? "" : `${color} bg-slate-900/80`}`}
       >
-        {sexyIcon ? <SexyIcon name={sexyIcon} size={36} glow="gold" /> : React.cloneElement(icon, { size: 20 })}
-        {badge !== undefined && badge > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white px-1 shadow-[0_0_6px_rgba(220,38,38,0.5)]">
-            {badge}
-          </span>
+        {sexyIcon ? <SexyIcon name={sexyIcon} size={32} glow="gold" /> : React.cloneElement(icon, { size: 18 })}
+      </div>
+      <div className="flex-1 text-left min-w-0">
+        <div className="text-xs font-bold text-slate-200 uppercase tracking-wide group-hover:text-white transition-colors truncate">
+          {label}
+        </div>
+        {desc && (
+          <div className="text-[10px] text-slate-500 mt-0.5 truncate">{desc}</div>
         )}
       </div>
-      <span
-        className={`text-[9px] font-bold uppercase tracking-wide transition-colors ${badge && badge > 0 ? "text-white" : "text-slate-500 group-hover:text-white"}`}
-      >
-        {label}
-      </span>
+      {badge !== undefined && badge > 0 && (
+        <span className="min-w-[20px] h-[20px] flex items-center justify-center rounded-full bg-red-600 text-[9px] font-black text-white px-1.5 shadow-[0_0_6px_rgba(220,38,38,0.5)] shrink-0">
+          {badge}
+        </span>
+      )}
+      <ChevronRight size={14} className="text-slate-700 group-hover:text-slate-400 transition-colors shrink-0" />
     </button>
   );
 }
