@@ -41,8 +41,6 @@ import {
   Trash2,
   Bell,
   ShieldAlert,
-  Moon,
-  Sun,
   RefreshCw,
   MessageSquare,
   RotateCcw,
@@ -81,10 +79,8 @@ import {
   Link,
   Crown,
   Crosshair,
-  Skull,
   Siren,
   SendHorizonal,
-  CircleDot,
   Layers,
   ListChecks,
   Hourglass,
@@ -201,39 +197,12 @@ import {
   SCENE_CATEGORIES,
   type PrebuiltScene,
 } from "@/lib/prebuilt-scenes";
-import { ActionFeed, type FeedItem } from "@/components/action-feed";
+import { type FeedItem } from "@/components/action-feed";
+import { CommandProtocols } from "@/components/command-protocols";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
-
-const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
-  left: `${Math.random() * 100}%`,
-  top: `${Math.random() * 100}%`,
-  duration: `${4 + Math.random() * 4}s`,
-  delay: `${Math.random() * 5}s`,
-}));
-
-const VelvetParticles = React.memo(function VelvetParticles() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      {PARTICLE_DATA.map((p, i) => (
-        <div
-          key={i}
-          className="absolute w-1 h-1 rounded-full bg-red-500/40"
-          style={{
-            left: p.left,
-            top: p.top,
-            animation: `float-ember ${p.duration} ease-in-out infinite`,
-            animationDelay: p.delay,
-            willChange: "opacity, transform",
-          }}
-        />
-      ))}
-    </div>
-  );
-});
 
 export default function BondedAscentApp() {
   const [activeView, setActiveView] = useState("dashboard");
-  const [isVelvetMode, setIsVelvetMode] = useState(false);
   const [isCrisisMode, setIsCrisisMode] = useState(false);
   const [modal, setModal] = useState<string | null>(null);
   const [, setLocation] = useLocation();
@@ -263,10 +232,6 @@ export default function BondedAscentApp() {
   const [pairError, setPairError] = useState<string | null>(null);
   const [pairSuccess, setPairSuccess] = useState<string | null>(null);
 
-  const [commandInput, setCommandInput] = useState("");
-  const [demandMessage, setDemandMessage] = useState("");
-  const [demandDuration, setDemandDuration] = useState(5);
-  const [throneWordIndex, setThroneWordIndex] = useState(0);
 
   const [trainingActive, setTrainingActive] = useState<string | null>(null);
   const [trainingTimer, setTrainingTimer] = useState(0);
@@ -501,7 +466,6 @@ export default function BondedAscentApp() {
     presenceHeartbeatMutation.mutate();
   }, []);
 
-  const throneWords = ["OBEY", "SUBMIT", "KNEEL", "SERVE", "YIELD"];
 
   const scenePhases = ["Warm-Up", "Main Scene", "Cooldown"];
 
@@ -569,71 +533,24 @@ export default function BondedAscentApp() {
 
   const DomDashboard = () => (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
-      <div className="relative overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-b from-red-950/30 via-black to-slate-950/80" style={{ animation: "command-center-glow 4s ease-in-out infinite, command-center-border 4s ease-in-out infinite" }}>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(220,38,38,0.12),transparent_70%)] pointer-events-none" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-900/30 to-transparent" />
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03]">
-          <div className="absolute inset-0" style={{ animation: "scanline 8s linear infinite", background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)" }} />
-        </div>
-        <div className="relative p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center shadow-lg shadow-red-500/10">
-                <Zap size={16} className="text-red-400" />
-              </div>
-              <div>
-                <h2 className="text-sm font-black text-white uppercase tracking-[0.15em]">Command Center</h2>
-                <p className="text-[10px] text-red-400/60 font-mono uppercase tracking-widest">Live Operations</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {buildDomFeedItems().filter(i => ["demand", "command", "accusation"].includes(i.type)).length > 0 && (
-                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: "pulse-dot 2s ease-in-out infinite" }} />
-                  <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">
-                    {buildDomFeedItems().filter(i => ["demand", "command", "accusation"].includes(i.type)).length} urgent
-                  </span>
-                </span>
-              )}
-              <span className="text-[10px] text-slate-600 font-mono tabular-nums">
-                {buildDomFeedItems().filter(i => i.type !== "notification").length} total
-              </span>
-            </div>
-          </div>
-          <ActionFeed items={buildDomFeedItems()} onAction={handleFeedAction} role="dom" />
-          <div className="flex gap-2">
-            <input
-              data-testid="input-dom-quick-task"
-              type="text"
-              value={newTaskText}
-              onChange={(e) => setNewTaskText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && newTaskText.trim()) {
-                  createPartnerTaskMutation.mutate({ text: newTaskText });
-                  setNewTaskText("");
-                }
-              }}
-              placeholder="Quick assign protocol..."
-              className="flex-1 bg-black/50 border border-red-900/30 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/50 transition-colors"
-            />
-            <Button
-              data-testid="button-dom-quick-task"
-              size="sm"
-              onClick={() => {
-                if (newTaskText.trim()) {
-                  createPartnerTaskMutation.mutate({ text: newTaskText });
-                  setNewTaskText("");
-                }
-              }}
-              disabled={createPartnerTaskMutation.isPending}
-              className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-500/20 rounded-xl px-4"
-            >
-              <Plus size={16} />
-            </Button>
-          </div>
-        </div>
-      </div>
+      <CommandProtocols
+        role="dom"
+        feedItems={buildDomFeedItems()}
+        standingOrders={standingOrders}
+        rituals={rituals}
+        tasks={partnerTasks || []}
+        onAction={handleFeedAction}
+        onAssignTask={(text) => { createPartnerTaskMutation.mutate({ text }); }}
+        onQuickCommand={(msg) => { sendQuickCommandMutation.mutate({ message: msg }); }}
+        onDemandTimer={(msg, mins) => { createDemandTimerMutation.mutate({ message: msg, durationSeconds: mins * 60 }); }}
+        onToggleLockdown={(locked) => { toggleLockdownMutation.mutate(locked); }}
+        partnerStats={partnerStats}
+        partnerPresence={partnerPresence}
+        partnerName={partner?.username}
+        lockdownStatus={lockdownStatus?.lockedDown ?? false}
+        enforcementLevel={(partnerEnforcement as any)?.enforcementLevel}
+        isAssigning={createPartnerTaskMutation.isPending}
+      />
 
       <div className="flex flex-col items-center gap-6 pt-4">
         <input
@@ -744,35 +661,7 @@ export default function BondedAscentApp() {
         )}
       </div>
 
-      <div className="flex items-center justify-between border-b border-white/5 pb-2">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-          Control Panel
-        </h3>
-        <button
-          data-testid="button-dom-velvet-toggle"
-          onClick={() => setIsVelvetMode(!isVelvetMode)}
-          className={`flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-bold uppercase transition-all shadow-lg cursor-pointer
-            ${
-              isVelvetMode
-                ? "bg-red-950 border-red-500 text-red-400 shadow-[0_0_10px_rgba(220,38,38,0.2)]"
-                : "bg-slate-900 border-slate-700 text-slate-400"
-            }`}
-        >
-          {isVelvetMode ? <Moon size={12} /> : <Sun size={12} />}
-          {isVelvetMode ? "Velvet Mode" : "Standard"}
-        </button>
-      </div>
-
-      {isVelvetMode && partner && (
-        <div className="text-center py-2">
-          <span className="text-xs font-bold text-red-500/60 uppercase tracking-[0.2em]">
-            Your domain awaits, Master
-          </span>
-        </div>
-      )}
-
-      {!isVelvetMode ? (
-        <div className="space-y-6 animate-in fade-in">
+      <div className="space-y-6 animate-in fade-in">
           <div className="grid grid-cols-4 gap-3">
             <QuickAction
               icon={<Clock />}
@@ -1363,259 +1252,7 @@ export default function BondedAscentApp() {
             </Button>
           </div>
         </div>
-      ) : (
-        <div className="relative w-full animate-in zoom-in-95 duration-700 space-y-6">
-          <div className="relative h-[450px] w-full flex items-center justify-center">
-            <VelvetParticles />
-            <div className="absolute inset-0 bg-gradient-radial from-red-900/20 via-transparent to-transparent pointer-events-none" />
-            <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.8)] pointer-events-none rounded-2xl z-10" />
-
-            <button
-              className="w-32 h-32 rounded-full bg-gradient-to-br from-red-800 to-black border-2 border-red-500/50 flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer relative"
-              style={{ animation: "throne-pulse 2s ease-in-out infinite" }}
-            >
-              <Crown
-                className="text-white mb-1 group-hover:text-red-200 drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-                size={36}
-              />
-              <span className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] absolute -bottom-6">
-                {throneWords[throneWordIndex]}
-              </span>
-            </button>
-
-            <div className="absolute w-[280px] h-[280px] border border-red-500/10 rounded-full pointer-events-none" />
-            <div className="absolute w-[280px] h-[280px] rounded-full pointer-events-none">
-              <svg className="w-full h-full absolute" viewBox="0 0 280 280">
-                <circle
-                  cx="140"
-                  cy="140"
-                  r="130"
-                  fill="none"
-                  stroke="rgba(220,38,38,0.15)"
-                  strokeWidth="1"
-                  strokeDasharray="4 4"
-                  style={{ animation: "chain-flow 2s linear infinite" }}
-                />
-              </svg>
-            </div>
-
-            <SanctuaryNode
-              icon={<Map />}
-              label="Desire Map"
-              angle={270}
-              color="bg-amber-600"
-              onClick={() => setModal("dom_command")}
-              sexyIcon="map-of-desire"
-            />
-            <SanctuaryNode
-              icon={<Crosshair />}
-              label="Interrogate"
-              angle={0}
-              color="bg-emerald-600"
-              onClick={() => setModal("dom_inspect")}
-              sexyIcon="interrogate"
-            />
-            <SanctuaryNode
-              icon={<Siren />}
-              label="Enforce"
-              angle={90}
-              color="bg-rose-600"
-              onClick={() => setModal("dom_enforce")}
-              sexyIcon="enforce"
-            />
-            <SanctuaryNode
-              icon={<ShieldAlert />}
-              label="Override"
-              angle={180}
-              color="bg-red-900"
-              onClick={() => setModal("dom_override")}
-              sexyIcon="endurance"
-            />
-          </div>
-
-          {partner && partnerPresence && (
-            <div className="flex items-center justify-center gap-3 py-2">
-              <div
-                className={`w-3 h-3 rounded-full ${partnerPresence.online ? "bg-green-500 shadow-[0_0_10px_lime]" : "bg-slate-600"}`}
-              />
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                {partner.username}:{" "}
-                {partnerPresence.online ? (
-                  <span className="text-green-400">Online Now</span>
-                ) : (
-                  <span className="text-slate-500">
-                    Last seen{" "}
-                    {partnerPresence.lastSeen
-                      ? new Date(partnerPresence.lastSeen).toLocaleTimeString()
-                      : "never"}
-                  </span>
-                )}
-              </span>
-              <Link
-                size={12}
-                className={
-                  partnerPresence.online ? "text-green-400" : "text-slate-600"
-                }
-              />
-            </div>
-          )}
-
-          {partner && (
-            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">
-                  Compliance Gauge
-                </h4>
-                <span className="text-lg font-black text-white">
-                  {partnerStats?.complianceRate ?? 0}%
-                </span>
-              </div>
-              <div className="relative h-4 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                <div
-                  className="h-full rounded-full transition-all duration-1000"
-                  style={{
-                    width: `${partnerStats?.complianceRate ?? 0}%`,
-                    background: `linear-gradient(90deg, #dc2626 0%, #f59e0b ${Math.max(50, partnerStats?.complianceRate ?? 0)}%, #22c55e 100%)`,
-                    boxShadow: "0 0 15px rgba(220,38,38,0.5)",
-                  }}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[9px] font-black text-white uppercase tracking-widest drop-shadow-lg">
-                    {(partnerStats?.complianceRate ?? 0) >= 80
-                      ? "OBEDIENT"
-                      : (partnerStats?.complianceRate ?? 0) >= 50
-                        ? "ADEQUATE"
-                        : "DEFIANT"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {partner && (
-            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4">
-              <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-3">
-                Quick Command
-              </h4>
-              <div className="flex gap-2">
-                <input
-                  data-testid="input-quick-command"
-                  type="text"
-                  value={commandInput}
-                  onChange={(e) => setCommandInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && commandInput.trim()) {
-                      sendQuickCommandMutation.mutate({
-                        message: commandInput,
-                      });
-                      setCommandInput("");
-                    }
-                  }}
-                  placeholder="Issue an order..."
-                  className="flex-1 bg-black/60 border border-red-900/50 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
-                />
-                <Button
-                  data-testid="button-send-command"
-                  size="sm"
-                  className="bg-red-600 hover:bg-red-500"
-                  disabled={
-                    sendQuickCommandMutation.isPending || !commandInput.trim()
-                  }
-                  onClick={() => {
-                    if (commandInput.trim()) {
-                      sendQuickCommandMutation.mutate({
-                        message: commandInput,
-                      });
-                      setCommandInput("");
-                    }
-                  }}
-                >
-                  <SendHorizonal size={16} />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {partner && (
-            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4">
-              <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em] mb-3">
-                Demand Timer
-              </h4>
-              <div className="space-y-3">
-                <input
-                  data-testid="input-demand-message"
-                  type="text"
-                  value={demandMessage}
-                  onChange={(e) => setDemandMessage(e.target.value)}
-                  placeholder="What must they do?"
-                  className="w-full bg-black/60 border border-red-900/50 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
-                />
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold">
-                    Minutes:
-                  </span>
-                  <input
-                    data-testid="input-demand-duration"
-                    type="number"
-                    min={1}
-                    max={120}
-                    value={demandDuration}
-                    onChange={(e) => setDemandDuration(Number(e.target.value))}
-                    className="w-20 bg-black/60 border border-red-900/50 rounded-lg px-3 py-1 text-sm text-white focus:outline-none focus:border-red-500"
-                  />
-                  <Button
-                    data-testid="button-send-demand"
-                    size="sm"
-                    className="bg-red-600 hover:bg-red-500 ml-auto"
-                    disabled={
-                      createDemandTimerMutation.isPending ||
-                      !demandMessage.trim()
-                    }
-                    onClick={() => {
-                      if (demandMessage.trim()) {
-                        createDemandTimerMutation.mutate({
-                          message: demandMessage,
-                          durationSeconds: demandDuration * 60,
-                        });
-                        setDemandMessage("");
-                      }
-                    }}
-                  >
-                    Set Demand
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {partner && (
-            <div className="bg-slate-900/60 border border-red-900/30 rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">
-                  Lockdown Mode
-                </h4>
-                <p className="text-[9px] text-slate-500 mt-1">
-                  Restrict sub to tasks only
-                </p>
-              </div>
-              <button
-                data-testid="button-lockdown-toggle"
-                onClick={() =>
-                  toggleLockdownMutation.mutate(
-                    !(lockdownStatus?.lockedDown ?? false),
-                  )
-                }
-                className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 shadow-inner cursor-pointer ${lockdownStatus?.lockedDown ? "bg-red-600 shadow-[0_0_10px_red]" : "bg-slate-900 border border-slate-700"}`}
-              >
-                <div
-                  className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${lockdownStatus?.lockedDown ? "translate-x-6" : "translate-x-0"}`}
-                />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+      </div>
   );
 
   const buildSubFeedItems = useCallback((): FeedItem[] => {
@@ -1845,27 +1482,7 @@ export default function BondedAscentApp() {
             </button>
           </div>
 
-          <div className="flex items-center justify-between border-b border-white/5 pb-2">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              Dashboard Controls
-            </h3>
-            <button
-              data-testid="button-velvet-toggle"
-              onClick={() => setIsVelvetMode(!isVelvetMode)}
-              className={`flex items-center gap-2 px-4 py-1.5 rounded-full border text-xs font-bold uppercase transition-all shadow-lg cursor-pointer
-                ${
-                  isVelvetMode
-                    ? "bg-red-950 border-red-500 text-red-400 shadow-[0_0_10px_rgba(220,38,38,0.2)]"
-                    : "bg-slate-900 border-slate-700 text-slate-400"
-                }`}
-            >
-              {isVelvetMode ? <Moon size={12} /> : <Sun size={12} />}
-              {isVelvetMode ? "Velvet Mode" : "Standard"}
-            </button>
-          </div>
-
-          {!isVelvetMode ? (
-            <div className="space-y-6 animate-in fade-in">
+          <div className="space-y-6 animate-in fade-in">
               <div className="grid grid-cols-4 gap-3">
                 <QuickAction
                   icon={<Clock />}
@@ -2045,241 +1662,6 @@ export default function BondedAscentApp() {
                 </div>
               )}
             </div>
-          ) : (
-            <div className="relative w-full animate-in zoom-in-95 duration-700 space-y-6">
-              <div className="relative h-[450px] w-full flex items-center justify-center">
-                <VelvetParticles />
-                <div className="absolute inset-0 bg-gradient-radial from-red-900/15 via-transparent to-transparent pointer-events-none" />
-                <div className="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.8)] pointer-events-none rounded-2xl z-10" />
-
-                <button
-                  className="w-28 h-28 rounded-full bg-gradient-to-br from-red-900 to-black border-2 border-red-500/30 shadow-[0_0_40px_rgba(220,38,38,0.3)] flex flex-col items-center justify-center z-20 hover:scale-105 transition-transform group cursor-pointer"
-                  style={{
-                    animation: "devotion-pulse 2.5s ease-in-out infinite",
-                  }}
-                >
-                  <CircleDot
-                    className="text-red-400 mb-1 group-hover:text-red-200 drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]"
-                    size={32}
-                  />
-                  <span className="text-[10px] font-black text-red-400 uppercase tracking-widest">
-                    Collar
-                  </span>
-                </button>
-
-                <div className="absolute w-[260px] h-[260px] rounded-full pointer-events-none">
-                  <svg className="w-full h-full absolute" viewBox="0 0 260 260">
-                    <circle
-                      cx="130"
-                      cy="130"
-                      r="120"
-                      fill="none"
-                      stroke="rgba(220,38,38,0.12)"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
-                      style={{ animation: "chain-flow 2s linear infinite" }}
-                    />
-                  </svg>
-                </div>
-
-                <SanctuaryNode
-                  icon={<Check />}
-                  label="Obey"
-                  angle={270}
-                  color="bg-red-600"
-                  onClick={() => setModal("training")}
-                  sexyIcon="assign-tasks"
-                />
-                <SanctuaryNode
-                  icon={<MessageSquare />}
-                  label="Confess"
-                  angle={30}
-                  color="bg-purple-600"
-                  onClick={() => setModal("checkin")}
-                  sexyIcon="secrets"
-                />
-                <SanctuaryNode
-                  icon={<Sliders />}
-                  label="Sensory"
-                  angle={150}
-                  color="bg-slate-700"
-                  onClick={() => setModal("sensory")}
-                  sexyIcon="rituals"
-                />
-              </div>
-
-              {partner && (
-                <div className="flex items-center justify-center gap-3 py-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">
-                    Time Since Last Command:
-                  </span>
-                  <span className="text-sm font-black text-red-400">
-                    {partnerActivity.length > 0
-                      ? formatTime(partnerActivity[0]?.createdAt)
-                      : "No commands yet"}
-                  </span>
-                </div>
-              )}
-
-              {demandTimers.filter(
-                (t: any) => !t.responded && new Date(t.expiresAt) > new Date(),
-              ).length > 0 && (
-                <div className="space-y-3">
-                  {demandTimers
-                    .filter(
-                      (t: any) =>
-                        !t.responded && new Date(t.expiresAt) > new Date(),
-                    )
-                    .map((timer: any) => {
-                      const remaining = Math.max(
-                        0,
-                        Math.ceil(
-                          (new Date(timer.expiresAt).getTime() - Date.now()) /
-                            1000,
-                        ),
-                      );
-                      const mins = Math.floor(remaining / 60);
-                      const secs = remaining % 60;
-                      const urgency =
-                        remaining < 60
-                          ? "border-red-500 bg-red-950/60"
-                          : remaining < 180
-                            ? "border-orange-500 bg-orange-950/40"
-                            : "border-yellow-500/50 bg-yellow-950/30";
-                      return (
-                        <div
-                          key={timer.id}
-                          className={`border rounded-2xl p-4 ${urgency}`}
-                        >
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="text-xs font-black text-white uppercase tracking-wider">
-                              {timer.message}
-                            </div>
-                            <span className="text-lg font-mono font-black text-red-400">
-                              {mins}:{secs.toString().padStart(2, "0")}
-                            </span>
-                          </div>
-                          <Button
-                            data-testid={`button-respond-demand-${timer.id}`}
-                            size="sm"
-                            className="w-full bg-red-600 hover:bg-red-500 font-black uppercase tracking-widest"
-                            onClick={() =>
-                              respondDemandTimerMutation.mutate(timer.id)
-                            }
-                          >
-                            RESPOND
-                          </Button>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
-
-              {accusations.filter((a: any) => a.status === "pending").length >
-                0 && (
-                <div className="space-y-2">
-                  <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">
-                    Pending Accusations
-                  </h4>
-                  {accusations
-                    .filter((a: any) => a.status === "pending")
-                    .map((acc: any) => (
-                      <div
-                        key={acc.id}
-                        className="bg-red-950/40 border border-red-900/50 rounded-xl p-3 space-y-2"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Crosshair size={12} className="text-red-400" />
-                          <span className="text-xs font-bold text-white">
-                            "{acc.accusation}"
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <input
-                            data-testid={`input-accusation-response-${acc.id}`}
-                            type="text"
-                            value={accusationResponses[acc.id] || ""}
-                            onChange={(e) =>
-                              setAccusationResponses((prev) => ({
-                                ...prev,
-                                [acc.id]: e.target.value,
-                              }))
-                            }
-                            placeholder="Your response..."
-                            className="flex-1 bg-black/60 border border-red-900/50 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-red-500"
-                          />
-                          <Button
-                            data-testid={`button-respond-accusation-${acc.id}`}
-                            size="sm"
-                            variant="outline"
-                            className="border-red-500/50 text-red-400 text-[10px] uppercase cursor-pointer"
-                            onClick={() => {
-                              if (accusationResponses[acc.id]?.trim()) {
-                                respondToAccusationMutation.mutate({
-                                  id: acc.id,
-                                  response: accusationResponses[acc.id],
-                                });
-                                setAccusationResponses((prev) => {
-                                  const n = { ...prev };
-                                  delete n[acc.id];
-                                  return n;
-                                });
-                              }
-                            }}
-                            disabled={respondToAccusationMutation.isPending}
-                          >
-                            Respond
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {myEnforcement && (myEnforcement as any).enforcementLevel > 1 && (
-                <div className="bg-rose-950/30 border border-rose-500/20 rounded-xl p-3 text-center">
-                  <div className="text-[10px] text-rose-400 uppercase font-bold tracking-widest">
-                    Enforcement Active
-                  </div>
-                  <div className="text-lg font-black text-rose-500">
-                    Level {(myEnforcement as any).enforcementLevel}
-                  </div>
-                </div>
-              )}
-
-              {quickCommands.filter((c: any) => !c.acknowledged).length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">
-                    Pending Orders
-                  </h4>
-                  {quickCommands
-                    .filter((c: any) => !c.acknowledged)
-                    .slice(0, 5)
-                    .map((cmd: any) => (
-                      <div
-                        key={cmd.id}
-                        className="bg-red-950/40 border border-red-900/50 rounded-xl p-3 flex items-center justify-between"
-                      >
-                        <span className="text-xs font-bold text-white uppercase">
-                          {cmd.message}
-                        </span>
-                        <Button
-                          data-testid={`button-ack-command-${cmd.id}`}
-                          size="sm"
-                          variant="outline"
-                          className="border-red-500/50 text-red-400 text-[10px] uppercase"
-                          onClick={() =>
-                            acknowledgeCommandMutation.mutate(cmd.id)
-                          }
-                        >
-                          Acknowledge
-                        </Button>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       );
     }
@@ -2792,28 +2174,6 @@ export default function BondedAscentApp() {
 
   return (
     <div className="flex h-[100dvh] bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
-      <style>{`
-        @keyframes float-ember {
-          0%, 100% { opacity: 0; transform: translateY(0); }
-          50% { opacity: 0.6; transform: translateY(-30px); }
-        }
-        @keyframes throne-pulse {
-          0%, 100% { box-shadow: 0 0 30px rgba(220,38,38,0.2), 0 0 60px rgba(220,38,38,0.08); }
-          50% { box-shadow: 0 0 40px rgba(220,38,38,0.35), 0 0 80px rgba(220,38,38,0.15); }
-        }
-        @keyframes chain-flow {
-          0% { stroke-dashoffset: 20; }
-          100% { stroke-dashoffset: 0; }
-        }
-        @keyframes word-rotate {
-          0%, 20% { opacity: 1; }
-          25%, 100% { opacity: 0; }
-        }
-        @keyframes devotion-pulse {
-          0%, 100% { box-shadow: 0 0 20px rgba(220,38,38,0.15), 0 0 40px rgba(220,38,38,0.06); }
-          50% { box-shadow: 0 0 30px rgba(220,38,38,0.3), 0 0 60px rgba(220,38,38,0.12); }
-        }
-      `}</style>
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
 
       {isCrisisMode && (
@@ -2879,11 +2239,6 @@ export default function BondedAscentApp() {
               <div className="text-2xl font-black text-white tracking-tighter uppercase drop-shadow-md">
                 Bonded<span className="text-red-600">Ascent</span>
               </div>
-              {isVelvetMode && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-900/30 text-red-500 border border-red-500/50 uppercase tracking-widest">
-                  Velvet Mode
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm font-bold text-white uppercase tracking-wider hidden sm:inline">
@@ -5819,47 +5174,6 @@ function BigButton({
   );
 }
 
-function SanctuaryNode({
-  icon,
-  label,
-  angle,
-  color,
-  onClick,
-  sexyIcon,
-}: {
-  icon: React.ReactElement<any>;
-  label: string;
-  angle: number;
-  color: string;
-  onClick: () => void;
-  sexyIcon?: string;
-}) {
-  const rad = (angle - 90) * (Math.PI / 180);
-  const radius = 130;
-
-  return (
-    <button
-      onClick={onClick}
-      className={`absolute w-14 h-14 rounded-full ${sexyIcon ? "bg-black/60 backdrop-blur-sm" : color} shadow-[0_0_15px_currentColor] flex flex-col items-center justify-center ${sexyIcon ? "hover:z-50" : "hover:scale-125 hover:z-50"} transition-all duration-300 border-2 border-white/20 cursor-pointer ${sexyIcon ? "overflow-visible" : "overflow-hidden"}`}
-      style={{
-        left: `calc(50% + ${radius * Math.cos(rad)}px)`,
-        top: `calc(50% + ${radius * Math.sin(rad)}px)`,
-        transform: "translate(-50%, -50%)",
-      }}
-    >
-      {sexyIcon ? (
-        <SexyIcon name={sexyIcon} size={36} glow="gold" />
-      ) : (
-        <div className="text-white drop-shadow-md">
-          {React.cloneElement(icon, { size: 18 })}
-        </div>
-      )}
-      <span className="text-[7px] font-black text-white uppercase absolute -bottom-5 w-24 text-center bg-black/80 px-1 py-0.5 rounded backdrop-blur-sm border border-white/10">
-        {label}
-      </span>
-    </button>
-  );
-}
 
 function PushNotificationToggle() {
   const [pushEnabled, setPushEnabled] = useState(false);
