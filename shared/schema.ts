@@ -15,6 +15,7 @@ export const users = pgTable("users", {
   partnerId: varchar("partner_id"),
   lockedDown: boolean("locked_down").notNull().default(false),
   enforcementLevel: integer("enforcement_level").notNull().default(1),
+  stickerBalance: integer("sticker_balance").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -72,6 +73,9 @@ export const journalEntries = pgTable("journal_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
   content: text("content").notNull(),
+  isShared: boolean("is_shared").notNull().default(false),
+  unlockCost: integer("unlock_cost").notNull().default(50),
+  unlockedBy: varchar("unlocked_by"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -133,6 +137,7 @@ export const secrets = pgTable("secrets", {
   content: text("content").notNull(),
   tier: text("tier").notNull().default("common"),
   revealed: boolean("revealed").notNull().default(false),
+  xpCost: integer("xp_cost").notNull().default(25),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -273,6 +278,8 @@ export const insertCheckInSchema = createInsertSchema(checkIns).pick({
 export const insertJournalSchema = createInsertSchema(journalEntries).pick({
   userId: true,
   content: true,
+  isShared: true,
+  unlockCost: true,
 });
 
 export const insertRewardSchema = createInsertSchema(rewards).pick({
@@ -662,6 +669,9 @@ export const media = pgTable("media", {
   url: text("url").notNull(),
   entityType: text("entity_type"),
   entityId: varchar("entity_id"),
+  isLocked: boolean("is_locked").notNull().default(false),
+  unlockCost: integer("unlock_cost").notNull().default(100),
+  unlockedBy: varchar("unlocked_by"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

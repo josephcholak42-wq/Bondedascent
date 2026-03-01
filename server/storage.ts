@@ -245,6 +245,12 @@ export interface IStorage {
   getBodyMapZones(userId: string): Promise<BodyMapZone[]>;
   upsertBodyMapZone(userId: string, partnerId: string | null, zoneName: string, status: string, intensity: number): Promise<BodyMapZone>;
   deleteBodyMapZones(userId: string): Promise<void>;
+
+  updateUserStickerBalance(userId: string, balance: number): Promise<User | undefined>;
+  getJournalEntriesForPair(userIds: string[]): Promise<JournalEntry[]>;
+  unlockJournalEntry(id: string, unlockedBy: string): Promise<JournalEntry | undefined>;
+  getLockedMediaForPair(userIds: string[]): Promise<Media[]>;
+  unlockMedia(id: string, unlockedBy: string): Promise<Media | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -949,6 +955,34 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBodyMapZones(userId: string): Promise<void> {
     await db.delete(bodyMapZones).where(eq(bodyMapZones.userId, userId));
+  }
+
+  async updateUserStickerBalance(userId: string, balance: number): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ stickerBalance: balance }).where(eq(users.id, userId)).returning();
+    return user;
+  }
+
+  async getJournalEntriesForPair(userIds: string[]): Promise<JournalEntry[]> {
+    return db.select().from(journalEntries).where(inArray(journalEntries.userId, userIds)).orderBy(desc(journalEntries.createdAt));
+  }
+
+  async unlockJournalEntry(id: string, unlockedBy: string): Promise<JournalEntry | undefined> {
+    const [entry] = await db.update(journalEntries).set({ unlockedBy }).where(eq(journalEntries.id, id)).returning();
+    return entry;
+  }
+
+  async getLockedMediaForPair(userIds: string[]): Promise<Media[]> {
+    return db.select().from(media).where(
+      and(
+        inArray(media.userId, userIds),
+        eq(media.entityType, "locked_media")
+      )
+    ).orderBy(desc(media.createdAt));
+  }
+
+  async unlockMedia(id: string, unlockedBy: string): Promise<Media | undefined> {
+    const [m] = await db.update(media).set({ isLocked: false, unlockedBy }).where(eq(media.id, id)).returning();
+    return m;
   }
 }
 

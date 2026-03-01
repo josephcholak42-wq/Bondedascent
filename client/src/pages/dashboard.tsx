@@ -200,6 +200,7 @@ import {
   SCENE_CATEGORIES,
   type PrebuiltScene,
 } from "@/lib/prebuilt-scenes";
+import { ActionFeed, type FeedItem } from "@/components/action-feed";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 const PARTICLE_DATA = Array.from({ length: 8 }).map(() => ({
@@ -1519,6 +1520,95 @@ export default function BondedAscentApp() {
       )}
     </div>
   );
+
+  const buildSubFeedItems = useCallback((): FeedItem[] => {
+    const items: FeedItem[] = [];
+    const activeDemands = (demandTimers || []).filter((t: any) => !t.responded && new Date(t.expiresAt) > new Date());
+    activeDemands.forEach((t: any) => {
+      const remaining = Math.max(0, Math.ceil((new Date(t.expiresAt).getTime() - Date.now()) / 1000));
+      items.push({ id: t.id, type: "demand", title: t.message, countdown: remaining, data: t });
+    });
+    (quickCommands || []).filter((c: any) => !c.acknowledged).forEach((c: any) => {
+      items.push({ id: c.id, type: "command", title: c.message, data: c });
+    });
+    (accusations || []).filter((a: any) => a.status === "pending" && a.toUserId === user?.id).forEach((a: any) => {
+      items.push({ id: a.id, type: "accusation", title: a.accusation, data: a });
+    });
+    tasks.filter((t) => !t.done).forEach((t) => {
+      items.push({ id: t.id, type: "task", title: t.text, data: t });
+    });
+    (punishments || []).filter((p: any) => p.status === "active" && p.userId === user?.id).forEach((p: any) => {
+      items.push({ id: p.id, type: "punishment", title: p.name, description: p.category ? `${p.category} · ${p.duration || ""}` : undefined, data: p });
+    });
+    dares.filter((d: any) => !d.completed).forEach((d: any) => {
+      items.push({ id: d.id, type: "dare", title: d.text, data: d });
+    });
+    (rewards || []).filter((r: any) => !r.unlocked && r.userId === user?.id).forEach((r: any) => {
+      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r });
+    });
+    notifications.slice(0, 10).forEach((n) => {
+      items.push({ id: n.id, type: "notification", title: n.text, data: n });
+    });
+    return items;
+  }, [demandTimers, quickCommands, accusations, tasks, punishments, dares, rewards, notifications, user?.id]);
+
+  const buildDomFeedItems = useCallback((): FeedItem[] => {
+    const items: FeedItem[] = [];
+    (partnerCheckIns || []).filter((c: any) => c.status === "pending").forEach((c: any) => {
+      items.push({ id: c.id, type: "checkin_review", title: `Check-In: Mood ${c.mood}/10, Obedience ${c.obedience}/10`, description: c.notes || undefined, data: c });
+    });
+    (partnerTasks || []).filter((t: any) => !t.done).forEach((t: any) => {
+      items.push({ id: t.id, type: "task", title: t.text, description: "Assigned to partner", data: { ...t, isPartnerTask: true } });
+    });
+    (punishments || []).filter((p: any) => p.status === "active").forEach((p: any) => {
+      items.push({ id: p.id, type: "punishment", title: p.name, description: `Active · ${p.category || ""}`, data: p });
+    });
+    (rewards || []).filter((r: any) => !r.unlocked).forEach((r: any) => {
+      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r });
+    });
+    notifications.slice(0, 10).forEach((n) => {
+      items.push({ id: n.id, type: "notification", title: n.text, data: n });
+    });
+    return items;
+  }, [partnerCheckIns, partnerTasks, punishments, rewards, notifications]);
+
+  const handleFeedAction = useCallback((itemId: string, action: string, payload?: any) => {
+    switch (action) {
+      case "respond":
+        if (payload && typeof payload === "string") {
+          respondToAccusationMutation.mutate({ id: itemId, response: payload });
+        } else {
+          respondDemandTimerMutation.mutate(itemId);
+        }
+        break;
+      case "acknowledge":
+        acknowledgeCommandMutation.mutate(itemId);
+        break;
+      case "toggle":
+        handleToggleTask(itemId);
+        break;
+      case "complete":
+        const punishItem = (punishments || []).find((p: any) => p.id === itemId);
+        if (punishItem) {
+          updatePunishmentStatusMutation.mutate({ id: itemId, status: "completed" });
+        } else {
+          completeDareMutation.mutate(itemId);
+        }
+        break;
+      case "redeem":
+        toggleRewardMutation.mutate(itemId);
+        break;
+      case "dismiss":
+        dismissNotificationMutation.mutate(itemId);
+        break;
+      case "approve":
+        reviewPartnerCheckInMutation.mutate({ checkInId: itemId, status: "approved", xpAwarded: payload || 10 });
+        break;
+      case "reject":
+        reviewPartnerCheckInMutation.mutate({ checkInId: itemId, status: "rejected", xpAwarded: 0 });
+        break;
+    }
+  }, [respondToAccusationMutation, respondDemandTimerMutation, acknowledgeCommandMutation, toggleTaskMutation, punishments, updatePunishmentStatusMutation, completeDareMutation, toggleRewardMutation, dismissNotificationMutation, reviewPartnerCheckInMutation]);
 
   const renderContent = () => {
     if (userRole === "dom" && activeView === "dashboard") {

@@ -1,0 +1,140 @@
+export interface PrebuiltRitual {
+  name: string;
+  category: string;
+  frequency: string;
+  description: string;
+}
+
+export const RITUAL_CATEGORIES = [
+  "Morning",
+  "Evening",
+  "Service",
+  "Devotion",
+  "Discipline",
+  "Greeting",
+  "Transition",
+  "Maintenance",
+] as const;
+
+export const PREBUILT_RITUALS: PrebuiltRitual[] = [
+  // Morning Rituals
+  { name: "Morning greeting text", category: "Morning", frequency: "daily", description: "Send a good morning message with a respectful greeting before anything else" },
+  { name: "Kneeling wake-up", category: "Morning", frequency: "daily", description: "Kneel beside the bed for 2 minutes upon waking to center yourself" },
+  { name: "Morning affirmation recitation", category: "Morning", frequency: "daily", description: "Recite 3 affirmations about your dynamic aloud each morning" },
+  { name: "Morning body presentation", category: "Morning", frequency: "daily", description: "Present yourself for inspection each morning before dressing" },
+  { name: "Gratitude journal entry", category: "Morning", frequency: "daily", description: "Write 3 things you are grateful for about your partner each morning" },
+  { name: "Morning stretch routine", category: "Morning", frequency: "daily", description: "Complete a 10-minute stretch routine before starting the day" },
+  { name: "Prepare partner's coffee or tea", category: "Morning", frequency: "daily", description: "Have their preferred morning beverage ready before they wake" },
+  { name: "Morning check-in photo", category: "Morning", frequency: "daily", description: "Send a photo of yourself ready for the day for approval" },
+  { name: "Recite daily rules", category: "Morning", frequency: "daily", description: "Read through and recite all active rules and protocols each morning" },
+  { name: "Morning meditation", category: "Morning", frequency: "daily", description: "5-minute guided meditation focusing on submission and trust" },
+  { name: "Make the bed perfectly", category: "Morning", frequency: "daily", description: "Make the bed with hospital corners and arrange pillows neatly" },
+  { name: "Morning skincare routine", category: "Morning", frequency: "daily", description: "Complete full skincare routine as prescribed by your Dom" },
+  { name: "Set daily intentions", category: "Morning", frequency: "daily", description: "Write and share 3 intentions for the day with your partner" },
+  { name: "Morning exercise", category: "Morning", frequency: "daily", description: "Complete assigned workout routine before breakfast" },
+
+  // Evening Rituals
+  { name: "Evening reflection journal", category: "Evening", frequency: "daily", description: "Write a reflection on the day including obedience, struggles, and gratitude" },
+  { name: "Goodnight text with honorific", category: "Evening", frequency: "daily", description: "Send a goodnight message using proper titles and expressing devotion" },
+  { name: "Lay out clothes for tomorrow", category: "Evening", frequency: "daily", description: "Set out tomorrow's outfit for partner's approval" },
+  { name: "Evening kneeling meditation", category: "Evening", frequency: "daily", description: "Kneel for 5 minutes in silence reflecting on the day's dynamic" },
+  { name: "Prepare bedroom for sleep", category: "Evening", frequency: "daily", description: "Turn down sheets, set temperature, light candles, prepare the space" },
+  { name: "Report daily tasks completion", category: "Evening", frequency: "daily", description: "Send a detailed report of all completed tasks and any shortcomings" },
+  { name: "Evening bath or shower ritual", category: "Evening", frequency: "daily", description: "Bathe with intention, focusing on preparing your body for your partner" },
+  { name: "Read assigned chapter", category: "Evening", frequency: "daily", description: "Read one chapter of an assigned book before bed" },
+  { name: "Screen-free last hour", category: "Evening", frequency: "daily", description: "No screens for the last hour before bed — focus on connection" },
+  { name: "Evening prayer or mantra", category: "Evening", frequency: "daily", description: "Recite an evening prayer or mantra of devotion before sleep" },
+  { name: "Foot massage for partner", category: "Evening", frequency: "daily", description: "Offer a 10-minute foot massage to your partner before bed" },
+  { name: "Lock up routine", category: "Evening", frequency: "daily", description: "Check all doors, windows, and lights before presenting yourself for bed" },
+  { name: "Nightly collar ceremony", category: "Evening", frequency: "daily", description: "Remove day collar and replace with sleep collar with reverence" },
+
+  // Service Rituals
+  { name: "Serve meals on knees", category: "Service", frequency: "daily", description: "Present meals to your partner while kneeling" },
+  { name: "Draw partner's bath", category: "Service", frequency: "daily", description: "Prepare a bath with preferred temperature, salts, and candles" },
+  { name: "Polish partner's shoes", category: "Service", frequency: "weekly", description: "Clean and polish all of your partner's shoes weekly" },
+  { name: "Prepare partner's work bag", category: "Service", frequency: "daily", description: "Pack partner's bag with everything needed for the day" },
+  { name: "Iron partner's clothes", category: "Service", frequency: "daily", description: "Press and prepare partner's outfit for the next day" },
+  { name: "Fetch slippers at door", category: "Service", frequency: "daily", description: "Have slippers ready at the door when partner arrives home" },
+  { name: "Serve drinks properly", category: "Service", frequency: "daily", description: "Always serve beverages on a tray with a napkin, kneeling to present" },
+  { name: "Weekly deep clean", category: "Service", frequency: "weekly", description: "Perform a thorough deep clean of the entire living space" },
+  { name: "Grocery shopping and meal prep", category: "Service", frequency: "weekly", description: "Plan, shop for, and prep meals for the week according to preferences" },
+  { name: "Car maintenance check", category: "Service", frequency: "weekly", description: "Check partner's car — fuel, tires, cleanliness — and address needs" },
+  { name: "Wardrobe organization", category: "Service", frequency: "weekly", description: "Organize partner's closet, ensuring everything is sorted and accessible" },
+  { name: "Pack partner's lunch", category: "Service", frequency: "daily", description: "Prepare and pack a thoughtful lunch with a handwritten note" },
+  { name: "Run partner's errands", category: "Service", frequency: "weekly", description: "Complete any errands on partner's to-do list without being asked" },
+
+  // Devotion Rituals
+  { name: "Write a love note", category: "Devotion", frequency: "daily", description: "Leave a handwritten note of devotion somewhere partner will find it" },
+  { name: "Collar kissing", category: "Devotion", frequency: "daily", description: "Kiss your collar before putting it on and when removing it" },
+  { name: "Recite devotion pledge", category: "Devotion", frequency: "daily", description: "Speak your devotion pledge aloud while kneeling before your partner" },
+  { name: "Weekly love letter", category: "Devotion", frequency: "weekly", description: "Write a detailed love letter expressing your feelings and commitment" },
+  { name: "Photo of something that reminded you of them", category: "Devotion", frequency: "daily", description: "Send a photo during the day of something that made you think of them" },
+  { name: "Learn something new for partner", category: "Devotion", frequency: "weekly", description: "Learn a new skill, recipe, or technique to please your partner" },
+  { name: "Create art or poetry for partner", category: "Devotion", frequency: "weekly", description: "Create something artistic dedicated to your partner and dynamic" },
+  { name: "Memorize a quote about devotion", category: "Devotion", frequency: "weekly", description: "Find and memorize a meaningful quote about love, trust, or devotion" },
+  { name: "Altar maintenance", category: "Devotion", frequency: "daily", description: "Maintain a small altar or shrine dedicated to your dynamic" },
+  { name: "Song dedication", category: "Devotion", frequency: "daily", description: "Send your partner a song that expresses how you feel about them" },
+  { name: "Verbal praise offering", category: "Devotion", frequency: "daily", description: "Give your partner 5 specific compliments or praises each day" },
+  { name: "Memory sharing", category: "Devotion", frequency: "weekly", description: "Share a favorite memory of your dynamic and why it matters to you" },
+  { name: "Gratitude prayer", category: "Devotion", frequency: "daily", description: "Speak a prayer of gratitude for your partner and your connection" },
+
+  // Discipline Rituals
+  { name: "Position practice", category: "Discipline", frequency: "daily", description: "Practice and hold assigned positions for 5 minutes each" },
+  { name: "Posture check-ins", category: "Discipline", frequency: "daily", description: "Set hourly reminders to check and correct your posture throughout the day" },
+  { name: "Edge and deny", category: "Discipline", frequency: "daily", description: "Edge yourself once per day but do not finish — report to partner" },
+  { name: "Cold shower discipline", category: "Discipline", frequency: "daily", description: "End every shower with 30 seconds of cold water" },
+  { name: "No complaining challenge", category: "Discipline", frequency: "daily", description: "Go the entire day without complaining — log any failures" },
+  { name: "Eye contact training", category: "Discipline", frequency: "daily", description: "Practice maintaining or avoiding eye contact as directed" },
+  { name: "Speech protocol practice", category: "Discipline", frequency: "daily", description: "Use proper titles and speech patterns in all communication" },
+  { name: "Patience exercise", category: "Discipline", frequency: "daily", description: "Wait 10 seconds before responding to any request to practice patience" },
+  { name: "Self-denial exercise", category: "Discipline", frequency: "daily", description: "Deny yourself one pleasure or comfort item each day" },
+  { name: "Rule review quiz", category: "Discipline", frequency: "weekly", description: "Complete a quiz on all current rules and protocols — score tracked" },
+  { name: "Silence period", category: "Discipline", frequency: "daily", description: "Maintain complete silence for 30 minutes daily unless addressed" },
+  { name: "Mindfulness bell", category: "Discipline", frequency: "daily", description: "When the bell sounds, stop and kneel for 30 seconds wherever you are" },
+  { name: "Physical endurance hold", category: "Discipline", frequency: "daily", description: "Hold a stress position for an increasing duration each day" },
+
+  // Greeting Rituals
+  { name: "Kneel at the door", category: "Greeting", frequency: "daily", description: "Kneel at the front door when your partner arrives home" },
+  { name: "Greeting with honorific", category: "Greeting", frequency: "daily", description: "Always greet your partner with their proper title and a bow or curtsy" },
+  { name: "Remove partner's shoes", category: "Greeting", frequency: "daily", description: "Kneel and remove partner's shoes when they arrive home" },
+  { name: "Present collar for inspection", category: "Greeting", frequency: "daily", description: "Present your collar for partner to inspect upon greeting" },
+  { name: "Welcome home drink", category: "Greeting", frequency: "daily", description: "Have partner's preferred drink ready within 2 minutes of arrival" },
+  { name: "Status report greeting", category: "Greeting", frequency: "daily", description: "Upon greeting, immediately report your status and completed tasks" },
+  { name: "Kiss hand or feet", category: "Greeting", frequency: "daily", description: "Kiss partner's hand or feet as a greeting gesture" },
+  { name: "Coat and bag service", category: "Greeting", frequency: "daily", description: "Take partner's coat and bag, hang them properly upon arrival" },
+  { name: "Welcome home massage", category: "Greeting", frequency: "daily", description: "Offer a brief shoulder or hand massage upon partner's return" },
+  { name: "Presentation pose", category: "Greeting", frequency: "daily", description: "Assume the designated presentation pose when partner enters the room" },
+  { name: "Farewell blessing", category: "Greeting", frequency: "daily", description: "Perform a farewell ritual when partner leaves — words, gesture, or kiss" },
+  { name: "Eye contact greeting", category: "Greeting", frequency: "daily", description: "Make intentional eye contact and state your devotion when greeting" },
+  { name: "Phone greeting protocol", category: "Greeting", frequency: "daily", description: "Answer partner's calls with proper greeting and title within 3 rings" },
+
+  // Transition Rituals
+  { name: "Collar on ceremony", category: "Transition", frequency: "daily", description: "Formal collaring each time you enter the dynamic — kneel, present neck" },
+  { name: "Collar off ceremony", category: "Transition", frequency: "daily", description: "Formal removal of collar when leaving dynamic space — gratitude spoken" },
+  { name: "Scene entry protocol", category: "Transition", frequency: "custom", description: "Follow specific steps before entering a scene — breathing, kneeling, consent check" },
+  { name: "Aftercare transition", category: "Transition", frequency: "custom", description: "Structured aftercare ritual — blanket, water, gentle touch, verbal reassurance" },
+  { name: "Work-to-home transition", category: "Transition", frequency: "daily", description: "Change into designated home attire and mindset within 15 minutes of arriving" },
+  { name: "Public-to-private shift", category: "Transition", frequency: "custom", description: "When entering private space, switch to full protocol — posture, speech, behavior" },
+  { name: "Safeword check-in", category: "Transition", frequency: "custom", description: "Before any intensity change, perform a traffic-light check-in" },
+  { name: "Breathing reset", category: "Transition", frequency: "daily", description: "5 deep breaths together before transitioning between activities" },
+  { name: "Intention setting before play", category: "Transition", frequency: "custom", description: "Both partners state their intentions and boundaries before a session" },
+  { name: "Re-entry ritual", category: "Transition", frequency: "custom", description: "After time apart, perform a reconnection ritual — touch, words, eye contact" },
+  { name: "Weekend mode activation", category: "Transition", frequency: "weekly", description: "Friday evening ritual that shifts the dynamic into weekend intensity" },
+  { name: "Monday reset", category: "Transition", frequency: "weekly", description: "Monday morning protocol reset — review rules, set weekly goals" },
+  { name: "Headspace transition meditation", category: "Transition", frequency: "custom", description: "Guided meditation to shift from vanilla to dynamic headspace" },
+
+  // Maintenance Rituals
+  { name: "Weekly relationship check-in", category: "Maintenance", frequency: "weekly", description: "Structured conversation about what's working, what needs adjusting" },
+  { name: "Limits review", category: "Maintenance", frequency: "weekly", description: "Review and discuss all limits — any changes, new discoveries, concerns" },
+  { name: "Protocol audit", category: "Maintenance", frequency: "weekly", description: "Review all active protocols and adjust or remove as needed" },
+  { name: "Equipment inspection", category: "Maintenance", frequency: "weekly", description: "Clean, inspect, and organize all toys, restraints, and equipment" },
+  { name: "Safe space conversation", category: "Maintenance", frequency: "weekly", description: "Designated time where both partners speak freely without dynamic roles" },
+  { name: "Goal setting session", category: "Maintenance", frequency: "weekly", description: "Set and review weekly goals for the dynamic together" },
+  { name: "Physical health check", category: "Maintenance", frequency: "weekly", description: "Check for any marks, soreness, or physical concerns from play" },
+  { name: "Emotional wellness check", category: "Maintenance", frequency: "weekly", description: "Honest assessment of emotional state and any sub/dom drop signs" },
+  { name: "Contract review", category: "Maintenance", frequency: "weekly", description: "Re-read and discuss the dynamic contract — amendments if needed" },
+  { name: "Scene debrief", category: "Maintenance", frequency: "custom", description: "After every scene, discuss what worked, what didn't, and feelings" },
+  { name: "Monthly anniversary ritual", category: "Maintenance", frequency: "custom", description: "Celebrate monthly dynamic anniversary with a special ritual" },
+  { name: "Trust exercise", category: "Maintenance", frequency: "weekly", description: "Complete a trust-building exercise together — falls, blindfold walks, etc." },
+  { name: "Fantasy sharing session", category: "Maintenance", frequency: "weekly", description: "Each partner shares one fantasy or desire in a safe, judgment-free space" },
+];

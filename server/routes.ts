@@ -323,13 +323,57 @@ export async function registerRoutes(
 
   app.post("/api/journal", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { content } = req.body;
+    const { content, isShared, unlockCost } = req.body;
     if (!content || typeof content !== "string" || !content.trim()) {
       return res.status(400).json({ message: "Journal content required" });
     }
-    const entry = await storage.createJournalEntry({ userId: user.id, content: content.trim() });
+    const entry = await storage.createJournalEntry({
+      userId: user.id,
+      content: content.trim(),
+      isShared: isShared || false,
+      unlockCost: unlockCost || 50,
+    });
     await storage.logActivity(user.id, "journal_entry", "New journal entry");
+    if (isShared) {
+      const partner = await storage.getPartner(user.id);
+      if (partner) {
+        await notifyUser(partner.id, `${user.username} shared a journal entry (locked — ${unlockCost || 50} XP to read)`, "info");
+      }
+    }
     res.status(201).json(entry);
+  });
+
+  app.get("/api/journal/shared", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.json([]);
+    const entries = await storage.getJournalEntriesForPair([user.id, partner.id]);
+    const shared = entries.filter(e => e.isShared);
+    res.json(shared.map(e => ({
+      ...e,
+      content: e.unlockedBy || e.userId === user.id ? e.content : "🔒 Locked — purchase to read",
+      isUnlocked: !!e.unlockedBy || e.userId === user.id,
+    })));
+  });
+
+  app.post("/api/journal/:id/unlock", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(400).json({ message: "No partner linked" });
+    const entries = await storage.getJournalEntriesForPair([user.id, partner.id]);
+    const entry = entries.find(e => e.id === req.params.id);
+    if (!entry) return res.status(404).json({ message: "Entry not found" });
+    if (entry.userId === user.id) return res.status(400).json({ message: "You own this entry" });
+    if (entry.unlockedBy) return res.status(400).json({ message: "Already unlocked" });
+    const cost = entry.unlockCost || 50;
+    if (user.xp < cost) {
+      return res.status(400).json({ message: `Not enough XP. Need ${cost} XP.` });
+    }
+    await storage.updateUserXp(user.id, user.xp - cost);
+    const unlocked = await storage.unlockJournalEntry(req.params.id, user.id);
+    await storage.logActivity(user.id, "journal_unlocked", `Spent ${cost} XP to read partner's journal`);
+    await notifyUser(entry.userId, `${user.username} unlocked one of your journal entries!`, "info");
+    res.json(unlocked);
   });
 
   // --- NOTIFICATIONS ---
@@ -723,6 +767,25 @@ export async function registerRoutes(
   });
 
   app.patch("/api/secrets/:id/reveal", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allSecrets = await storage.getSecrets(user.id);
+    const partnerSecrets = await storage.getSecretsForUser(user.id);
+    const allOwned = [...allSecrets, ...partnerSecrets];
+    const targetSecret = allOwned.find(s => s.id === req.params.id);
+    if (!targetSecret) return res.status(404).json({ message: "Not found" });
+
+    const isOwner = targetSecret.userId === user.id;
+    const isDom = user.role === "dom";
+
+    if (!isOwner && !isDom) {
+      const cost = targetSecret.xpCost || 25;
+      if (user.xp < cost) {
+        return res.status(400).json({ message: `Not enough XP. Need ${cost} XP to reveal.` });
+      }
+      await storage.updateUserXp(user.id, user.xp - cost);
+      await storage.logActivity(user.id, "secret_purchased", `Spent ${cost} XP to reveal: ${targetSecret.title}`);
+    }
+
     const secret = await storage.revealSecret(req.params.id);
     if (!secret) return res.status(404).json({ message: "Not found" });
     res.json(secret);
@@ -1664,15 +1727,36 @@ export async function registerRoutes(
     const user = req.user as User;
     const { recipientId, stickerType, message } = req.body;
     if (!recipientId || !stickerType) return res.status(400).json({ message: "recipientId and stickerType required" });
+    const STICKER_VALUES: Record<string, number> = {
+      "gold-star": 5, heart: 3, fire: 4, crown: 10, diamond: 15, ribbon: 2, trophy: 8, sparkle: 1,
+    };
     const sticker = await storage.createSticker({
       senderId: user.id,
       recipientId,
       stickerType,
       message: message || null,
     });
+    const stickerValue = STICKER_VALUES[stickerType] || 1;
+    const recipient = await storage.getUser(recipientId);
+    if (recipient) {
+      await storage.updateUserStickerBalance(recipientId, (recipient.stickerBalance || 0) + stickerValue);
+    }
     await storage.logActivity(user.id, "sticker_sent", `Sent a ${stickerType} sticker`);
-    await notifyUser(recipientId, `${user.username} sent you a ${stickerType} sticker!`, "info");
+    await notifyUser(recipientId, `${user.username} sent you a ${stickerType} sticker! (+${stickerValue} points)`, "info");
     res.json(sticker);
+  });
+
+  app.post("/api/stickers/spend", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { amount } = req.body;
+    if (!amount || typeof amount !== "number" || amount <= 0) {
+      return res.status(400).json({ message: "Invalid amount" });
+    }
+    if ((user.stickerBalance || 0) < amount) {
+      return res.status(400).json({ message: "Insufficient sticker balance" });
+    }
+    await storage.updateUserStickerBalance(user.id, (user.stickerBalance || 0) - amount);
+    res.json({ success: true, newBalance: (user.stickerBalance || 0) - amount });
   });
 
   // --- FEATURE SETTINGS ---
@@ -1724,6 +1808,64 @@ export async function registerRoutes(
     const user = req.user as User;
     await storage.deleteBodyMapZones(user.id);
     res.json({ success: true });
+  });
+
+  // --- LOCKED MEDIA ---
+  app.get("/api/media/locked", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const items = await storage.getLockedMediaForPair(userIds);
+    res.json(items.map(m => ({
+      ...m,
+      url: m.isLocked && m.userId !== user.id && m.unlockedBy !== user.id ? null : m.url,
+    })));
+  });
+
+  app.post("/api/media/locked", requireAuth, upload.single("file"), async (req, res) => {
+    const user = req.user as User;
+    if (!req.file) return res.status(400).json({ message: "File required" });
+    const unlockCost = parseInt(req.body.unlockCost) || 100;
+    const m = await storage.createMedia({
+      userId: user.id,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      url: `/uploads/${req.file.filename}`,
+      entityType: "locked_media",
+      entityId: null,
+      isLocked: true,
+      unlockCost,
+      unlockedBy: null,
+    });
+    await storage.logActivity(user.id, "locked_media_uploaded", `Uploaded locked ${req.file.mimetype.startsWith("video") ? "video" : "photo"}`);
+    const partner = await storage.getPartner(user.id);
+    if (partner) {
+      await notifyUser(partner.id, `${user.username} uploaded a locked ${req.file.mimetype.startsWith("video") ? "video" : "photo"} (${unlockCost} XP to unlock)`, "info");
+    }
+    res.status(201).json(m);
+  });
+
+  app.post("/api/media/:id/unlock", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(400).json({ message: "No partner linked" });
+    const userIds = [user.id, partner.id];
+    const items = await storage.getLockedMediaForPair(userIds);
+    const item = items.find(m => m.id === req.params.id);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    if (item.userId === user.id) return res.status(400).json({ message: "You own this media" });
+    if (!item.isLocked) return res.status(400).json({ message: "Already unlocked" });
+    const cost = item.unlockCost || 100;
+    if (user.xp < cost) {
+      return res.status(400).json({ message: `Not enough XP. Need ${cost} XP.` });
+    }
+    await storage.updateUserXp(user.id, user.xp - cost);
+    const unlocked = await storage.unlockMedia(req.params.id, user.id);
+    await storage.logActivity(user.id, "media_unlocked", `Spent ${cost} XP to unlock media`);
+    await notifyUser(item.userId, `${user.username} unlocked your locked media!`, "info");
+    res.json({ ...unlocked, url: unlocked?.url });
   });
 
   return httpServer;

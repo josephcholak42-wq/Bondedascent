@@ -25,31 +25,40 @@ interface ZoneDefinition {
   name: string;
   label: string;
   test: (point: THREE.Vector3) => boolean;
+  glowPos: [number, number, number];
 }
 
 const ZONE_DEFS: ZoneDefinition[] = [
-  { name: "head", label: "Head", test: (p) => p.y > 1.55 },
-  { name: "neck", label: "Neck", test: (p) => p.y > 1.42 && p.y <= 1.55 },
-  { name: "left_shoulder", label: "Left Shoulder", test: (p) => p.y > 1.3 && p.y <= 1.42 && p.x < -0.2 },
-  { name: "right_shoulder", label: "Right Shoulder", test: (p) => p.y > 1.3 && p.y <= 1.42 && p.x > 0.2 },
-  { name: "chest", label: "Chest", test: (p) => p.y > 1.05 && p.y <= 1.42 && p.z > -0.05 && Math.abs(p.x) <= 0.2 },
-  { name: "upper_back", label: "Upper Back", test: (p) => p.y > 1.05 && p.y <= 1.42 && p.z <= -0.05 && Math.abs(p.x) <= 0.2 },
-  { name: "left_upper_arm", label: "Left Upper Arm", test: (p) => p.y > 0.95 && p.y <= 1.3 && p.x < -0.2 },
-  { name: "right_upper_arm", label: "Right Upper Arm", test: (p) => p.y > 0.95 && p.y <= 1.3 && p.x > 0.2 },
-  { name: "abdomen", label: "Abdomen", test: (p) => p.y > 0.85 && p.y <= 1.05 && p.z > -0.05 && Math.abs(p.x) <= 0.25 },
-  { name: "lower_back", label: "Lower Back", test: (p) => p.y > 0.85 && p.y <= 1.05 && p.z <= -0.05 && Math.abs(p.x) <= 0.25 },
-  { name: "left_forearm", label: "Left Forearm", test: (p) => p.y > 0.6 && p.y <= 0.95 && p.x < -0.2 },
-  { name: "right_forearm", label: "Right Forearm", test: (p) => p.y > 0.6 && p.y <= 0.95 && p.x > 0.2 },
-  { name: "hips", label: "Hips", test: (p) => p.y > 0.7 && p.y <= 0.85 && Math.abs(p.x) <= 0.25 },
-  { name: "left_hand", label: "Left Hand", test: (p) => p.y <= 0.6 && p.x < -0.25 },
-  { name: "right_hand", label: "Right Hand", test: (p) => p.y <= 0.6 && p.x > 0.25 },
-  { name: "inner_thighs", label: "Inner Thighs", test: (p) => p.y > 0.4 && p.y <= 0.7 && Math.abs(p.x) < 0.08 },
-  { name: "left_thigh", label: "Left Thigh", test: (p) => p.y > 0.35 && p.y <= 0.7 && p.x <= -0.03 },
-  { name: "right_thigh", label: "Right Thigh", test: (p) => p.y > 0.35 && p.y <= 0.7 && p.x > 0.03 },
-  { name: "left_shin", label: "Left Shin", test: (p) => p.y > 0.08 && p.y <= 0.35 && p.x <= 0 },
-  { name: "right_shin", label: "Right Shin", test: (p) => p.y > 0.08 && p.y <= 0.35 && p.x > 0 },
-  { name: "left_foot", label: "Left Foot", test: (p) => p.y <= 0.08 && p.x <= 0 },
-  { name: "right_foot", label: "Right Foot", test: (p) => p.y <= 0.08 && p.x > 0 },
+  { name: "head_top", label: "Top of Head", test: (p) => p.y > 1.65, glowPos: [0, 1.72, 0] },
+  { name: "face", label: "Face", test: (p) => p.y > 1.55 && p.y <= 1.65 && p.z > -0.02, glowPos: [0, 1.60, 0.06] },
+  { name: "back_of_head", label: "Back of Head", test: (p) => p.y > 1.55 && p.y <= 1.65 && p.z <= -0.02, glowPos: [0, 1.60, -0.06] },
+  { name: "neck_front", label: "Throat", test: (p) => p.y > 1.42 && p.y <= 1.55 && p.z > -0.02, glowPos: [0, 1.48, 0.04] },
+  { name: "neck_back", label: "Nape", test: (p) => p.y > 1.42 && p.y <= 1.55 && p.z <= -0.02, glowPos: [0, 1.48, -0.06] },
+  { name: "left_shoulder", label: "Left Shoulder", test: (p) => p.y > 1.3 && p.y <= 1.42 && p.x < -0.18, glowPos: [-0.3, 1.36, 0] },
+  { name: "right_shoulder", label: "Right Shoulder", test: (p) => p.y > 1.3 && p.y <= 1.42 && p.x > 0.18, glowPos: [0.3, 1.36, 0] },
+  { name: "upper_chest", label: "Upper Chest", test: (p) => p.y > 1.22 && p.y <= 1.42 && p.z > -0.05 && Math.abs(p.x) <= 0.18, glowPos: [0, 1.32, 0.06] },
+  { name: "chest", label: "Chest", test: (p) => p.y > 1.05 && p.y <= 1.22 && p.z > -0.05 && Math.abs(p.x) <= 0.2, glowPos: [0, 1.14, 0.06] },
+  { name: "upper_back", label: "Upper Back", test: (p) => p.y > 1.22 && p.y <= 1.42 && p.z <= -0.05 && Math.abs(p.x) <= 0.18, glowPos: [0, 1.32, -0.1] },
+  { name: "mid_back", label: "Mid Back", test: (p) => p.y > 1.05 && p.y <= 1.22 && p.z <= -0.05 && Math.abs(p.x) <= 0.2, glowPos: [0, 1.14, -0.1] },
+  { name: "left_upper_arm", label: "Left Upper Arm", test: (p) => p.y > 0.95 && p.y <= 1.3 && p.x < -0.2, glowPos: [-0.38, 1.12, 0] },
+  { name: "right_upper_arm", label: "Right Upper Arm", test: (p) => p.y > 0.95 && p.y <= 1.3 && p.x > 0.2, glowPos: [0.38, 1.12, 0] },
+  { name: "abdomen", label: "Abdomen", test: (p) => p.y > 0.85 && p.y <= 1.05 && p.z > -0.05 && Math.abs(p.x) <= 0.22, glowPos: [0, 0.95, 0.05] },
+  { name: "lower_back", label: "Lower Back", test: (p) => p.y > 0.85 && p.y <= 1.05 && p.z <= -0.05 && Math.abs(p.x) <= 0.22, glowPos: [0, 0.95, -0.1] },
+  { name: "left_forearm", label: "Left Forearm", test: (p) => p.y > 0.6 && p.y <= 0.95 && p.x < -0.2, glowPos: [-0.4, 0.78, 0] },
+  { name: "right_forearm", label: "Right Forearm", test: (p) => p.y > 0.6 && p.y <= 0.95 && p.x > 0.2, glowPos: [0.4, 0.78, 0] },
+  { name: "hips_front", label: "Hips", test: (p) => p.y > 0.7 && p.y <= 0.85 && p.z > -0.05 && Math.abs(p.x) <= 0.22, glowPos: [0, 0.78, 0.04] },
+  { name: "buttocks", label: "Buttocks", test: (p) => p.y > 0.7 && p.y <= 0.85 && p.z <= -0.05 && Math.abs(p.x) <= 0.22, glowPos: [0, 0.78, -0.08] },
+  { name: "left_hand", label: "Left Hand", test: (p) => p.y <= 0.6 && p.x < -0.25, glowPos: [-0.4, 0.55, 0] },
+  { name: "right_hand", label: "Right Hand", test: (p) => p.y <= 0.6 && p.x > 0.25, glowPos: [0.4, 0.55, 0] },
+  { name: "inner_thighs", label: "Inner Thighs", test: (p) => p.y > 0.4 && p.y <= 0.7 && Math.abs(p.x) < 0.07, glowPos: [0, 0.55, 0] },
+  { name: "left_thigh", label: "Left Thigh", test: (p) => p.y > 0.35 && p.y <= 0.7 && p.x <= -0.03, glowPos: [-0.12, 0.52, 0] },
+  { name: "right_thigh", label: "Right Thigh", test: (p) => p.y > 0.35 && p.y <= 0.7 && p.x > 0.03, glowPos: [0.12, 0.52, 0] },
+  { name: "left_knee", label: "Left Knee", test: (p) => p.y > 0.28 && p.y <= 0.35 && p.x <= 0, glowPos: [-0.12, 0.32, 0.03] },
+  { name: "right_knee", label: "Right Knee", test: (p) => p.y > 0.28 && p.y <= 0.35 && p.x > 0, glowPos: [0.12, 0.32, 0.03] },
+  { name: "left_shin", label: "Left Shin", test: (p) => p.y > 0.08 && p.y <= 0.28 && p.x <= 0, glowPos: [-0.12, 0.18, 0] },
+  { name: "right_shin", label: "Right Shin", test: (p) => p.y > 0.08 && p.y <= 0.28 && p.x > 0, glowPos: [0.12, 0.18, 0] },
+  { name: "left_foot", label: "Left Foot", test: (p) => p.y <= 0.08 && p.x <= 0, glowPos: [-0.12, 0.04, 0.05] },
+  { name: "right_foot", label: "Right Foot", test: (p) => p.y <= 0.08 && p.x > 0, glowPos: [0.12, 0.04, 0.05] },
 ];
 
 function getZoneFromPoint(point: THREE.Vector3): string {
@@ -67,9 +76,9 @@ function getZoneLabel(zoneName: string): string {
 function GlowSphere({ position, intensity, time }: { position: THREE.Vector3; intensity: number; time: number }) {
   const ref = useRef<THREE.Mesh>(null);
 
-  useFrame(() => {
+  useFrame((state) => {
     if (ref.current) {
-      const pulse = 0.8 + Math.sin(time * 2.5) * 0.2;
+      const pulse = 0.8 + Math.sin(state.clock.elapsedTime * 2.5) * 0.2;
       const scale = 0.08 + (intensity / 100) * 0.12;
       ref.current.scale.setScalar(scale * pulse);
       (ref.current.material as THREE.MeshBasicMaterial).opacity = (intensity / 100) * 0.5 * pulse;
@@ -84,19 +93,74 @@ function GlowSphere({ position, intensity, time }: { position: THREE.Vector3; in
   );
 }
 
+function ProgressRing({ progress, position }: { progress: number; position: { x: number; y: number } }) {
+  const size = 56;
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (progress * circumference);
+
+  return (
+    <div
+      className="fixed z-50 pointer-events-none"
+      style={{
+        left: position.x - size / 2,
+        top: position.y - size / 2,
+        width: size,
+        height: size,
+      }}
+    >
+      <svg width={size} height={size} className="rotate-[-90deg]">
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,215,0,0.15)"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,215,0,0.8)"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-[stroke-dashoffset] duration-75"
+          style={{
+            filter: "drop-shadow(0 0 4px rgba(255,215,0,0.6))",
+          }}
+        />
+      </svg>
+    </div>
+  );
+}
+
 function HumanModel({
   zones,
   onInteract,
+  onHoverZone,
+  onPressStart,
+  onPressEnd,
 }: {
   zones: ZoneData[];
   onInteract: (zoneName: string, type: "longpress" | "doubletap") => void;
+  onHoverZone: (zoneName: string | null) => void;
+  onPressStart: (zoneName: string, screenPos: { x: number; y: number }) => void;
+  onPressEnd: () => void;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF(MODEL_URL);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTapRef = useRef(0);
+  const lastTapZoneRef = useRef<string>("");
   const [hoverZone, setHoverZone] = useState<string | null>(null);
   const [activeGlows, setActiveGlows] = useState<{ position: THREE.Vector3; zone: string }[]>([]);
+  const pressStartTimeRef = useRef<number>(0);
+  const pressAnimRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const zoneMap = useMemo(() => {
     const m: Record<string, ZoneData> = {};
@@ -128,20 +192,7 @@ function HumanModel({
       if (z.status === "desire") {
         const def = ZONE_DEFS.find((d) => d.name === z.zoneName);
         if (def) {
-          const positions: Record<string, [number, number, number]> = {
-            head: [0, 1.65, 0], neck: [0, 1.48, 0], chest: [0, 1.22, 0.05],
-            upper_back: [0, 1.22, -0.1], abdomen: [0, 0.95, 0.05], lower_back: [0, 0.95, -0.1],
-            left_shoulder: [-0.3, 1.36, 0], right_shoulder: [0.3, 1.36, 0],
-            left_upper_arm: [-0.38, 1.12, 0], right_upper_arm: [0.38, 1.12, 0],
-            left_forearm: [-0.4, 0.78, 0], right_forearm: [0.4, 0.78, 0],
-            left_hand: [-0.4, 0.55, 0], right_hand: [0.4, 0.55, 0],
-            hips: [0, 0.78, 0], inner_thighs: [0, 0.55, 0],
-            left_thigh: [-0.12, 0.52, 0], right_thigh: [0.12, 0.52, 0],
-            left_shin: [-0.12, 0.22, 0], right_shin: [0.12, 0.22, 0],
-            left_foot: [-0.12, 0.04, 0.05], right_foot: [0.12, 0.04, 0.05],
-          };
-          const pos = positions[z.zoneName];
-          if (pos) glows.push({ position: new THREE.Vector3(...pos), zone: z.zoneName });
+          glows.push({ position: new THREE.Vector3(...def.glowPos), zone: z.zoneName });
         }
       }
     });
@@ -187,6 +238,19 @@ function HumanModel({
     });
   });
 
+  const clearPressState = useCallback(() => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+    if (pressAnimRef.current) {
+      clearInterval(pressAnimRef.current);
+      pressAnimRef.current = null;
+    }
+    pressStartTimeRef.current = 0;
+    onPressEnd();
+  }, [onPressEnd]);
+
   const handlePointerDown = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
@@ -197,38 +261,53 @@ function HumanModel({
       const now = Date.now();
       const timeSinceLastTap = now - lastTapRef.current;
 
-      if (timeSinceLastTap < 350) {
-        if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+      if (timeSinceLastTap < 500 && lastTapZoneRef.current === zone) {
+        clearPressState();
         onInteract(zone, "doubletap");
         try { navigator.vibrate?.([30, 20, 30]); } catch {}
         lastTapRef.current = 0;
+        lastTapZoneRef.current = "";
         return;
       }
 
       lastTapRef.current = now;
+      lastTapZoneRef.current = zone;
+
+      const screenPos = {
+        x: e.nativeEvent.clientX ?? (e.nativeEvent as any).touches?.[0]?.clientX ?? 0,
+        y: e.nativeEvent.clientY ?? (e.nativeEvent as any).touches?.[0]?.clientY ?? 0,
+      };
+
+      pressStartTimeRef.current = now;
+      onPressStart(zone, screenPos);
 
       pressTimerRef.current = setTimeout(() => {
         onInteract(zone, "longpress");
-        try { navigator.vibrate?.([50]); } catch {}
+        try {
+          if (navigator.vibrate) {
+            navigator.vibrate([50]);
+          }
+        } catch {}
+        onPressEnd();
+        pressTimerRef.current = null;
       }, 500);
     },
-    [onInteract]
+    [onInteract, clearPressState, onPressStart, onPressEnd]
   );
 
   const handlePointerUp = useCallback(() => {
-    if (pressTimerRef.current) {
-      clearTimeout(pressTimerRef.current);
-      pressTimerRef.current = null;
-    }
-  }, []);
+    clearPressState();
+  }, [clearPressState]);
 
   const handlePointerMove = useCallback(
     (e: ThreeEvent<PointerEvent>) => {
       const localPoint = e.point.clone();
       if (groupRef.current) groupRef.current.worldToLocal(localPoint);
-      setHoverZone(getZoneFromPoint(localPoint));
+      const zone = getZoneFromPoint(localPoint);
+      setHoverZone(zone);
+      onHoverZone(zone);
     },
-    []
+    [onHoverZone]
   );
 
   return (
@@ -239,7 +318,7 @@ function HumanModel({
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
         onPointerMove={handlePointerMove}
-        onPointerOut={() => setHoverZone(null)}
+        onPointerOut={() => { setHoverZone(null); onHoverZone(null); }}
       />
       {activeGlows.map((g) => {
         const zd = zoneMap[g.zone];
@@ -253,6 +332,39 @@ function HumanModel({
         ) : null;
       })}
     </group>
+  );
+}
+
+function HoverLabel({
+  zoneName,
+  zones,
+}: {
+  zoneName: string | null;
+  zones: ZoneData[];
+}) {
+  if (!zoneName) return null;
+  const zoneData = zones.find((z) => z.zoneName === zoneName);
+  const label = getZoneLabel(zoneName);
+  const status = zoneData?.status || "neutral";
+
+  return (
+    <div className="absolute top-12 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in fade-in duration-200">
+      <div
+        className={`px-3 py-1.5 rounded-full backdrop-blur-xl text-[10px] font-bold uppercase tracking-[0.15em] border transition-all duration-300 ${
+          status === "desire"
+            ? "bg-amber-950/70 border-amber-500/40 text-amber-300 shadow-[0_0_15px_rgba(255,215,0,0.25)]"
+            : status === "void"
+              ? "bg-slate-950/70 border-slate-600/30 text-slate-500"
+              : "bg-white/5 border-white/15 text-white/70"
+        }`}
+      >
+        {label}
+        {status === "desire" && zoneData && (
+          <span className="ml-1.5 text-amber-400/60">{zoneData.intensity}%</span>
+        )}
+        {status === "void" && <span className="ml-1.5">🚫</span>}
+      </div>
+    </div>
   );
 }
 
@@ -291,9 +403,53 @@ function ZoneLabel({
   );
 }
 
+function IOSPulse({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none">
+      <div className="absolute inset-0 border-2 border-amber-400/30 rounded-2xl animate-ping" style={{ animationDuration: "1s" }} />
+    </div>
+  );
+}
+
 export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DProps) {
   const [lastInteracted, setLastInteracted] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hoverZone, setHoverZone] = useState<string | null>(null);
+  const [pressProgress, setPressProgress] = useState(0);
+  const [pressPos, setPressPos] = useState<{ x: number; y: number } | null>(null);
+  const [showPulse, setShowPulse] = useState(false);
+  const pressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pressStartRef = useRef<number>(0);
+  const LONG_PRESS_MS = 500;
+
+  const handlePressStart = useCallback((zoneName: string, screenPos: { x: number; y: number }) => {
+    setPressPos(screenPos);
+    setPressProgress(0);
+    pressStartRef.current = Date.now();
+
+    if (pressIntervalRef.current) clearInterval(pressIntervalRef.current);
+    pressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - pressStartRef.current;
+      const prog = Math.min(1, elapsed / LONG_PRESS_MS);
+      setPressProgress(prog);
+      if (prog >= 1) {
+        if (pressIntervalRef.current) {
+          clearInterval(pressIntervalRef.current);
+          pressIntervalRef.current = null;
+        }
+      }
+    }, 16);
+  }, []);
+
+  const handlePressEnd = useCallback(() => {
+    if (pressIntervalRef.current) {
+      clearInterval(pressIntervalRef.current);
+      pressIntervalRef.current = null;
+    }
+    setPressProgress(0);
+    setPressPos(null);
+  }, []);
 
   const handleInteract = useCallback(
     (zoneName: string, type: "longpress" | "doubletap") => {
@@ -307,6 +463,8 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
         } else {
           onZoneUpdate(zoneName, "desire", 50);
         }
+        setShowPulse(true);
+        setTimeout(() => setShowPulse(false), 600);
       } else if (type === "doubletap") {
         if (existing?.status === "void") {
           onZoneUpdate(zoneName, "neutral", 0);
@@ -366,6 +524,14 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
         </div>
       </div>
 
+      <HoverLabel zoneName={hoverZone} zones={zones} />
+
+      <IOSPulse active={showPulse} />
+
+      {pressPos && pressProgress > 0 && pressProgress < 1 && (
+        <ProgressRing progress={pressProgress} position={pressPos} />
+      )}
+
       {loading && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black">
           <div className="flex flex-col items-center gap-3">
@@ -389,7 +555,13 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
         <directionalLight position={[3, 5, 3]} intensity={0.4} color="#ffffff" />
         <pointLight position={[-3, 2, -2]} intensity={0.15} color="#ffd700" />
 
-        <HumanModel zones={zones} onInteract={handleInteract} />
+        <HumanModel
+          zones={zones}
+          onInteract={handleInteract}
+          onHoverZone={setHoverZone}
+          onPressStart={handlePressStart}
+          onPressEnd={handlePressEnd}
+        />
 
         <OrbitControls
           enablePan={false}

@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { FileSignature, Plus, Trash2, Check, X } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { FileSignature, Plus, Trash2, Check, X, Search, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RoleGatedButton, RoleGatedAction, PulseIndicator, ActionBadge } from '@/components/ui/role-gate';
 import { useStandingOrders, useCreateStandingOrder, useUpdateStandingOrder, useDeleteStandingOrder, useAuth } from '@/lib/hooks';
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
+import { PREBUILT_STANDING_ORDERS, STANDING_ORDER_CATEGORIES } from '@/lib/prebuilt-standing-orders';
 
 const priorityColors: Record<string, string> = {
   urgent: 'text-red-500',
@@ -31,6 +33,23 @@ export default function StandingOrdersPage() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('standard');
   const [showForm, setShowForm] = useState(false);
+  const [showPrebuilt, setShowPrebuilt] = useState(false);
+  const [prebuiltCategory, setPrebuiltCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredPrebuilt = useMemo(() => {
+    let items = PREBUILT_STANDING_ORDERS;
+    if (prebuiltCategory !== 'All') {
+      items = items.filter((o) => o.category === prebuiltCategory);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      items = items.filter(
+        (o) => o.name.toLowerCase().includes(q) || o.category.toLowerCase().includes(q)
+      );
+    }
+    return items;
+  }, [prebuiltCategory, searchQuery]);
 
   const handleCreate = () => {
     if (!title.trim()) return;
@@ -43,6 +62,14 @@ export default function StandingOrdersPage() {
     setDescription('');
     setPriority('standard');
     setShowForm(false);
+  };
+
+  const handleQuickAssign = (order: { name: string; category: string; priority: string }) => {
+    createMutation.mutate({
+      title: order.name,
+      description: `Category: ${order.category}`,
+      priority: order.priority,
+    });
   };
 
   const handleToggleActive = (order: { id: string; active: boolean }) => {
@@ -69,16 +96,29 @@ export default function StandingOrdersPage() {
         </div>
       </div>
 
-      <RoleGatedButton
-        data-testid="button-toggle-form"
-        allowed={userRole === 'dom'}
-        tooltipText="Only your Dom can issue orders"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        Issue Order
-      </RoleGatedButton>
+      <div className="flex gap-2 mb-6">
+        <RoleGatedButton
+          data-testid="button-toggle-form"
+          allowed={userRole === 'dom'}
+          tooltipText="Only your Dom can issue orders"
+          className="bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => { setShowForm(!showForm); setShowPrebuilt(false); }}
+        >
+          <Plus size={16} className="mr-2" />
+          Issue Order
+        </RoleGatedButton>
+        <RoleGatedButton
+          data-testid="button-toggle-prebuilt"
+          allowed={userRole === 'dom'}
+          tooltipText="Only your Dom can issue orders"
+          className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 uppercase tracking-wider"
+          onClick={() => { setShowPrebuilt(!showPrebuilt); setShowForm(false); }}
+        >
+          <BookOpen size={16} className="mr-2" />
+          Browse Library
+          {showPrebuilt ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />}
+        </RoleGatedButton>
+      </div>
 
       {showForm && userRole === 'dom' && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-order">
@@ -127,6 +167,88 @@ export default function StandingOrdersPage() {
               Cancel
             </Button>
           </div>
+        </div>
+      )}
+
+      {showPrebuilt && userRole === 'dom' && (
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6" data-testid="panel-prebuilt-orders">
+          <div className="relative mb-4">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <Input
+              data-testid="input-search-prebuilt"
+              placeholder="Search standing orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-slate-800 border-slate-700 text-white placeholder:text-slate-500"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2 mb-4" data-testid="filter-category-pills">
+            <button
+              data-testid="pill-category-all"
+              onClick={() => setPrebuiltCategory('All')}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                prebuiltCategory === 'All'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+              }`}
+            >
+              All
+            </button>
+            {STANDING_ORDER_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                data-testid={`pill-category-${cat.toLowerCase().replace(/\s+/g, '-')}`}
+                onClick={() => setPrebuiltCategory(cat)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  prebuiltCategory === cat
+                    ? 'bg-red-600 text-white'
+                    : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+            {filteredPrebuilt.length === 0 && (
+              <p className="text-slate-500 text-center py-4 text-sm" data-testid="text-no-prebuilt-results">
+                No matching orders found.
+              </p>
+            )}
+            {filteredPrebuilt.map((order, idx) => (
+              <div
+                key={`${order.category}-${idx}`}
+                data-testid={`prebuilt-order-${idx}`}
+                className="flex items-center justify-between gap-3 bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 hover:border-red-600/30 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm truncate">{order.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs text-slate-500">{order.category}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${priorityBgColors[order.priority] || priorityBgColors.standard}`}>
+                      {order.priority}
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  data-testid={`button-assign-prebuilt-${idx}`}
+                  size="sm"
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs shrink-0"
+                  onClick={() => handleQuickAssign(order)}
+                  disabled={createMutation.isPending}
+                >
+                  <Plus size={14} className="mr-1" />
+                  Assign
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-slate-600 text-xs mt-3 text-center">
+            {filteredPrebuilt.length} order{filteredPrebuilt.length !== 1 ? 's' : ''} available
+          </p>
         </div>
       )}
 
