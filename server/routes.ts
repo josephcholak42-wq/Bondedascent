@@ -1684,6 +1684,17 @@ export async function registerRoutes(
   // --- MEDIA UPLOADS ---
   app.use("/uploads", express.static(uploadsDir));
 
+  app.post("/api/profile-pic", requireAuth, upload.single("file"), async (req, res) => {
+    const user = req.user as User;
+    const file = req.file;
+    if (!file) return res.status(400).json({ message: "No file uploaded" });
+    if (!file.mimetype.startsWith("image/")) return res.status(400).json({ message: "Only image files allowed" });
+    const url = `/uploads/${file.filename}`;
+    const updated = await storage.updateUserProfilePic(user.id, url);
+    await storage.logActivity(user.id, "profile_pic_updated", "Updated profile picture");
+    res.json({ profilePic: url, user: updated });
+  });
+
   app.post("/api/media/upload", requireAuth, upload.single("file"), async (req, res) => {
     const user = req.user as User;
     const file = req.file;

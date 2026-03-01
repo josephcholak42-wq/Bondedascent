@@ -118,6 +118,7 @@ All data endpoints fetch data for both paired users (not just the logged-in user
 - **Locked Media Gallery**: `is_locked`, `unlock_cost`, `unlocked_by` columns on media table. New page at `/locked-media`. Upload locked photos/videos with XP price. Blurred thumbnails for locked items. `POST /api/media/locked` and `POST /api/media/:id/unlock` routes.
 - **Prebuilt Libraries (Extended)**: New prebuilt catalogs for rituals (100+ items, 8 categories), standing orders (100+ items, 8 categories), wagers (80+), devotions (80+), limits (85+), desired changes (80+). Files: `prebuilt-rituals.ts`, `prebuilt-standing-orders.ts`, `prebuilt-wagers.ts`, `prebuilt-devotions.ts`, `prebuilt-limits.ts`, `prebuilt-desired-changes.ts`.
 - **3D Body Map Improvements**: Expanded zone definitions (20+ zones), improved touch detection, press-and-hold progress ring animation, zone labels on hover/touch, increased double-tap window (500ms), iOS haptic fallback.
+- **Profile Pictures**: Users can upload profile pictures via clickable avatar circles on the dashboard. Stored in `/uploads/` directory, referenced by `profile_pic` column on `users` table. `POST /api/profile-pic` route. Partner's profile pic shown in pair view. Camera overlay on hover.
 
 ## External Dependencies
 

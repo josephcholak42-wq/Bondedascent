@@ -247,6 +247,7 @@ export interface IStorage {
   deleteBodyMapZones(userId: string): Promise<void>;
 
   updateUserStickerBalance(userId: string, balance: number): Promise<User | undefined>;
+  updateUserProfilePic(userId: string, profilePic: string): Promise<User | undefined>;
   getJournalEntriesForPair(userIds: string[]): Promise<JournalEntry[]>;
   unlockJournalEntry(id: string, unlockedBy: string): Promise<JournalEntry | undefined>;
   getLockedMediaForPair(userIds: string[]): Promise<Media[]>;
@@ -959,6 +960,11 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserStickerBalance(userId: string, balance: number): Promise<User | undefined> {
     const [user] = await db.update(users).set({ stickerBalance: balance }).where(eq(users.id, userId)).returning();
+    return user;
+  }
+
+  async updateUserProfilePic(userId: string, profilePic: string): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ profilePic }).where(eq(users.id, userId)).returning();
     return user;
   }
 

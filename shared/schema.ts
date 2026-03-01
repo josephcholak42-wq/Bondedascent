@@ -16,6 +16,7 @@ export const users = pgTable("users", {
   lockedDown: boolean("locked_down").notNull().default(false),
   enforcementLevel: integer("enforcement_level").notNull().default(1),
   stickerBalance: integer("sticker_balance").notNull().default(0),
+  profilePic: text("profile_pic"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

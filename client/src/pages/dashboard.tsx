@@ -184,6 +184,7 @@ import {
   useBodyMapZones,
   useUpdateBodyMapZone,
   useResetBodyMap,
+  useUploadProfilePic,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -377,6 +378,8 @@ export default function BondedAscentApp() {
   const roleSwitchEnabled = useIsFeatureEnabled("role_switch");
   const uploadMediaMutation = useUploadMedia();
   const deleteMediaMutation = useDeleteMedia();
+  const uploadProfilePicMutation = useUploadProfilePic();
+  const profilePicInputRef = useRef<HTMLInputElement>(null);
   const [stickerMessage, setStickerMessage] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaEntityType, setMediaEntityType] = useState("");
@@ -633,13 +636,36 @@ export default function BondedAscentApp() {
       </div>
 
       <div className="flex flex-col items-center gap-6 pt-4">
+        <input
+          ref={profilePicInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          data-testid="input-profile-pic"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) uploadProfilePicMutation.mutate(file);
+            e.target.value = "";
+          }}
+        />
         <div className="flex items-center gap-8 relative">
           <div className="text-center relative">
-            <div className="w-20 h-20 rounded-full border-2 border-red-600 p-1 mb-2 bg-black shadow-[0_0_15px_rgba(220,38,38,0.3)]">
-              <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                <Shield size={32} className="text-red-500" />
+            <button
+              onClick={() => profilePicInputRef.current?.click()}
+              className="w-20 h-20 rounded-full border-2 border-red-600 p-1 mb-2 bg-black shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer group relative overflow-hidden"
+              data-testid="button-upload-profile-pic"
+            >
+              {user?.profilePic ? (
+                <img src={user.profilePic} alt={user.username} className="w-full h-full rounded-full object-cover" />
+              ) : (
+                <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                  <Shield size={32} className="text-red-500" />
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Camera size={20} className="text-white" />
               </div>
-            </div>
+            </button>
             <div className="text-sm font-bold text-white uppercase tracking-wider">
               {user?.username} (Dom)
             </div>
@@ -649,12 +675,16 @@ export default function BondedAscentApp() {
           </div>
           <div className="text-center relative">
             <div className="w-20 h-20 rounded-full border-2 border-slate-700 p-1 mb-2 bg-black">
-              <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                <Heart
-                  size={32}
-                  className={partner ? "text-red-400" : "text-slate-600"}
-                />
-              </div>
+              {partner?.profilePic ? (
+                <img src={partner.profilePic} alt={partner.username} className="w-full h-full rounded-full object-cover" />
+              ) : (
+                <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                  <Heart
+                    size={32}
+                    className={partner ? "text-red-400" : "text-slate-600"}
+                  />
+                </div>
+              )}
             </div>
             <div className="text-sm font-bold text-slate-400 uppercase tracking-wider">
               {partner ? partner.username : "Not Paired"}
@@ -1742,13 +1772,36 @@ export default function BondedAscentApp() {
           </div>
 
           <div className="flex flex-col items-center gap-6 pt-4">
+            <input
+              ref={profilePicInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              data-testid="input-profile-pic-sub"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadProfilePicMutation.mutate(file);
+                e.target.value = "";
+              }}
+            />
             <div className="flex items-center gap-8 relative">
               <div className="text-center relative">
-                <div className="w-20 h-20 rounded-full border-2 border-red-600 p-1 mb-2 bg-black shadow-[0_0_15px_rgba(220,38,38,0.3)]">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                    <Heart size={32} className="text-red-500" />
+                <button
+                  onClick={() => profilePicInputRef.current?.click()}
+                  className="w-20 h-20 rounded-full border-2 border-red-600 p-1 mb-2 bg-black shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer group relative overflow-hidden"
+                  data-testid="button-upload-profile-pic-sub"
+                >
+                  {user?.profilePic ? (
+                    <img src={user.profilePic} alt={user.username} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                      <Heart size={32} className="text-red-500" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Camera size={20} className="text-white" />
                   </div>
-                </div>
+                </button>
                 <div className="text-sm font-bold text-white uppercase tracking-wider">
                   {user?.username}
                 </div>
@@ -1758,12 +1811,16 @@ export default function BondedAscentApp() {
               </div>
               <div className="text-center relative">
                 <div className="w-20 h-20 rounded-full border-2 border-red-900 p-1 mb-2 bg-black">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                    <Shield size={32} className="text-slate-600" />
-                  </div>
+                  {partner?.profilePic ? (
+                    <img src={partner.profilePic} alt={partner.username} className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
+                      <Shield size={32} className="text-slate-600" />
+                    </div>
+                  )}
                 </div>
                 <div className="text-sm font-bold text-white uppercase tracking-wider">
-                  Dominant
+                  {partner ? partner.username : "Dominant"}
                 </div>
               </div>
             </div>
