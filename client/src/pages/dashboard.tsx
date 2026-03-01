@@ -745,6 +745,50 @@ export default function BondedAscentApp() {
                 />
               </div>
 
+              <div className="bg-gradient-to-b from-slate-900 to-black border border-white/5 shadow-xl p-1 rounded-2xl">
+                <div className="bg-slate-950/50 p-5 rounded-xl">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xs font-bold text-red-500/70 uppercase tracking-widest">
+                      ⚡ Command Center
+                    </h3>
+                    <span className="text-[10px] text-slate-600 font-mono">
+                      {buildDomFeedItems().filter(i => i.type !== "notification").length} items
+                    </span>
+                  </div>
+                  <ActionFeed items={buildDomFeedItems()} onAction={handleFeedAction} role="dom" />
+                  <div className="flex gap-2 mt-4">
+                    <input
+                      data-testid="input-dom-quick-task"
+                      type="text"
+                      value={newTaskText}
+                      onChange={(e) => setNewTaskText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && newTaskText.trim()) {
+                          createPartnerTaskMutation.mutate({ text: newTaskText });
+                          setNewTaskText("");
+                        }
+                      }}
+                      placeholder="Quick assign task..."
+                      className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500/50"
+                    />
+                    <Button
+                      data-testid="button-dom-quick-task"
+                      size="sm"
+                      onClick={() => {
+                        if (newTaskText.trim()) {
+                          createPartnerTaskMutation.mutate({ text: newTaskText });
+                          setNewTaskText("");
+                        }
+                      }}
+                      disabled={createPartnerTaskMutation.isPending}
+                      className="bg-red-600 hover:bg-red-500"
+                    >
+                      <Plus size={16} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
@@ -1047,6 +1091,7 @@ export default function BondedAscentApp() {
                 <FeatureLink icon={<Award />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
                 <FeatureLink icon={<Timer />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} sexyIcon="countdown-events" />
                 <FeatureLink icon={<Lock />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} sexyIcon="config" />
+                <FeatureLink icon={<Camera />} label="Locked Media" desc="Hidden gallery" href="/locked-media" color="text-pink-400" sexyIcon="secrets" />
               </div>
             </CategorySection>
           </div>
@@ -1720,44 +1765,14 @@ export default function BondedAscentApp() {
               <div className="bg-gradient-to-b from-slate-900 to-black border border-white/5 shadow-xl p-1 rounded-2xl">
                 <div className="bg-slate-950/50 p-5 rounded-xl">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                      Daily Protocols
+                    <h3 className="text-xs font-bold text-red-500/70 uppercase tracking-widest">
+                      ⚡ Command Center
                     </h3>
                     <span className="text-[10px] text-slate-600 font-mono">
-                      {tasks.filter((t) => t.done).length}/{tasks.length}
+                      {buildSubFeedItems().filter(i => i.type !== "notification").length} pending
                     </span>
                   </div>
-                  <div className="space-y-3">
-                    {tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        data-testid={`card-task-${task.id}`}
-                        onClick={() => handleToggleTask(task.id)}
-                        className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all group
-                          ${
-                            task.done
-                              ? "bg-slate-900/30 border-green-900/30 opacity-50"
-                              : "bg-gradient-to-b from-slate-900 to-black border-slate-800 hover:border-red-900/50 hover:shadow-lg"
-                          }`}
-                      >
-                        <span
-                          className={`text-sm font-bold ${task.done ? "text-green-500 line-through" : "text-slate-200"}`}
-                        >
-                          {task.text}
-                        </span>
-                        {task.done ? (
-                          <CheckCircle size={20} className="text-green-500" />
-                        ) : (
-                          <div className="w-5 h-5 rounded-full border-2 border-slate-700 group-hover:border-red-500 transition-colors" />
-                        )}
-                      </div>
-                    ))}
-                    {tasks.length === 0 && (
-                      <div className="text-center py-8 text-slate-600 text-xs uppercase tracking-widest">
-                        No protocols assigned yet
-                      </div>
-                    )}
-                  </div>
+                  <ActionFeed items={buildSubFeedItems()} onAction={handleFeedAction} role="sub" />
                   <div className="flex gap-2 mt-4">
                     <input
                       data-testid="input-new-task"
@@ -1910,6 +1925,7 @@ export default function BondedAscentApp() {
                         <FeatureLink icon={<Award />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
                         <FeatureLink icon={<Timer />} label="Upcoming Events" desc="Countdowns" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} sexyIcon="countdown-events" />
                         <FeatureLink icon={<Lock />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} sexyIcon="config" />
+                        <FeatureLink icon={<Camera />} label="Locked Media" desc="Hidden gallery" href="/locked-media" color="text-pink-400" sexyIcon="secrets" />
                       </div>
                     </CategorySection>
                   </div>

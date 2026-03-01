@@ -110,6 +110,15 @@ All data endpoints fetch data for both paired users (not just the logged-in user
 - **Sexy Icon System**: AI-generated photorealistic 3D-rendered BDSM-themed icons (30 icons) replace Lucide vector icons across the dashboard. Icons stored in `client/public/icons/` (Vite public directory). Reusable `<SexyIcon>` component (`client/src/components/sexy-icon.tsx`) with hover float/glow, tap bounce, and long-press throb animations. CSS animations in `client/src/index.css`. Supports `prefers-reduced-motion`. Fallback to Lucide icons when images fail to load.
 - **Key Tables**: `media`, `stickers`, `feature_settings`, `body_map_zones`
 
+### New Features (Mar 2026)
+- **Command Center (ActionFeed)**: Unified action feed on both Dom and Sub dashboards (`client/src/components/action-feed.tsx`). Color-coded cards for demands (red), commands (orange), accusations (rose), tasks (blue), punishments (dark-red), rewards (amber), dares (fuchsia), check-in reviews (purple), notifications (slate). Filter pills (All/Urgent/Tasks/Rewards/Info), inline action buttons, countdown timers for demands.
+- **Sticker Economy**: Stickers now have point values (gold-star=5, heart=3, fire=4, crown=10, diamond=15, ribbon=2, trophy=8, sparkle=1). `sticker_balance` field on users tracks total sticker points. `POST /api/stickers/spend` route for purchasing content.
+- **Purchasable Secrets**: `xp_cost` column on secrets table. Partner can spend XP to reveal secrets. Dom reveals for free. Blurred preview with price tag.
+- **Purchasable Journal Entries**: `is_shared`, `unlock_cost`, `unlocked_by` columns on journal_entries. Users can share entries; partner pays XP/sticker points to read. `POST /api/journal/:id/unlock` route.
+- **Locked Media Gallery**: `is_locked`, `unlock_cost`, `unlocked_by` columns on media table. New page at `/locked-media`. Upload locked photos/videos with XP price. Blurred thumbnails for locked items. `POST /api/media/locked` and `POST /api/media/:id/unlock` routes.
+- **Prebuilt Libraries (Extended)**: New prebuilt catalogs for rituals (100+ items, 8 categories), standing orders (100+ items, 8 categories), wagers (80+), devotions (80+), limits (85+), desired changes (80+). Files: `prebuilt-rituals.ts`, `prebuilt-standing-orders.ts`, `prebuilt-wagers.ts`, `prebuilt-devotions.ts`, `prebuilt-limits.ts`, `prebuilt-desired-changes.ts`.
+- **3D Body Map Improvements**: Expanded zone definitions (20+ zones), improved touch detection, press-and-hold progress ring animation, zone labels on hover/touch, increased double-tap window (500ms), iOS haptic fallback.
+
 ## External Dependencies
 
 - **PostgreSQL**: Primary database, required via `DATABASE_URL` environment variable. Used for both application data (via Drizzle ORM) and session storage (via `connect-pg-simple`)
