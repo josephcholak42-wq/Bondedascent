@@ -172,6 +172,45 @@
   }
 }
 
+@keyframes feed-card-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(-12px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes command-center-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(220, 38, 38, 0.25), 0 0 80px rgba(220, 38, 38, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+}
+
+@keyframes command-center-border {
+  0%, 100% {
+    border-color: rgba(220, 38, 38, 0.2);
+  }
+  50% {
+    border-color: rgba(220, 38, 38, 0.4);
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.5); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sexy-icon, .sexy-icon-interactive:hover, .sexy-icon-tap, .sexy-icon-throb {
     animation: none !important;

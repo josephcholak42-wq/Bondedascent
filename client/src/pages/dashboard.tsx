@@ -566,6 +566,72 @@ export default function BondedAscentApp() {
 
   const DomDashboard = () => (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
+      <div className="relative overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-b from-red-950/30 via-black to-slate-950/80" style={{ animation: "command-center-glow 4s ease-in-out infinite, command-center-border 4s ease-in-out infinite" }}>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(220,38,38,0.12),transparent_70%)] pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-900/30 to-transparent" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03]">
+          <div className="absolute inset-0" style={{ animation: "scanline 8s linear infinite", background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)" }} />
+        </div>
+        <div className="relative p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center shadow-lg shadow-red-500/10">
+                <Zap size={16} className="text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-sm font-black text-white uppercase tracking-[0.15em]">Command Center</h2>
+                <p className="text-[10px] text-red-400/60 font-mono uppercase tracking-widest">Live Operations</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {buildDomFeedItems().filter(i => ["demand", "command", "accusation"].includes(i.type)).length > 0 && (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: "pulse-dot 2s ease-in-out infinite" }} />
+                  <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">
+                    {buildDomFeedItems().filter(i => ["demand", "command", "accusation"].includes(i.type)).length} urgent
+                  </span>
+                </span>
+              )}
+              <span className="text-[10px] text-slate-600 font-mono tabular-nums">
+                {buildDomFeedItems().filter(i => i.type !== "notification").length} total
+              </span>
+            </div>
+          </div>
+          <ActionFeed items={buildDomFeedItems()} onAction={handleFeedAction} role="dom" />
+          <div className="flex gap-2">
+            <input
+              data-testid="input-dom-quick-task"
+              type="text"
+              value={newTaskText}
+              onChange={(e) => setNewTaskText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newTaskText.trim()) {
+                  createPartnerTaskMutation.mutate({ text: newTaskText });
+                  setNewTaskText("");
+                }
+              }}
+              placeholder="Quick assign protocol..."
+              className="flex-1 bg-black/50 border border-red-900/30 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/50 transition-colors"
+            />
+            <Button
+              data-testid="button-dom-quick-task"
+              size="sm"
+              onClick={() => {
+                if (newTaskText.trim()) {
+                  createPartnerTaskMutation.mutate({ text: newTaskText });
+                  setNewTaskText("");
+                }
+              }}
+              disabled={createPartnerTaskMutation.isPending}
+              className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-500/20 rounded-xl px-4"
+            >
+              <Plus size={16} />
+            </Button>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col items-center gap-6 pt-4">
         <div className="flex items-center gap-8 relative">
           <div className="text-center relative">
@@ -743,50 +809,6 @@ export default function BondedAscentApp() {
                   onClick={() => setModal("dom_review")}
                   sexyIcon="review-logs"
                 />
-              </div>
-
-              <div className="bg-gradient-to-b from-slate-900 to-black border border-white/5 shadow-xl p-1 rounded-2xl">
-                <div className="bg-slate-950/50 p-5 rounded-xl">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs font-bold text-red-500/70 uppercase tracking-widest">
-                      ⚡ Command Center
-                    </h3>
-                    <span className="text-[10px] text-slate-600 font-mono">
-                      {buildDomFeedItems().filter(i => i.type !== "notification").length} items
-                    </span>
-                  </div>
-                  <ActionFeed items={buildDomFeedItems()} onAction={handleFeedAction} role="dom" />
-                  <div className="flex gap-2 mt-4">
-                    <input
-                      data-testid="input-dom-quick-task"
-                      type="text"
-                      value={newTaskText}
-                      onChange={(e) => setNewTaskText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && newTaskText.trim()) {
-                          createPartnerTaskMutation.mutate({ text: newTaskText });
-                          setNewTaskText("");
-                        }
-                      }}
-                      placeholder="Quick assign task..."
-                      className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500/50"
-                    />
-                    <Button
-                      data-testid="button-dom-quick-task"
-                      size="sm"
-                      onClick={() => {
-                        if (newTaskText.trim()) {
-                          createPartnerTaskMutation.mutate({ text: newTaskText });
-                          setNewTaskText("");
-                        }
-                      }}
-                      disabled={createPartnerTaskMutation.isPending}
-                      className="bg-red-600 hover:bg-red-500"
-                    >
-                      <Plus size={16} />
-                    </Button>
-                  </div>
-                </div>
               </div>
 
               <div className="bg-slate-900/40 border border-white/5 p-4 rounded-xl">
@@ -1663,6 +1685,62 @@ export default function BondedAscentApp() {
     if (activeView === "dashboard") {
       return (
         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="relative overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-b from-red-950/30 via-black to-slate-950/80" style={{ animation: "command-center-glow 4s ease-in-out infinite, command-center-border 4s ease-in-out infinite" }}>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(220,38,38,0.12),transparent_70%)] pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-900/30 to-transparent" />
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03]">
+              <div className="absolute inset-0" style={{ animation: "scanline 8s linear infinite", background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)" }} />
+            </div>
+            <div className="relative p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-red-500/20 border border-red-500/30 flex items-center justify-center shadow-lg shadow-red-500/10">
+                    <Siren size={16} className="text-red-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black text-white uppercase tracking-[0.15em]">Command Center</h2>
+                    <p className="text-[10px] text-red-400/60 font-mono uppercase tracking-widest">Incoming Orders</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {buildSubFeedItems().filter(i => ["demand", "command", "accusation"].includes(i.type)).length > 0 && (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: "pulse-dot 2s ease-in-out infinite" }} />
+                      <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">
+                        {buildSubFeedItems().filter(i => ["demand", "command", "accusation"].includes(i.type)).length} urgent
+                      </span>
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-600 font-mono tabular-nums">
+                    {buildSubFeedItems().filter(i => i.type !== "notification").length} pending
+                  </span>
+                </div>
+              </div>
+              <ActionFeed items={buildSubFeedItems()} onAction={handleFeedAction} role="sub" />
+              <div className="flex gap-2">
+                <input
+                  data-testid="input-new-task"
+                  type="text"
+                  value={newTaskText}
+                  onChange={(e) => setNewTaskText(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreateTask()}
+                  placeholder="Add new protocol..."
+                  className="flex-1 bg-black/50 border border-red-900/30 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/50 transition-colors"
+                />
+                <Button
+                  data-testid="button-add-task"
+                  size="sm"
+                  onClick={handleCreateTask}
+                  disabled={createTaskMutation.isPending}
+                  className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-500/20 rounded-xl px-4"
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col items-center gap-6 pt-4">
             <div className="flex items-center gap-8 relative">
               <div className="text-center relative">
@@ -1760,40 +1838,6 @@ export default function BondedAscentApp() {
                   onClick={() => setModal("countdowns")}
                   sexyIcon="timers"
                 />
-              </div>
-
-              <div className="bg-gradient-to-b from-slate-900 to-black border border-white/5 shadow-xl p-1 rounded-2xl">
-                <div className="bg-slate-950/50 p-5 rounded-xl">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xs font-bold text-red-500/70 uppercase tracking-widest">
-                      ⚡ Command Center
-                    </h3>
-                    <span className="text-[10px] text-slate-600 font-mono">
-                      {buildSubFeedItems().filter(i => i.type !== "notification").length} pending
-                    </span>
-                  </div>
-                  <ActionFeed items={buildSubFeedItems()} onAction={handleFeedAction} role="sub" />
-                  <div className="flex gap-2 mt-4">
-                    <input
-                      data-testid="input-new-task"
-                      type="text"
-                      value={newTaskText}
-                      onChange={(e) => setNewTaskText(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleCreateTask()}
-                      placeholder="Add new protocol..."
-                      className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500/50"
-                    />
-                    <Button
-                      data-testid="button-add-task"
-                      size="sm"
-                      onClick={handleCreateTask}
-                      disabled={createTaskMutation.isPending}
-                      className="bg-red-600 hover:bg-red-500"
-                    >
-                      <Plus size={16} />
-                    </Button>
-                  </div>
-                </div>
               </div>
 
               {stickersList.length > 0 && (

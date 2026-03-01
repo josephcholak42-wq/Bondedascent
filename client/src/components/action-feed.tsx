@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   AlertTriangle, Bell, CheckCircle, Clock, Gift, Gavel,
-  MessageSquare, Siren, Target, Zap, X, Send, Sparkles
+  MessageSquare, Siren, Target, Zap, X, Send, Sparkles,
+  ChevronDown, Flame, Shield, Eye
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -27,24 +28,24 @@ interface ActionFeedProps {
   role: "dom" | "sub";
 }
 
-const TYPE_CONFIG: Record<FeedItemType, { color: string; borderColor: string; bgColor: string; icon: any; label: string }> = {
-  demand: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-red-950/40", icon: Siren, label: "Demand" },
-  command: { color: "text-orange-400", borderColor: "border-l-orange-500", bgColor: "bg-orange-950/30", icon: Zap, label: "Order" },
-  accusation: { color: "text-rose-400", borderColor: "border-l-rose-500", bgColor: "bg-rose-950/30", icon: AlertTriangle, label: "Accusation" },
-  task: { color: "text-blue-400", borderColor: "border-l-blue-500", bgColor: "bg-blue-950/30", icon: Target, label: "Task" },
-  punishment: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "bg-red-950/20", icon: Gavel, label: "Punishment" },
-  reward: { color: "text-amber-400", borderColor: "border-l-amber-500", bgColor: "bg-amber-950/30", icon: Gift, label: "Reward" },
-  dare: { color: "text-fuchsia-400", borderColor: "border-l-fuchsia-500", bgColor: "bg-fuchsia-950/30", icon: Sparkles, label: "Dare" },
-  checkin_review: { color: "text-purple-400", borderColor: "border-l-purple-500", bgColor: "bg-purple-950/30", icon: MessageSquare, label: "Check-In" },
-  notification: { color: "text-slate-400", borderColor: "border-l-slate-500", bgColor: "bg-slate-900/30", icon: Bell, label: "Info" },
+const TYPE_CONFIG: Record<FeedItemType, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string }> = {
+  demand: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/60 to-red-950/20", glowColor: "shadow-red-500/20", icon: Siren, label: "DEMAND" },
+  command: { color: "text-orange-400", borderColor: "border-l-orange-500", bgColor: "bg-gradient-to-r from-orange-950/50 to-orange-950/15", glowColor: "shadow-orange-500/15", icon: Zap, label: "ORDER" },
+  accusation: { color: "text-rose-400", borderColor: "border-l-rose-500", bgColor: "bg-gradient-to-r from-rose-950/50 to-rose-950/15", glowColor: "shadow-rose-500/15", icon: AlertTriangle, label: "ACCUSATION" },
+  task: { color: "text-blue-400", borderColor: "border-l-blue-500", bgColor: "bg-gradient-to-r from-blue-950/40 to-blue-950/10", glowColor: "shadow-blue-500/10", icon: Target, label: "PROTOCOL" },
+  punishment: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "bg-gradient-to-r from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT" },
+  reward: { color: "text-amber-400", borderColor: "border-l-amber-500", bgColor: "bg-gradient-to-r from-amber-950/40 to-amber-950/10", glowColor: "shadow-amber-500/15", icon: Gift, label: "REWARD" },
+  dare: { color: "text-fuchsia-400", borderColor: "border-l-fuchsia-500", bgColor: "bg-gradient-to-r from-fuchsia-950/40 to-fuchsia-950/10", glowColor: "shadow-fuchsia-500/15", icon: Sparkles, label: "DARE" },
+  checkin_review: { color: "text-purple-400", borderColor: "border-l-purple-500", bgColor: "bg-gradient-to-r from-purple-950/40 to-purple-950/10", glowColor: "shadow-purple-500/15", icon: MessageSquare, label: "CHECK-IN" },
+  notification: { color: "text-slate-400", borderColor: "border-l-slate-600", bgColor: "bg-gradient-to-r from-slate-900/50 to-slate-900/20", glowColor: "shadow-slate-500/5", icon: Bell, label: "INFO" },
 };
 
 const FILTER_OPTIONS = [
-  { key: "all", label: "All" },
-  { key: "urgent", label: "Urgent" },
-  { key: "tasks", label: "Tasks" },
-  { key: "rewards", label: "Rewards" },
-  { key: "info", label: "Info" },
+  { key: "all", label: "All", icon: Eye },
+  { key: "urgent", label: "Urgent", icon: Flame },
+  { key: "tasks", label: "Tasks", icon: Target },
+  { key: "rewards", label: "Rewards", icon: Gift },
+  { key: "info", label: "Info", icon: Bell },
 ];
 
 function formatCountdown(seconds: number) {
@@ -53,40 +54,60 @@ function formatCountdown(seconds: number) {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
+function CountdownTimer({ seconds }: { seconds: number }) {
+  const [remaining, setRemaining] = useState(seconds);
+  useEffect(() => {
+    setRemaining(seconds);
+    const interval = setInterval(() => setRemaining(prev => Math.max(0, prev - 1)), 1000);
+    return () => clearInterval(interval);
+  }, [seconds]);
+
+  const urgency = remaining < 60 ? "text-red-400 animate-pulse" : remaining < 180 ? "text-orange-400" : "text-yellow-400";
+  return (
+    <span className={`text-sm font-mono font-black tabular-nums ${urgency}`}>
+      {formatCountdown(remaining)}
+    </span>
+  );
+}
+
 function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFeedProps["onAction"]; role: string }) {
   const [responseText, setResponseText] = useState("");
   const [xpAmount, setXpAmount] = useState(10);
   const config = TYPE_CONFIG[item.type];
   const Icon = config.icon;
+  const isUrgent = ["demand", "command", "accusation"].includes(item.type);
 
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`border-l-4 ${config.borderColor} ${config.bgColor} rounded-r-xl p-3 flex items-start gap-3 transition-all duration-200 hover:brightness-110`}
+      className={`border-l-[3px] ${config.borderColor} ${config.bgColor} rounded-r-xl p-3.5 flex items-start gap-3 transition-all duration-300 hover:scale-[1.01] hover:brightness-125 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""}`}
+      style={isUrgent ? { animation: "feed-card-enter 0.4s ease-out" } : { animation: "feed-card-enter 0.3s ease-out" }}
     >
-      <div className={`mt-0.5 ${config.color}`}>
-        <Icon size={18} />
+      <div className={`mt-0.5 ${config.color} shrink-0`}>
+        <div className={`w-8 h-8 rounded-lg ${isUrgent ? "bg-white/10" : "bg-white/5"} flex items-center justify-center`}>
+          <Icon size={16} />
+        </div>
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <span className={`text-[9px] font-black uppercase tracking-wider ${config.color}`}>{config.label}</span>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${config.color} opacity-80`}>{config.label}</span>
           {item.countdown !== undefined && item.countdown > 0 && (
-            <span className="text-xs font-mono font-black text-red-400">{formatCountdown(item.countdown)}</span>
+            <CountdownTimer seconds={item.countdown} />
           )}
         </div>
-        <p className="text-xs font-bold text-white truncate">{item.title}</p>
+        <p className="text-sm font-bold text-white/90 leading-snug">{item.title}</p>
         {item.description && (
-          <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-2">{item.description}</p>
+          <p className="text-[11px] text-slate-400/80 mt-1 line-clamp-2">{item.description}</p>
         )}
 
         {item.type === "accusation" && (
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 mt-2.5">
             <input
               data-testid={`accusation-response-${item.id}`}
               value={responseText}
               onChange={(e) => setResponseText(e.target.value)}
               placeholder="Your response..."
-              className="flex-1 bg-black/30 border border-rose-900/50 rounded-lg px-2 py-1 text-xs text-white placeholder:text-slate-500"
+              className="flex-1 bg-black/40 border border-rose-900/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/60"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && responseText.trim()) {
                   onAction(item.id, "respond", responseText.trim());
@@ -97,7 +118,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
             <Button
               data-testid={`accusation-send-${item.id}`}
               size="sm"
-              className="bg-rose-600 hover:bg-rose-500 h-7 px-2"
+              className="bg-rose-600 hover:bg-rose-500 h-8 px-3 shadow-lg shadow-rose-500/20"
               onClick={() => { if (responseText.trim()) { onAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}
             >
               <Send size={12} />
@@ -106,15 +127,15 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
         )}
 
         {item.type === "checkin_review" && role === "dom" && (
-          <div className="flex gap-2 mt-2">
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] text-purple-400">XP:</span>
+          <div className="flex gap-2 mt-2.5 items-center">
+            <div className="flex items-center gap-1.5 bg-black/30 rounded-lg px-2 py-1 border border-purple-900/30">
+              <span className="text-[9px] text-purple-400 font-bold">XP</span>
               <input
                 data-testid={`checkin-xp-${item.id}`}
                 type="number"
                 value={xpAmount}
                 onChange={(e) => setXpAmount(parseInt(e.target.value) || 0)}
-                className="w-12 bg-black/30 border border-purple-900/50 rounded px-1 py-0.5 text-xs text-white text-center"
+                className="w-10 bg-transparent text-xs text-white text-center focus:outline-none"
                 min={0}
                 max={100}
               />
@@ -122,7 +143,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
             <Button
               data-testid={`checkin-approve-${item.id}`}
               size="sm"
-              className="bg-green-700 hover:bg-green-600 h-7 px-2 text-[10px]"
+              className="bg-emerald-600 hover:bg-emerald-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-emerald-500/20"
               onClick={() => onAction(item.id, "approve", xpAmount)}
             >
               Approve
@@ -130,7 +151,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
             <Button
               data-testid={`checkin-reject-${item.id}`}
               size="sm"
-              className="bg-red-800 hover:bg-red-700 h-7 px-2 text-[10px]"
+              className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
               onClick={() => onAction(item.id, "reject")}
             >
               Reject
@@ -139,12 +160,12 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
         )}
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-1.5 shrink-0">
         {item.type === "demand" && (
           <Button
             data-testid={`demand-respond-${item.id}`}
             size="sm"
-            className="bg-red-600 hover:bg-red-500 h-7 px-3 text-[10px] font-black"
+            className="bg-red-600 hover:bg-red-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-red-500/30 animate-pulse"
             onClick={() => onAction(item.id, "respond")}
           >
             RESPOND
@@ -154,7 +175,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
           <Button
             data-testid={`command-ack-${item.id}`}
             size="sm"
-            className="bg-orange-600 hover:bg-orange-500 h-7 px-3 text-[10px] font-bold"
+            className="bg-orange-600 hover:bg-orange-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-orange-500/20"
             onClick={() => onAction(item.id, "acknowledge")}
           >
             ACK
@@ -163,17 +184,21 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
         {item.type === "task" && (
           <button
             data-testid={`task-toggle-${item.id}`}
-            className="w-6 h-6 rounded-full border-2 border-blue-500/50 flex items-center justify-center hover:bg-blue-500/20 transition-colors"
+            className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${
+              item.data?.done 
+                ? "border-green-500 bg-green-500/20" 
+                : "border-blue-500/40 hover:border-blue-400 hover:bg-blue-500/10"
+            }`}
             onClick={() => onAction(item.id, "toggle")}
           >
-            {item.data?.done && <CheckCircle size={14} className="text-green-500" />}
+            {item.data?.done && <CheckCircle size={14} className="text-green-400" />}
           </button>
         )}
         {item.type === "punishment" && (
           <Button
             data-testid={`punishment-complete-${item.id}`}
             size="sm"
-            className="bg-red-800 hover:bg-red-700 h-7 px-2 text-[10px]"
+            className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
             onClick={() => onAction(item.id, "complete")}
           >
             Done
@@ -183,7 +208,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
           <Button
             data-testid={`reward-redeem-${item.id}`}
             size="sm"
-            className="bg-amber-600 hover:bg-amber-500 h-7 px-2 text-[10px]"
+            className="bg-amber-600 hover:bg-amber-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-amber-500/20"
             onClick={() => onAction(item.id, "redeem")}
           >
             Redeem
@@ -193,7 +218,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
           <Button
             data-testid={`dare-complete-${item.id}`}
             size="sm"
-            className="bg-fuchsia-600 hover:bg-fuchsia-500 h-7 px-2 text-[10px]"
+            className="bg-fuchsia-600 hover:bg-fuchsia-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-fuchsia-500/20"
             onClick={() => onAction(item.id, "complete")}
           >
             Done
@@ -202,7 +227,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
         {item.type === "notification" && (
           <button
             data-testid={`notification-dismiss-${item.id}`}
-            className="text-slate-500 hover:text-white transition-colors"
+            className="text-slate-600 hover:text-white transition-colors p-1"
             onClick={() => onAction(item.id, "dismiss")}
           >
             <X size={14} />
@@ -231,11 +256,13 @@ export function ActionFeed({ items, onAction, role }: ActionFeedProps) {
   };
 
   const sorted = [...filtered].sort((a, b) => urgencyOrder[a.type] - urgencyOrder[b.type]);
+  const urgentCount = items.filter(i => ["demand", "command", "accusation"].includes(i.type)).length;
 
   return (
     <div className="space-y-3" data-testid="action-feed">
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {FILTER_OPTIONS.map((opt) => {
+          const FilterIcon = opt.icon;
           const count = items.filter(i => {
             if (opt.key === "all") return true;
             if (opt.key === "urgent") return ["demand", "command", "accusation"].includes(i.type);
@@ -244,32 +271,51 @@ export function ActionFeed({ items, onAction, role }: ActionFeedProps) {
             if (opt.key === "info") return ["notification", "checkin_review"].includes(i.type);
             return true;
           }).length;
+          const isActive = filter === opt.key;
+          const isUrgentFilter = opt.key === "urgent" && urgentCount > 0;
           return (
             <button
               key={opt.key}
               data-testid={`filter-${opt.key}`}
               onClick={() => setFilter(opt.key)}
-              className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                filter === opt.key
-                  ? "bg-white/10 text-white border border-white/20"
-                  : "bg-white/[0.03] text-slate-500 border border-white/5 hover:text-slate-300"
+              className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                isActive
+                  ? isUrgentFilter
+                    ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/10"
+                    : "bg-white/10 text-white border border-white/20 shadow-lg shadow-white/5"
+                  : isUrgentFilter
+                    ? "bg-red-950/30 text-red-400/70 border border-red-900/30 hover:bg-red-500/15"
+                    : "bg-white/[0.03] text-slate-500 border border-white/5 hover:text-slate-300 hover:bg-white/[0.06]"
               }`}
             >
-              {opt.label} {count > 0 && <span className="ml-1 text-[8px] opacity-60">({count})</span>}
+              <FilterIcon size={10} />
+              {opt.label}
+              {count > 0 && (
+                <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${
+                  isUrgentFilter ? "bg-red-500/30 text-red-300" : "bg-white/10 text-white/50"
+                }`}>
+                  {count}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
       {sorted.length === 0 ? (
-        <div className="text-center py-8" data-testid="feed-empty">
-          <CheckCircle size={32} className="mx-auto text-green-500/30 mb-2" />
-          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">All clear — nothing pending</p>
+        <div className="text-center py-10" data-testid="feed-empty">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+            <CheckCircle size={28} className="text-emerald-500/40" />
+          </div>
+          <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em]">All clear</p>
+          <p className="text-[10px] text-slate-600 mt-1">Nothing requires your attention</p>
         </div>
       ) : (
         <div className="space-y-2">
-          {sorted.map((item) => (
-            <FeedCard key={`${item.type}-${item.id}`} item={item} onAction={onAction} role={role} />
+          {sorted.map((item, i) => (
+            <div key={`${item.type}-${item.id}`} style={{ animationDelay: `${i * 50}ms` }}>
+              <FeedCard item={item} onAction={onAction} role={role} />
+            </div>
           ))}
         </div>
       )}
