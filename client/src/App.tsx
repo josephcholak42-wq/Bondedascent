@@ -1,5 +1,4 @@
-import { useEffect, useRef } from "react";
-import { Switch, Route, Redirect, useLocation } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -100,36 +99,7 @@ function Router() {
   );
 }
 
-function useBackGestureGuard() {
-  const [location, setLocation] = useLocation();
-  const locationRef = useRef(location);
-  locationRef.current = location;
-
-  useEffect(() => {
-    history.replaceState({ __guarded: true, __path: location }, "");
-    history.pushState({ __guarded: true, __path: location }, "", window.location.href);
-
-    const handlePopState = () => {
-      const currentPath = locationRef.current;
-      history.pushState({ __guarded: true, __path: currentPath }, "", window.location.href);
-      if (currentPath !== "/") {
-        setLocation("/");
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  useEffect(() => {
-    history.replaceState({ __guarded: true, __path: location }, "");
-    history.pushState({ __guarded: true, __path: location }, "", window.location.href);
-  }, [location]);
-}
-
 function App() {
-  useBackGestureGuard();
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

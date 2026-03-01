@@ -88,6 +88,7 @@ import {
   Layers,
   ListChecks,
   Hourglass,
+  ChevronDown,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -1011,9 +1012,8 @@ export default function BondedAscentApp() {
               );
             })()}
 
-          <div className="border-t border-white/5 pt-6 space-y-5">
-            <div>
-              <h3 className="text-[10px] font-bold text-red-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Protocol & Structure</h3>
+          <div className="border-t border-white/5 pt-6 space-y-2">
+            <CategorySection title="Protocol & Structure" color="text-red-500/70" borderColor="border-red-500/20" defaultOpen={false}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <FeatureLink icon={<Flame />} label="Rituals" desc="Daily routines & habits" href="/rituals" color="text-orange-400" badge={rituals.filter((r: any) => !r.completed).length} sexyIcon="rituals" />
                 <FeatureLink icon={<FileSignature />} label="Standing Orders" desc="Permanent directives" href="/standing-orders" color="text-red-400" badge={standingOrders.filter((o: any) => o.status === "active").length} sexyIcon="standing-orders" />
@@ -1021,9 +1021,8 @@ export default function BondedAscentApp() {
                 <FeatureLink icon={<Hand />} label="Permissions" desc="Requests & approvals" href="/permission-requests" color="text-indigo-400" badge={permissionRequests.filter((p: any) => p.status === "pending").length} sexyIcon="permission-requests" />
                 <FeatureLink icon={<Target />} label="Desired Changes" desc="Growth requests" href="/desired-changes" color="text-teal-400" badge={desiredChanges.filter((c: any) => c.status === "pending").length} sexyIcon="standing-orders" />
               </div>
-            </div>
-            <div>
-              <h3 className="text-[10px] font-bold text-amber-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Challenges & Games</h3>
+            </CategorySection>
+            <CategorySection title="Challenges & Games" color="text-amber-500/70" borderColor="border-amber-500/20" defaultOpen={false}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <FeatureLink icon={<Play />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-green-400" badge={playSessions.filter((s: any) => s.status === "planned").length} sexyIcon="play-sessions" />
                 <FeatureLink icon={<Layers />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" badge={intensitySessions.filter((s: any) => s.status === "active").length} sexyIcon="endurance" />
@@ -1032,25 +1031,23 @@ export default function BondedAscentApp() {
                 <FeatureLink icon={<Dices />} label="Wagers" desc="Bets & stakes" href="/wagers" color="text-yellow-400" badge={wagers.filter((w: any) => w.status === "active" || w.status === "pending").length} sexyIcon="wagers" />
                 <FeatureLink icon={<Hourglass />} label="Endurance" desc="Timed challenges" href="/endurance-challenges" color="text-orange-500" badge={enduranceChallenges.filter((c: any) => c.status === "active").length} sexyIcon="endurance" />
               </div>
-            </div>
-            <div>
-              <h3 className="text-[10px] font-bold text-pink-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Connection & Reflection</h3>
+            </CategorySection>
+            <CategorySection title="Connection & Reflection" color="text-pink-500/70" borderColor="border-pink-500/20" defaultOpen={false}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <FeatureLink icon={<HeartPulse />} label="Connection Pulse" desc="Bond health" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
                 <FeatureLink icon={<Heart />} label="Devotions" desc="Acts of service" href="/devotions" color="text-pink-300" badge={devotionsList.length} sexyIcon="devotions" />
                 <FeatureLink icon={<Eye />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-purple-400" badge={secrets.length} sexyIcon="secrets" />
                 <FeatureLink icon={<AlertTriangle />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-rose-400" badge={conflictsList.filter((c: any) => c.status !== "resolved").length} sexyIcon="conflicts" />
               </div>
-            </div>
-            <div>
-              <h3 className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Tracking & Progress</h3>
+            </CategorySection>
+            <CategorySection title="Tracking & Progress" color="text-emerald-500/70" borderColor="border-emerald-500/20" defaultOpen={false}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <FeatureLink icon={<Star />} label="Ratings" desc="Performance scores" href="/ratings" color="text-amber-400" badge={ratingsList.length} sexyIcon="ratings" />
                 <FeatureLink icon={<Award />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
                 <FeatureLink icon={<Timer />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} sexyIcon="countdown-events" />
                 <FeatureLink icon={<Lock />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} sexyIcon="config" />
               </div>
-            </div>
+            </CategorySection>
           </div>
 
           {partner && (
@@ -1789,9 +1786,8 @@ export default function BondedAscentApp() {
                     </WouterLink>
                   </div>
 
-                  <div className="border-t border-white/5 pt-6 space-y-5">
-                    <div>
-                      <h3 className="text-[10px] font-bold text-red-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Protocol & Structure</h3>
+                  <div className="border-t border-white/5 pt-6 space-y-2">
+                    <CategorySection title="Protocol & Structure" color="text-red-500/70" borderColor="border-red-500/20" defaultOpen={false}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <FeatureLink icon={<Flame />} label="Rituals" desc="Daily routines & habits" href="/rituals" color="text-orange-400" badge={rituals.filter((r: any) => !r.completed).length} sexyIcon="rituals" />
                         <FeatureLink icon={<FileSignature />} label="Standing Orders" desc="Active directives" href="/standing-orders" color="text-red-400" badge={standingOrders.filter((o: any) => o.status === "active").length} sexyIcon="standing-orders" />
@@ -1799,9 +1795,8 @@ export default function BondedAscentApp() {
                         <FeatureLink icon={<Hand />} label="Permissions" desc="Request & track" href="/permission-requests" color="text-indigo-400" badge={permissionRequests.filter((p: any) => p.status === "pending").length} sexyIcon="permission-requests" />
                         <FeatureLink icon={<Target />} label="Required Changes" desc="Assigned growth" href="/desired-changes" color="text-teal-400" badge={desiredChanges.filter((c: any) => c.status === "pending").length} sexyIcon="standing-orders" />
                       </div>
-                    </div>
-                    <div>
-                      <h3 className="text-[10px] font-bold text-amber-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Challenges & Games</h3>
+                    </CategorySection>
+                    <CategorySection title="Challenges & Games" color="text-amber-500/70" borderColor="border-amber-500/20" defaultOpen={false}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <FeatureLink icon={<Play />} label="Scheduled Sessions" desc="Upcoming scenes" href="/play-sessions" color="text-green-400" badge={playSessions.filter((s: any) => s.status === "planned").length} sexyIcon="play-sessions" />
                         <FeatureLink icon={<Layers />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" badge={intensitySessions.filter((s: any) => s.status === "active").length} sexyIcon="endurance" />
@@ -1810,25 +1805,23 @@ export default function BondedAscentApp() {
                         <FeatureLink icon={<Dices />} label="Wagers" desc="Bets & stakes" href="/wagers" color="text-yellow-400" badge={wagers.filter((w: any) => w.status === "active" || w.status === "pending").length} sexyIcon="wagers" />
                         <FeatureLink icon={<Hourglass />} label="Endurance" desc="Timed challenges" href="/endurance-challenges" color="text-orange-500" badge={enduranceChallenges.filter((c: any) => c.status === "active").length} sexyIcon="endurance" />
                       </div>
-                    </div>
-                    <div>
-                      <h3 className="text-[10px] font-bold text-pink-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Connection & Reflection</h3>
+                    </CategorySection>
+                    <CategorySection title="Connection & Reflection" color="text-pink-500/70" borderColor="border-pink-500/20" defaultOpen={false}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <FeatureLink icon={<HeartPulse />} label="Connection Pulse" desc="Bond health" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
                         <FeatureLink icon={<Heart />} label="Devotions" desc="Acts of devotion" href="/devotions" color="text-pink-300" badge={devotionsList.length} sexyIcon="devotions" />
                         <FeatureLink icon={<Eye />} label="Confessions" desc="Secrets & truths" href="/secrets" color="text-purple-400" badge={secrets.length} sexyIcon="secrets" />
                         <FeatureLink icon={<AlertTriangle />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-rose-400" badge={conflictsList.filter((c: any) => c.status !== "resolved").length} sexyIcon="conflicts" />
                       </div>
-                    </div>
-                    <div>
-                      <h3 className="text-[10px] font-bold text-emerald-500/70 uppercase tracking-[0.2em] mb-3 pl-1">Tracking & Progress</h3>
+                    </CategorySection>
+                    <CategorySection title="Tracking & Progress" color="text-emerald-500/70" borderColor="border-emerald-500/20" defaultOpen={false}>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <FeatureLink icon={<Star />} label="Ratings" desc="Performance scores" href="/ratings" color="text-amber-400" badge={ratingsList.length} sexyIcon="ratings" />
                         <FeatureLink icon={<Award />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
                         <FeatureLink icon={<Timer />} label="Upcoming Events" desc="Countdowns" href="/countdown-events" color="text-cyan-400" badge={countdownEvents.length} sexyIcon="countdown-events" />
                         <FeatureLink icon={<Lock />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" badge={sealedOrders.filter((o: any) => !o.completed).length} sexyIcon="config" />
                       </div>
-                    </div>
+                    </CategorySection>
                   </div>
                 </>
               )}
@@ -5780,6 +5773,39 @@ function urlBase64ToUint8Array(base64String: string) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
+}
+
+function CategorySection({
+  title,
+  color,
+  borderColor,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  color: string;
+  borderColor: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  return (
+    <div className={`rounded-xl border ${isOpen ? borderColor : "border-white/5"} bg-gradient-to-b from-slate-900/50 to-slate-950/50 overflow-hidden transition-colors`}>
+      <button
+        data-testid={`category-${title.toLowerCase().replace(/\s+/g, "-")}`}
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
+      >
+        <h3 className={`text-[10px] font-bold ${color} uppercase tracking-[0.2em]`}>{title}</h3>
+        <ChevronDown size={14} className={`${color} transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      <div className={`transition-all duration-200 ease-in-out ${isOpen ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"} overflow-hidden`}>
+        <div className="px-3 pb-3">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function FeatureLink({
