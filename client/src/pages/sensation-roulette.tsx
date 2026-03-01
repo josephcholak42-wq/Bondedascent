@@ -1,3 +1,4 @@
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React, { useState, useRef, useMemo } from 'react';
 import { Sparkles, Plus, X, Trash2, EyeOff, ChevronDown, ChevronUp, Check, Zap, RotateCcw, Search, Library, Flame, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';

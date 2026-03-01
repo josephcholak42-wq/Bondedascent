@@ -1,3 +1,4 @@
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React, { useState } from 'react';
 import { Star, BarChart, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';

@@ -1,3 +1,4 @@
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React from 'react';
 import { useLocation } from 'wouter';
 import { HeartPulse, Activity, Users, Zap } from 'lucide-react';

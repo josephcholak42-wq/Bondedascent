@@ -1,3 +1,4 @@
+import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, Plus, Check, X, AlertTriangle, Link2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
