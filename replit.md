@@ -73,6 +73,15 @@ Preferred communication style: Simple, everyday language.
 - `server/storage.ts` defines an `IStorage` interface and a database-backed implementation using Drizzle queries
 - All database operations go through the storage abstraction
 
+### Role-Aware Data Separation
+- **Column**: `created_as_role TEXT NOT NULL DEFAULT 'sub'` on 32 content tables (tasks, check_ins, dares, rewards, punishments, journal_entries, notifications, activity_log, rituals, limits, secrets, wagers, ratings, countdown_events, standing_orders, permission_requests, devotions, conflicts, desired_changes, achievements, play_sessions, accusations, demand_timers, quick_commands, intensity_sessions, obedience_trials, sensation_cards, sealed_orders, endurance_challenges, media, stickers, body_map_zones)
+- **Defaults**: Most tables default to 'sub'; demand_timers, quick_commands, sealed_orders, endurance_challenges default to 'dom'
+- **Write path**: All create routes in `server/routes.ts` set `createdAsRole: user.role` when inserting records
+- **Read path**: All `ForPair()` storage methods accept optional `role` param; when provided, filter `WHERE created_as_role = role`. Single-user query methods (getNotifications, getJournalEntries, getActivityLog, getDemandTimers, getQuickCommands, getAccusations) also accept optional role param
+- **Partner data**: Partner-specific routes (partner stats, partner activity, partner accusations) filter by `partner.role` (the partner's current role), not the viewer's role
+- **Backfill**: Existing records were backfilled with `created_as_role = original_role` from the creating user's `original_role` field
+- **Effect**: When a user switches roles (Dom ↔ Sub), they only see data created under their current role. Switching back reveals the original data
+
 ### Build & Deployment
 - **Development**: `npm run dev` starts the Express server with Vite middleware for HMR
 - **Production Build**: `npm run build` runs a custom build script that uses Vite for the client and esbuild for the server, outputting to `dist/`

@@ -41,8 +41,8 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
-async function notifyUser(userId: string, text: string, type: string = "info") {
-  await storage.createNotification({ userId, text, type });
+async function notifyUser(userId: string, text: string, type: string = "info", createdAsRole?: string) {
+  await storage.createNotification({ userId, text, type, ...(createdAsRole ? { createdAsRole } : {}) });
   const title = type === "alert" ? "BondedAscent Alert" : "BondedAscent";
   sendPushToUser(userId, title, text, type).catch(() => {});
 }
@@ -70,7 +70,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const taskList = await storage.getTasksForPair(userIds);
+    const taskList = await storage.getTasksForPair(userIds, user.role);
     res.json(taskList);
   });
 
@@ -85,9 +85,10 @@ export async function registerRoutes(
       text: text.trim(),
       userId: user.id,
       assignedBy: user.id,
+      createdAsRole: user.role,
     });
 
-    await storage.logActivity(user.id, "task_created", text.trim());
+    await storage.logActivity(user.id, "task_created", text.trim(), user.role);
     res.status(201).json(task);
   });
 
@@ -106,8 +107,8 @@ export async function registerRoutes(
         const newXp = Math.min((freshUser.xp || 0) + 5, 100 * (freshUser.level || 1));
         await storage.updateUserXp(user.id, newXp);
       }
-      await storage.logActivity(user.id, "task_completed", task.text);
-      await notifyUser(user.id, `Completed: ${task.text} (+5 XP)`, "info");
+      await storage.logActivity(user.id, "task_completed", task.text, user.role);
+      await notifyUser(user.id, `Completed: ${task.text} (+5 XP)`, "info", user.role);
     }
 
     res.json(task);
@@ -128,7 +129,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getCheckInsForPair(userIds);
+    const list = await storage.getCheckInsForPair(userIds, user.role);
     res.json(list);
   });
 
@@ -140,9 +141,9 @@ export async function registerRoutes(
     }
 
     const { mood, obedience, notes } = parsed.data;
-    const checkIn = await storage.createCheckIn({ userId: user.id, mood, obedience, notes });
-    await storage.logActivity(user.id, "checkin_submitted", `Mood: ${mood}, Obedience: ${obedience}`);
-    await notifyUser(user.id, "Check-in submitted successfully", "info");
+    const checkIn = await storage.createCheckIn({ userId: user.id, mood, obedience, notes, createdAsRole: user.role });
+    await storage.logActivity(user.id, "checkin_submitted", `Mood: ${mood}, Obedience: ${obedience}`, user.role);
+    await notifyUser(user.id, "Check-in submitted successfully", "info", user.role);
 
     const freshUser = await storage.getUser(user.id);
     if (freshUser) {
@@ -184,7 +185,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getDaresForPair(userIds);
+    const list = await storage.getDaresForPair(userIds, user.role);
     res.json(list);
   });
 
@@ -203,9 +204,9 @@ export async function registerRoutes(
       "No electronics for 2 hours",
     ];
     const text = dareOptions[Math.floor(Math.random() * dareOptions.length)];
-    const dare = await storage.createDare(user.id, text);
-    await storage.logActivity(user.id, "dare_spun", text);
-    await notifyUser(user.id, `New Dare: ${text}`, "info");
+    const dare = await storage.createDare(user.id, text, user.role);
+    await storage.logActivity(user.id, "dare_spun", text, user.role);
+    await notifyUser(user.id, `New Dare: ${text}`, "info", user.role);
     res.status(201).json(dare);
   });
 
@@ -223,7 +224,7 @@ export async function registerRoutes(
       const newXp = Math.min((freshUser.xp || 0) + 10, 100 * (freshUser.level || 1));
       await storage.updateUserXp(user.id, newXp);
     }
-    await storage.logActivity(user.id, "dare_completed", dare.text);
+    await storage.logActivity(user.id, "dare_completed", dare.text, user.role);
     res.json(dare);
   });
 
@@ -232,7 +233,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getRewardsForPair(userIds);
+    const list = await storage.getRewardsForPair(userIds, user.role);
     res.json(list);
   });
 
@@ -243,7 +244,7 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Reward name required" });
     }
     const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
-    const reward = await storage.createReward({ userId: user.id, name: name.trim(), unlockLevel: lvl, category: category || null, duration: duration || null });
+    const reward = await storage.createReward({ userId: user.id, name: name.trim(), unlockLevel: lvl, category: category || null, duration: duration || null, createdAsRole: user.role });
     res.status(201).json(reward);
   });
 
@@ -251,16 +252,16 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allRewards = await storage.getRewardsForPair(userIds);
+    const allRewards = await storage.getRewardsForPair(userIds, user.role);
     const owned = allRewards.find(r => r.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Reward not found" });
 
     const reward = await storage.toggleReward(req.params.id);
     if (!reward) return res.status(404).json({ message: "Reward not found" });
     const action = reward.unlocked ? "redeemed" : "locked";
-    await storage.logActivity(user.id, `reward_${action}`, reward.name);
+    await storage.logActivity(user.id, `reward_${action}`, reward.name, user.role);
     if (partner) {
-      await notifyUser(partner.id, `${user.username} ${action} reward: ${reward.name}`, "info");
+      await notifyUser(partner.id, `${user.username} ${action} reward: ${reward.name}`, "info", user.role);
     }
     res.json(reward);
   });
@@ -270,7 +271,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getPunishmentsForPair(userIds);
+    const list = await storage.getPunishmentsForPair(userIds, user.role);
     res.json(list);
   });
 
@@ -286,9 +287,10 @@ export async function registerRoutes(
       name: name.trim(),
       category: category || null,
       duration: duration || null,
+      createdAsRole: user.role,
     });
-    await storage.logActivity(user.id, "punishment_assigned", name.trim());
-    await notifyUser(user.id, `Punishment assigned: ${name.trim()}`, "alert");
+    await storage.logActivity(user.id, "punishment_assigned", name.trim(), user.role);
+    await notifyUser(user.id, `Punishment assigned: ${name.trim()}`, "alert", user.role);
     res.status(201).json(punishment);
   });
 
@@ -301,15 +303,15 @@ export async function registerRoutes(
 
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allPunishments = await storage.getPunishmentsForPair(userIds);
+    const allPunishments = await storage.getPunishmentsForPair(userIds, user.role);
     const owned = allPunishments.find(p => p.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Punishment not found" });
 
     const punishment = await storage.updatePunishmentStatus(req.params.id, status);
     if (!punishment) return res.status(404).json({ message: "Punishment not found" });
-    await storage.logActivity(user.id, `punishment_${status}`, punishment.name);
+    await storage.logActivity(user.id, `punishment_${status}`, punishment.name, user.role);
     if (partner) {
-      await notifyUser(partner.id, `${user.username} marked punishment "${punishment.name}" as ${status}`, "info");
+      await notifyUser(partner.id, `${user.username} marked punishment "${punishment.name}" as ${status}`, "info", user.role);
     }
     res.json(punishment);
   });
@@ -317,7 +319,7 @@ export async function registerRoutes(
   // --- JOURNAL ---
   app.get("/api/journal", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getJournalEntries(user.id);
+    const list = await storage.getJournalEntries(user.id, user.role);
     res.json(list);
   });
 
@@ -332,12 +334,13 @@ export async function registerRoutes(
       content: content.trim(),
       isShared: isShared || false,
       unlockCost: unlockCost || 50,
+      createdAsRole: user.role,
     });
-    await storage.logActivity(user.id, "journal_entry", "New journal entry");
+    await storage.logActivity(user.id, "journal_entry", "New journal entry", user.role);
     if (isShared) {
       const partner = await storage.getPartner(user.id);
       if (partner) {
-        await notifyUser(partner.id, `${user.username} shared a journal entry (locked — ${unlockCost || 50} XP to read)`, "info");
+        await notifyUser(partner.id, `${user.username} shared a journal entry (locked — ${unlockCost || 50} XP to read)`, "info", user.role);
       }
     }
     res.status(201).json(entry);
@@ -371,21 +374,21 @@ export async function registerRoutes(
     }
     await storage.updateUserXp(user.id, user.xp - cost);
     const unlocked = await storage.unlockJournalEntry(req.params.id, user.id);
-    await storage.logActivity(user.id, "journal_unlocked", `Spent ${cost} XP to read partner's journal`);
-    await notifyUser(entry.userId, `${user.username} unlocked one of your journal entries!`, "info");
+    await storage.logActivity(user.id, "journal_unlocked", `Spent ${cost} XP to read partner's journal`, user.role);
+    await notifyUser(entry.userId, `${user.username} unlocked one of your journal entries!`, "info", user.role);
     res.json(unlocked);
   });
 
   // --- NOTIFICATIONS ---
   app.get("/api/notifications", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getNotifications(user.id);
+    const list = await storage.getNotifications(user.id, user.role);
     res.json(list);
   });
 
   app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const notifications = await storage.getNotifications(user.id);
+    const notifications = await storage.getNotifications(user.id, user.role);
     const owned = notifications.find(n => n.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Notification not found" });
 
@@ -398,7 +401,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getActivityLogForPair(userIds);
+    const list = await storage.getActivityLogForPair(userIds, user.role);
     res.json(list);
   });
 
@@ -406,7 +409,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const { action, detail } = req.body;
     if (!action || typeof action !== "string") return res.status(400).json({ message: "Action is required" });
-    const entry = await storage.logActivity(user.id, action, detail || undefined);
+    const entry = await storage.logActivity(user.id, action, detail || undefined, user.role);
     res.status(201).json(entry);
   });
 
@@ -418,7 +421,7 @@ export async function registerRoutes(
     const completedTasks = taskList.filter(t => t.done).length;
     const totalTasks = taskList.length;
     const checkInList = await storage.getCheckIns(user.id);
-    const journalList = await storage.getJournalEntries(user.id);
+    const journalList = await storage.getJournalEntries(user.id, user.role);
     const dareList = await storage.getDares(user.id);
     const completedDares = dareList.filter(d => d.completed).length;
 
@@ -501,10 +504,10 @@ export async function registerRoutes(
     await storage.usePairCode(pairCode.id, user.id);
     await storage.linkPartners(user.id, pairCode.userId);
 
-    await storage.logActivity(user.id, "partner_linked", `Paired with ${codeOwner.username}`);
-    await storage.logActivity(pairCode.userId, "partner_linked", `Paired with ${user.username}`);
-    await notifyUser(user.id, `You are now bonded with ${codeOwner.username}`, "info");
-    await notifyUser(pairCode.userId, `You are now bonded with ${user.username}`, "info");
+    await storage.logActivity(user.id, "partner_linked", `Paired with ${codeOwner.username}`, user.role);
+    await storage.logActivity(pairCode.userId, "partner_linked", `Paired with ${user.username}`, codeOwner.role);
+    await notifyUser(user.id, `You are now bonded with ${codeOwner.username}`, "info", user.role);
+    await notifyUser(pairCode.userId, `You are now bonded with ${user.username}`, "info", codeOwner.role);
 
     res.json({ message: "Successfully paired!", partnerUsername: codeOwner.username });
   });
@@ -516,10 +519,10 @@ export async function registerRoutes(
     }
     const partner = await storage.getPartner(user.id);
     await storage.unlinkPartner(user.id);
-    await storage.logActivity(user.id, "partner_unlinked", partner ? `Unlinked from ${partner.username}` : "Partner unlinked");
+    await storage.logActivity(user.id, "partner_unlinked", partner ? `Unlinked from ${partner.username}` : "Partner unlinked", user.role);
     if (partner) {
-      await storage.logActivity(partner.id, "partner_unlinked", `${user.username} ended the bond`);
-      await notifyUser(partner.id, `${user.username} has ended the bond`, "alert");
+      await storage.logActivity(partner.id, "partner_unlinked", `${user.username} ended the bond`, partner.role);
+      await notifyUser(partner.id, `${user.username} has ended the bond`, "alert", partner.role);
     }
     res.json({ message: "Bond dissolved" });
   });
@@ -545,7 +548,7 @@ export async function registerRoutes(
     const completedTasks = taskList.filter(t => t.done).length;
     const checkInList = await storage.getCheckIns(partner.id);
     const dareList = await storage.getDares(partner.id);
-    const journalList = await storage.getJournalEntries(partner.id);
+    const journalList = await storage.getJournalEntries(partner.id, partner.role);
 
     res.json({
       username: partner.username,
@@ -580,9 +583,9 @@ export async function registerRoutes(
     if (!text || typeof text !== "string" || !text.trim()) {
       return res.status(400).json({ message: "Task text required" });
     }
-    const task = await storage.createTask({ text: text.trim(), userId: partner.id, assignedBy: user.id });
-    await storage.logActivity(user.id, "task_assigned", `Assigned "${text.trim()}" to ${partner.username}`);
-    await notifyUser(partner.id, `New task from ${user.username}: ${text.trim()}`, "info");
+    const task = await storage.createTask({ text: text.trim(), userId: partner.id, assignedBy: user.id, createdAsRole: user.role });
+    await storage.logActivity(user.id, "task_assigned", `Assigned "${text.trim()}" to ${partner.username}`, user.role);
+    await notifyUser(partner.id, `New task from ${user.username}: ${text.trim()}`, "info", user.role);
     res.status(201).json(task);
   });
 
@@ -617,8 +620,8 @@ export async function registerRoutes(
       await storage.updateUserXp(partner.id, newXp);
     }
 
-    await storage.logActivity(user.id, "checkin_reviewed", `${status} check-in for ${partner.username}`);
-    await notifyUser(partner.id, `Check-in ${status} by ${user.username}${xpAwarded > 0 ? ` (+${xpAwarded} XP)` : ''}`, "info");
+    await storage.logActivity(user.id, "checkin_reviewed", `${status} check-in for ${partner.username}`, user.role);
+    await notifyUser(partner.id, `Check-in ${status} by ${user.username}${xpAwarded > 0 ? ` (+${xpAwarded} XP)` : ''}`, "info", user.role);
     res.json(checkIn);
   });
 
@@ -630,9 +633,9 @@ export async function registerRoutes(
     if (!name || typeof name !== "string" || !name.trim()) {
       return res.status(400).json({ message: "Punishment name required" });
     }
-    const punishment = await storage.createPunishment({ userId: partner.id, assignedBy: user.id, name: name.trim(), category: category || null, duration: duration || null });
-    await storage.logActivity(user.id, "punishment_assigned", `Assigned "${name.trim()}" to ${partner.username}`);
-    await notifyUser(partner.id, `Punishment from ${user.username}: ${name.trim()}`, "alert");
+    const punishment = await storage.createPunishment({ userId: partner.id, assignedBy: user.id, name: name.trim(), category: category || null, duration: duration || null, createdAsRole: user.role });
+    await storage.logActivity(user.id, "punishment_assigned", `Assigned "${name.trim()}" to ${partner.username}`, user.role);
+    await notifyUser(partner.id, `Punishment from ${user.username}: ${name.trim()}`, "alert", user.role);
     res.status(201).json(punishment);
   });
 
@@ -645,9 +648,9 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Reward name required" });
     }
     const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
-    const reward = await storage.createReward({ userId: partner.id, name: name.trim(), unlockLevel: lvl, category: category || null, duration: duration || null });
-    await storage.logActivity(user.id, "reward_granted", `Granted "${name.trim()}" to ${partner.username}`);
-    await notifyUser(partner.id, `Reward from ${user.username}: ${name.trim()}`, "info");
+    const reward = await storage.createReward({ userId: partner.id, name: name.trim(), unlockLevel: lvl, category: category || null, duration: duration || null, createdAsRole: user.role });
+    await storage.logActivity(user.id, "reward_granted", `Granted "${name.trim()}" to ${partner.username}`, user.role);
+    await notifyUser(partner.id, `Reward from ${user.username}: ${name.trim()}`, "info", user.role);
     res.status(201).json(reward);
   });
 
@@ -655,7 +658,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     if (!partner) return res.status(404).json({ message: "No partner linked" });
-    const list = await storage.getActivityLog(partner.id);
+    const list = await storage.getActivityLog(partner.id, partner.role);
     res.json(list);
   });
 
@@ -664,15 +667,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getRitualsForPair(userIds));
+    res.json(await storage.getRitualsForPair(userIds, user.role));
   });
 
   app.post("/api/rituals", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { title, description, frequency, timeOfDay } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const ritual = await storage.createRitual({ userId: user.id, assignedBy: user.id, title: title.trim(), description, frequency, timeOfDay });
-    await storage.logActivity(user.id, "ritual_created", title.trim());
+    const ritual = await storage.createRitual({ userId: user.id, assignedBy: user.id, title: title.trim(), description, frequency, timeOfDay, createdAsRole: user.role });
+    await storage.logActivity(user.id, "ritual_created", title.trim(), user.role);
     res.status(201).json(ritual);
   });
 
@@ -700,9 +703,9 @@ export async function registerRoutes(
     if (!partner) return res.status(404).json({ message: "No partner" });
     const { title, description, frequency, timeOfDay } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const ritual = await storage.createRitual({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, frequency, timeOfDay });
-    await storage.logActivity(user.id, "ritual_assigned", `Assigned "${title.trim()}" to ${partner.username}`);
-    await notifyUser(partner.id, `New ritual from ${user.username}: ${title.trim()}`, "info");
+    const ritual = await storage.createRitual({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, frequency, timeOfDay, createdAsRole: user.role });
+    await storage.logActivity(user.id, "ritual_assigned", `Assigned "${title.trim()}" to ${partner.username}`, user.role);
+    await notifyUser(partner.id, `New ritual from ${user.username}: ${title.trim()}`, "info", user.role);
     res.status(201).json(ritual);
   });
 
@@ -711,15 +714,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getLimitsForPair(userIds));
+    res.json(await storage.getLimitsForPair(userIds, user.role));
   });
 
   app.post("/api/limits", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { name, category, level, description } = req.body;
     if (!name?.trim()) return res.status(400).json({ message: "Name required" });
-    const limit = await storage.createLimit({ userId: user.id, name: name.trim(), category, level, description });
-    await storage.logActivity(user.id, "limit_set", name.trim());
+    const limit = await storage.createLimit({ userId: user.id, name: name.trim(), category, level, description, createdAsRole: user.role });
+    await storage.logActivity(user.id, "limit_set", name.trim(), user.role);
     res.status(201).json(limit);
   });
 
@@ -746,7 +749,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getSecretsForPair(userIds));
+    res.json(await storage.getSecretsForPair(userIds, user.role));
   });
 
   app.get("/api/secrets/for-me", requireAuth, async (req, res) => {
@@ -758,10 +761,10 @@ export async function registerRoutes(
     const user = req.user as User;
     const { title, content, tier, forUserId } = req.body;
     if (!title?.trim() || !content?.trim()) return res.status(400).json({ message: "Title and content required" });
-    const secret = await storage.createSecret({ userId: user.id, forUserId, title: title.trim(), content: content.trim(), tier });
-    await storage.logActivity(user.id, "secret_created", title.trim());
+    const secret = await storage.createSecret({ userId: user.id, forUserId, title: title.trim(), content: content.trim(), tier, createdAsRole: user.role });
+    await storage.logActivity(user.id, "secret_created", title.trim(), user.role);
     if (forUserId) {
-      await notifyUser(forUserId, `${user.username} shared a secret with you`, "info");
+      await notifyUser(forUserId, `${user.username} shared a secret with you`, "info", user.role);
     }
     res.status(201).json(secret);
   });
@@ -783,7 +786,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: `Not enough XP. Need ${cost} XP to reveal.` });
       }
       await storage.updateUserXp(user.id, user.xp - cost);
-      await storage.logActivity(user.id, "secret_purchased", `Spent ${cost} XP to reveal: ${targetSecret.title}`);
+      await storage.logActivity(user.id, "secret_purchased", `Spent ${cost} XP to reveal: ${targetSecret.title}`, user.role);
     }
 
     const secret = await storage.revealSecret(req.params.id);
@@ -796,17 +799,17 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getWagersForPair(userIds));
+    res.json(await storage.getWagersForPair(userIds, user.role));
   });
 
   app.post("/api/wagers", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { title, description, stakes, partnerId } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const wager = await storage.createWager({ userId: user.id, partnerId, title: title.trim(), description, stakes });
-    await storage.logActivity(user.id, "wager_created", title.trim());
+    const wager = await storage.createWager({ userId: user.id, partnerId, title: title.trim(), description, stakes, createdAsRole: user.role });
+    await storage.logActivity(user.id, "wager_created", title.trim(), user.role);
     if (partnerId) {
-      await notifyUser(partnerId, `${user.username} proposed a wager: ${title.trim()}`, "info");
+      await notifyUser(partnerId, `${user.username} proposed a wager: ${title.trim()}`, "info", user.role);
     }
     res.status(201).json(wager);
   });
@@ -822,7 +825,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getRatingsForPair(userIds));
+    res.json(await storage.getRatingsForPair(userIds, user.role));
   });
 
   app.get("/api/ratings/received", requireAuth, async (req, res) => {
@@ -834,9 +837,9 @@ export async function registerRoutes(
     const user = req.user as User;
     const { ratedUserId, overall, communication, obedience, effort, notes } = req.body;
     if (!ratedUserId || typeof overall !== "number") return res.status(400).json({ message: "Rated user and overall score required" });
-    const rating = await storage.createRating({ userId: user.id, ratedUserId, overall, communication, obedience, effort, notes });
-    await storage.logActivity(user.id, "rating_given", `Rated partner ${overall}/10`);
-    await notifyUser(ratedUserId, `${user.username} rated you ${overall}/10`, "info");
+    const rating = await storage.createRating({ userId: user.id, ratedUserId, overall, communication, obedience, effort, notes, createdAsRole: user.role });
+    await storage.logActivity(user.id, "rating_given", `Rated partner ${overall}/10`, user.role);
+    await notifyUser(ratedUserId, `${user.username} rated you ${overall}/10`, "info", user.role);
     res.status(201).json(rating);
   });
 
@@ -845,15 +848,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getCountdownEventsForPair(userIds));
+    res.json(await storage.getCountdownEventsForPair(userIds, user.role));
   });
 
   app.post("/api/countdown-events", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { title, description, targetDate, category } = req.body;
     if (!title?.trim() || !targetDate) return res.status(400).json({ message: "Title and target date required" });
-    const event = await storage.createCountdownEvent({ userId: user.id, title: title.trim(), description, targetDate: new Date(targetDate), category });
-    await storage.logActivity(user.id, "countdown_created", title.trim());
+    const event = await storage.createCountdownEvent({ userId: user.id, title: title.trim(), description, targetDate: new Date(targetDate), category, createdAsRole: user.role });
+    await storage.logActivity(user.id, "countdown_created", title.trim(), user.role);
     res.status(201).json(event);
   });
 
@@ -867,15 +870,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getStandingOrdersForPair(userIds));
+    res.json(await storage.getStandingOrdersForPair(userIds, user.role));
   });
 
   app.post("/api/standing-orders", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { title, description, priority } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const order = await storage.createStandingOrder({ userId: user.id, assignedBy: user.id, title: title.trim(), description, priority });
-    await storage.logActivity(user.id, "standing_order_created", title.trim());
+    const order = await storage.createStandingOrder({ userId: user.id, assignedBy: user.id, title: title.trim(), description, priority, createdAsRole: user.role });
+    await storage.logActivity(user.id, "standing_order_created", title.trim(), user.role);
     res.status(201).json(order);
   });
 
@@ -896,9 +899,9 @@ export async function registerRoutes(
     if (!partner) return res.status(404).json({ message: "No partner" });
     const { title, description, priority } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const order = await storage.createStandingOrder({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, priority });
-    await storage.logActivity(user.id, "standing_order_assigned", `Assigned "${title.trim()}" to ${partner.username}`);
-    await notifyUser(partner.id, `New standing order from ${user.username}: ${title.trim()}`, "info");
+    const order = await storage.createStandingOrder({ userId: partner.id, assignedBy: user.id, title: title.trim(), description, priority, createdAsRole: user.role });
+    await storage.logActivity(user.id, "standing_order_assigned", `Assigned "${title.trim()}" to ${partner.username}`, user.role);
+    await notifyUser(partner.id, `New standing order from ${user.username}: ${title.trim()}`, "info", user.role);
     res.status(201).json(order);
   });
 
@@ -907,18 +910,18 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getPermissionRequestsForPair(userIds));
+    res.json(await storage.getPermissionRequestsForPair(userIds, user.role));
   });
 
   app.post("/api/permission-requests", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { title, description } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const request = await storage.createPermissionRequest({ userId: user.id, title: title.trim(), description });
-    await storage.logActivity(user.id, "permission_requested", title.trim());
+    const request = await storage.createPermissionRequest({ userId: user.id, title: title.trim(), description, createdAsRole: user.role });
+    await storage.logActivity(user.id, "permission_requested", title.trim(), user.role);
     const partner = await storage.getPartner(user.id);
     if (partner) {
-      await notifyUser(partner.id, `${user.username} is requesting permission: ${title.trim()}`, "info");
+      await notifyUser(partner.id, `${user.username} is requesting permission: ${title.trim()}`, "info", user.role);
     }
     res.status(201).json(request);
   });
@@ -941,15 +944,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getDevotionsForPair(userIds));
+    res.json(await storage.getDevotionsForPair(userIds, user.role));
   });
 
   app.post("/api/devotions", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { type, content } = req.body;
     if (!content?.trim()) return res.status(400).json({ message: "Content required" });
-    const devotion = await storage.createDevotion({ userId: user.id, type: type || "affirmation", content: content.trim() });
-    await storage.logActivity(user.id, "devotion_created", content.trim().substring(0, 50));
+    const devotion = await storage.createDevotion({ userId: user.id, type: type || "affirmation", content: content.trim(), createdAsRole: user.role });
+    await storage.logActivity(user.id, "devotion_created", content.trim().substring(0, 50), user.role);
     res.status(201).json(devotion);
   });
 
@@ -964,15 +967,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getConflictsForPair(userIds));
+    res.json(await storage.getConflictsForPair(userIds, user.role));
   });
 
   app.post("/api/conflicts", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { title, description, partnerId } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const conflict = await storage.createConflict({ userId: user.id, partnerId, title: title.trim(), description });
-    await storage.logActivity(user.id, "conflict_opened", title.trim());
+    const conflict = await storage.createConflict({ userId: user.id, partnerId, title: title.trim(), description, createdAsRole: user.role });
+    await storage.logActivity(user.id, "conflict_opened", title.trim(), user.role);
     res.status(201).json(conflict);
   });
 
@@ -987,15 +990,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getDesiredChangesForPair(userIds));
+    res.json(await storage.getDesiredChangesForPair(userIds, user.role));
   });
 
   app.post("/api/desired-changes", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { title, description, category, targetUserId } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
-    const change = await storage.createDesiredChange({ userId: user.id, targetUserId, title: title.trim(), description, category });
-    await storage.logActivity(user.id, "desired_change_created", title.trim());
+    const change = await storage.createDesiredChange({ userId: user.id, targetUserId, title: title.trim(), description, category, createdAsRole: user.role });
+    await storage.logActivity(user.id, "desired_change_created", title.trim(), user.role);
     res.status(201).json(change);
   });
 
@@ -1010,15 +1013,15 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getAchievementsForPair(userIds));
+    res.json(await storage.getAchievementsForPair(userIds, user.role));
   });
 
   app.post("/api/achievements", requireAuth, async (req, res) => {
     const user = req.user as User;
     const { name, description, icon, tier } = req.body;
     if (!name?.trim()) return res.status(400).json({ message: "Name required" });
-    const achievement = await storage.createAchievement({ userId: user.id, name: name.trim(), description, icon, tier });
-    await storage.logActivity(user.id, "achievement_unlocked", name.trim());
+    const achievement = await storage.createAchievement({ userId: user.id, name: name.trim(), description, icon, tier, createdAsRole: user.role });
+    await storage.logActivity(user.id, "achievement_unlocked", name.trim(), user.role);
     res.status(201).json(achievement);
   });
 
@@ -1027,7 +1030,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getPlaySessionsForPair(userIds));
+    res.json(await storage.getPlaySessionsForPair(userIds, user.role));
   });
 
   app.post("/api/play-sessions", requireAuth, async (req, res) => {
@@ -1036,8 +1039,9 @@ export async function registerRoutes(
     const session = await storage.createPlaySession({
       userId: user.id, partnerId, title, notes, mood,
       intensity, activities, status: "planned", scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
+      createdAsRole: user.role,
     });
-    await storage.logActivity(user.id, "play_session_created", title || "New session");
+    await storage.logActivity(user.id, "play_session_created", title || "New session", user.role);
     res.status(201).json(session);
   });
 
@@ -1085,7 +1089,7 @@ export async function registerRoutes(
 
   app.get("/api/demand-timers", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const timers = await storage.getDemandTimers(user.id);
+    const timers = await storage.getDemandTimers(user.id, user.role);
     res.json(timers);
   });
 
@@ -1101,14 +1105,15 @@ export async function registerRoutes(
       message,
       durationSeconds,
       expiresAt,
+      createdAsRole: user.role,
     });
-    await notifyUser(user.partnerId, `DEMAND: ${message} — Respond within ${Math.ceil(durationSeconds / 60)} min`, "alert");
+    await notifyUser(user.partnerId, `DEMAND: ${message} — Respond within ${Math.ceil(durationSeconds / 60)} min`, "alert", user.role);
     res.status(201).json(timer);
   });
 
   app.post("/api/demand-timers/:id/respond", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const timers = await storage.getDemandTimers(user.id);
+    const timers = await storage.getDemandTimers(user.id, user.role);
     const target = timers.find(t => t.id === req.params.id);
     if (!target) return res.status(404).json({ message: "Timer not found or not yours" });
     const timer = await storage.respondDemandTimer(req.params.id);
@@ -1118,7 +1123,7 @@ export async function registerRoutes(
 
   app.get("/api/quick-commands", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const commands = await storage.getQuickCommands(user.id);
+    const commands = await storage.getQuickCommands(user.id, user.role);
     res.json(commands);
   });
 
@@ -1131,14 +1136,15 @@ export async function registerRoutes(
       fromUserId: user.id,
       toUserId: user.partnerId,
       message,
+      createdAsRole: user.role,
     });
-    await notifyUser(user.partnerId, `ORDER: ${message}`, "alert");
+    await notifyUser(user.partnerId, `ORDER: ${message}`, "alert", user.role);
     res.status(201).json(cmd);
   });
 
   app.post("/api/quick-commands/:id/acknowledge", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const commands = await storage.getQuickCommands(user.id);
+    const commands = await storage.getQuickCommands(user.id, user.role);
     const target = commands.find(c => c.id === req.params.id);
     if (!target) return res.status(404).json({ message: "Command not found or not yours" });
     const cmd = await storage.acknowledgeQuickCommand(req.params.id);
@@ -1188,16 +1194,16 @@ export async function registerRoutes(
 
     const tasksToCreate = intensityTasks[level] || [];
     for (const taskText of tasksToCreate) {
-      await storage.createTask({ text: taskText, userId: user.partnerId, assignedBy: user.id });
+      await storage.createTask({ text: taskText, userId: user.partnerId, assignedBy: user.id, createdAsRole: user.role });
     }
 
     if (level >= 3) {
       await storage.updateUserLockdown(user.partnerId, false);
     }
 
-    await notifyUser(user.partnerId, `Enforcement level changed to Level ${level} — ${levelNames[level]}. ${tasksToCreate.length > 0 ? `${tasksToCreate.length} new tasks assigned.` : ''}`, "alert");
-    await storage.logActivity(user.id, "enforcement_set", `Level ${level} — ${levelNames[level]}`);
-    await storage.logActivity(user.partnerId, "enforcement_received", `Level ${level} — ${levelNames[level]}${tasksToCreate.length > 0 ? ` (+${tasksToCreate.length} tasks)` : ''}`);
+    await notifyUser(user.partnerId, `Enforcement level changed to Level ${level} — ${levelNames[level]}. ${tasksToCreate.length > 0 ? `${tasksToCreate.length} new tasks assigned.` : ''}`, "alert", user.role);
+    await storage.logActivity(user.id, "enforcement_set", `Level ${level} — ${levelNames[level]}`, user.role);
+    await storage.logActivity(user.partnerId, "enforcement_received", `Level ${level} — ${levelNames[level]}${tasksToCreate.length > 0 ? ` (+${tasksToCreate.length} tasks)` : ''}`, user.role);
 
     res.json({ enforcementLevel: updated.enforcementLevel, tasksCreated: tasksToCreate.length });
   });
@@ -1222,9 +1228,9 @@ export async function registerRoutes(
     const user = req.user as User;
     if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
     await storage.revokeAllRewardsForUser(user.partnerId);
-    await notifyUser(user.partnerId, "All your rewards have been revoked by your Dom.", "alert");
-    await storage.logActivity(user.id, "rewards_revoked", "All partner rewards revoked");
-    await storage.logActivity(user.partnerId, "rewards_revoked_received", "All rewards have been revoked");
+    await notifyUser(user.partnerId, "All your rewards have been revoked by your Dom.", "alert", user.role);
+    await storage.logActivity(user.id, "rewards_revoked", "All partner rewards revoked", user.role);
+    await storage.logActivity(user.partnerId, "rewards_revoked_received", "All rewards have been revoked", user.role);
     res.json({ message: "All rewards revoked" });
   });
 
@@ -1232,18 +1238,18 @@ export async function registerRoutes(
     const user = req.user as User;
     if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
     await storage.deleteAllTasksForUser(user.partnerId);
-    await notifyUser(user.partnerId, "All your tasks have been cleared by your Dom.", "alert");
-    await storage.logActivity(user.id, "tasks_cleared", "All partner tasks cleared");
-    await storage.logActivity(user.partnerId, "tasks_cleared_received", "All tasks have been cleared");
+    await notifyUser(user.partnerId, "All your tasks have been cleared by your Dom.", "alert", user.role);
+    await storage.logActivity(user.id, "tasks_cleared", "All partner tasks cleared", user.role);
+    await storage.logActivity(user.partnerId, "tasks_cleared_received", "All tasks have been cleared", user.role);
     res.json({ message: "All tasks cleared" });
   });
 
   app.post("/api/partner/override/force-checkin", requireAuth, async (req, res) => {
     const user = req.user as User;
     if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
-    await notifyUser(user.partnerId, "IMMEDIATE CHECK-IN REQUIRED. Submit your report now.", "alert");
-    await storage.logActivity(user.id, "checkin_forced", "Forced immediate check-in from partner");
-    await storage.logActivity(user.partnerId, "checkin_forced_received", "Immediate check-in demanded");
+    await notifyUser(user.partnerId, "IMMEDIATE CHECK-IN REQUIRED. Submit your report now.", "alert", user.role);
+    await storage.logActivity(user.id, "checkin_forced", "Forced immediate check-in from partner", user.role);
+    await storage.logActivity(user.partnerId, "checkin_forced_received", "Immediate check-in demanded", user.role);
     const expiresAt = new Date(Date.now() + 300000);
     await storage.createDemandTimer({
       fromUserId: user.id,
@@ -1251,6 +1257,7 @@ export async function registerRoutes(
       message: "Immediate check-in required",
       durationSeconds: 300,
       expiresAt,
+      createdAsRole: user.role,
     });
     res.json({ message: "Check-in forced" });
   });
@@ -1258,14 +1265,16 @@ export async function registerRoutes(
   // --- ACCUSATIONS ---
   app.get("/api/accusations", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getAccusations(user.id);
+    const list = await storage.getAccusations(user.id, user.role);
     res.json(list);
   });
 
   app.get("/api/partner/accusations", requireAuth, async (req, res) => {
     const user = req.user as User;
     if (!user.partnerId) return res.status(404).json({ message: "No partner linked" });
-    const list = await storage.getAccusations(user.partnerId);
+    const partner = await storage.getPartner(user.id);
+    if (!partner) return res.status(404).json({ message: "No partner linked" });
+    const list = await storage.getAccusations(user.partnerId, partner.role);
     res.json(list);
   });
 
@@ -1280,10 +1289,11 @@ export async function registerRoutes(
       fromUserId: user.id,
       toUserId: user.partnerId,
       accusation: accusation.trim(),
+      createdAsRole: user.role,
     });
-    await notifyUser(user.partnerId, `You have been accused: "${accusation.trim()}" — Respond immediately.`, "alert");
-    await storage.logActivity(user.id, "accusation_made", accusation.trim());
-    await storage.logActivity(user.partnerId, "accusation_received", accusation.trim());
+    await notifyUser(user.partnerId, `You have been accused: "${accusation.trim()}" — Respond immediately.`, "alert", user.role);
+    await storage.logActivity(user.id, "accusation_made", accusation.trim(), user.role);
+    await storage.logActivity(user.partnerId, "accusation_received", accusation.trim(), user.role);
     res.status(201).json(acc);
   });
 
@@ -1296,9 +1306,9 @@ export async function registerRoutes(
     const acc = await storage.respondToAccusation(req.params.id, response.trim());
     if (!acc) return res.status(404).json({ message: "Accusation not found" });
     if (acc.fromUserId) {
-      await notifyUser(acc.fromUserId, `Response to accusation "${acc.accusation}": "${response.trim()}"`, "info");
+      await notifyUser(acc.fromUserId, `Response to accusation "${acc.accusation}": "${response.trim()}"`, "info", user.role);
     }
-    await storage.logActivity(user.id, "accusation_responded", `Re: "${acc.accusation}" — "${response.trim()}"`);
+    await storage.logActivity(user.id, "accusation_responded", `Re: "${acc.accusation}" — "${response.trim()}"`, user.role);
     res.json(acc);
   });
 
@@ -1309,9 +1319,9 @@ export async function registerRoutes(
     const updated = await storage.updateUserLockdown(user.partnerId, !!locked);
     if (!updated) return res.status(404).json({ message: "Partner not found" });
     if (locked) {
-      await notifyUser(user.partnerId, "Your dashboard has been locked down. Focus on your protocols.", "alert");
+      await notifyUser(user.partnerId, "Your dashboard has been locked down. Focus on your protocols.", "alert", user.role);
     } else {
-      await notifyUser(user.partnerId, "Lockdown lifted. Full access restored.", "info");
+      await notifyUser(user.partnerId, "Lockdown lifted. Full access restored.", "info", user.role);
     }
     res.json({ lockedDown: updated.lockedDown });
   });
@@ -1331,7 +1341,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const sessions = await storage.getIntensitySessionsForPair(userIds);
+    const sessions = await storage.getIntensitySessionsForPair(userIds, user.role);
     res.json(sessions);
   });
 
@@ -1345,9 +1355,10 @@ export async function registerRoutes(
       currentTier: currentTier || 1,
       notes: notes || null,
       status: status || "active",
+      createdAsRole: user.role,
     });
-    await storage.logActivity(user.id, "intensity_session_started", `Tier ${currentTier || 1}`);
-    await notifyUser(user.partnerId, `Intensity session started at Tier ${currentTier || 1}`, "alert");
+    await storage.logActivity(user.id, "intensity_session_started", `Tier ${currentTier || 1}`, user.role);
+    await notifyUser(user.partnerId, `Intensity session started at Tier ${currentTier || 1}`, "alert", user.role);
     res.json(session);
   });
 
@@ -1364,8 +1375,8 @@ export async function registerRoutes(
     const session = await storage.updateIntensitySession(req.params.id, data);
     if (!session) return res.status(404).json({ message: "Session not found" });
     if (status === "completed" && user.partnerId) {
-      await notifyUser(user.partnerId, `Intensity session completed! Max tier: ${session.maxTierReached}`, "info");
-      await storage.logActivity(user.id, "intensity_session_completed", `Max tier: ${session.maxTierReached}`);
+      await notifyUser(user.partnerId, `Intensity session completed! Max tier: ${session.maxTierReached}`, "info", user.role);
+      await storage.logActivity(user.id, "intensity_session_completed", `Max tier: ${session.maxTierReached}`, user.role);
     }
     res.json(session);
   });
@@ -1375,7 +1386,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const trials = await storage.getObedienceTrialsForPair(userIds);
+    const trials = await storage.getObedienceTrialsForPair(userIds, user.role);
     res.json(trials);
   });
 
@@ -1395,6 +1406,7 @@ export async function registerRoutes(
       autoReward: autoReward || null,
       autoPunishment: autoPunishment || null,
       status: "pending",
+      createdAsRole: user.role,
     });
     for (let i = 0; i < steps.length; i++) {
       await storage.createTrialStep({
@@ -1404,8 +1416,8 @@ export async function registerRoutes(
         status: "pending",
       });
     }
-    await notifyUser(user.partnerId, `New trial assigned: "${title}" (${steps.length} steps)`, "alert");
-    await storage.logActivity(user.id, "trial_created", title);
+    await notifyUser(user.partnerId, `New trial assigned: "${title}" (${steps.length} steps)`, "alert", user.role);
+    await storage.logActivity(user.id, "trial_created", title, user.role);
     res.json(trial);
   });
 
@@ -1427,16 +1439,16 @@ export async function registerRoutes(
     if (!trial) return res.status(404).json({ message: "Trial not found" });
     if (status === "passed") {
       if (trial.autoReward && trial.partnerId) {
-        await storage.createReward({ userId: trial.partnerId, name: trial.autoReward, unlockLevel: 1 });
-        await notifyUser(trial.partnerId, `Trial passed! Reward earned: ${trial.autoReward}`, "info");
+        await storage.createReward({ userId: trial.partnerId, name: trial.autoReward, unlockLevel: 1, createdAsRole: user.role });
+        await notifyUser(trial.partnerId, `Trial passed! Reward earned: ${trial.autoReward}`, "info", user.role);
       }
-      await storage.logActivity(user.id, "trial_passed", trial.title);
+      await storage.logActivity(user.id, "trial_passed", trial.title, user.role);
     } else if (status === "failed") {
       if (trial.autoPunishment && trial.partnerId) {
-        await storage.createPunishment({ userId: trial.partnerId, name: trial.autoPunishment, assignedBy: trial.userId });
-        await notifyUser(trial.partnerId, `Trial failed. Punishment assigned: ${trial.autoPunishment}`, "alert");
+        await storage.createPunishment({ userId: trial.partnerId, name: trial.autoPunishment, assignedBy: trial.userId, createdAsRole: user.role });
+        await notifyUser(trial.partnerId, `Trial failed. Punishment assigned: ${trial.autoPunishment}`, "alert", user.role);
       }
-      await storage.logActivity(user.id, "trial_failed", trial.title);
+      await storage.logActivity(user.id, "trial_failed", trial.title, user.role);
     }
     res.json(trial);
   });
@@ -1455,7 +1467,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const cards = await storage.getSensationCardsForPair(userIds);
+    const cards = await storage.getSensationCardsForPair(userIds, user.role);
     res.json(cards);
   });
 
@@ -1470,8 +1482,9 @@ export async function registerRoutes(
       intensity: intensity || 3,
       cardType: cardType || "normal",
       durationMinutes: durationMinutes || null,
+      createdAsRole: user.role,
     });
-    await storage.logActivity(user.id, "sensation_card_created", label);
+    await storage.logActivity(user.id, "sensation_card_created", label, user.role);
     res.json(card);
   });
 
@@ -1484,7 +1497,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const spins = await storage.getSensationSpinsForPair(userIds);
+    const spins = await storage.getSensationSpinsForPair(userIds, user.role);
     res.json(spins);
   });
 
@@ -1508,7 +1521,7 @@ export async function registerRoutes(
       cardType: cardType || "normal",
     });
     const updated = await storage.updateSensationSpin(spin.id, { xpAwarded, streakCount });
-    await storage.logActivity(user.id, "sensation_spin", result);
+    await storage.logActivity(user.id, "sensation_spin", result, user.role);
     res.json(updated || spin);
   });
 
@@ -1522,7 +1535,7 @@ export async function registerRoutes(
       if (currentUser) {
         await storage.updateUserXp(user.id, (currentUser.xp || 0) + spin.xpAwarded);
       }
-      await notifyUser(user.id, `Sensation completed! +${spin.xpAwarded} XP (streak: ${spin.streakCount}x)`, "info");
+      await notifyUser(user.id, `Sensation completed! +${spin.xpAwarded} XP (streak: ${spin.streakCount}x)`, "info", user.role);
     }
     res.json(spin);
   });
@@ -1554,9 +1567,10 @@ export async function registerRoutes(
       chainOrder: chainOrder || null,
       previousOrderId: previousOrderId || null,
       xpCost: xpCost || 25,
+      createdAsRole: user.role,
     });
-    await notifyUser(user.partnerId, `New sealed order: "${title}" — unlocks soon...`, "alert");
-    await storage.logActivity(user.id, "sealed_order_created", title);
+    await notifyUser(user.partnerId, `New sealed order: "${title}" — unlocks soon...`, "alert", user.role);
+    await storage.logActivity(user.id, "sealed_order_created", title, user.role);
     res.json(order);
   });
 
@@ -1574,14 +1588,14 @@ export async function registerRoutes(
       if (currentUser && currentUser.xp >= order.xpCost) {
         await storage.updateUserXp(user.id, currentUser.xp - order.xpCost);
         await storage.updateSealedOrder(req.params.id, { revealed: true });
-        await notifyUser(order.userId, `Emergency unseal used on "${order.title}" (-${order.xpCost} XP)`, "alert");
-        await storage.logActivity(user.id, "emergency_unseal", `${order.title} (-${order.xpCost} XP)`);
+        await notifyUser(order.userId, `Emergency unseal used on "${order.title}" (-${order.xpCost} XP)`, "alert", user.role);
+        await storage.logActivity(user.id, "emergency_unseal", `${order.title} (-${order.xpCost} XP)`, user.role);
       } else {
         return res.status(400).json({ message: `Not enough XP. Need ${order.xpCost}, have ${currentUser?.xp || 0}` });
       }
     }
     if (completed) {
-      await storage.logActivity(user.id, "sealed_order_completed", order.title);
+      await storage.logActivity(user.id, "sealed_order_completed", order.title, user.role);
     }
     res.json(order);
   });
@@ -1619,10 +1633,11 @@ export async function registerRoutes(
       status: "active",
       startedAt: new Date(),
       endsAt,
+      createdAsRole: user.role,
     });
     await storage.updateEnduranceChallenge(challenge.id, { totalCheckins });
-    await notifyUser(user.partnerId, `Endurance challenge: "${title}" — ${durationHours}h, check in every ${intervalMins}min`, "alert");
-    await storage.logActivity(user.id, "endurance_challenge_created", title);
+    await notifyUser(user.partnerId, `Endurance challenge: "${title}" — ${durationHours}h, check in every ${intervalMins}min`, "alert", user.role);
+    await storage.logActivity(user.id, "endurance_challenge_created", title, user.role);
     res.json(challenge);
   });
 
@@ -1637,14 +1652,14 @@ export async function registerRoutes(
     const challenge = await storage.updateEnduranceChallenge(req.params.id, data);
     if (!challenge) return res.status(404).json({ message: "Challenge not found" });
     if (status === "completed") {
-      await storage.logActivity(user.id, "endurance_completed", challenge.title);
+      await storage.logActivity(user.id, "endurance_completed", challenge.title, user.role);
       if (challenge.userId !== user.id) {
-        await notifyUser(challenge.userId, `Endurance challenge "${challenge.title}" completed!`, "info");
+        await notifyUser(challenge.userId, `Endurance challenge "${challenge.title}" completed!`, "info", user.role);
       }
     }
     if (status === "failed" && challenge.autoPunishment) {
-      await storage.createPunishment({ userId: challenge.targetUserId, name: challenge.autoPunishment, assignedBy: challenge.userId });
-      await notifyUser(challenge.targetUserId, `Endurance failed. Punishment: ${challenge.autoPunishment}`, "alert");
+      await storage.createPunishment({ userId: challenge.targetUserId, name: challenge.autoPunishment, assignedBy: challenge.userId, createdAsRole: user.role });
+      await notifyUser(challenge.targetUserId, `Endurance failed. Punishment: ${challenge.autoPunishment}`, "alert", user.role);
     }
     res.json(challenge);
   });
@@ -1674,9 +1689,9 @@ export async function registerRoutes(
     if (currentUser) {
       await storage.updateUserXp(user.id, (currentUser.xp || 0) + xpPerCheckin);
     }
-    await notifyUser(user.id, `Endurance check-in #${gateNumber}! +${xpPerCheckin} XP`, "info");
+    await notifyUser(user.id, `Endurance check-in #${gateNumber}! +${xpPerCheckin} XP`, "info", user.role);
     if (ch.userId !== user.id) {
-      await notifyUser(ch.userId, `${user.username} checked in for "${ch.title}" (gate #${gateNumber})`, "info");
+      await notifyUser(ch.userId, `${user.username} checked in for "${ch.title}" (gate #${gateNumber})`, "info", user.role);
     }
     res.json(checkin);
   });
@@ -1691,7 +1706,7 @@ export async function registerRoutes(
     if (!file.mimetype.startsWith("image/")) return res.status(400).json({ message: "Only image files allowed" });
     const url = `/uploads/${file.filename}`;
     const updated = await storage.updateUserProfilePic(user.id, url);
-    await storage.logActivity(user.id, "profile_pic_updated", "Updated profile picture");
+    await storage.logActivity(user.id, "profile_pic_updated", "Updated profile picture", user.role);
     res.json({ profilePic: url, user: updated });
   });
 
@@ -1710,8 +1725,9 @@ export async function registerRoutes(
       mimeType: file.mimetype,
       size: file.size,
       url: `/uploads/${file.filename}`,
+      createdAsRole: user.role,
     });
-    await storage.logActivity(user.id, "media_uploaded", `Uploaded ${file.originalname}`);
+    await storage.logActivity(user.id, "media_uploaded", `Uploaded ${file.originalname}`, user.role);
     res.json(mediaItem);
   });
 
@@ -1730,7 +1746,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getStickersForPair(userIds);
+    const list = await storage.getStickersForPair(userIds, user.role);
     res.json(list);
   });
 
@@ -1746,14 +1762,15 @@ export async function registerRoutes(
       recipientId,
       stickerType,
       message: message || null,
+      createdAsRole: user.role,
     });
     const stickerValue = STICKER_VALUES[stickerType] || 1;
     const recipient = await storage.getUser(recipientId);
     if (recipient) {
       await storage.updateUserStickerBalance(recipientId, (recipient.stickerBalance || 0) + stickerValue);
     }
-    await storage.logActivity(user.id, "sticker_sent", `Sent a ${stickerType} sticker`);
-    await notifyUser(recipientId, `${user.username} sent you a ${stickerType} sticker! (+${stickerValue} points)`, "info");
+    await storage.logActivity(user.id, "sticker_sent", `Sent a ${stickerType} sticker`, user.role);
+    await notifyUser(recipientId, `${user.username} sent you a ${stickerType} sticker! (+${stickerValue} points)`, "info", user.role);
     res.json(sticker);
   });
 
@@ -1785,7 +1802,7 @@ export async function registerRoutes(
     const { enabled } = req.body;
     if (typeof enabled !== "boolean") return res.status(400).json({ message: "enabled must be a boolean" });
     const setting = await storage.upsertFeatureSetting(user.id, req.params.featureKey, enabled);
-    await storage.logActivity(user.id, "feature_toggled", `${enabled ? "Enabled" : "Disabled"} ${req.params.featureKey}`);
+    await storage.logActivity(user.id, "feature_toggled", `${enabled ? "Enabled" : "Disabled"} ${req.params.featureKey}`, user.role);
     res.json(setting);
   });
 
@@ -1810,7 +1827,8 @@ export async function registerRoutes(
       partner?.id || null,
       req.params.zoneName,
       status,
-      intensity
+      intensity,
+      user.role
     );
     res.json(zone);
   });
@@ -1826,7 +1844,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const items = await storage.getLockedMediaForPair(userIds);
+    const items = await storage.getLockedMediaForPair(userIds, user.role);
     res.json(items.map(m => ({
       ...m,
       url: m.isLocked && m.userId !== user.id && m.unlockedBy !== user.id ? null : m.url,
@@ -1849,11 +1867,12 @@ export async function registerRoutes(
       isLocked: true,
       unlockCost,
       unlockedBy: null,
+      createdAsRole: user.role,
     });
-    await storage.logActivity(user.id, "locked_media_uploaded", `Uploaded locked ${req.file.mimetype.startsWith("video") ? "video" : "photo"}`);
+    await storage.logActivity(user.id, "locked_media_uploaded", `Uploaded locked ${req.file.mimetype.startsWith("video") ? "video" : "photo"}`, user.role);
     const partner = await storage.getPartner(user.id);
     if (partner) {
-      await notifyUser(partner.id, `${user.username} uploaded a locked ${req.file.mimetype.startsWith("video") ? "video" : "photo"} (${unlockCost} XP to unlock)`, "info");
+      await notifyUser(partner.id, `${user.username} uploaded a locked ${req.file.mimetype.startsWith("video") ? "video" : "photo"} (${unlockCost} XP to unlock)`, "info", user.role);
     }
     res.status(201).json(m);
   });
@@ -1863,7 +1882,7 @@ export async function registerRoutes(
     const partner = await storage.getPartner(user.id);
     if (!partner) return res.status(400).json({ message: "No partner linked" });
     const userIds = [user.id, partner.id];
-    const items = await storage.getLockedMediaForPair(userIds);
+    const items = await storage.getLockedMediaForPair(userIds, user.role);
     const item = items.find(m => m.id === req.params.id);
     if (!item) return res.status(404).json({ message: "Not found" });
     if (item.userId === user.id) return res.status(400).json({ message: "You own this media" });
@@ -1874,8 +1893,8 @@ export async function registerRoutes(
     }
     await storage.updateUserXp(user.id, user.xp - cost);
     const unlocked = await storage.unlockMedia(req.params.id, user.id);
-    await storage.logActivity(user.id, "media_unlocked", `Spent ${cost} XP to unlock media`);
-    await notifyUser(item.userId, `${user.username} unlocked your locked media!`, "info");
+    await storage.logActivity(user.id, "media_unlocked", `Spent ${cost} XP to unlock media`, user.role);
+    await notifyUser(item.userId, `${user.username} unlocked your locked media!`, "info", user.role);
     res.json({ ...unlocked, url: unlocked?.url });
   });
 

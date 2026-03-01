@@ -60,7 +60,7 @@ export interface IStorage {
   reviewCheckIn(checkInId: string, status: string, xpAwarded: number): Promise<CheckIn | undefined>;
 
   getDares(userId: string): Promise<Dare[]>;
-  createDare(userId: string, text: string): Promise<Dare>;
+  createDare(userId: string, text: string, createdAsRole?: string): Promise<Dare>;
   completeDare(dareId: string): Promise<Dare | undefined>;
 
   getRewards(userId: string): Promise<Reward[]>;
@@ -71,15 +71,15 @@ export interface IStorage {
   createPunishment(punishment: InsertPunishment): Promise<Punishment>;
   updatePunishmentStatus(punishmentId: string, status: string): Promise<Punishment | undefined>;
 
-  getJournalEntries(userId: string): Promise<JournalEntry[]>;
+  getJournalEntries(userId: string, role?: string): Promise<JournalEntry[]>;
   createJournalEntry(entry: InsertJournal): Promise<JournalEntry>;
 
-  getNotifications(userId: string): Promise<Notification[]>;
+  getNotifications(userId: string, role?: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   dismissNotification(notificationId: string): Promise<void>;
 
-  getActivityLog(userId: string): Promise<ActivityLogEntry[]>;
-  logActivity(userId: string, action: string, detail?: string): Promise<ActivityLogEntry>;
+  getActivityLog(userId: string, role?: string): Promise<ActivityLogEntry[]>;
+  logActivity(userId: string, action: string, detail?: string, createdAsRole?: string): Promise<ActivityLogEntry>;
 
   createPairCode(userId: string, code: string, expiresAt: Date): Promise<PairCode>;
   getPairCodeByCode(code: string): Promise<PairCode | undefined>;
@@ -148,11 +148,11 @@ export interface IStorage {
   deletePushSubscription(endpoint: string): Promise<void>;
   deletePushSubscriptionForUser(userId: string, endpoint: string): Promise<void>;
 
-  getDemandTimers(toUserId: string): Promise<DemandTimer[]>;
+  getDemandTimers(toUserId: string, role?: string): Promise<DemandTimer[]>;
   createDemandTimer(timer: InsertDemandTimer): Promise<DemandTimer>;
   respondDemandTimer(id: string): Promise<DemandTimer | undefined>;
 
-  getQuickCommands(toUserId: string): Promise<QuickCommand[]>;
+  getQuickCommands(toUserId: string, role?: string): Promise<QuickCommand[]>;
   createQuickCommand(cmd: InsertQuickCommand): Promise<QuickCommand>;
   acknowledgeQuickCommand(id: string): Promise<QuickCommand | undefined>;
 
@@ -165,7 +165,7 @@ export interface IStorage {
   deleteAllTasksForUser(userId: string): Promise<void>;
   revokeAllRewardsForUser(userId: string): Promise<void>;
 
-  getAccusations(toUserId: string): Promise<Accusation[]>;
+  getAccusations(toUserId: string, role?: string): Promise<Accusation[]>;
   createAccusation(accusation: InsertAccusation): Promise<Accusation>;
   respondToAccusation(id: string, response: string): Promise<Accusation | undefined>;
 
@@ -205,30 +205,30 @@ export interface IStorage {
   getEnduranceCheckins(challengeId: string): Promise<EnduranceCheckin[]>;
   createEnduranceCheckin(checkin: InsertEnduranceCheckin): Promise<EnduranceCheckin>;
 
-  getTasksForPair(userIds: string[]): Promise<Task[]>;
-  getCheckInsForPair(userIds: string[]): Promise<CheckIn[]>;
-  getRitualsForPair(userIds: string[]): Promise<Ritual[]>;
-  getLimitsForPair(userIds: string[]): Promise<Limit[]>;
-  getSecretsForPair(userIds: string[]): Promise<Secret[]>;
-  getWagersForPair(userIds: string[]): Promise<Wager[]>;
-  getRatingsForPair(userIds: string[]): Promise<Rating[]>;
-  getCountdownEventsForPair(userIds: string[]): Promise<CountdownEvent[]>;
-  getStandingOrdersForPair(userIds: string[]): Promise<StandingOrder[]>;
-  getPermissionRequestsForPair(userIds: string[]): Promise<PermissionRequest[]>;
-  getDevotionsForPair(userIds: string[]): Promise<Devotion[]>;
-  getConflictsForPair(userIds: string[]): Promise<Conflict[]>;
-  getDesiredChangesForPair(userIds: string[]): Promise<DesiredChange[]>;
-  getPlaySessionsForPair(userIds: string[]): Promise<PlaySession[]>;
-  getIntensitySessionsForPair(userIds: string[]): Promise<IntensitySession[]>;
-  getObedienceTrialsForPair(userIds: string[]): Promise<ObedienceTrial[]>;
-  getSensationCardsForPair(userIds: string[]): Promise<SensationCard[]>;
-  getSensationSpinsForPair(userIds: string[]): Promise<SensationSpin[]>;
+  getTasksForPair(userIds: string[], role?: string): Promise<Task[]>;
+  getCheckInsForPair(userIds: string[], role?: string): Promise<CheckIn[]>;
+  getRitualsForPair(userIds: string[], role?: string): Promise<Ritual[]>;
+  getLimitsForPair(userIds: string[], role?: string): Promise<Limit[]>;
+  getSecretsForPair(userIds: string[], role?: string): Promise<Secret[]>;
+  getWagersForPair(userIds: string[], role?: string): Promise<Wager[]>;
+  getRatingsForPair(userIds: string[], role?: string): Promise<Rating[]>;
+  getCountdownEventsForPair(userIds: string[], role?: string): Promise<CountdownEvent[]>;
+  getStandingOrdersForPair(userIds: string[], role?: string): Promise<StandingOrder[]>;
+  getPermissionRequestsForPair(userIds: string[], role?: string): Promise<PermissionRequest[]>;
+  getDevotionsForPair(userIds: string[], role?: string): Promise<Devotion[]>;
+  getConflictsForPair(userIds: string[], role?: string): Promise<Conflict[]>;
+  getDesiredChangesForPair(userIds: string[], role?: string): Promise<DesiredChange[]>;
+  getPlaySessionsForPair(userIds: string[], role?: string): Promise<PlaySession[]>;
+  getIntensitySessionsForPair(userIds: string[], role?: string): Promise<IntensitySession[]>;
+  getObedienceTrialsForPair(userIds: string[], role?: string): Promise<ObedienceTrial[]>;
+  getSensationCardsForPair(userIds: string[], role?: string): Promise<SensationCard[]>;
+  getSensationSpinsForPair(userIds: string[], role?: string): Promise<SensationSpin[]>;
 
-  getDaresForPair(userIds: string[]): Promise<Dare[]>;
-  getRewardsForPair(userIds: string[]): Promise<Reward[]>;
-  getPunishmentsForPair(userIds: string[]): Promise<Punishment[]>;
-  getAchievementsForPair(userIds: string[]): Promise<Achievement[]>;
-  getActivityLogForPair(userIds: string[]): Promise<ActivityLogEntry[]>;
+  getDaresForPair(userIds: string[], role?: string): Promise<Dare[]>;
+  getRewardsForPair(userIds: string[], role?: string): Promise<Reward[]>;
+  getPunishmentsForPair(userIds: string[], role?: string): Promise<Punishment[]>;
+  getAchievementsForPair(userIds: string[], role?: string): Promise<Achievement[]>;
+  getActivityLogForPair(userIds: string[], role?: string): Promise<ActivityLogEntry[]>;
 
   getMedia(entityType: string, entityId: string): Promise<Media[]>;
   getMediaByUser(userId: string): Promise<Media[]>;
@@ -236,21 +236,21 @@ export interface IStorage {
   deleteMedia(id: string): Promise<void>;
 
   getStickers(recipientId: string): Promise<Sticker[]>;
-  getStickersForPair(userIds: string[]): Promise<Sticker[]>;
+  getStickersForPair(userIds: string[], role?: string): Promise<Sticker[]>;
   createSticker(sticker: InsertSticker): Promise<Sticker>;
 
   getFeatureSettings(pairOwnerId: string): Promise<FeatureSetting[]>;
   upsertFeatureSetting(pairOwnerId: string, featureKey: string, enabled: boolean): Promise<FeatureSetting>;
 
   getBodyMapZones(userId: string): Promise<BodyMapZone[]>;
-  upsertBodyMapZone(userId: string, partnerId: string | null, zoneName: string, status: string, intensity: number): Promise<BodyMapZone>;
+  upsertBodyMapZone(userId: string, partnerId: string | null, zoneName: string, status: string, intensity: number, createdAsRole?: string): Promise<BodyMapZone>;
   deleteBodyMapZones(userId: string): Promise<void>;
 
   updateUserStickerBalance(userId: string, balance: number): Promise<User | undefined>;
   updateUserProfilePic(userId: string, profilePic: string): Promise<User | undefined>;
-  getJournalEntriesForPair(userIds: string[]): Promise<JournalEntry[]>;
+  getJournalEntriesForPair(userIds: string[], role?: string): Promise<JournalEntry[]>;
   unlockJournalEntry(id: string, unlockedBy: string): Promise<JournalEntry | undefined>;
-  getLockedMediaForPair(userIds: string[]): Promise<Media[]>;
+  getLockedMediaForPair(userIds: string[], role?: string): Promise<Media[]>;
   unlockMedia(id: string, unlockedBy: string): Promise<Media | undefined>;
 }
 
@@ -332,8 +332,8 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(dares).where(eq(dares.userId, userId)).orderBy(desc(dares.createdAt));
   }
 
-  async createDare(userId: string, text: string): Promise<Dare> {
-    const [dare] = await db.insert(dares).values({ userId, text }).returning();
+  async createDare(userId: string, text: string, createdAsRole?: string): Promise<Dare> {
+    const [dare] = await db.insert(dares).values({ userId, text, ...(createdAsRole ? { createdAsRole } : {}) }).returning();
     return dare;
   }
 
@@ -372,8 +372,10 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getJournalEntries(userId: string): Promise<JournalEntry[]> {
-    return db.select().from(journalEntries).where(eq(journalEntries.userId, userId)).orderBy(desc(journalEntries.createdAt));
+  async getJournalEntries(userId: string, role?: string): Promise<JournalEntry[]> {
+    const conditions = [eq(journalEntries.userId, userId)];
+    if (role) conditions.push(eq(journalEntries.createdAsRole, role));
+    return db.select().from(journalEntries).where(and(...conditions)).orderBy(desc(journalEntries.createdAt));
   }
 
   async createJournalEntry(entry: InsertJournal): Promise<JournalEntry> {
@@ -381,8 +383,10 @@ export class DatabaseStorage implements IStorage {
     return newEntry;
   }
 
-  async getNotifications(userId: string): Promise<Notification[]> {
-    return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt));
+  async getNotifications(userId: string, role?: string): Promise<Notification[]> {
+    const conditions = [eq(notifications.userId, userId)];
+    if (role) conditions.push(eq(notifications.createdAsRole, role));
+    return db.select().from(notifications).where(and(...conditions)).orderBy(desc(notifications.createdAt));
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
@@ -394,12 +398,14 @@ export class DatabaseStorage implements IStorage {
     await db.delete(notifications).where(eq(notifications.id, notificationId));
   }
 
-  async getActivityLog(userId: string): Promise<ActivityLogEntry[]> {
-    return db.select().from(activityLog).where(eq(activityLog.userId, userId)).orderBy(desc(activityLog.createdAt));
+  async getActivityLog(userId: string, role?: string): Promise<ActivityLogEntry[]> {
+    const conditions = [eq(activityLog.userId, userId)];
+    if (role) conditions.push(eq(activityLog.createdAsRole, role));
+    return db.select().from(activityLog).where(and(...conditions)).orderBy(desc(activityLog.createdAt));
   }
 
-  async logActivity(userId: string, action: string, detail?: string): Promise<ActivityLogEntry> {
-    const [entry] = await db.insert(activityLog).values({ userId, action, detail }).returning();
+  async logActivity(userId: string, action: string, detail?: string, createdAsRole?: string): Promise<ActivityLogEntry> {
+    const [entry] = await db.insert(activityLog).values({ userId, action, detail, ...(createdAsRole ? { createdAsRole } : {}) }).returning();
     return entry;
   }
 
@@ -649,8 +655,10 @@ export class DatabaseStorage implements IStorage {
     );
   }
 
-  async getDemandTimers(toUserId: string): Promise<DemandTimer[]> {
-    return db.select().from(demandTimers).where(eq(demandTimers.toUserId, toUserId)).orderBy(desc(demandTimers.createdAt));
+  async getDemandTimers(toUserId: string, role?: string): Promise<DemandTimer[]> {
+    const conditions = [eq(demandTimers.toUserId, toUserId)];
+    if (role) conditions.push(eq(demandTimers.createdAsRole, role));
+    return db.select().from(demandTimers).where(and(...conditions)).orderBy(desc(demandTimers.createdAt));
   }
 
   async createDemandTimer(timer: InsertDemandTimer): Promise<DemandTimer> {
@@ -663,8 +671,10 @@ export class DatabaseStorage implements IStorage {
     return t;
   }
 
-  async getQuickCommands(toUserId: string): Promise<QuickCommand[]> {
-    return db.select().from(quickCommands).where(eq(quickCommands.toUserId, toUserId)).orderBy(desc(quickCommands.createdAt));
+  async getQuickCommands(toUserId: string, role?: string): Promise<QuickCommand[]> {
+    const conditions = [eq(quickCommands.toUserId, toUserId)];
+    if (role) conditions.push(eq(quickCommands.createdAsRole, role));
+    return db.select().from(quickCommands).where(and(...conditions)).orderBy(desc(quickCommands.createdAt));
   }
 
   async createQuickCommand(cmd: InsertQuickCommand): Promise<QuickCommand> {
@@ -709,8 +719,10 @@ export class DatabaseStorage implements IStorage {
     await db.update(rewards).set({ unlocked: false }).where(eq(rewards.userId, userId));
   }
 
-  async getAccusations(toUserId: string): Promise<Accusation[]> {
-    return db.select().from(accusations).where(eq(accusations.toUserId, toUserId)).orderBy(desc(accusations.createdAt));
+  async getAccusations(toUserId: string, role?: string): Promise<Accusation[]> {
+    const conditions = [eq(accusations.toUserId, toUserId)];
+    if (role) conditions.push(eq(accusations.createdAsRole, role));
+    return db.select().from(accusations).where(and(...conditions)).orderBy(desc(accusations.createdAt));
   }
 
   async createAccusation(accusation: InsertAccusation): Promise<Accusation> {
@@ -826,75 +838,121 @@ export class DatabaseStorage implements IStorage {
     return c;
   }
 
-  async getTasksForPair(userIds: string[]): Promise<Task[]> {
-    return db.select().from(tasks).where(inArray(tasks.userId, userIds)).orderBy(desc(tasks.createdAt));
+  async getTasksForPair(userIds: string[], role?: string): Promise<Task[]> {
+    const conditions = [inArray(tasks.userId, userIds)];
+    if (role) conditions.push(eq(tasks.createdAsRole, role));
+    return db.select().from(tasks).where(and(...conditions)).orderBy(desc(tasks.createdAt));
   }
-  async getCheckInsForPair(userIds: string[]): Promise<CheckIn[]> {
-    return db.select().from(checkIns).where(inArray(checkIns.userId, userIds)).orderBy(desc(checkIns.createdAt));
+  async getCheckInsForPair(userIds: string[], role?: string): Promise<CheckIn[]> {
+    const conditions = [inArray(checkIns.userId, userIds)];
+    if (role) conditions.push(eq(checkIns.createdAsRole, role));
+    return db.select().from(checkIns).where(and(...conditions)).orderBy(desc(checkIns.createdAt));
   }
-  async getRitualsForPair(userIds: string[]): Promise<Ritual[]> {
-    return db.select().from(rituals).where(inArray(rituals.userId, userIds)).orderBy(desc(rituals.createdAt));
+  async getRitualsForPair(userIds: string[], role?: string): Promise<Ritual[]> {
+    const conditions = [inArray(rituals.userId, userIds)];
+    if (role) conditions.push(eq(rituals.createdAsRole, role));
+    return db.select().from(rituals).where(and(...conditions)).orderBy(desc(rituals.createdAt));
   }
-  async getLimitsForPair(userIds: string[]): Promise<Limit[]> {
-    return db.select().from(limits).where(inArray(limits.userId, userIds)).orderBy(desc(limits.createdAt));
+  async getLimitsForPair(userIds: string[], role?: string): Promise<Limit[]> {
+    const conditions = [inArray(limits.userId, userIds)];
+    if (role) conditions.push(eq(limits.createdAsRole, role));
+    return db.select().from(limits).where(and(...conditions)).orderBy(desc(limits.createdAt));
   }
-  async getSecretsForPair(userIds: string[]): Promise<Secret[]> {
-    return db.select().from(secrets).where(inArray(secrets.userId, userIds)).orderBy(desc(secrets.createdAt));
+  async getSecretsForPair(userIds: string[], role?: string): Promise<Secret[]> {
+    const conditions = [inArray(secrets.userId, userIds)];
+    if (role) conditions.push(eq(secrets.createdAsRole, role));
+    return db.select().from(secrets).where(and(...conditions)).orderBy(desc(secrets.createdAt));
   }
-  async getWagersForPair(userIds: string[]): Promise<Wager[]> {
-    return db.select().from(wagers).where(inArray(wagers.userId, userIds)).orderBy(desc(wagers.createdAt));
+  async getWagersForPair(userIds: string[], role?: string): Promise<Wager[]> {
+    const conditions = [inArray(wagers.userId, userIds)];
+    if (role) conditions.push(eq(wagers.createdAsRole, role));
+    return db.select().from(wagers).where(and(...conditions)).orderBy(desc(wagers.createdAt));
   }
-  async getRatingsForPair(userIds: string[]): Promise<Rating[]> {
-    return db.select().from(ratings).where(inArray(ratings.userId, userIds)).orderBy(desc(ratings.createdAt));
+  async getRatingsForPair(userIds: string[], role?: string): Promise<Rating[]> {
+    const conditions = [inArray(ratings.userId, userIds)];
+    if (role) conditions.push(eq(ratings.createdAsRole, role));
+    return db.select().from(ratings).where(and(...conditions)).orderBy(desc(ratings.createdAt));
   }
-  async getCountdownEventsForPair(userIds: string[]): Promise<CountdownEvent[]> {
-    return db.select().from(countdownEvents).where(inArray(countdownEvents.userId, userIds)).orderBy(desc(countdownEvents.createdAt));
+  async getCountdownEventsForPair(userIds: string[], role?: string): Promise<CountdownEvent[]> {
+    const conditions = [inArray(countdownEvents.userId, userIds)];
+    if (role) conditions.push(eq(countdownEvents.createdAsRole, role));
+    return db.select().from(countdownEvents).where(and(...conditions)).orderBy(desc(countdownEvents.createdAt));
   }
-  async getStandingOrdersForPair(userIds: string[]): Promise<StandingOrder[]> {
-    return db.select().from(standingOrders).where(inArray(standingOrders.userId, userIds)).orderBy(desc(standingOrders.createdAt));
+  async getStandingOrdersForPair(userIds: string[], role?: string): Promise<StandingOrder[]> {
+    const conditions = [inArray(standingOrders.userId, userIds)];
+    if (role) conditions.push(eq(standingOrders.createdAsRole, role));
+    return db.select().from(standingOrders).where(and(...conditions)).orderBy(desc(standingOrders.createdAt));
   }
-  async getPermissionRequestsForPair(userIds: string[]): Promise<PermissionRequest[]> {
-    return db.select().from(permissionRequests).where(inArray(permissionRequests.userId, userIds)).orderBy(desc(permissionRequests.createdAt));
+  async getPermissionRequestsForPair(userIds: string[], role?: string): Promise<PermissionRequest[]> {
+    const conditions = [inArray(permissionRequests.userId, userIds)];
+    if (role) conditions.push(eq(permissionRequests.createdAsRole, role));
+    return db.select().from(permissionRequests).where(and(...conditions)).orderBy(desc(permissionRequests.createdAt));
   }
-  async getDevotionsForPair(userIds: string[]): Promise<Devotion[]> {
-    return db.select().from(devotions).where(inArray(devotions.userId, userIds)).orderBy(desc(devotions.createdAt));
+  async getDevotionsForPair(userIds: string[], role?: string): Promise<Devotion[]> {
+    const conditions = [inArray(devotions.userId, userIds)];
+    if (role) conditions.push(eq(devotions.createdAsRole, role));
+    return db.select().from(devotions).where(and(...conditions)).orderBy(desc(devotions.createdAt));
   }
-  async getConflictsForPair(userIds: string[]): Promise<Conflict[]> {
-    return db.select().from(conflicts).where(inArray(conflicts.userId, userIds)).orderBy(desc(conflicts.createdAt));
+  async getConflictsForPair(userIds: string[], role?: string): Promise<Conflict[]> {
+    const conditions = [inArray(conflicts.userId, userIds)];
+    if (role) conditions.push(eq(conflicts.createdAsRole, role));
+    return db.select().from(conflicts).where(and(...conditions)).orderBy(desc(conflicts.createdAt));
   }
-  async getDesiredChangesForPair(userIds: string[]): Promise<DesiredChange[]> {
-    return db.select().from(desiredChanges).where(inArray(desiredChanges.userId, userIds)).orderBy(desc(desiredChanges.createdAt));
+  async getDesiredChangesForPair(userIds: string[], role?: string): Promise<DesiredChange[]> {
+    const conditions = [inArray(desiredChanges.userId, userIds)];
+    if (role) conditions.push(eq(desiredChanges.createdAsRole, role));
+    return db.select().from(desiredChanges).where(and(...conditions)).orderBy(desc(desiredChanges.createdAt));
   }
-  async getPlaySessionsForPair(userIds: string[]): Promise<PlaySession[]> {
-    return db.select().from(playSessions).where(inArray(playSessions.userId, userIds)).orderBy(desc(playSessions.createdAt));
+  async getPlaySessionsForPair(userIds: string[], role?: string): Promise<PlaySession[]> {
+    const conditions = [inArray(playSessions.userId, userIds)];
+    if (role) conditions.push(eq(playSessions.createdAsRole, role));
+    return db.select().from(playSessions).where(and(...conditions)).orderBy(desc(playSessions.createdAt));
   }
-  async getIntensitySessionsForPair(userIds: string[]): Promise<IntensitySession[]> {
-    return db.select().from(intensitySessions).where(inArray(intensitySessions.userId, userIds)).orderBy(desc(intensitySessions.createdAt));
+  async getIntensitySessionsForPair(userIds: string[], role?: string): Promise<IntensitySession[]> {
+    const conditions = [inArray(intensitySessions.userId, userIds)];
+    if (role) conditions.push(eq(intensitySessions.createdAsRole, role));
+    return db.select().from(intensitySessions).where(and(...conditions)).orderBy(desc(intensitySessions.createdAt));
   }
-  async getObedienceTrialsForPair(userIds: string[]): Promise<ObedienceTrial[]> {
-    return db.select().from(obedienceTrials).where(inArray(obedienceTrials.userId, userIds)).orderBy(desc(obedienceTrials.createdAt));
+  async getObedienceTrialsForPair(userIds: string[], role?: string): Promise<ObedienceTrial[]> {
+    const conditions = [inArray(obedienceTrials.userId, userIds)];
+    if (role) conditions.push(eq(obedienceTrials.createdAsRole, role));
+    return db.select().from(obedienceTrials).where(and(...conditions)).orderBy(desc(obedienceTrials.createdAt));
   }
-  async getSensationCardsForPair(userIds: string[]): Promise<SensationCard[]> {
-    return db.select().from(sensationCards).where(inArray(sensationCards.userId, userIds)).orderBy(desc(sensationCards.createdAt));
+  async getSensationCardsForPair(userIds: string[], role?: string): Promise<SensationCard[]> {
+    const conditions = [inArray(sensationCards.userId, userIds)];
+    if (role) conditions.push(eq(sensationCards.createdAsRole, role));
+    return db.select().from(sensationCards).where(and(...conditions)).orderBy(desc(sensationCards.createdAt));
   }
-  async getSensationSpinsForPair(userIds: string[]): Promise<SensationSpin[]> {
-    return db.select().from(sensationSpins).where(inArray(sensationSpins.userId, userIds)).orderBy(desc(sensationSpins.createdAt));
+  async getSensationSpinsForPair(userIds: string[], role?: string): Promise<SensationSpin[]> {
+    const conditions = [inArray(sensationSpins.userId, userIds)];
+    if (role) conditions.push(eq(sensationSpins.createdAsRole, role));
+    return db.select().from(sensationSpins).where(and(...conditions)).orderBy(desc(sensationSpins.createdAt));
   }
 
-  async getDaresForPair(userIds: string[]): Promise<Dare[]> {
-    return db.select().from(dares).where(inArray(dares.userId, userIds)).orderBy(desc(dares.createdAt));
+  async getDaresForPair(userIds: string[], role?: string): Promise<Dare[]> {
+    const conditions = [inArray(dares.userId, userIds)];
+    if (role) conditions.push(eq(dares.createdAsRole, role));
+    return db.select().from(dares).where(and(...conditions)).orderBy(desc(dares.createdAt));
   }
-  async getRewardsForPair(userIds: string[]): Promise<Reward[]> {
-    return db.select().from(rewards).where(inArray(rewards.userId, userIds)).orderBy(desc(rewards.createdAt));
+  async getRewardsForPair(userIds: string[], role?: string): Promise<Reward[]> {
+    const conditions = [inArray(rewards.userId, userIds)];
+    if (role) conditions.push(eq(rewards.createdAsRole, role));
+    return db.select().from(rewards).where(and(...conditions)).orderBy(desc(rewards.createdAt));
   }
-  async getPunishmentsForPair(userIds: string[]): Promise<Punishment[]> {
-    return db.select().from(punishments).where(inArray(punishments.userId, userIds)).orderBy(desc(punishments.createdAt));
+  async getPunishmentsForPair(userIds: string[], role?: string): Promise<Punishment[]> {
+    const conditions = [inArray(punishments.userId, userIds)];
+    if (role) conditions.push(eq(punishments.createdAsRole, role));
+    return db.select().from(punishments).where(and(...conditions)).orderBy(desc(punishments.createdAt));
   }
-  async getAchievementsForPair(userIds: string[]): Promise<Achievement[]> {
-    return db.select().from(achievements).where(inArray(achievements.userId, userIds)).orderBy(desc(achievements.unlockedAt));
+  async getAchievementsForPair(userIds: string[], role?: string): Promise<Achievement[]> {
+    const conditions = [inArray(achievements.userId, userIds)];
+    if (role) conditions.push(eq(achievements.createdAsRole, role));
+    return db.select().from(achievements).where(and(...conditions)).orderBy(desc(achievements.unlockedAt));
   }
-  async getActivityLogForPair(userIds: string[]): Promise<ActivityLogEntry[]> {
-    return db.select().from(activityLog).where(inArray(activityLog.userId, userIds)).orderBy(desc(activityLog.createdAt));
+  async getActivityLogForPair(userIds: string[], role?: string): Promise<ActivityLogEntry[]> {
+    const conditions = [inArray(activityLog.userId, userIds)];
+    if (role) conditions.push(eq(activityLog.createdAsRole, role));
+    return db.select().from(activityLog).where(and(...conditions)).orderBy(desc(activityLog.createdAt));
   }
 
   async getMedia(entityType: string, entityId: string): Promise<Media[]> {
@@ -914,8 +972,10 @@ export class DatabaseStorage implements IStorage {
   async getStickers(recipientId: string): Promise<Sticker[]> {
     return db.select().from(stickers).where(eq(stickers.recipientId, recipientId)).orderBy(desc(stickers.createdAt));
   }
-  async getStickersForPair(userIds: string[]): Promise<Sticker[]> {
-    return db.select().from(stickers).where(inArray(stickers.recipientId, userIds)).orderBy(desc(stickers.createdAt));
+  async getStickersForPair(userIds: string[], role?: string): Promise<Sticker[]> {
+    const conditions = [inArray(stickers.recipientId, userIds)];
+    if (role) conditions.push(eq(stickers.createdAsRole, role));
+    return db.select().from(stickers).where(and(...conditions)).orderBy(desc(stickers.createdAt));
   }
   async createSticker(sticker: InsertSticker): Promise<Sticker> {
     const [s] = await db.insert(stickers).values(sticker).returning();
@@ -939,7 +999,7 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(bodyMapZones).where(eq(bodyMapZones.userId, userId));
   }
 
-  async upsertBodyMapZone(userId: string, partnerId: string | null, zoneName: string, status: string, intensity: number): Promise<BodyMapZone> {
+  async upsertBodyMapZone(userId: string, partnerId: string | null, zoneName: string, status: string, intensity: number, createdAsRole?: string): Promise<BodyMapZone> {
     const existing = await db.select().from(bodyMapZones).where(and(eq(bodyMapZones.userId, userId), eq(bodyMapZones.zoneName, zoneName)));
     if (existing.length > 0) {
       if (status === "neutral") {
@@ -949,8 +1009,8 @@ export class DatabaseStorage implements IStorage {
       const [updated] = await db.update(bodyMapZones).set({ status, intensity, partnerId, updatedAt: new Date() }).where(eq(bodyMapZones.id, existing[0].id)).returning();
       return updated;
     }
-    if (status === "neutral") return { id: "", userId, partnerId, zoneName, status, intensity, createdAt: new Date(), updatedAt: new Date() };
-    const [created] = await db.insert(bodyMapZones).values({ userId, partnerId, zoneName, status, intensity }).returning();
+    if (status === "neutral") return { id: "", userId, partnerId, zoneName, status, intensity, createdAsRole: createdAsRole || "sub", createdAt: new Date(), updatedAt: new Date() };
+    const [created] = await db.insert(bodyMapZones).values({ userId, partnerId, zoneName, status, intensity, ...(createdAsRole ? { createdAsRole } : {}) }).returning();
     return created;
   }
 
@@ -968,8 +1028,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getJournalEntriesForPair(userIds: string[]): Promise<JournalEntry[]> {
-    return db.select().from(journalEntries).where(inArray(journalEntries.userId, userIds)).orderBy(desc(journalEntries.createdAt));
+  async getJournalEntriesForPair(userIds: string[], role?: string): Promise<JournalEntry[]> {
+    const conditions = [inArray(journalEntries.userId, userIds)];
+    if (role) conditions.push(eq(journalEntries.createdAsRole, role));
+    return db.select().from(journalEntries).where(and(...conditions)).orderBy(desc(journalEntries.createdAt));
   }
 
   async unlockJournalEntry(id: string, unlockedBy: string): Promise<JournalEntry | undefined> {
@@ -977,13 +1039,10 @@ export class DatabaseStorage implements IStorage {
     return entry;
   }
 
-  async getLockedMediaForPair(userIds: string[]): Promise<Media[]> {
-    return db.select().from(media).where(
-      and(
-        inArray(media.userId, userIds),
-        eq(media.entityType, "locked_media")
-      )
-    ).orderBy(desc(media.createdAt));
+  async getLockedMediaForPair(userIds: string[], role?: string): Promise<Media[]> {
+    const conditions = [inArray(media.userId, userIds), eq(media.entityType, "locked_media")];
+    if (role) conditions.push(eq(media.createdAsRole, role));
+    return db.select().from(media).where(and(...conditions)).orderBy(desc(media.createdAt));
   }
 
   async unlockMedia(id: string, unlockedBy: string): Promise<Media | undefined> {

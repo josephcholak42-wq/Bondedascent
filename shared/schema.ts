@@ -26,6 +26,7 @@ export const tasks = pgTable("tasks", {
   assignedBy: varchar("assigned_by"),
   text: text("text").notNull(),
   done: boolean("done").notNull().default(false),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -37,6 +38,7 @@ export const checkIns = pgTable("check_ins", {
   notes: text("notes"),
   status: text("status").notNull().default("pending"),
   xpAwarded: integer("xp_awarded").default(0),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -45,6 +47,7 @@ export const dares = pgTable("dares", {
   userId: varchar("user_id").notNull(),
   text: text("text").notNull(),
   completed: boolean("completed").notNull().default(false),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -56,6 +59,7 @@ export const rewards = pgTable("rewards", {
   duration: text("duration"),
   unlocked: boolean("unlocked").notNull().default(false),
   unlockLevel: integer("unlock_level").notNull().default(1),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -67,6 +71,7 @@ export const punishments = pgTable("punishments", {
   category: text("category"),
   duration: text("duration"),
   status: text("status").notNull().default("active"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -77,6 +82,7 @@ export const journalEntries = pgTable("journal_entries", {
   isShared: boolean("is_shared").notNull().default(false),
   unlockCost: integer("unlock_cost").notNull().default(50),
   unlockedBy: varchar("unlocked_by"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -86,6 +92,7 @@ export const notifications = pgTable("notifications", {
   text: text("text").notNull(),
   type: text("type").notNull().default("info"),
   read: boolean("read").notNull().default(false),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -94,6 +101,7 @@ export const activityLog = pgTable("activity_log", {
   userId: varchar("user_id").notNull(),
   action: text("action").notNull(),
   detail: text("detail"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -117,6 +125,7 @@ export const rituals = pgTable("rituals", {
   timeOfDay: text("time_of_day"),
   active: boolean("active").notNull().default(true),
   lastCompleted: timestamp("last_completed"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -127,6 +136,7 @@ export const limits = pgTable("limits", {
   category: text("category").notNull().default("general"),
   level: text("level").notNull().default("soft"),
   description: text("description"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -139,6 +149,7 @@ export const secrets = pgTable("secrets", {
   tier: text("tier").notNull().default("common"),
   revealed: boolean("revealed").notNull().default(false),
   xpCost: integer("xp_cost").notNull().default(25),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -151,6 +162,7 @@ export const wagers = pgTable("wagers", {
   stakes: text("stakes"),
   status: text("status").notNull().default("active"),
   winnerId: varchar("winner_id"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -163,6 +175,7 @@ export const ratings = pgTable("ratings", {
   obedience: integer("obedience_rating"),
   effort: integer("effort"),
   notes: text("notes"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -173,6 +186,7 @@ export const countdownEvents = pgTable("countdown_events", {
   description: text("description"),
   targetDate: timestamp("target_date").notNull(),
   category: text("category").notNull().default("special"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -184,6 +198,7 @@ export const standingOrders = pgTable("standing_orders", {
   description: text("description"),
   priority: text("priority").notNull().default("standard"),
   active: boolean("active").notNull().default(true),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -194,6 +209,7 @@ export const permissionRequests = pgTable("permission_requests", {
   description: text("description"),
   status: text("status").notNull().default("pending"),
   reviewedBy: varchar("reviewed_by"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -203,6 +219,7 @@ export const devotions = pgTable("devotions", {
   type: text("type").notNull().default("affirmation"),
   content: text("content").notNull(),
   completed: boolean("completed").notNull().default(false),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -214,6 +231,7 @@ export const conflicts = pgTable("conflicts", {
   description: text("description"),
   status: text("status").notNull().default("open"),
   resolution: text("resolution"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -225,6 +243,7 @@ export const desiredChanges = pgTable("desired_changes", {
   description: text("description"),
   category: text("category").notNull().default("behavior"),
   status: text("status").notNull().default("active"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -235,6 +254,7 @@ export const achievements = pgTable("achievements", {
   description: text("description"),
   icon: text("icon"),
   tier: text("tier").notNull().default("bronze"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   unlockedAt: timestamp("unlocked_at").defaultNow(),
 });
 
@@ -251,6 +271,7 @@ export const playSessions = pgTable("play_sessions", {
   status: text("status").notNull().default("planned"),
   scheduledFor: timestamp("scheduled_for"),
   completedAt: timestamp("completed_at"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -267,6 +288,7 @@ export const insertTaskSchema = createInsertSchema(tasks).pick({
   text: true,
   userId: true,
   assignedBy: true,
+  createdAsRole: true,
 });
 
 export const insertCheckInSchema = createInsertSchema(checkIns).pick({
@@ -274,6 +296,7 @@ export const insertCheckInSchema = createInsertSchema(checkIns).pick({
   mood: true,
   obedience: true,
   notes: true,
+  createdAsRole: true,
 });
 
 export const insertJournalSchema = createInsertSchema(journalEntries).pick({
@@ -281,6 +304,7 @@ export const insertJournalSchema = createInsertSchema(journalEntries).pick({
   content: true,
   isShared: true,
   unlockCost: true,
+  createdAsRole: true,
 });
 
 export const insertRewardSchema = createInsertSchema(rewards).pick({
@@ -289,6 +313,7 @@ export const insertRewardSchema = createInsertSchema(rewards).pick({
   category: true,
   duration: true,
   unlockLevel: true,
+  createdAsRole: true,
 });
 
 export const insertPunishmentSchema = createInsertSchema(punishments).pick({
@@ -297,12 +322,14 @@ export const insertPunishmentSchema = createInsertSchema(punishments).pick({
   name: true,
   category: true,
   duration: true,
+  createdAsRole: true,
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).pick({
   userId: true,
   text: true,
   type: true,
+  createdAsRole: true,
 });
 
 export const insertRitualSchema = createInsertSchema(rituals).pick({
@@ -312,6 +339,7 @@ export const insertRitualSchema = createInsertSchema(rituals).pick({
   description: true,
   frequency: true,
   timeOfDay: true,
+  createdAsRole: true,
 });
 
 export const insertLimitSchema = createInsertSchema(limits).pick({
@@ -320,6 +348,7 @@ export const insertLimitSchema = createInsertSchema(limits).pick({
   category: true,
   level: true,
   description: true,
+  createdAsRole: true,
 });
 
 export const insertSecretSchema = createInsertSchema(secrets).pick({
@@ -328,6 +357,7 @@ export const insertSecretSchema = createInsertSchema(secrets).pick({
   title: true,
   content: true,
   tier: true,
+  createdAsRole: true,
 });
 
 export const insertWagerSchema = createInsertSchema(wagers).pick({
@@ -336,6 +366,7 @@ export const insertWagerSchema = createInsertSchema(wagers).pick({
   title: true,
   description: true,
   stakes: true,
+  createdAsRole: true,
 });
 
 export const insertRatingSchema = createInsertSchema(ratings).pick({
@@ -346,6 +377,7 @@ export const insertRatingSchema = createInsertSchema(ratings).pick({
   obedience: true,
   effort: true,
   notes: true,
+  createdAsRole: true,
 });
 
 export const insertCountdownEventSchema = createInsertSchema(countdownEvents).pick({
@@ -354,6 +386,7 @@ export const insertCountdownEventSchema = createInsertSchema(countdownEvents).pi
   description: true,
   targetDate: true,
   category: true,
+  createdAsRole: true,
 });
 
 export const insertStandingOrderSchema = createInsertSchema(standingOrders).pick({
@@ -362,18 +395,21 @@ export const insertStandingOrderSchema = createInsertSchema(standingOrders).pick
   title: true,
   description: true,
   priority: true,
+  createdAsRole: true,
 });
 
 export const insertPermissionRequestSchema = createInsertSchema(permissionRequests).pick({
   userId: true,
   title: true,
   description: true,
+  createdAsRole: true,
 });
 
 export const insertDevotionSchema = createInsertSchema(devotions).pick({
   userId: true,
   type: true,
   content: true,
+  createdAsRole: true,
 });
 
 export const insertConflictSchema = createInsertSchema(conflicts).pick({
@@ -381,6 +417,7 @@ export const insertConflictSchema = createInsertSchema(conflicts).pick({
   partnerId: true,
   title: true,
   description: true,
+  createdAsRole: true,
 });
 
 export const insertDesiredChangeSchema = createInsertSchema(desiredChanges).pick({
@@ -389,6 +426,7 @@ export const insertDesiredChangeSchema = createInsertSchema(desiredChanges).pick
   title: true,
   description: true,
   category: true,
+  createdAsRole: true,
 });
 
 export const insertAchievementSchema = createInsertSchema(achievements).pick({
@@ -397,6 +435,7 @@ export const insertAchievementSchema = createInsertSchema(achievements).pick({
   description: true,
   icon: true,
   tier: true,
+  createdAsRole: true,
 });
 
 export const insertPlaySessionSchema = createInsertSchema(playSessions).pick({
@@ -409,6 +448,7 @@ export const insertPlaySessionSchema = createInsertSchema(playSessions).pick({
   activities: true,
   status: true,
   scheduledFor: true,
+  createdAsRole: true,
 });
 
 // Types
@@ -463,6 +503,7 @@ export const accusations = pgTable("accusations", {
   accusation: text("accusation").notNull(),
   response: text("response"),
   status: text("status").notNull().default("pending"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -478,6 +519,7 @@ export const demandTimers = pgTable("demand_timers", {
   durationSeconds: integer("duration_seconds").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   responded: boolean("responded").notNull().default(false),
+  createdAsRole: text("created_as_role").notNull().default("dom"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -487,6 +529,7 @@ export const quickCommands = pgTable("quick_commands", {
   toUserId: varchar("to_user_id").notNull(),
   message: text("message").notNull(),
   acknowledged: boolean("acknowledged").notNull().default(false),
+  createdAsRole: text("created_as_role").notNull().default("dom"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -527,6 +570,7 @@ export const intensitySessions = pgTable("intensity_sessions", {
   status: text("status").notNull().default("active"),
   durationSeconds: integer("duration_seconds").default(0),
   notes: text("notes"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
   completedAt: timestamp("completed_at"),
 });
@@ -549,6 +593,7 @@ export const obedienceTrials = pgTable("obedience_trials", {
   autoPunishment: text("auto_punishment"),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -579,6 +624,7 @@ export const sensationCards = pgTable("sensation_cards", {
   cardType: text("card_type").notNull().default("normal"),
   durationMinutes: integer("duration_minutes"),
   active: boolean("active").notNull().default(true),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -615,6 +661,7 @@ export const sealedOrders = pgTable("sealed_orders", {
   completed: boolean("completed").notNull().default(false),
   emergencyUnsealed: boolean("emergency_unsealed").notNull().default(false),
   xpCost: integer("xp_cost").notNull().default(25),
+  createdAsRole: text("created_as_role").notNull().default("dom"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -639,6 +686,7 @@ export const enduranceChallenges = pgTable("endurance_challenges", {
   startedAt: timestamp("started_at").defaultNow(),
   endsAt: timestamp("ends_at").notNull(),
   completedAt: timestamp("completed_at"),
+  createdAsRole: text("created_as_role").notNull().default("dom"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -673,6 +721,7 @@ export const media = pgTable("media", {
   isLocked: boolean("is_locked").notNull().default(false),
   unlockCost: integer("unlock_cost").notNull().default(100),
   unlockedBy: varchar("unlocked_by"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -686,6 +735,7 @@ export const stickers = pgTable("stickers", {
   recipientId: varchar("recipient_id").notNull(),
   stickerType: varchar("sticker_type").notNull(),
   message: text("message"),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -712,6 +762,7 @@ export const bodyMapZones = pgTable("body_map_zones", {
   zoneName: text("zone_name").notNull(),
   status: text("status").notNull().default("desire"),
   intensity: integer("intensity").notNull().default(50),
+  createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
