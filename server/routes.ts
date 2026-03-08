@@ -65,6 +65,101 @@ export async function registerRoutes(
 
   setupAuth(app);
 
+  app.get("/api/dashboard-init", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+
+    const [
+      tasks, checkIns, dares, rewardsList, punishmentsList,
+      journalList, notifications, activityLog,
+      standingOrders, rituals, wagers, desiredChanges,
+      obedienceTrials, enduranceChallenges, sealedOrders,
+      secrets, limits, permissionRequests, devotions,
+      conflicts, ratings, intensitySessions, countdownEvents,
+      playSessions, stickers, featureSettings, bodyMapZones,
+      accusations,
+    ] = await Promise.all([
+      storage.getTasksForPair(userIds, user.role),
+      storage.getCheckInsForPair(userIds, user.role),
+      storage.getDaresForPair(userIds, user.role),
+      storage.getRewardsForPair(userIds, user.role),
+      storage.getPunishmentsForPair(userIds, user.role),
+      storage.getJournalEntries(user.id, user.role),
+      storage.getNotifications(user.id, user.role),
+      storage.getActivityLog(user.id, user.role),
+      storage.getStandingOrdersForPair(userIds, user.role),
+      storage.getRitualsForPair(userIds, user.role),
+      storage.getWagersForPair(userIds, user.role),
+      storage.getDesiredChangesForPair(userIds, user.role),
+      storage.getObedienceTrialsForPair(userIds, user.role),
+      storage.getEnduranceChallenges(user.id),
+      storage.getSealedOrders(user.id),
+      storage.getSecretsForPair(userIds, user.role),
+      storage.getLimitsForPair(userIds, user.role),
+      storage.getPermissionRequestsForPair(userIds, user.role),
+      storage.getDevotionsForPair(userIds, user.role),
+      storage.getConflictsForPair(userIds, user.role),
+      storage.getRatingsForPair(userIds, user.role),
+      storage.getIntensitySessionsForPair(userIds, user.role),
+      storage.getCountdownEventsForPair(userIds, user.role),
+      storage.getPlaySessionsForPair(userIds, user.role),
+      storage.getStickersForPair(userIds, user.role),
+      storage.getFeatureSettings(user.id),
+      storage.getBodyMapZones(user.id),
+      storage.getAccusations(user.id, user.role),
+    ]);
+
+    let partnerData = null;
+    let partnerStats = null;
+    let partnerTasks: any[] = [];
+    let partnerCheckIns: any[] = [];
+    let partnerActivityLog: any[] = [];
+    let partnerAccusations: any[] = [];
+    if (partner) {
+      const pTasks = await storage.getTasks(partner.id);
+      const pCheckIns = await storage.getCheckIns(partner.id);
+      const pActivity = await storage.getActivityLog(partner.id, partner.role as string);
+      const pAccusations = await storage.getAccusations(partner.id, partner.role as string);
+      const completedTasks = pTasks.filter((t: any) => t.done).length;
+      const pDares = await storage.getDares(partner.id);
+      const completedDares2 = pDares.filter((d: any) => d.completed).length;
+      const totalDares2 = pDares.length;
+      const totalCheckIns2 = pCheckIns.length;
+      const totalJournalEntries2 = (await storage.getJournalEntries(partner.id, partner.role as string)).length;
+      partnerData = { id: partner.id, username: partner.username, email: partner.email, role: partner.role, originalRole: partner.originalRole, xp: partner.xp, level: partner.level, partnerId: partner.partnerId, lockedDown: partner.lockedDown, enforcementLevel: partner.enforcementLevel, stickerBalance: partner.stickerBalance, profilePic: partner.profilePic, createdAt: partner.createdAt };
+      partnerStats = { username: partner.username, role: partner.role, xp: partner.xp, level: partner.level, completedTasks, totalTasks: pTasks.length, totalCheckIns: totalCheckIns2, totalDares: totalDares2, completedDares: completedDares2, totalJournalEntries: totalJournalEntries2, complianceRate: pTasks.length > 0 ? Math.round((completedTasks / pTasks.length) * 100) : 0, pendingCheckIns: pCheckIns.filter((c: any) => c.status === "pending").length };
+      partnerTasks = pTasks;
+      partnerCheckIns = pCheckIns;
+      partnerActivityLog = pActivity;
+      partnerAccusations = pAccusations;
+    }
+
+    const completedTasks = tasks.filter((t: any) => t.done).length;
+    const totalCheckIns3 = checkIns.length;
+    const completedDares3 = dares.filter((d: any) => d.completed).length;
+    const userStats = {
+      xp: user.xp, level: user.level, completedTasks, totalTasks: tasks.length,
+      totalCheckIns: totalCheckIns3, totalDares: dares.length, completedDares: completedDares3,
+      totalJournalEntries: journalList.length,
+      complianceRate: tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0,
+    };
+
+    res.json({
+      tasks, checkIns, dares, rewards: rewardsList, punishments: punishmentsList,
+      journal: journalList, notifications, activityLog,
+      partner: partnerData, partnerStats, partnerTasks, partnerCheckIns, partnerActivity: partnerActivityLog,
+      partnerAccusations,
+      stats: userStats,
+      standingOrders, rituals, wagers, desiredChanges,
+      obedienceTrials, enduranceChallenges, sealedOrders,
+      secrets, limits, permissionRequests, devotions,
+      conflicts, ratings, intensitySessions, countdownEvents,
+      playSessions, stickers, featureSettings, bodyMapZones,
+      accusations,
+    });
+  });
+
   // --- TASKS ---
   app.get("/api/tasks", requireAuth, async (req, res) => {
     const user = req.user as User;
@@ -287,6 +382,17 @@ export async function registerRoutes(
     res.json(reward);
   });
 
+  app.delete("/api/rewards/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allRewards = await storage.getRewardsForPair(userIds, user.role);
+    const owned = allRewards.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Reward not found" });
+    await storage.deleteReward(req.params.id);
+    res.json({ message: "Reward deleted" });
+  });
+
   // --- PUNISHMENTS ---
   app.get("/api/punishments", requireAuth, async (req, res) => {
     const user = req.user as User;
@@ -335,6 +441,17 @@ export async function registerRoutes(
       await notifyUser(partner.id, `${user.username} marked punishment "${punishment.name}" as ${status}`, "info", user.role);
     }
     res.json(punishment);
+  });
+
+  app.delete("/api/punishments/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allPunishments = await storage.getPunishmentsForPair(userIds, user.role);
+    const owned = allPunishments.find(p => p.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Punishment not found" });
+    await storage.deletePunishment(req.params.id);
+    res.json({ message: "Punishment deleted" });
   });
 
   // --- JOURNAL ---

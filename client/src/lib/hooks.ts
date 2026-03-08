@@ -1,8 +1,64 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest, getQueryFn } from "./queryClient";
+import { useEffect, useRef } from "react";
+import { apiRequest, getQueryFn, queryClient } from "./queryClient";
 import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession, Accusation, IntensitySession, ObedienceTrial, TrialStep, SensationCard, SensationSpin, SealedOrder, EnduranceChallenge, EnduranceCheckin, Media, Sticker, FeatureSetting, Contract, Confession, TrainingProgram, TrainingDay, TrainingEnrollment, SceneScript, ScriptStep, InterrogationSession, InterrogationQuestion, AftercareItem, Streak } from "@shared/schema";
 
 type SafeUser = Omit<User, "password">;
+
+export function useDashboardInit() {
+  const seeded = useRef(false);
+  const { data: user } = useAuth();
+
+  useEffect(() => {
+    if (!user || seeded.current) return;
+    seeded.current = true;
+
+    fetch("/api/dashboard-init", { credentials: "include" })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!data) return;
+        const seed = (key: string, val: any) => {
+          if (val !== undefined && val !== null) queryClient.setQueryData([key], val);
+        };
+        seed("/api/tasks", data.tasks);
+        seed("/api/checkins", data.checkIns);
+        seed("/api/dares", data.dares);
+        seed("/api/rewards", data.rewards);
+        seed("/api/punishments", data.punishments);
+        seed("/api/journal", data.journal);
+        seed("/api/notifications", data.notifications);
+        seed("/api/activity", data.activityLog);
+        seed("/api/user/stats", data.stats);
+        seed("/api/pair/partner", data.partner);
+        seed("/api/pair/partner/stats", data.partnerStats);
+        seed("/api/partner/tasks", data.partnerTasks);
+        seed("/api/partner/checkins", data.partnerCheckIns);
+        seed("/api/partner/activity", data.partnerActivity);
+        seed("/api/partner/accusations", data.partnerAccusations);
+        seed("/api/standing-orders", data.standingOrders);
+        seed("/api/rituals", data.rituals);
+        seed("/api/wagers", data.wagers);
+        seed("/api/desired-changes", data.desiredChanges);
+        seed("/api/obedience-trials", data.obedienceTrials);
+        seed("/api/endurance-challenges", data.enduranceChallenges);
+        seed("/api/sealed-orders", data.sealedOrders);
+        seed("/api/secrets", data.secrets);
+        seed("/api/limits", data.limits);
+        seed("/api/permission-requests", data.permissionRequests);
+        seed("/api/devotions", data.devotions);
+        seed("/api/conflicts", data.conflicts);
+        seed("/api/ratings", data.ratings);
+        seed("/api/intensity-sessions", data.intensitySessions);
+        seed("/api/countdown-events", data.countdownEvents);
+        seed("/api/play-sessions", data.playSessions);
+        seed("/api/stickers", data.stickers);
+        seed("/api/feature-settings", data.featureSettings);
+        seed("/api/body-map-zones", data.bodyMapZones);
+        seed("/api/accusations", data.accusations);
+      })
+      .catch(() => {});
+  }, [user]);
+}
 
 export function useAuth() {
   return useQuery<SafeUser | null>({
@@ -238,6 +294,32 @@ export function useToggleReward() {
       qc.invalidateQueries({ queryKey: ["/api/rewards"] });
       qc.invalidateQueries({ queryKey: ["/api/activity"] });
       qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function useDeleteReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rewardId: string) => {
+      const res = await apiRequest("DELETE", `/api/rewards/${rewardId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+    },
+  });
+}
+
+export function useDeletePunishment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (punishmentId: string) => {
+      const res = await apiRequest("DELETE", `/api/punishments/${punishmentId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/punishments"] });
     },
   });
 }

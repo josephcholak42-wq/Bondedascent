@@ -81,10 +81,12 @@ export interface IStorage {
   getRewards(userId: string): Promise<Reward[]>;
   createReward(reward: InsertReward): Promise<Reward>;
   toggleReward(rewardId: string): Promise<Reward | undefined>;
+  deleteReward(rewardId: string): Promise<void>;
 
   getPunishments(userId: string): Promise<Punishment[]>;
   createPunishment(punishment: InsertPunishment): Promise<Punishment>;
   updatePunishmentStatus(punishmentId: string, status: string): Promise<Punishment | undefined>;
+  deletePunishment(punishmentId: string): Promise<void>;
 
   getJournalEntries(userId: string, role?: string): Promise<JournalEntry[]>;
   createJournalEntry(entry: InsertJournal): Promise<JournalEntry>;
@@ -418,6 +420,10 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async deleteReward(rewardId: string): Promise<void> {
+    await db.delete(rewards).where(eq(rewards.id, rewardId));
+  }
+
   async getPunishments(userId: string): Promise<Punishment[]> {
     return db.select().from(punishments).where(eq(punishments.userId, userId)).orderBy(desc(punishments.createdAt));
   }
@@ -430,6 +436,10 @@ export class DatabaseStorage implements IStorage {
   async updatePunishmentStatus(punishmentId: string, status: string): Promise<Punishment | undefined> {
     const [updated] = await db.update(punishments).set({ status }).where(eq(punishments.id, punishmentId)).returning();
     return updated;
+  }
+
+  async deletePunishment(punishmentId: string): Promise<void> {
+    await db.delete(punishments).where(eq(punishments.id, punishmentId));
   }
 
   async getJournalEntries(userId: string, role?: string): Promise<JournalEntry[]> {

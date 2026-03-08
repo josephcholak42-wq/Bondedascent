@@ -71,6 +71,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - `GET /api/play-sessions/active-live` — Polls for any active live session in the pair (Sub auto-detect)
 - `PUT /api/play-sessions/:id/live` — Live session state updates (instruction, intensity, phase, end)
 - `POST /api/rituals/:id/remind` — Trigger push notification reminder
+- `GET /api/dashboard-init` — Batch endpoint fetching all dashboard data in one request; frontend `useDashboardInit()` hook seeds TanStack Query cache
 
 ### Core Architectural Decisions
 - **Command Center First**: Everything usable through Command Center. Dashboard shows only CommandProtocols.

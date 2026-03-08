@@ -94,6 +94,7 @@ import {
   useAuth,
   useLogout,
   useSwitchRole,
+  useDashboardInit,
   useStats,
   useTasks,
   useCreateTask,
@@ -107,9 +108,11 @@ import {
   useRewards,
   useCreateReward,
   useToggleReward,
+  useDeleteReward,
   usePunishments,
   useCreatePunishment,
   useUpdatePunishmentStatus,
+  useDeletePunishment,
   useJournal,
   useCreateJournal,
   useNotifications,
@@ -346,6 +349,7 @@ export default function BondedAscentApp() {
   }, []);
 
   const { data: user } = useAuth();
+  useDashboardInit();
   const logoutMutation = useLogout();
   const switchRoleMutation = useSwitchRole();
   const { data: stats } = useStats();
@@ -361,9 +365,11 @@ export default function BondedAscentApp() {
   const { data: rewards = [] } = useRewards();
   const createRewardMutation = useCreateReward();
   const toggleRewardMutation = useToggleReward();
+  const deleteRewardMutation = useDeleteReward();
   const { data: punishments = [] } = usePunishments();
   const createPunishmentMutation = useCreatePunishment();
   const updatePunishmentStatusMutation = useUpdatePunishmentStatus();
+  const deletePunishmentMutation = useDeletePunishment();
   const { data: journalEntries = [] } = useJournal();
   const createJournalMutation = useCreateJournal();
   const { data: notifications = [] } = useNotifications();
@@ -863,11 +869,11 @@ export default function BondedAscentApp() {
       case "countdown_event": deleteCountdownEventMutation.mutate(id); break;
       case "standing_order": deleteStandingOrderMutation.mutate(id); break;
       case "notification": dismissNotificationMutation.mutate(id); break;
-      case "punishment": updatePunishmentStatusMutation.mutate({ id, status: "completed" }); break;
-      case "reward": toggleRewardMutation.mutate(id); break;
+      case "punishment": deletePunishmentMutation.mutate(id); break;
+      case "reward": deleteRewardMutation.mutate(id); break;
       case "dare": completeDareMutation.mutate(id); break;
     }
-  }, [deleteTaskMutation, deleteRitualMutation, deleteLimitMutation, deleteCountdownEventMutation, deleteStandingOrderMutation, dismissNotificationMutation, updatePunishmentStatusMutation, toggleRewardMutation, completeDareMutation]);
+  }, [deleteTaskMutation, deleteRitualMutation, deleteLimitMutation, deleteCountdownEventMutation, deleteStandingOrderMutation, dismissNotificationMutation, deletePunishmentMutation, deleteRewardMutation, completeDareMutation]);
 
   const handleOnEdit = useCallback((type: string, id: string, data: Record<string, any>) => {
     switch (type) {
