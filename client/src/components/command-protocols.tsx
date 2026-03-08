@@ -5,10 +5,17 @@ import {
   Flame, Shield, Eye, ChevronDown, ChevronUp,
   FileSignature, RotateCcw, ListChecks, TrendingUp,
   CircleDot, Timer, ShieldAlert, Lock, Unlock,
-  SendHorizonal, Plus, Crown, Crosshair
+  SendHorizonal, Plus, Crown, Crosshair,
+  Award, Star, Heart, Camera, Dices, BookOpen,
+  RefreshCw, Sliders, Play, Hand, Layers, Hourglass,
+  HeartPulse, ChevronRight
 } from "lucide-react";
+import { Link as WouterLink } from "wouter";
+import { Switch } from "@/components/ui/switch";
+import { FeatureDrawer } from "@/components/feature-drawer";
 import { Button } from "@/components/ui/button";
 import { SexyIcon } from "@/components/sexy-icon";
+import { UniversalCreator } from "@/components/universal-creator";
 
 export type FeedItemType =
   | "demand" | "command" | "accusation" | "task"
@@ -24,6 +31,27 @@ export interface FeedItem {
   countdown?: number;
   createdAt?: string | Date;
   data?: any;
+}
+
+export interface StickerItem {
+  id: number;
+  stickerType: string;
+  message?: string | null;
+  senderId?: number;
+  recipientId?: number;
+  createdAt?: string | Date;
+}
+
+export interface FeatureSetting {
+  featureKey: string;
+  enabled: boolean;
+}
+
+export interface UserStatsData {
+  xp: number;
+  level: number;
+  badges?: number;
+  activeTimers?: number;
 }
 
 interface CommandProtocolsProps {
@@ -43,6 +71,13 @@ interface CommandProtocolsProps {
   lockdownStatus?: boolean;
   enforcementLevel?: number;
   isAssigning?: boolean;
+  stickers?: StickerItem[];
+  onSendSticker?: (stickerType: string, message?: string) => void;
+  featureSettings?: FeatureSetting[];
+  onToggleFeature?: (featureKey: string, enabled: boolean) => void;
+  userStats?: UserStatsData;
+  onCrisisMode?: (active: boolean) => void;
+  onCreate?: (type: string, data: Record<string, any>) => void;
 }
 
 const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string; priority: number }> = {
@@ -118,6 +153,19 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: (id: str
   const Icon = config.icon;
   const isUrgent = ["demand", "command", "accusation"].includes(item.type);
 
+  const handleAction = (id: string, action: string, payload?: any) => {
+    if (action === "toggle" || action === "complete" || action === "approve" || action === "redeem") {
+      feedbackComplete();
+    } else if (action === "respond" || action === "acknowledge") {
+      feedbackUrgent();
+    } else if (action === "dismiss" || action === "reject") {
+      feedbackDelete();
+    } else {
+      feedbackTap();
+    }
+    onAction(id, action, payload);
+  };
+
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
@@ -141,10 +189,10 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: (id: str
           <div className="flex gap-2 mt-2.5">
             <input data-testid={`accusation-response-${item.id}`} value={responseText} onChange={(e) => setResponseText(e.target.value)}
               placeholder="Your response..." className="flex-1 bg-black/40 border border-rose-900/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/60"
-              onKeyDown={(e) => { if (e.key === "Enter" && responseText.trim()) { onAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}
+              onKeyDown={(e) => { if (e.key === "Enter" && responseText.trim()) { handleAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}
             />
             <Button data-testid={`accusation-send-${item.id}`} size="sm" className="bg-rose-600 hover:bg-rose-500 h-8 px-3 shadow-lg shadow-rose-500/20"
-              onClick={() => { if (responseText.trim()) { onAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}>
+              onClick={() => { if (responseText.trim()) { handleAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}>
               <Send size={12} />
             </Button>
           </div>
@@ -159,9 +207,9 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: (id: str
               />
             </div>
             <Button data-testid={`checkin-approve-${item.id}`} size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-emerald-500/20"
-              onClick={() => onAction(item.id, "approve", xpAmount)}>Approve</Button>
+              onClick={() => handleAction(item.id, "approve", xpAmount)}>Approve</Button>
             <Button data-testid={`checkin-reject-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
-              onClick={() => onAction(item.id, "reject")}>Reject</Button>
+              onClick={() => handleAction(item.id, "reject")}>Reject</Button>
           </div>
         )}
       </div>
@@ -170,39 +218,90 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: (id: str
         {item.type === "demand" && (
           <Button data-testid={`demand-respond-${item.id}`} size="sm"
             className="bg-red-600 hover:bg-red-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-red-500/30 animate-pulse"
-            onClick={() => onAction(item.id, "respond")}>RESPOND</Button>
+            onClick={() => handleAction(item.id, "respond")}>RESPOND</Button>
         )}
         {item.type === "command" && (
           <Button data-testid={`command-ack-${item.id}`} size="sm"
             className="bg-orange-600 hover:bg-orange-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-orange-500/20"
-            onClick={() => onAction(item.id, "acknowledge")}>ACK</Button>
+            onClick={() => handleAction(item.id, "acknowledge")}>ACK</Button>
         )}
         {item.type === "task" && (
           <button data-testid={`task-toggle-${item.id}`}
             className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${
               item.data?.done ? "border-green-500 bg-green-500/20" : "border-blue-500/40 hover:border-blue-400 hover:bg-blue-500/10"
-            }`} onClick={() => onAction(item.id, "toggle")}>
+            }`} onClick={() => handleAction(item.id, "toggle")}>
             {item.data?.done && <CheckCircle size={14} className="text-green-400" />}
           </button>
         )}
         {item.type === "punishment" && (
           <Button data-testid={`punishment-complete-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
-            onClick={() => onAction(item.id, "complete")}>Done</Button>
+            onClick={() => handleAction(item.id, "complete")}>Done</Button>
         )}
         {item.type === "reward" && !item.data?.unlocked && (
           <Button data-testid={`reward-redeem-${item.id}`} size="sm" className="bg-amber-600 hover:bg-amber-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-amber-500/20"
-            onClick={() => onAction(item.id, "redeem")}>Redeem</Button>
+            onClick={() => handleAction(item.id, "redeem")}>Redeem</Button>
         )}
         {item.type === "dare" && !item.data?.completed && (
           <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-fuchsia-600 hover:bg-fuchsia-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-fuchsia-500/20"
-            onClick={() => onAction(item.id, "complete")}>Done</Button>
+            onClick={() => handleAction(item.id, "complete")}>Done</Button>
         )}
         {item.type === "notification" && (
           <button data-testid={`notification-dismiss-${item.id}`} className="text-slate-600 hover:text-white transition-colors p-1"
-            onClick={() => onAction(item.id, "dismiss")}><X size={14} /></button>
+            onClick={() => handleAction(item.id, "dismiss")}><X size={14} /></button>
         )}
       </div>
     </div>
+  );
+}
+
+const STICKER_TYPES = [
+  { type: "gold-star", emoji: "⭐", label: "gold star" },
+  { type: "heart", emoji: "❤️", label: "heart" },
+  { type: "fire", emoji: "🔥", label: "fire" },
+  { type: "crown", emoji: "👑", label: "crown" },
+  { type: "diamond", emoji: "💎", label: "diamond" },
+  { type: "ribbon", emoji: "🎀", label: "ribbon" },
+  { type: "trophy", emoji: "🏆", label: "trophy" },
+  { type: "sparkle", emoji: "✨", label: "sparkle" },
+];
+
+function getStickerEmoji(type: string) {
+  return STICKER_TYPES.find(s => s.type === type)?.emoji || "✨";
+}
+
+const FEATURE_TOGGLES = [
+  { key: "dares", label: "Wheel of Dares", icon: Dices },
+  { key: "journal", label: "Journal", icon: BookOpen },
+  { key: "rewards", label: "Rewards", icon: Gift },
+  { key: "stickers", label: "Stickers", icon: Sparkles },
+  { key: "wagers", label: "Wagers", icon: Dices },
+  { key: "secrets", label: "Secrets", icon: Eye },
+  { key: "ratings", label: "Ratings", icon: Star },
+  { key: "media_upload", label: "Media Upload", icon: Camera },
+  { key: "role_switch", label: "Role Switching", icon: RefreshCw },
+];
+
+function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon }: {
+  icon: React.ReactNode; label: string; desc?: string; href: string; color: string; badge?: number; sexyIcon?: string;
+}) {
+  return (
+    <WouterLink
+      href={href}
+      data-testid={`drawer-link-${label.toLowerCase().replace(/\s+/g, "-")}`}
+      className="relative flex items-center gap-3 p-2.5 bg-gradient-to-r from-slate-900/80 to-slate-950/60 border border-white/5 rounded-xl hover:border-white/15 hover:from-slate-800/80 hover:to-slate-900/60 transition-all cursor-pointer group no-underline"
+    >
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${sexyIcon ? "overflow-visible" : `overflow-hidden ${color} bg-slate-900/80`}`}>
+        {sexyIcon ? <SexyIcon name={sexyIcon} size={28} glow="gold" /> : <span>{icon}</span>}
+      </div>
+      <div className="flex-1 text-left min-w-0">
+        <div className="text-[10px] font-bold text-slate-200 uppercase tracking-wide group-hover:text-white transition-colors truncate">{label}</div>
+        {desc && <div className="text-[9px] text-slate-500 mt-0.5 truncate">{desc}</div>}
+      </div>
+      {badge !== undefined && badge > 0 && (
+        <span className="min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-600 text-[8px] font-black text-white px-1 shadow-[0_0_6px_rgba(220,38,38,0.5)] shrink-0">{badge}</span>
+      )}
+      <ChevronRight size={12} className="text-slate-700 group-hover:text-slate-400 transition-colors shrink-0" />
+    </WouterLink>
   );
 }
 
@@ -210,6 +309,7 @@ export function CommandProtocols({
   role, feedItems, standingOrders, rituals, tasks,
   onAction, onAssignTask, onQuickCommand, onDemandTimer, onToggleLockdown,
   partnerStats, partnerPresence, partnerName, lockdownStatus, enforcementLevel, isAssigning,
+  stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onCreate,
 }: CommandProtocolsProps) {
   const [filter, setFilter] = useState("all");
   const [newTaskText, setNewTaskText] = useState("");
@@ -217,6 +317,8 @@ export function CommandProtocols({
   const [demandMessage, setDemandMessage] = useState("");
   const [demandDuration, setDemandDuration] = useState(5);
   const [showControlPanel, setShowControlPanel] = useState(false);
+  const [stickerMessage, setStickerMessage] = useState("");
+  const [crisisModeActive, setCrisisModeActive] = useState(false);
 
   const protocolItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = [];
@@ -397,19 +499,163 @@ export function CommandProtocols({
             )}
           </div>
 
+          <div className="px-5 pb-3 space-y-2" data-testid="cp-feature-drawers">
+            <FeatureDrawer title="Quick Access" icon={<Zap size={14} className="text-amber-400" />}>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="bg-gradient-to-b from-amber-950/30 to-transparent border border-amber-500/20 rounded-xl p-2.5 text-center">
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Balance</div>
+                  <div className="text-sm font-black text-amber-400 tabular-nums leading-tight">{userStats?.xp ?? 0} XP</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">Lv {userStats?.level ?? 1}</div>
+                </div>
+                <div className="bg-gradient-to-b from-emerald-950/30 to-transparent border border-emerald-500/20 rounded-xl p-2.5 text-center">
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Badges</div>
+                  <div className="text-sm font-black text-emerald-400 tabular-nums leading-tight">{userStats?.badges ?? 0}</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">earned</div>
+                </div>
+                <div className="bg-gradient-to-b from-cyan-950/30 to-transparent border border-cyan-500/20 rounded-xl p-2.5 text-center">
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Timers</div>
+                  <div className="text-sm font-black text-cyan-400 tabular-nums leading-tight">{userStats?.activeTimers ?? 0}</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">active</div>
+                </div>
+                <div className="bg-gradient-to-b from-purple-950/30 to-transparent border border-purple-500/20 rounded-xl p-2.5 text-center">
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Stats</div>
+                  <div className="text-sm font-black text-purple-400 tabular-nums leading-tight">{partnerStats?.complianceRate ?? 0}%</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">compliance</div>
+                </div>
+              </div>
+            </FeatureDrawer>
+
+            <FeatureDrawer title="Sticker Rewards" icon={<Sparkles size={14} className="text-yellow-400" />} count={stickers?.length}>
+              {role === "dom" && onSendSticker ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-4 gap-2">
+                    {STICKER_TYPES.map((s) => (
+                      <button key={s.type} data-testid={`drawer-sticker-${s.type}`}
+                        onClick={() => onSendSticker(s.type, stickerMessage || undefined)}
+                        className="p-2.5 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-yellow-900/30 active:bg-yellow-900/30 active:border-yellow-500/50 active:shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                        <span className="text-xl">{s.emoji}</span>
+                        <div className="text-[7px] text-slate-500 uppercase mt-0.5">{s.label}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <input data-testid="drawer-sticker-message" type="text" value={stickerMessage}
+                    onChange={(e) => setStickerMessage(e.target.value)}
+                    placeholder="Optional message..."
+                    className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-yellow-500/40" />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {stickers && stickers.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {stickers.slice(0, 12).map((s) => (
+                        <div key={s.id} data-testid={`drawer-sticker-received-${s.id}`}
+                          className="bg-slate-900/60 border border-white/5 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                          <span className="text-base">{getStickerEmoji(s.stickerType)}</span>
+                          {s.message && <span className="text-[9px] text-slate-400 max-w-[80px] truncate">{s.message}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-600 text-center py-2">No stickers yet</p>
+                  )}
+                </div>
+              )}
+            </FeatureDrawer>
+
+            {role === "dom" && onToggleFeature && (
+              <FeatureDrawer title="Feature Controls" icon={<Sliders size={14} className="text-red-400" />}>
+                <div className="space-y-2">
+                  {FEATURE_TOGGLES.map((feature) => {
+                    const FeatureIcon = feature.icon;
+                    const setting = featureSettings?.find((s) => s.featureKey === feature.key);
+                    const isEnabled = setting ? setting.enabled : true;
+                    return (
+                      <div key={feature.key} data-testid={`drawer-feature-${feature.key}`}
+                        className="flex items-center justify-between p-2.5 bg-slate-900/40 border border-white/5 rounded-xl">
+                        <div className="flex items-center gap-2.5">
+                          <FeatureIcon size={13} className="text-slate-400" />
+                          <span className="text-[11px] font-bold text-white">{feature.label}</span>
+                        </div>
+                        <Switch checked={isEnabled} onCheckedChange={(checked) => onToggleFeature(feature.key, checked)} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </FeatureDrawer>
+            )}
+
+            {role === "dom" && onCrisisMode && (
+              <FeatureDrawer title="Crisis Mode" icon={<ShieldAlert size={14} className="text-red-500" />}>
+                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <ShieldAlert size={20} className="text-red-500" />
+                    <div>
+                      <div className="text-[11px] font-bold text-white uppercase tracking-wider">Force Crisis Mode</div>
+                      <div className="text-[9px] text-slate-500">Pause all activities immediately</div>
+                    </div>
+                  </div>
+                  <button data-testid="drawer-crisis-toggle"
+                    onClick={() => { const next = !crisisModeActive; setCrisisModeActive(next); onCrisisMode(next); }}
+                    className={`w-12 h-7 rounded-full p-0.5 transition-colors duration-300 cursor-pointer ${crisisModeActive ? "bg-red-600 shadow-[0_0_10px_red]" : "bg-slate-800 border border-slate-700"}`}>
+                    <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${crisisModeActive ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              </FeatureDrawer>
+            )}
+
+            <FeatureDrawer title="Protocol & Structure" icon={<Flame size={14} className="text-red-400" />}>
+              <div className="space-y-1.5">
+                <DrawerFeatureLink icon={<Flame size={14} />} label="Rituals" desc="Daily routines & habits" href="/rituals" color="text-orange-400" sexyIcon="rituals" />
+                <DrawerFeatureLink icon={<FileSignature size={14} />} label="Standing Orders" desc="Permanent directives" href="/standing-orders" color="text-red-400" sexyIcon="standing-orders" />
+                <DrawerFeatureLink icon={<Shield size={14} />} label="Limits" desc="Boundaries & safety" href="/limits" color="text-blue-400" sexyIcon="limits" />
+                <DrawerFeatureLink icon={<Hand size={14} />} label="Permissions" desc="Requests & approvals" href="/permission-requests" color="text-indigo-400" sexyIcon="permission-requests" />
+                <DrawerFeatureLink icon={<Target size={14} />} label="Desired Changes" desc="Growth requests" href="/desired-changes" color="text-teal-400" sexyIcon="standing-orders" />
+              </div>
+            </FeatureDrawer>
+
+            <FeatureDrawer title="Challenges & Games" icon={<Dices size={14} className="text-amber-400" />}>
+              <div className="space-y-1.5">
+                <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-green-400" sexyIcon="play-sessions" />
+                <DrawerFeatureLink icon={<Layers size={14} />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" sexyIcon="endurance" />
+                <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-amber-500" sexyIcon="enforce" />
+                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random card spins" href="/sensation-roulette" color="text-fuchsia-400" sexyIcon="wheel-of-dares" />
+                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Bets & stakes" href="/wagers" color="text-yellow-400" sexyIcon="wagers" />
+                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed challenges" href="/endurance-challenges" color="text-orange-500" sexyIcon="endurance" />
+              </div>
+            </FeatureDrawer>
+
+            <FeatureDrawer title="Connection & Reflection" icon={<HeartPulse size={14} className="text-pink-400" />}>
+              <div className="space-y-1.5">
+                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond health" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
+                <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-pink-300" sexyIcon="devotions" />
+                <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-purple-400" sexyIcon="secrets" />
+                <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-rose-400" sexyIcon="conflicts" />
+              </div>
+            </FeatureDrawer>
+
+            <FeatureDrawer title="Tracking & Progress" icon={<Award size={14} className="text-emerald-400" />}>
+              <div className="space-y-1.5">
+                <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-amber-400" sexyIcon="ratings" />
+                <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
+                <DrawerFeatureLink icon={<Timer size={14} />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-cyan-400" sexyIcon="countdown-events" />
+                <DrawerFeatureLink icon={<Lock size={14} />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" sexyIcon="config" />
+                <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Hidden gallery" href="/locked-media" color="text-pink-400" sexyIcon="secrets" />
+              </div>
+            </FeatureDrawer>
+          </div>
+
           <div className="px-5 pb-4 space-y-2">
-            <div className="flex gap-2">
-              <input data-testid="cp-input-task" type="text" value={newTaskText}
-                onChange={(e) => setNewTaskText(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && newTaskText.trim()) { onAssignTask(newTaskText); setNewTaskText(""); } }}
-                placeholder={role === "dom" ? "Assign protocol..." : "Add protocol..."}
-                className="flex-1 bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/50 transition-colors" />
-              <Button data-testid="cp-button-assign" size="sm" disabled={isAssigning || !newTaskText.trim()}
-                className="bg-red-600 hover:bg-red-500 shadow-lg shadow-red-500/20 rounded-xl px-4"
-                onClick={() => { if (newTaskText.trim()) { onAssignTask(newTaskText); setNewTaskText(""); } }}>
-                <Plus size={16} />
-              </Button>
-            </div>
+            <UniversalCreator
+              role={role}
+              onCreate={(type, data) => {
+                if (onCreate) {
+                  onCreate(type, data);
+                } else if (type === "task") {
+                  onAssignTask(data.text);
+                }
+              }}
+              isCreating={isAssigning}
+            />
 
             {role === "dom" && (
               <>
