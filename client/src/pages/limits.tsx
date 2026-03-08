@@ -9,14 +9,14 @@ import { PREBUILT_LIMITS, LIMIT_CATEGORIES } from '@/lib/prebuilt-limits';
 
 const LEVEL_COLORS: Record<string, string> = {
   hard: 'text-red-500',
-  soft: 'text-yellow-500',
-  curious: 'text-green-500',
+  soft: 'text-red-400',
+  curious: 'text-red-500',
 };
 
 const LEVEL_BG: Record<string, string> = {
   hard: 'bg-red-500/20 text-red-500',
-  soft: 'bg-yellow-500/20 text-yellow-500',
-  curious: 'bg-green-500/20 text-green-500',
+  soft: 'bg-red-700/20 text-red-400',
+  curious: 'bg-red-500/20 text-red-500',
 };
 
 export default function LimitsPage() {

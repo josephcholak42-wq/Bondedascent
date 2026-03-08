@@ -49,25 +49,25 @@ const CATEGORY_GROUPS = {
 };
 
 const TYPE_META: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
-  task: { label: "Task", icon: Target, color: "text-blue-400", bgColor: "bg-blue-500/15 border-blue-500/30" },
-  reward: { label: "Reward", icon: Gift, color: "text-amber-400", bgColor: "bg-amber-500/15 border-amber-500/30" },
-  punishment: { label: "Punishment", icon: Gavel, color: "text-red-400", bgColor: "bg-red-500/15 border-red-500/30" },
-  ritual: { label: "Ritual", icon: RotateCcw, color: "text-amber-300", bgColor: "bg-amber-400/15 border-amber-400/30" },
-  standing_order: { label: "Standing Order", icon: FileSignature, color: "text-cyan-400", bgColor: "bg-cyan-500/15 border-cyan-500/30" },
-  dare: { label: "Dare", icon: Sparkles, color: "text-fuchsia-400", bgColor: "bg-fuchsia-500/15 border-fuchsia-500/30" },
-  journal: { label: "Journal Entry", icon: BookOpen, color: "text-purple-400", bgColor: "bg-purple-500/15 border-purple-500/30" },
-  checkin: { label: "Check-In", icon: MessageSquare, color: "text-purple-400", bgColor: "bg-purple-500/15 border-purple-500/30" },
-  wager: { label: "Wager", icon: Dices, color: "text-amber-400", bgColor: "bg-amber-500/15 border-amber-500/30" },
-  secret: { label: "Secret", icon: Eye, color: "text-violet-400", bgColor: "bg-violet-500/15 border-violet-500/30" },
-  limit: { label: "Limit", icon: Shield, color: "text-slate-400", bgColor: "bg-slate-500/15 border-slate-500/30" },
-  accusation: { label: "Accusation", icon: AlertTriangle, color: "text-rose-400", bgColor: "bg-rose-500/15 border-rose-500/30" },
-  devotion: { label: "Devotion", icon: Heart, color: "text-rose-400", bgColor: "bg-rose-500/15 border-rose-500/30" },
-  permission_request: { label: "Permission", icon: Hand, color: "text-blue-400", bgColor: "bg-blue-500/15 border-blue-500/30" },
-  play_session: { label: "Play Session", icon: Play, color: "text-pink-400", bgColor: "bg-pink-500/15 border-pink-500/30" },
-  countdown_event: { label: "Countdown", icon: Timer, color: "text-emerald-400", bgColor: "bg-emerald-500/15 border-emerald-500/30" },
-  desired_change: { label: "Desired Change", icon: Target, color: "text-teal-400", bgColor: "bg-teal-500/15 border-teal-500/30" },
-  rating: { label: "Rating", icon: Star, color: "text-yellow-400", bgColor: "bg-yellow-500/15 border-yellow-500/30" },
-  conflict: { label: "Conflict", icon: AlertTriangle, color: "text-orange-400", bgColor: "bg-orange-500/15 border-orange-500/30" },
+  task: { label: "Task", icon: Target, color: "text-red-300", bgColor: "bg-red-900/20 border-red-800/30" },
+  reward: { label: "Reward", icon: Gift, color: "text-red-400", bgColor: "bg-red-900/20 border-red-700/30" },
+  punishment: { label: "Punishment", icon: Gavel, color: "text-red-500", bgColor: "bg-red-900/25 border-red-600/30" },
+  ritual: { label: "Ritual", icon: RotateCcw, color: "text-red-400/80", bgColor: "bg-red-950/30 border-red-800/25" },
+  standing_order: { label: "Standing Order", icon: FileSignature, color: "text-red-300/80", bgColor: "bg-red-950/20 border-red-900/25" },
+  dare: { label: "Dare", icon: Sparkles, color: "text-rose-400", bgColor: "bg-rose-950/25 border-rose-800/30" },
+  journal: { label: "Journal Entry", icon: BookOpen, color: "text-red-300/70", bgColor: "bg-red-950/15 border-red-900/20" },
+  checkin: { label: "Check-In", icon: MessageSquare, color: "text-slate-400", bgColor: "bg-slate-900/30 border-slate-700/30" },
+  wager: { label: "Wager", icon: Dices, color: "text-red-400/70", bgColor: "bg-red-950/20 border-red-900/25" },
+  secret: { label: "Secret", icon: Eye, color: "text-red-300/60", bgColor: "bg-red-950/15 border-red-900/20" },
+  limit: { label: "Limit", icon: Shield, color: "text-slate-400", bgColor: "bg-slate-900/25 border-slate-700/25" },
+  accusation: { label: "Accusation", icon: AlertTriangle, color: "text-red-500", bgColor: "bg-red-900/25 border-red-700/30" },
+  devotion: { label: "Devotion", icon: Heart, color: "text-rose-400", bgColor: "bg-rose-950/25 border-rose-800/25" },
+  permission_request: { label: "Permission", icon: Hand, color: "text-red-300/70", bgColor: "bg-red-950/15 border-red-900/20" },
+  play_session: { label: "Play Session", icon: Play, color: "text-rose-400", bgColor: "bg-rose-950/20 border-rose-900/25" },
+  countdown_event: { label: "Countdown", icon: Timer, color: "text-red-400", bgColor: "bg-red-950/20 border-red-800/25" },
+  desired_change: { label: "Desired Change", icon: Target, color: "text-red-300/80", bgColor: "bg-red-950/15 border-red-900/20" },
+  rating: { label: "Rating", icon: Star, color: "text-red-400/80", bgColor: "bg-red-950/20 border-red-800/25" },
+  conflict: { label: "Conflict", icon: AlertTriangle, color: "text-red-400", bgColor: "bg-red-900/20 border-red-800/25" },
 };
 
 const MOOD_EMOJIS = ["😢", "😟", "😐", "🙂", "😊"];
@@ -430,7 +430,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") resetForm(); }}
               placeholder="Reward name..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <div className="flex flex-wrap gap-1.5">
@@ -438,7 +438,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
                 <button key={cat} data-testid={`reward-cat-${cat.toLowerCase()}`}
                   onClick={() => updateFormField("category", cat.toLowerCase())}
                   className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-                    formData.category === cat.toLowerCase() ? "bg-amber-500/20 text-amber-400 border-amber-500/40" : "bg-white/[0.03] text-slate-500 border-white/5 hover:bg-white/[0.06]"
+                    formData.category === cat.toLowerCase() ? "bg-red-900/30 text-red-400 border-red-700/40" : "bg-white/[0.03] text-slate-500 border-white/5 hover:bg-white/[0.06]"
                   }`}>
                   {cat}
                 </button>
@@ -447,7 +447,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-amber-600 hover:bg-amber-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Reward</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Reward</Button>
             </div>
           </div>
         );
@@ -488,7 +488,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") resetForm(); }}
               placeholder="Ritual title..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-400/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <div className="flex gap-1.5">
@@ -496,7 +496,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
                 <button key={freq} data-testid={`ritual-freq-${freq}`}
                   onClick={() => updateFormField("frequency", freq)}
                   className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-                    (formData.frequency || "daily") === freq ? "bg-amber-400/20 text-amber-300 border-amber-400/40" : "bg-white/[0.03] text-slate-500 border-white/5 hover:bg-white/[0.06]"
+                    (formData.frequency || "daily") === freq ? "bg-red-900/30 text-red-300 border-red-800/40" : "bg-white/[0.03] text-slate-500 border-white/5 hover:bg-white/[0.06]"
                   }`}>
                   {freq}
                 </button>
@@ -505,7 +505,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-amber-600 hover:bg-amber-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Ritual</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Ritual</Button>
             </div>
           </div>
         );
@@ -517,19 +517,19 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="Standing order title..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <textarea data-testid="creator-form-standing-order-desc" value={formData.description || ""}
               onChange={(e) => updateFormField("description", e.target.value)}
               placeholder="Description (optional)..."
               rows={2}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-cyan-600 hover:bg-cyan-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Order</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Order</Button>
             </div>
           </div>
         );
@@ -541,7 +541,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => updateFormField("content", e.target.value)}
               placeholder="Write your journal entry..."
               rows={3}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
               autoFocus
             />
             <div className="flex items-center gap-3">
@@ -551,7 +551,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
                   <button key={idx} data-testid={`journal-mood-${idx}`}
                     onClick={() => updateFormField("mood", idx + 1)}
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-lg transition-all cursor-pointer ${
-                      (formData.mood || 0) === idx + 1 ? "bg-purple-500/30 scale-125 ring-2 ring-purple-500/50" : "bg-white/5 hover:bg-white/10"
+                      (formData.mood || 0) === idx + 1 ? "bg-red-900/40 scale-125 ring-2 ring-red-700/50" : "bg-white/5 hover:bg-white/10"
                     }`}>
                     {emoji}
                   </button>
@@ -561,7 +561,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !(formData.content || "").trim()}
-                className="bg-purple-600 hover:bg-purple-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Save Entry</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Save Entry</Button>
             </div>
           </div>
         );
@@ -576,7 +576,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               </div>
               <input data-testid="creator-form-checkin-mood" type="range" min={1} max={10} value={formData.mood || 5}
                 onChange={(e) => updateFormField("mood", parseInt(e.target.value))}
-                className="w-full accent-purple-500 h-1.5"
+                className="w-full accent-red-600 h-1.5"
               />
             </div>
             <div>
@@ -586,19 +586,19 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               </div>
               <input data-testid="creator-form-checkin-obedience" type="range" min={1} max={10} value={formData.obedience || 5}
                 onChange={(e) => updateFormField("obedience", parseInt(e.target.value))}
-                className="w-full accent-purple-500 h-1.5"
+                className="w-full accent-red-600 h-1.5"
               />
             </div>
             <textarea data-testid="creator-form-checkin-notes" value={formData.notes || ""}
               onChange={(e) => updateFormField("notes", e.target.value)}
               placeholder="Notes (optional)..."
               rows={2}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-purple-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating}
-                className="bg-purple-600 hover:bg-purple-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Submit Check-In</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Submit Check-In</Button>
             </div>
           </div>
         );
@@ -611,11 +611,11 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
                 onChange={(e) => { setInputValue(e.target.value); updateFormField("spinRandom", false); }}
                 onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); if (e.key === "Escape") resetForm(); }}
                 placeholder="Enter a dare or spin random..."
-                className="flex-1 bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-fuchsia-500/50 transition-colors"
+                className="flex-1 bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
                 autoFocus
               />
               <Button data-testid="creator-spin-dare" size="sm"
-                className="bg-fuchsia-600 hover:bg-fuchsia-500 h-10 px-3 text-[10px] font-bold"
+                className="bg-red-800 hover:bg-red-700 h-10 px-3 text-[10px] font-bold"
                 onClick={() => { updateFormField("spinRandom", true); handleSubmit(); }}>
                 <Sparkles size={14} className="mr-1" /> Spin
               </Button>
@@ -623,7 +623,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-fuchsia-600 hover:bg-fuchsia-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Dare</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Dare</Button>
             </div>
           </div>
         );
@@ -635,22 +635,22 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="Wager title..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <input data-testid="creator-form-wager-stakes" type="text" value={formData.stakes || ""}
               onChange={(e) => updateFormField("stakes", e.target.value)}
               placeholder="What are the stakes?"
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
             />
             <input data-testid="creator-form-wager-deadline" type="date" value={formData.deadline || ""}
               onChange={(e) => updateFormField("deadline", e.target.value)}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-700/50 transition-colors"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-amber-600 hover:bg-amber-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Wager</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Wager</Button>
             </div>
           </div>
         );
@@ -662,7 +662,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="Session title..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-pink-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <div className="flex items-center gap-3">
@@ -672,7 +672,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
                   <button key={idx} data-testid={`session-mood-${idx}`}
                     onClick={() => updateFormField("mood", ["sad", "anxious", "neutral", "happy", "excited"][idx])}
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-lg transition-all cursor-pointer ${
-                      formData.mood === ["sad", "anxious", "neutral", "happy", "excited"][idx] ? "bg-pink-500/30 scale-125 ring-2 ring-pink-500/50" : "bg-white/5 hover:bg-white/10"
+                      formData.mood === ["sad", "anxious", "neutral", "happy", "excited"][idx] ? "bg-red-900/40 scale-125 ring-2 ring-red-700/50" : "bg-white/5 hover:bg-white/10"
                     }`}>
                     {emoji}
                   </button>
@@ -686,18 +686,18 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               </div>
               <input data-testid="creator-form-session-intensity" type="range" min={1} max={10} value={formData.intensity || 5}
                 onChange={(e) => updateFormField("intensity", parseInt(e.target.value))}
-                className="w-full accent-pink-500 h-1.5"
+                className="w-full accent-red-600 h-1.5"
               />
             </div>
             <input data-testid="creator-form-session-activities" type="text" value={formData.activitiesText || ""}
               onChange={(e) => updateFormField("activitiesText", e.target.value)}
               placeholder="Activities (comma separated)..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-pink-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-pink-600 hover:bg-pink-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Session</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Session</Button>
             </div>
           </div>
         );
@@ -709,19 +709,19 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="Devotion title..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <textarea data-testid="creator-form-devotion-desc" value={formData.description || ""}
               onChange={(e) => updateFormField("description", e.target.value)}
               placeholder="Description..."
               rows={2}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-rose-600 hover:bg-rose-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Devotion</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Devotion</Button>
             </div>
           </div>
         );
@@ -733,7 +733,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => updateFormField("content", e.target.value)}
               placeholder="Write your secret..."
               rows={3}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
               autoFocus
               style={{ filter: formData.blurred ? "blur(4px)" : "none" }}
             />
@@ -741,7 +741,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               <button data-testid="creator-secret-blur-toggle"
                 onClick={() => updateFormField("blurred", !formData.blurred)}
                 className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-                  formData.blurred ? "bg-violet-500/20 text-violet-400 border-violet-500/40" : "bg-white/[0.03] text-slate-500 border-white/5"
+                  formData.blurred ? "bg-red-900/30 text-red-300 border-red-800/40" : "bg-white/[0.03] text-slate-500 border-white/5"
                 }`}>
                 <Eye size={10} className="inline mr-1" /> {formData.blurred ? "Blurred" : "Preview"}
               </button>
@@ -749,7 +749,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !(formData.content || "").trim()}
-                className="bg-violet-600 hover:bg-violet-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Secret</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Secret</Button>
             </div>
           </div>
         );
@@ -761,19 +761,19 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="What do you request permission for?"
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <textarea data-testid="creator-form-permission-reason" value={formData.reason || ""}
               onChange={(e) => updateFormField("reason", e.target.value)}
               placeholder="Reason..."
               rows={2}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-blue-600 hover:bg-blue-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Request</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Request</Button>
             </div>
           </div>
         );
@@ -794,7 +794,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
                   onClick={() => updateFormField("level", level)}
                   className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
                     (formData.level || "soft") === level
-                      ? level === "hard" ? "bg-red-500/20 text-red-400 border-red-500/40" : "bg-amber-500/20 text-amber-400 border-amber-500/40"
+                      ? level === "hard" ? "bg-red-500/20 text-red-400 border-red-500/40" : "bg-red-900/30 text-red-400 border-red-700/40"
                       : "bg-white/[0.03] text-slate-500 border-white/5 hover:bg-white/[0.06]"
                   }`}>
                   {level}
@@ -816,7 +816,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="What change do you desire?"
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <div className="flex gap-1.5">
@@ -826,8 +826,8 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
                   className={`px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
                     (formData.priority || "medium") === priority
                       ? priority === "high" ? "bg-red-500/20 text-red-400 border-red-500/40"
-                        : priority === "medium" ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
-                        : "bg-green-500/20 text-green-400 border-green-500/40"
+                        : priority === "medium" ? "bg-red-900/30 text-red-400 border-red-700/40"
+                        : "bg-red-900/30 text-red-400 border-red-700/40"
                       : "bg-white/[0.03] text-slate-500 border-white/5 hover:bg-white/[0.06]"
                   }`}>
                   {priority}
@@ -837,7 +837,7 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-teal-600 hover:bg-teal-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Change</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Change</Button>
             </div>
           </div>
         );
@@ -849,17 +849,17 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="Event title..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <input data-testid="creator-form-countdown-date" type="datetime-local" value={formData.targetDate || ""}
               onChange={(e) => updateFormField("targetDate", e.target.value)}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors [color-scheme:dark]"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-700/50 transition-colors [color-scheme:dark]"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-emerald-600 hover:bg-emerald-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Event</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Create Event</Button>
             </div>
           </div>
         );
@@ -870,23 +870,23 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wider">Score</span>
-                <span className="text-xs font-bold text-yellow-400">{formData.overall || 5}/10</span>
+                <span className="text-xs font-bold text-red-400">{formData.overall || 5}/10</span>
               </div>
               <input data-testid="creator-form-rating-score" type="range" min={1} max={10} value={formData.overall || 5}
                 onChange={(e) => updateFormField("overall", parseInt(e.target.value))}
-                className="w-full accent-yellow-500 h-1.5"
+                className="w-full accent-red-600 h-1.5"
               />
             </div>
             <textarea data-testid="creator-form-rating-notes" value={formData.notes || ""}
               onChange={(e) => updateFormField("notes", e.target.value)}
               placeholder="Rating notes..."
               rows={2}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-yellow-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating}
-                className="bg-yellow-600 hover:bg-yellow-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Submit Rating</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Submit Rating</Button>
             </div>
           </div>
         );
@@ -898,19 +898,19 @@ export function UniversalCreator({ role, onCreate, isCreating }: UniversalCreato
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") resetForm(); }}
               placeholder="Conflict title..."
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-orange-500/50 transition-colors"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors"
               autoFocus
             />
             <textarea data-testid="creator-form-conflict-desc" value={formData.description || ""}
               onChange={(e) => updateFormField("description", e.target.value)}
               placeholder="Describe the conflict..."
               rows={2}
-              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-orange-500/50 transition-colors resize-none"
+              className="w-full bg-black/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/50 transition-colors resize-none"
             />
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={resetForm} className="text-slate-400 hover:text-white h-8 text-[10px] cursor-pointer">Cancel</Button>
               <Button data-testid="creator-submit" size="sm" disabled={isCreating || !inputValue.trim()}
-                className="bg-orange-600 hover:bg-orange-500 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Report Conflict</Button>
+                className="bg-red-800 hover:bg-red-700 h-8 px-4 text-[10px] font-bold" onClick={handleSubmit}>Report Conflict</Button>
             </div>
           </div>
         );

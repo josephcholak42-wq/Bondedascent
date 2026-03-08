@@ -85,8 +85,8 @@ export default function PlaySessionsPage() {
                 ? level >= 8
                   ? 'bg-red-500'
                   : level >= 5
-                  ? 'bg-amber-500'
-                  : 'bg-green-500'
+                  ? 'bg-red-700'
+                  : 'bg-red-500'
                 : 'bg-slate-800'
             }`}
           />
@@ -319,8 +319,8 @@ export default function PlaySessionsPage() {
                 {userRole === 'sub' && session.status === 'planned' && <PulseIndicator show className="ml-1" />}
                 <span
                   className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded border ${
-                    session.status === 'planned' ? 'text-blue-500 border-blue-500 bg-blue-500/20' :
-                    session.status === 'active' ? 'text-green-500 border-green-500 bg-green-500/20' :
+                    session.status === 'planned' ? 'text-red-400 border-red-700 bg-red-700/20' :
+                    session.status === 'active' ? 'text-red-500 border-red-700 bg-red-500/20' :
                     'text-slate-500 border-slate-500 bg-slate-500/20'
                   }`}
                   data-testid={`text-status-${session.id}`}
@@ -336,7 +336,7 @@ export default function PlaySessionsPage() {
                   <div className="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all ${
-                        session.intensity >= 8 ? 'bg-red-500' : session.intensity >= 5 ? 'bg-amber-500' : 'bg-green-500'
+                        session.intensity >= 8 ? 'bg-red-500' : session.intensity >= 5 ? 'bg-red-700' : 'bg-red-500'
                       }`}
                       style={{ width: `${(session.intensity / 10) * 100}%` }}
                       data-testid={`bar-intensity-${session.id}`}
@@ -376,7 +376,7 @@ export default function PlaySessionsPage() {
 
             {session.status !== 'completed' && (
               <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can complete sessions">
-                <Button data-testid={`button-complete-${session.id}`} variant="outline" size="sm" className="border-green-600 text-green-500 hover:bg-green-600 hover:text-white mt-3 text-[10px] uppercase tracking-wider" onClick={() => handleComplete(session.id)} disabled={updateMutation.isPending}>
+                <Button data-testid={`button-complete-${session.id}`} variant="outline" size="sm" className="border-red-700 text-red-500 hover:bg-red-700 hover:text-white mt-3 text-[10px] uppercase tracking-wider" onClick={() => handleComplete(session.id)} disabled={updateMutation.isPending}>
                   <Check size={12} className="mr-1" /> Complete
                 </Button>
               </RoleGatedAction>
@@ -396,10 +396,10 @@ export default function PlaySessionsPage() {
                 data-testid={`card-session-${session.id}`}
               >
                 <div className="flex items-start justify-between mb-1">
-                  <h3 className="text-green-500 font-semibold text-sm uppercase tracking-wide line-through flex-1 min-w-0 truncate" data-testid={`text-title-${session.id}`}>
+                  <h3 className="text-red-500 font-semibold text-sm uppercase tracking-wide line-through flex-1 min-w-0 truncate" data-testid={`text-title-${session.id}`}>
                     {session.title || 'Untitled Session'}
                   </h3>
-                  <Check size={16} className="text-green-500 shrink-0 ml-2" />
+                  <Check size={16} className="text-red-500 shrink-0 ml-2" />
                 </div>
                 {session.activities && session.activities.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">

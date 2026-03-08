@@ -9,15 +9,15 @@ import type { SensationCard } from '@shared/schema';
 
 const CARD_TYPE_BADGE: Record<string, { className: string; icon?: React.ReactNode; label: string }> = {
   normal: { className: 'bg-slate-700/60 text-slate-300 border-slate-600', label: 'Normal' },
-  wild: { className: 'bg-amber-500/20 text-amber-400 border-amber-500/40', icon: <Sparkles size={10} className="mr-1" />, label: 'Wild' },
-  blackout: { className: 'bg-purple-900/40 text-purple-400 border-purple-600/40', icon: <EyeOff size={10} className="mr-1" />, label: 'Blackout' },
+  wild: { className: 'bg-red-700/20 text-red-400 border-red-700/40', icon: <Sparkles size={10} className="mr-1" />, label: 'Wild' },
+  blackout: { className: 'bg-red-800/40 text-red-300/70 border-red-800/40', icon: <EyeOff size={10} className="mr-1" />, label: 'Blackout' },
 };
 
 const INTENSITY_COLORS = [
-  'text-green-400',
-  'text-lime-400',
-  'text-yellow-400',
-  'text-orange-400',
+  'text-red-400',
+  'text-red-300',
+  'text-red-400/80',
+  'text-red-400',
   'text-red-500',
 ];
 
@@ -185,14 +185,14 @@ export default function SensationRoulettePage() {
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
         <div className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 flex items-center gap-2">
-          <Zap size={14} className="text-yellow-500" />
+          <Zap size={14} className="text-red-400" />
           <span className="text-xs text-slate-400 uppercase tracking-wider">Streak:</span>
           <span className="text-white font-bold text-sm" data-testid="text-streak-count">{currentStreak}</span>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 flex items-center gap-2">
-          <Sparkles size={14} className="text-amber-400" />
+          <Sparkles size={14} className="text-red-400" />
           <span className="text-xs text-slate-400 uppercase tracking-wider">XP Multi:</span>
-          <span className="text-amber-400 font-bold text-sm">{xpMultiplier}x</span>
+          <span className="text-red-400 font-bold text-sm">{xpMultiplier}x</span>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 flex items-center gap-2">
           <RotateCcw size={14} className="text-red-500" />
@@ -200,9 +200,9 @@ export default function SensationRoulettePage() {
           <span className="text-white font-bold text-sm">{activeCards.length}</span>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 flex items-center gap-2">
-          <Check size={14} className="text-green-500" />
+          <Check size={14} className="text-red-500" />
           <span className="text-xs text-slate-400 uppercase tracking-wider">Completed:</span>
-          <span className="text-green-400 font-bold text-sm">{spins.filter(s => s.completed).length}</span>
+          <span className="text-red-400 font-bold text-sm">{spins.filter(s => s.completed).length}</span>
         </div>
       </div>
 
@@ -224,16 +224,16 @@ export default function SensationRoulettePage() {
             {!isSpinning && spinResult && (
               <div data-testid="text-spin-result">
                 {spinResult.cardType === 'blackout' && userRole === 'sub' ? (
-                  <div className="bg-purple-900/30 border border-purple-600/40 rounded-xl p-6 min-w-[260px]">
-                    <EyeOff size={36} className="text-purple-400 mx-auto mb-3" />
-                    <p className="text-purple-300 font-bold text-2xl">???</p>
-                    <p className="text-purple-400/60 text-sm mt-1 uppercase tracking-wider">Blackout Card</p>
-                    <p className="text-purple-400/40 text-xs mt-2">Your Dom knows what awaits...</p>
+                  <div className="bg-red-800/30 border border-red-800/40 rounded-xl p-6 min-w-[260px]">
+                    <EyeOff size={36} className="text-red-300/70 mx-auto mb-3" />
+                    <p className="text-red-300 font-bold text-2xl">???</p>
+                    <p className="text-red-300/70/60 text-sm mt-1 uppercase tracking-wider">Blackout Card</p>
+                    <p className="text-red-300/70/40 text-xs mt-2">Your Dom knows what awaits...</p>
                   </div>
                 ) : spinResult.cardType === 'wild' ? (
-                  <div className="bg-amber-900/20 border border-amber-500/40 rounded-xl p-6 min-w-[260px]">
-                    <Sparkles size={36} className="text-amber-400 mx-auto mb-3" />
-                    <p className="text-amber-400 font-bold text-2xl">DOM'S CHOICE</p>
+                  <div className="bg-red-800/20 border border-red-700/40 rounded-xl p-6 min-w-[260px]">
+                    <Sparkles size={36} className="text-red-400 mx-auto mb-3" />
+                    <p className="text-red-400 font-bold text-2xl">DOM'S CHOICE</p>
                     <p className="text-white text-lg mt-2">{spinResult.label}</p>
                     {spinResult.description && <p className="text-slate-400 text-sm mt-1">{spinResult.description}</p>}
                     <div className="mt-3 flex items-center justify-center gap-3">
@@ -292,7 +292,7 @@ export default function SensationRoulettePage() {
               return (
                 <Button
                   data-testid={`button-complete-spin-${latestSpin.id}`}
-                  className="mt-4 bg-green-600 hover:bg-green-700 text-white uppercase tracking-wider"
+                  className="mt-4 bg-red-700 hover:bg-red-700 text-white uppercase tracking-wider"
                   onClick={() => completeSpinMutation.mutate(latestSpin.id)}
                   disabled={completeSpinMutation.isPending}
                 >
@@ -405,13 +405,13 @@ export default function SensationRoulettePage() {
                     <button
                       key={idx}
                       data-testid={`button-add-prebuilt-${idx}`}
-                      className={`w-full text-left p-3 rounded-lg border transition-all ${alreadyAdded ? 'bg-green-900/10 border-green-800/30 opacity-60' : 'bg-slate-800/50 border-slate-700/50 hover:border-red-600/40 hover:bg-slate-800 active:scale-[0.98]'} cursor-pointer`}
+                      className={`w-full text-left p-3 rounded-lg border transition-all ${alreadyAdded ? 'bg-red-700/10 border-red-700/30 opacity-60' : 'bg-slate-800/50 border-slate-700/50 hover:border-red-600/40 hover:bg-slate-800 active:scale-[0.98]'} cursor-pointer`}
                       onClick={() => !alreadyAdded && handleAddFromLibrary(sensation)}
                       disabled={alreadyAdded || createCardMutation.isPending}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-semibold ${alreadyAdded ? 'text-green-400' : 'text-white'} leading-tight`}>
+                          <p className={`text-sm font-semibold ${alreadyAdded ? 'text-red-400' : 'text-white'} leading-tight`}>
                             {sensation.name}
                           </p>
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
@@ -427,7 +427,7 @@ export default function SensationRoulettePage() {
                         </div>
                         <div className="flex-shrink-0 mt-1">
                           {alreadyAdded ? (
-                            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded uppercase font-bold">Added</span>
+                            <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded uppercase font-bold">Added</span>
                           ) : (
                             <span className="text-[10px] bg-red-600/20 text-red-400 px-2 py-1 rounded uppercase font-bold group-hover:bg-red-600 group-hover:text-white">+ Add</span>
                           )}
@@ -621,13 +621,13 @@ export default function SensationRoulettePage() {
                       <span className="text-white text-sm font-medium">{spin.result}</span>
                       {badge(spin.cardType)}
                       {spin.completed ? (
-                        <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-bold uppercase">Done</span>
+                        <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold uppercase">Done</span>
                       ) : (
                         <span className="text-[10px] bg-slate-700 text-slate-400 px-2 py-0.5 rounded-full font-bold uppercase">Pending</span>
                       )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500">
-                      {spin.xpAwarded > 0 && <span className="text-amber-400">+{spin.xpAwarded} XP</span>}
+                      {spin.xpAwarded > 0 && <span className="text-red-400">+{spin.xpAwarded} XP</span>}
                       <span>Streak: {spin.streakCount}</span>
                       <span>{new Date(spin.createdAt!).toLocaleDateString()}</span>
                     </div>
@@ -636,7 +636,7 @@ export default function SensationRoulettePage() {
                     <Button
                       data-testid={`button-complete-spin-${spin.id}`}
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white text-xs flex-shrink-0 ml-2"
+                      className="bg-red-700 hover:bg-red-700 text-white text-xs flex-shrink-0 ml-2"
                       onClick={() => completeSpinMutation.mutate(spin.id)}
                       disabled={completeSpinMutation.isPending}
                     >

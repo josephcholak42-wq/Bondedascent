@@ -202,8 +202,8 @@ export default function ProtocolLockboxPage() {
 
       {confirmUnsealId && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-amber-600/50 rounded-lg p-6 max-w-sm w-full space-y-4">
-            <div className="flex items-center gap-2 text-amber-500">
+          <div className="bg-slate-900 border border-red-700/50 rounded-lg p-6 max-w-sm w-full space-y-4">
+            <div className="flex items-center gap-2 text-red-400">
               <AlertTriangle size={24} />
               <h3 className="text-lg font-bold uppercase tracking-wider">Emergency Unseal</h3>
             </div>
@@ -217,14 +217,14 @@ export default function ProtocolLockboxPage() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Cost:</span>
-                <span className="text-amber-500 font-mono">
+                <span className="text-red-400 font-mono">
                   -{displayOrders.find(o => o.id === confirmUnsealId)?.xpCost ?? 25} XP
                 </span>
               </div>
             </div>
             <div className="flex gap-2">
               <Button
-                className="bg-amber-600 hover:bg-amber-700 text-white flex-1"
+                className="bg-red-800 hover:bg-red-800 text-white flex-1"
                 onClick={() => handleEmergencyUnseal(confirmUnsealId)}
                 disabled={updateMutation.isPending}
               >
@@ -258,16 +258,16 @@ export default function ProtocolLockboxPage() {
           const borderClass = status === 'completed'
             ? 'border-slate-800 opacity-60'
             : status === 'sealed'
-            ? 'border-purple-900/50 shadow-[0_0_15px_rgba(88,28,135,0.15)]'
+            ? 'border-red-800/50 shadow-[0_0_15px_rgba(88,28,135,0.15)]'
             : status === 'emergency'
-            ? 'border-amber-600/40'
-            : 'border-green-900/40';
+            ? 'border-red-700/40'
+            : 'border-red-700/40';
 
           return (
             <React.Fragment key={order.id}>
               {hasPrevious && (
                 <div className="flex justify-center -my-2">
-                  <Link2 size={16} className="text-purple-500/50" />
+                  <Link2 size={16} className="text-red-400/50" />
                 </div>
               )}
               <div
@@ -276,15 +276,15 @@ export default function ProtocolLockboxPage() {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    {status === 'sealed' && <Lock size={18} className="text-purple-400" />}
-                    {status === 'unlocked' && <Unlock size={18} className="text-green-400" />}
-                    {status === 'emergency' && <AlertTriangle size={18} className="text-amber-400" />}
+                    {status === 'sealed' && <Lock size={18} className="text-red-300/70" />}
+                    {status === 'unlocked' && <Unlock size={18} className="text-red-400" />}
+                    {status === 'emergency' && <AlertTriangle size={18} className="text-red-400" />}
                     {status === 'completed' && <Check size={18} className="text-slate-500" />}
                     <h3 className="text-white font-semibold text-lg" data-testid={`text-title-${order.id}`}>
                       {order.title}
                     </h3>
                     {hasChain && (
-                      <span className="text-xs text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded flex items-center gap-1">
+                      <span className="text-xs text-red-300/70 bg-red-800/10 px-2 py-0.5 rounded flex items-center gap-1">
                         <Link2 size={10} />
                         #{order.chainOrder}
                       </span>
@@ -292,17 +292,17 @@ export default function ProtocolLockboxPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     {status === 'sealed' && (
-                      <span className="text-xs uppercase tracking-wider px-2 py-1 rounded border border-purple-600/40 text-purple-400 bg-purple-500/10">
+                      <span className="text-xs uppercase tracking-wider px-2 py-1 rounded border border-red-800/40 text-red-300/70 bg-red-800/10">
                         Sealed
                       </span>
                     )}
                     {status === 'unlocked' && (
-                      <span className="text-xs uppercase tracking-wider px-2 py-1 rounded border border-green-600/40 text-green-400 bg-green-500/10">
+                      <span className="text-xs uppercase tracking-wider px-2 py-1 rounded border border-red-700/40 text-red-400 bg-red-500/10">
                         Unlocked
                       </span>
                     )}
                     {status === 'emergency' && (
-                      <span className="text-xs uppercase tracking-wider px-2 py-1 rounded border border-amber-600/40 text-amber-400 bg-amber-500/10">
+                      <span className="text-xs uppercase tracking-wider px-2 py-1 rounded border border-red-700/40 text-red-400 bg-red-700/10">
                         Emergency
                       </span>
                     )}
@@ -328,7 +328,7 @@ export default function ProtocolLockboxPage() {
 
                 {status === 'sealed' && countdown && (
                   <div className="flex items-center gap-4 mt-3" data-testid={`text-countdown-${order.id}`}>
-                    <Lock size={14} className="text-purple-500/60" />
+                    <Lock size={14} className="text-red-400/60" />
                     <div className="flex gap-3">
                       <div className="text-center">
                         <div className="text-xl font-bold text-red-400 font-mono">{countdown.days}</div>
@@ -341,12 +341,12 @@ export default function ProtocolLockboxPage() {
                       </div>
                       <div className="text-slate-600 text-xl">:</div>
                       <div className="text-center">
-                        <div className="text-xl font-bold text-amber-400 font-mono">{countdown.minutes}</div>
+                        <div className="text-xl font-bold text-red-400 font-mono">{countdown.minutes}</div>
                         <div className="text-xs text-slate-500 uppercase tracking-wider">min</div>
                       </div>
                       <div className="text-slate-600 text-xl">:</div>
                       <div className="text-center">
-                        <div className="text-xl font-bold text-amber-400 font-mono">{countdown.seconds}</div>
+                        <div className="text-xl font-bold text-red-400 font-mono">{countdown.seconds}</div>
                         <div className="text-xs text-slate-500 uppercase tracking-wider">sec</div>
                       </div>
                     </div>
@@ -359,7 +359,7 @@ export default function ProtocolLockboxPage() {
                       data-testid={`button-emergency-unseal-${order.id}`}
                       variant="outline"
                       size="sm"
-                      className="border-amber-600/50 text-amber-400 hover:bg-amber-600/20 hover:text-amber-300"
+                      className="border-red-700/50 text-red-400 hover:bg-red-800/20 hover:text-red-400"
                       onClick={() => setConfirmUnsealId(order.id)}
                       disabled={updateMutation.isPending}
                     >
@@ -371,7 +371,7 @@ export default function ProtocolLockboxPage() {
                     <Button
                       data-testid={`button-complete-order-${order.id}`}
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="bg-red-700 hover:bg-red-700 text-white"
                       onClick={() => handleComplete(order.id)}
                       disabled={updateMutation.isPending}
                     >
@@ -383,7 +383,7 @@ export default function ProtocolLockboxPage() {
                     <Button
                       data-testid={`button-complete-order-${order.id}`}
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white"
+                      className="bg-red-700 hover:bg-red-700 text-white"
                       onClick={() => handleComplete(order.id)}
                       disabled={updateMutation.isPending}
                     >
@@ -396,7 +396,7 @@ export default function ProtocolLockboxPage() {
                 <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
                   <span>Unlocks: {new Date(order.unlockAt).toLocaleString()}</span>
                   {order.xpCost > 0 && status === 'sealed' && (
-                    <span className="text-amber-500/60">Emergency: {order.xpCost} XP</span>
+                    <span className="text-red-400/60">Emergency: {order.xpCost} XP</span>
                   )}
                 </div>
               </div>

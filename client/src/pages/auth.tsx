@@ -50,7 +50,7 @@ export default function AuthPage() {
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-900/10 blur-[100px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-red-950/10 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="w-full max-w-md z-10 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center mb-10">

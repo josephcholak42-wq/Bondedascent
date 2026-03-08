@@ -6,8 +6,8 @@ import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/u
 import { useIntensitySessions, useCreateIntensitySession, useUpdateIntensitySession, useAuth } from '@/lib/hooks';
 
 const TIER_NAMES = ['Warm-up', 'Moderate', 'Intense', 'Extreme', 'Edge'];
-const TIER_COLORS = ['text-green-400', 'text-yellow-400', 'text-orange-400', 'text-red-400', 'text-purple-400'];
-const TIER_BG = ['bg-green-600', 'bg-yellow-600', 'bg-orange-600', 'bg-red-600', 'bg-purple-600'];
+const TIER_COLORS = ['text-red-400', 'text-red-400/80', 'text-red-400', 'text-red-400', 'text-red-300/70'];
+const TIER_BG = ['bg-red-700', 'bg-red-800', 'bg-red-700', 'bg-red-600', 'bg-red-800'];
 
 function formatDuration(seconds: number) {
   const h = Math.floor(seconds / 3600);
@@ -207,7 +207,7 @@ export default function IntensityLadderPage() {
             <div className="flex gap-2 pt-3 border-t border-slate-800">
               <Button
                 data-testid="button-escalate"
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                className="bg-red-700 hover:bg-red-800 text-white"
                 onClick={handleEscalate}
                 disabled={activeSession.currentTier >= 5 || updateMutation.isPending}
               >
@@ -215,7 +215,7 @@ export default function IntensityLadderPage() {
               </Button>
               <Button
                 data-testid="button-complete-session"
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-red-700 hover:bg-red-700 text-white"
                 onClick={handleComplete}
                 disabled={updateMutation.isPending}
               >

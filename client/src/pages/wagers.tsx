@@ -8,10 +8,10 @@ import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import { PREBUILT_WAGERS, WAGER_CATEGORIES } from '@/lib/prebuilt-wagers';
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-yellow-500/20 text-yellow-500',
-  won: 'bg-green-500/20 text-green-500',
+  active: 'bg-red-700/20 text-red-400',
+  won: 'bg-red-500/20 text-red-500',
   lost: 'bg-red-500/20 text-red-500',
-  draw: 'bg-blue-500/20 text-blue-500',
+  draw: 'bg-red-700/20 text-red-400',
 };
 
 export default function WagersPage() {
@@ -196,7 +196,7 @@ export default function WagersPage() {
                   <p className="text-white text-sm font-medium truncate">{wager.name}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded">{wager.category}</span>
-                    <span className="text-xs text-yellow-500/80">
+                    <span className="text-xs text-red-400/80">
                       <Trophy size={10} className="inline mr-1" />
                       {wager.stakes}
                     </span>
@@ -248,7 +248,7 @@ export default function WagersPage() {
                   </p>
                 )}
                 {wager.stakes && (
-                  <p className="text-sm text-yellow-500/80 mb-2" data-testid={`text-wager-stakes-${wager.id}`}>
+                  <p className="text-sm text-red-400/80 mb-2" data-testid={`text-wager-stakes-${wager.id}`}>
                     <Trophy size={12} className="inline mr-1" />
                     Stakes: {wager.stakes}
                   </p>
@@ -258,7 +258,7 @@ export default function WagersPage() {
             {wager.status === 'active' && (
               <div className="flex gap-2 mt-3 pt-3 border-t border-slate-800">
                 <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can resolve wagers">
-                  <Button data-testid={`button-resolve-won-${wager.id}`} size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs uppercase tracking-wider" onClick={() => handleResolve(wager.id, 'won')} disabled={updateWagerMutation.isPending}>
+                  <Button data-testid={`button-resolve-won-${wager.id}`} size="sm" className="bg-red-700 hover:bg-red-600 text-white text-xs uppercase tracking-wider" onClick={() => handleResolve(wager.id, 'won')} disabled={updateWagerMutation.isPending}>
                     <Trophy size={14} className="mr-1" /> Won
                   </Button>
                 </RoleGatedAction>
@@ -268,7 +268,7 @@ export default function WagersPage() {
                   </Button>
                 </RoleGatedAction>
                 <RoleGatedAction allowed={userRole === 'dom'} tooltipText="Only your Dom can resolve wagers">
-                  <Button data-testid={`button-resolve-draw-${wager.id}`} size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs uppercase tracking-wider" onClick={() => handleResolve(wager.id, 'draw')} disabled={updateWagerMutation.isPending}>
+                  <Button data-testid={`button-resolve-draw-${wager.id}`} size="sm" className="bg-red-800 hover:bg-red-700 text-white text-xs uppercase tracking-wider" onClick={() => handleResolve(wager.id, 'draw')} disabled={updateWagerMutation.isPending}>
                     <Dices size={14} className="mr-1" /> Draw
                   </Button>
                 </RoleGatedAction>

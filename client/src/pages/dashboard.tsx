@@ -1454,7 +1454,7 @@ export default function BondedAscentApp() {
             <button
               data-testid="button-safeword"
               onClick={() => setModal("safeword")}
-              className="w-full bg-gradient-to-r from-yellow-900/20 to-transparent border-l-4 border-slate-300 p-4 rounded-r-xl flex items-center gap-4 hover:bg-slate-800/30 transition-all group relative overflow-hidden cursor-pointer"
+              className="w-full bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-slate-300 p-4 rounded-r-xl flex items-center gap-4 hover:bg-slate-800/30 transition-all group relative overflow-hidden cursor-pointer"
             >
               <div className="bg-slate-300/10 p-2 rounded-full group-hover:scale-110 transition-transform z-10">
                 <ShieldAlert size={24} className="text-slate-300" />
@@ -2439,7 +2439,7 @@ export default function BondedAscentApp() {
                       desc: "Wind down safely",
                       color: "bg-slate-500/10 border-slate-500/20 text-slate-400",
                       activeColor:
-                        "bg-slate-500/30 border-slate-500/50 text-blue-300 ring-1 ring-slate-500/30",
+                        "bg-red-900/30 border-red-800/40 text-red-300 ring-1 ring-red-900/30",
                     },
                   ].map((phase, i) => (
                     <div
@@ -2505,7 +2505,7 @@ export default function BondedAscentApp() {
                         key={log.id}
                         className="flex gap-3 items-start bg-slate-900/50 border border-white/5 p-3 rounded-xl"
                       >
-                        <span className="font-mono text-[10px] text-cyan-700 min-w-[50px] mt-0.5">
+                        <span className="font-mono text-[10px] text-red-400 min-w-[50px] mt-0.5">
                           {formatTime(log.createdAt)}
                         </span>
                         <div className="mt-0.5">
@@ -2671,7 +2671,7 @@ export default function BondedAscentApp() {
                       tasks + timed check-in requirements
                     </div>
                     <div>
-                      <span className="text-orange-400 font-bold">Lv4:</span> 4
+                      <span className="text-red-400 font-bold">Lv4:</span> 4
                       tasks + frequent reports + standing orders
                     </div>
                     <div>
@@ -2702,17 +2702,17 @@ export default function BondedAscentApp() {
                   <>
                     {rewards.length > 0 && (
                       <div className="space-y-2 mb-2">
-                        <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Bestowed Rewards</h3>
+                        <h3 className="text-[10px] font-bold text-red-500 uppercase tracking-widest">Bestowed Rewards</h3>
                         {rewards.map((r) => (
-                          <div key={r.id} className="flex justify-between items-center p-3 bg-amber-950/10 border border-slate-800/20 rounded-xl">
+                          <div key={r.id} className="flex justify-between items-center p-3 bg-red-800/10 border border-slate-800/20 rounded-xl">
                             <div className="flex items-center gap-3">
                               <div className="p-2 bg-slate-300/10 rounded-full text-slate-400"><Star size={14} /></div>
                               <div>
-                                <span className="text-sm font-bold text-amber-200">{r.name}</span>
+                                <span className="text-sm font-bold text-red-400">{r.name}</span>
                                 <div className="flex gap-2 mt-0.5">
                                   {r.category && <span className="text-[9px] text-slate-400 bg-slate-300/10 px-1.5 py-0.5 rounded">{r.category}</span>}
-                                  {r.duration && <span className="text-[9px] text-amber-600">{r.duration}</span>}
-                                  <span className="text-[9px] text-amber-600">{r.unlocked ? "Bestowed" : `Requires Lv ${r.unlockLevel}`}</span>
+                                  {r.duration && <span className="text-[9px] text-red-500">{r.duration}</span>}
+                                  <span className="text-[9px] text-red-500">{r.unlocked ? "Bestowed" : `Requires Lv ${r.unlockLevel}`}</span>
                                 </div>
                               </div>
                             </div>
@@ -2722,24 +2722,24 @@ export default function BondedAscentApp() {
                       </div>
                     )}
                     <div className="border-t border-slate-800/20 pt-3">
-                      <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Browse Pre-built Rewards</h3>
-                      <input data-testid="input-bestow-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-300 mb-2" style={{ fontSize: '16px' }} />
+                      <h3 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-2">Browse Pre-built Rewards</h3>
+                      <input data-testid="input-bestow-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-red-700/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-300 mb-2" style={{ fontSize: '16px' }} />
                       <div className="flex flex-wrap gap-1.5 mb-3">
-                        <button onClick={() => setRewardCategoryFilter(null)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!rewardCategoryFilter ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>All</button>
+                        <button onClick={() => setRewardCategoryFilter(null)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!rewardCategoryFilter ? "bg-red-800 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>All</button>
                         {REWARD_CATEGORIES.map((cat) => (
-                          <button key={cat} onClick={() => setRewardCategoryFilter(rewardCategoryFilter === cat ? null : cat)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${rewardCategoryFilter === cat ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>{cat}</button>
+                          <button key={cat} onClick={() => setRewardCategoryFilter(rewardCategoryFilter === cat ? null : cat)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${rewardCategoryFilter === cat ? "bg-red-800 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>{cat}</button>
                         ))}
                       </div>
                       <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
                         {PREBUILT_REWARDS.filter((r) => (!rewardCategoryFilter || r.category === rewardCategoryFilter) && (!rewardSearch || r.name.toLowerCase().includes(rewardSearch.toLowerCase()))).map((r, i) => (
-                          <button key={i} data-testid={`button-bestow-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-amber-950/10 hover:bg-amber-950/30 border border-amber-900/10 hover:border-slate-300/30 rounded-lg transition-all cursor-pointer group">
+                          <button key={i} data-testid={`button-bestow-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-red-800/10 hover:bg-red-800/30 border border-red-700/10 hover:border-slate-300/30 rounded-lg transition-all cursor-pointer group">
                             <div className="flex justify-between items-start">
-                              <span className="text-xs font-medium text-amber-200 group-hover:text-amber-100 leading-tight">{r.name}</span>
-                              <Plus size={12} className="text-amber-700 group-hover:text-slate-400 shrink-0 ml-2 mt-0.5" />
+                              <span className="text-xs font-medium text-red-400 group-hover:text-red-400 leading-tight">{r.name}</span>
+                              <Plus size={12} className="text-red-400 group-hover:text-slate-400 shrink-0 ml-2 mt-0.5" />
                             </div>
                             <div className="flex gap-2 mt-1">
                               <span className="text-[9px] text-slate-400 bg-slate-300/10 px-1.5 py-0.5 rounded">{r.category}</span>
-                              <span className="text-[9px] text-amber-600">{r.duration}</span>
+                              <span className="text-[9px] text-red-500">{r.duration}</span>
                             </div>
                           </button>
                         ))}
@@ -2749,10 +2749,10 @@ export default function BondedAscentApp() {
                       </div>
                     </div>
                     <div className="border-t border-slate-800/20 pt-3">
-                      <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Custom Reward</h3>
+                      <h3 className="text-[10px] font-bold text-red-500 uppercase tracking-widest mb-2">Custom Reward</h3>
                       <div className="flex gap-2">
-                        <input data-testid="input-dom-bestow-reward" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward to bestow..." className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-slate-300" style={{ fontSize: '16px' }} />
-                        <Button data-testid="button-dom-bestow-create" className="bg-amber-600 hover:bg-slate-300 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
+                        <input data-testid="input-dom-bestow-reward" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward to bestow..." className="flex-1 bg-black/40 border border-red-700/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-slate-300" style={{ fontSize: '16px' }} />
+                        <Button data-testid="button-dom-bestow-create" className="bg-red-800 hover:bg-slate-300 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
                       </div>
                     </div>
                   </>
@@ -2763,7 +2763,7 @@ export default function BondedAscentApp() {
             {modal === "dom_decree" && (
               <div className="p-4 space-y-4">
                 <div className="text-center">
-                  <Gavel size={48} className="mx-auto text-orange-500 mb-4" />
+                  <Gavel size={48} className="mx-auto text-red-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Issue Decree
                   </h2>
@@ -2790,7 +2790,7 @@ export default function BondedAscentApp() {
                         value={punishSearch}
                         onChange={(e) => setPunishSearch(e.target.value)}
                         placeholder="Search decrees..."
-                        className="w-full bg-black/40 border border-orange-900/30 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                        className="w-full bg-black/40 border border-red-900/30 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-700"
                         style={{ fontSize: "16px" }}
                       />
                     </div>
@@ -2798,7 +2798,7 @@ export default function BondedAscentApp() {
                       <button
                         data-testid="button-decree-cat-all"
                         onClick={() => setPunishCategoryFilter(null)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!punishCategoryFilter ? "bg-orange-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!punishCategoryFilter ? "bg-red-700 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
                       >
                         All
                       </button>
@@ -2807,7 +2807,7 @@ export default function BondedAscentApp() {
                           key={cat}
                           data-testid={`button-decree-cat-${cat.toLowerCase().replace(/\s/g, "-")}`}
                           onClick={() => setPunishCategoryFilter(cat)}
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${punishCategoryFilter === cat ? "bg-orange-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${punishCategoryFilter === cat ? "bg-red-700 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
                         >
                           {cat}
                         </button>
@@ -2847,10 +2847,10 @@ export default function BondedAscentApp() {
                               setPunishSearch("");
                               setPunishCategoryFilter(null);
                             }}
-                            className="w-full flex items-center gap-3 p-3 bg-orange-950/10 border border-orange-900/20 hover:bg-orange-900/30 hover:border-orange-500/40 rounded-xl transition-all cursor-pointer group text-left"
+                            className="w-full flex items-center gap-3 p-3 bg-red-950/10 border border-red-900/20 hover:bg-red-900/30 hover:border-red-700/40 rounded-xl transition-all cursor-pointer group text-left"
                           >
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs text-orange-400 font-semibold group-hover:text-white transition-colors truncate">
+                              <div className="text-xs text-red-400 font-semibold group-hover:text-white transition-colors truncate">
                                 {p.name}
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
@@ -2860,7 +2860,7 @@ export default function BondedAscentApp() {
                                 <span className="text-[9px] text-slate-600">
                                   •
                                 </span>
-                                <span className="text-[9px] text-orange-500/60 flex items-center gap-0.5">
+                                <span className="text-[9px] text-red-500/60 flex items-center gap-0.5">
                                   <Clock size={8} />
                                   {p.duration}
                                 </span>
@@ -2868,7 +2868,7 @@ export default function BondedAscentApp() {
                             </div>
                             <Gavel
                               size={12}
-                              className="text-orange-900 group-hover:text-orange-400 transition-colors shrink-0"
+                              className="text-red-900 group-hover:text-red-400 transition-colors shrink-0"
                             />
                           </button>
                         ))}
@@ -2899,12 +2899,12 @@ export default function BondedAscentApp() {
                           value={newPunishmentName}
                           onChange={(e) => setNewPunishmentName(e.target.value)}
                           placeholder="Custom decree..."
-                          className="flex-1 bg-black/40 border border-orange-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                          className="flex-1 bg-black/40 border border-red-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-700"
                           style={{ fontSize: "16px" }}
                         />
                         <Button
                           data-testid="button-dom-decree-custom"
-                          className="bg-orange-600 hover:bg-orange-500 cursor-pointer"
+                          className="bg-red-700 hover:bg-red-600 cursor-pointer"
                           onClick={() => {
                             if (newPunishmentName.trim()) {
                               createPartnerPunishmentMutation.mutate({
@@ -2932,7 +2932,7 @@ export default function BondedAscentApp() {
                           >
                             <Gavel
                               size={12}
-                              className="text-orange-600 shrink-0"
+                              className="text-red-400 shrink-0"
                             />
                             <div className="flex-1 min-w-0">
                               <span className="text-xs text-slate-400 block truncate">
@@ -2946,7 +2946,7 @@ export default function BondedAscentApp() {
                               )}
                             </div>
                             <span
-                              className={`text-[9px] uppercase font-bold shrink-0 ${p.status === "completed" ? "text-red-500" : "text-orange-500"}`}
+                              className={`text-[9px] uppercase font-bold shrink-0 ${p.status === "completed" ? "text-red-500" : "text-red-500"}`}
                             >
                               {p.status}
                             </span>
@@ -3451,7 +3451,7 @@ export default function BondedAscentApp() {
                           }
                         }}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all cursor-pointer
-                          ${done ? "bg-pink-900/20 border-rose-700/30" : "bg-slate-900/50 border-white/5 hover:border-rose-700/50"}`}
+                          ${done ? "bg-red-800/20 border-rose-700/30" : "bg-slate-900/50 border-white/5 hover:border-rose-700/50"}`}
                       >
                         <div
                           className={done ? "text-rose-500" : "text-rose-600"}
@@ -3470,7 +3470,7 @@ export default function BondedAscentApp() {
                   })}
                 </div>
                 {aftercareActions.length === 4 && (
-                  <div className="text-center bg-pink-900/20 border border-rose-700/20 p-4 rounded-xl">
+                  <div className="text-center bg-red-800/20 border border-rose-700/20 p-4 rounded-xl">
                     <div className="text-xs text-rose-600 font-bold uppercase">
                       Aftercare Complete
                     </div>
@@ -3496,12 +3496,12 @@ export default function BondedAscentApp() {
                   </p>
                 </div>
                 <div
-                  className={`border p-6 rounded-2xl text-center transition-all ${worshipDone ? "bg-slate-800/20 border-slate-300/30" : "bg-amber-900/10 border-slate-300/20"}`}
+                  className={`border p-6 rounded-2xl text-center transition-all ${worshipDone ? "bg-slate-800/20 border-slate-300/30" : "bg-red-800/10 border-slate-300/20"}`}
                 >
                   <div className="text-xs text-slate-400/70 uppercase tracking-widest mb-2 font-bold">
                     Daily Devotion
                   </div>
-                  <div className="text-sm italic text-amber-200">
+                  <div className="text-sm italic text-red-400">
                     "Your guidance is my only path."
                   </div>
                   {worshipDone ? (
@@ -3521,15 +3521,15 @@ export default function BondedAscentApp() {
                           detail: "Daily devotion acknowledged",
                         });
                       }}
-                      className="mt-6 w-full bg-amber-600 hover:bg-slate-300 text-black font-black uppercase tracking-widest text-xs cursor-pointer"
+                      className="mt-6 w-full bg-red-800 hover:bg-slate-300 text-black font-black uppercase tracking-widest text-xs cursor-pointer"
                     >
                       Acknowledge
                     </Button>
                   )}
                 </div>
                 {partner && (
-                  <div className="bg-amber-950/20 border border-amber-800/20 p-4 rounded-xl text-center">
-                    <div className="text-[10px] text-amber-600 uppercase font-bold tracking-widest mb-1">
+                  <div className="bg-red-800/20 border border-red-700/20 p-4 rounded-xl text-center">
+                    <div className="text-[10px] text-red-500 uppercase font-bold tracking-widest mb-1">
                       Devoted to
                     </div>
                     <div className="text-lg font-black text-slate-400 uppercase">
@@ -3917,7 +3917,7 @@ export default function BondedAscentApp() {
                       label: "Cooldown",
                       desc: "Wind down safely",
                       color: "bg-slate-500/10 border-slate-500/20 text-slate-400",
-                      activeColor: "bg-slate-500/30 border-slate-500/50 text-blue-300 ring-1 ring-slate-500/30",
+                      activeColor: "bg-red-900/30 border-red-800/40 text-red-300 ring-1 ring-red-900/30",
                     },
                   ].map((phase, i) => (
                     <div
@@ -4442,7 +4442,7 @@ function PushNotificationToggle() {
           data-testid="button-push-toggle"
           onClick={handleToggle}
           disabled={loading}
-          className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 shadow-inner cursor-pointer ${pushEnabled ? "bg-slate-600 shadow-[0_0_10px_blue]" : "bg-slate-900 border border-slate-700"}`}
+          className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 shadow-inner cursor-pointer ${pushEnabled ? "bg-slate-600 shadow-[0_0_10px_rgba(153,27,27,0.6)]" : "bg-slate-900 border border-slate-700"}`}
         >
           <div
             className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${pushEnabled ? "translate-x-6" : "translate-x-0"}`}

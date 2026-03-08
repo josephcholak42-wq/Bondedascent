@@ -7,8 +7,8 @@ import { RoleGatedButton, RoleGatedAction, PulseIndicator, ActionBadge } from '@
 import { usePermissionRequests, useCreatePermissionRequest, useUpdatePermissionRequest, useAuth } from '@/lib/hooks';
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-500/20 text-yellow-500',
-  approved: 'bg-green-500/20 text-green-500',
+  pending: 'bg-red-700/20 text-red-400',
+  approved: 'bg-red-500/20 text-red-500',
   denied: 'bg-red-500/20 text-red-500',
 };
 
@@ -149,7 +149,7 @@ export default function PermissionRequestsPage() {
                       data-testid={`button-approve-request-${request.id}`}
                       variant="ghost"
                       size="sm"
-                      className="text-green-500 hover:text-green-400"
+                      className="text-red-500 hover:text-red-400"
                       onClick={() => updateMutation.mutate({ id: request.id, status: 'approved' })}
                       disabled={updateMutation.isPending}
                     >

@@ -265,7 +265,7 @@ export default function RitualsPage() {
                   )}
                   <span
                     data-testid={`text-ritual-status-${ritual.id}`}
-                    className={ritual.active ? 'text-green-500' : 'text-slate-600'}
+                    className={ritual.active ? 'text-red-500' : 'text-slate-600'}
                   >
                     {ritual.active ? 'Active' : 'Inactive'}
                   </span>
@@ -277,7 +277,7 @@ export default function RitualsPage() {
                   data-testid={`button-toggle-ritual-${ritual.id}`}
                   variant="ghost"
                   size="sm"
-                  className={ritual.active ? 'text-green-500 hover:text-green-400' : 'text-slate-600 hover:text-slate-400'}
+                  className={ritual.active ? 'text-red-500 hover:text-red-400' : 'text-slate-600 hover:text-slate-400'}
                   onClick={() => handleToggleActive(ritual)}
                   disabled={updateRitualMutation.isPending}
                 >

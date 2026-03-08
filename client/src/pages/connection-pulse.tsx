@@ -29,8 +29,8 @@ export default function ConnectionPulsePage() {
   };
 
   const getBondColor = (rate: number) => {
-    if (rate >= 80) return 'text-green-500 shadow-[0_0_30px_rgba(34,197,94,0.4)]';
-    if (rate >= 50) return 'text-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.4)]';
+    if (rate >= 80) return 'text-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)]';
+    if (rate >= 50) return 'text-red-400 shadow-[0_0_30px_rgba(153,27,27,0.4)]';
     return 'text-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)]';
   };
 
@@ -88,12 +88,12 @@ export default function ConnectionPulsePage() {
 
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center" data-testid="stat-xp">
-          <Zap size={18} className="text-yellow-500 mx-auto mb-1" />
+          <Zap size={18} className="text-red-400 mx-auto mb-1" />
           <p className="text-xs text-slate-400 uppercase tracking-wider">XP / Level</p>
           <p className="text-white font-bold text-lg">{partnerStats?.xp ?? 0} / Lv{partnerStats?.level ?? 1}</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center" data-testid="stat-compliance">
-          <Activity size={18} className="text-green-500 mx-auto mb-1" />
+          <Activity size={18} className="text-red-500 mx-auto mb-1" />
           <p className="text-xs text-slate-400 uppercase tracking-wider">Compliance</p>
           <p className="text-white font-bold text-lg">{Math.round(complianceRate)}%</p>
         </div>
@@ -103,7 +103,7 @@ export default function ConnectionPulsePage() {
           <p className="text-white font-bold text-lg">{partnerStats?.totalCheckIns ?? 0}</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 text-center" data-testid="stat-tasks">
-          <Users size={18} className="text-blue-500 mx-auto mb-1" />
+          <Users size={18} className="text-red-400 mx-auto mb-1" />
           <p className="text-xs text-slate-400 uppercase tracking-wider">Tasks Done</p>
           <p className="text-white font-bold text-lg">{partnerStats?.completedTasks ?? 0} / {partnerStats?.totalTasks ?? 0}</p>
         </div>

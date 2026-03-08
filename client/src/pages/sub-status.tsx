@@ -88,8 +88,8 @@ export default function SubStatusPage() {
       label: 'Active Tasks',
       domLabel: 'Assigned Tasks',
       count: activeTasks.length,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10 border-blue-500/30',
+      color: 'text-red-300',
+      bgColor: 'bg-red-700/10 border-red-700/30',
       href: '/',
       items: activeTasks.slice(0, 5).map((t: any) => ({
         text: t.title || t.name,
@@ -114,8 +114,8 @@ export default function SubStatusPage() {
       label: 'Rituals',
       domLabel: 'Assigned Rituals',
       count: activeRituals.length,
-      color: 'text-orange-400',
-      bgColor: 'bg-orange-500/10 border-orange-500/30',
+      color: 'text-red-400',
+      bgColor: 'bg-red-700/10 border-red-700/30',
       href: '/rituals',
       items: activeRituals.slice(0, 5).map((r: any) => ({
         text: r.name || r.title,
@@ -140,8 +140,8 @@ export default function SubStatusPage() {
       label: 'Obedience Trials',
       domLabel: 'Issued Trials',
       count: activeTrials.length,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10 border-amber-500/30',
+      color: 'text-red-400',
+      bgColor: 'bg-red-700/10 border-red-700/30',
       href: '/obedience-trials',
       items: activeTrials.slice(0, 3).map((t: any) => ({
         text: t.title,
@@ -153,8 +153,8 @@ export default function SubStatusPage() {
       label: 'Endurance Challenges',
       domLabel: 'Active Challenges',
       count: activeChallenges.length,
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-500/10 border-orange-500/30',
+      color: 'text-red-500',
+      bgColor: 'bg-red-700/10 border-red-700/30',
       href: '/endurance-challenges',
       items: activeChallenges.slice(0, 3).map((c: any) => ({
         text: c.title,
@@ -166,8 +166,8 @@ export default function SubStatusPage() {
       label: 'Sealed Orders',
       domLabel: 'Sealed Orders',
       count: pendingSealedOrders.length,
-      color: 'text-violet-400',
-      bgColor: 'bg-violet-500/10 border-violet-500/30',
+      color: 'text-red-300/60',
+      bgColor: 'bg-red-700/10 border-red-800/30',
       href: '/protocol-lockbox',
       items: pendingSealedOrders.slice(0, 3).map((o: any) => ({
         text: o.title,
@@ -192,8 +192,8 @@ export default function SubStatusPage() {
       label: 'Active Wagers',
       domLabel: 'Wagers',
       count: activeWagers.length,
-      color: 'text-yellow-400',
-      bgColor: 'bg-yellow-500/10 border-yellow-500/30',
+      color: 'text-red-400/80',
+      bgColor: 'bg-red-700/10 border-red-800/30',
       href: '/wagers',
       items: activeWagers.slice(0, 3).map((w: any) => ({
         text: w.title || w.description,
@@ -205,8 +205,8 @@ export default function SubStatusPage() {
       label: 'Required Changes',
       domLabel: 'Desired Changes',
       count: pendingChanges.length,
-      color: 'text-teal-400',
-      bgColor: 'bg-teal-500/10 border-teal-500/30',
+      color: 'text-red-300/80',
+      bgColor: 'bg-red-700/10 border-red-800/30',
       href: '/desired-changes',
       items: pendingChanges.slice(0, 3).map((c: any) => ({
         text: c.title || c.description,
@@ -218,8 +218,8 @@ export default function SubStatusPage() {
       label: 'Upcoming Events',
       domLabel: 'Countdown Events',
       count: upcomingCountdowns.length,
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-500/10 border-cyan-500/30',
+      color: 'text-red-400/80',
+      bgColor: 'bg-red-700/10 border-red-700/30',
       href: '/countdown-events',
       items: upcomingCountdowns.slice(0, 3).map((c: any) => ({
         text: c.title,
@@ -231,8 +231,8 @@ export default function SubStatusPage() {
       label: 'Scheduled Sessions',
       domLabel: 'Planned Sessions',
       count: upcomingSessions.length,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10 border-green-500/30',
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/10 border-red-700/30',
       href: '/play-sessions',
       items: upcomingSessions.slice(0, 3).map((s: any) => ({
         text: s.title || s.description,
@@ -247,14 +247,14 @@ export default function SubStatusPage() {
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       urgent: 'bg-red-600/30 text-red-400',
-      active: 'bg-green-600/30 text-green-400',
-      pending: 'bg-amber-600/30 text-amber-400',
-      sealed: 'bg-violet-600/30 text-violet-400',
-      unlocked: 'bg-green-600/30 text-green-400',
+      active: 'bg-red-700/30 text-red-400',
+      pending: 'bg-red-800/30 text-red-400',
+      sealed: 'bg-red-800/30 text-red-300/60',
+      unlocked: 'bg-red-700/30 text-red-400',
       done: 'bg-slate-600/30 text-slate-400',
-      planned: 'bg-blue-600/30 text-blue-400',
+      planned: 'bg-red-800/30 text-red-300',
       failed: 'bg-red-600/30 text-red-400',
-      passed: 'bg-green-600/30 text-green-400',
+      passed: 'bg-red-700/30 text-red-400',
     };
     return map[status] || 'bg-slate-600/30 text-slate-400';
   };
@@ -282,7 +282,7 @@ export default function SubStatusPage() {
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center" data-testid="stat-enforcement">
           <div className="flex items-center justify-center gap-2">
-            <div className={`text-3xl font-black ${enforcementLevel >= 4 ? 'text-red-400' : enforcementLevel >= 2 ? 'text-amber-400' : 'text-slate-400'}`}>
+            <div className={`text-3xl font-black ${enforcementLevel >= 4 ? 'text-red-400' : enforcementLevel >= 2 ? 'text-red-400' : 'text-slate-400'}`}>
               {enforcementLevel}
             </div>
             <div className="text-xs text-slate-500">/5</div>

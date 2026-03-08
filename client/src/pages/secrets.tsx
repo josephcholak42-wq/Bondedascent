@@ -8,8 +8,8 @@ import { useSecrets, useSecretsForMe, useCreateSecret, useRevealSecret, useAuth 
 
 const TIER_COLORS: Record<string, string> = {
   common: 'bg-slate-400/20 text-slate-400',
-  rare: 'bg-blue-400/20 text-blue-400',
-  legendary: 'bg-amber-400/20 text-amber-400',
+  rare: 'bg-red-800/20 text-red-300',
+  legendary: 'bg-red-800/20 text-red-400',
 };
 
 export default function SecretsPage() {
@@ -76,7 +76,7 @@ export default function SecretsPage() {
         </div>
         <div className="flex items-center gap-1">
           {secret.revealed ? (
-            <Eye size={16} className="text-green-500" data-testid={`icon-revealed-${secret.id}`} />
+            <Eye size={16} className="text-red-500" data-testid={`icon-revealed-${secret.id}`} />
           ) : (
             <>
               <EyeOff size={16} className="text-slate-600" data-testid={`icon-hidden-${secret.id}`} />
@@ -87,7 +87,7 @@ export default function SecretsPage() {
                     data-testid={`button-reveal-secret-${secret.id}`}
                     variant="ghost"
                     size="sm"
-                    className="text-amber-400 hover:text-amber-300"
+                    className="text-red-400 hover:text-red-400"
                     onClick={() => handleReveal(secret.id)}
                     disabled={revealSecretMutation.isPending}
                   >

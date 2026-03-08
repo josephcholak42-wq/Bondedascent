@@ -8,8 +8,8 @@ import { useConflicts, useCreateConflict, useUpdateConflict, useAuth } from '@/l
 
 const statusColors: Record<string, string> = {
   open: 'bg-red-500/20 text-red-500',
-  discussing: 'bg-yellow-500/20 text-yellow-500',
-  resolved: 'bg-green-500/20 text-green-500',
+  discussing: 'bg-red-700/20 text-red-400',
+  resolved: 'bg-red-500/20 text-red-500',
 };
 
 export default function ConflictsPage() {
@@ -138,7 +138,7 @@ export default function ConflictsPage() {
                   </p>
                 )}
                 {conflict.resolution && (
-                  <p className="text-green-400 text-sm mt-2" data-testid={`text-conflict-resolution-${conflict.id}`}>
+                  <p className="text-red-400 text-sm mt-2" data-testid={`text-conflict-resolution-${conflict.id}`}>
                     Resolution: {conflict.resolution}
                   </p>
                 )}
@@ -150,7 +150,7 @@ export default function ConflictsPage() {
                       data-testid={`button-discuss-conflict-${conflict.id}`}
                       variant="ghost"
                       size="sm"
-                      className="text-yellow-500 hover:text-yellow-400"
+                      className="text-red-400 hover:text-red-400/80"
                       onClick={() => handleSetDiscussing(conflict.id)}
                       disabled={updateMutation.isPending}
                     >
@@ -162,7 +162,7 @@ export default function ConflictsPage() {
                       data-testid={`button-resolve-conflict-${conflict.id}`}
                       variant="ghost"
                       size="sm"
-                      className="text-green-500 hover:text-green-400"
+                      className="text-red-500 hover:text-red-400"
                       onClick={() => setResolvingId(resolvingId === conflict.id ? null : conflict.id)}
                     >
                       <Check size={16} />
@@ -182,7 +182,7 @@ export default function ConflictsPage() {
                 />
                 <Button
                   data-testid={`button-submit-resolution-${conflict.id}`}
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-red-700 hover:bg-red-600 text-white"
                   onClick={() => handleResolve(conflict.id)}
                   disabled={updateMutation.isPending}
                 >

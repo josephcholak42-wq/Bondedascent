@@ -29,7 +29,7 @@ function GatesVisual({ total, completed, missed }: { total: number; completed: n
   for (let i = 1; i <= maxDisplay; i++) {
     if (i <= completed) {
       gates.push(
-        <div key={i} className="w-6 h-6 rounded-full bg-green-600 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+        <div key={i} className="w-6 h-6 rounded-full bg-red-700 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
           {i}
         </div>
       );
@@ -41,7 +41,7 @@ function GatesVisual({ total, completed, missed }: { total: number; completed: n
       );
     } else if (i === completed + missed + 1) {
       gates.push(
-        <div key={i} className="w-6 h-6 rounded-full border-2 border-amber-500 flex items-center justify-center text-[10px] font-bold text-amber-500 animate-pulse shrink-0">
+        <div key={i} className="w-6 h-6 rounded-full border-2 border-red-700 flex items-center justify-center text-[10px] font-bold text-red-400 animate-pulse shrink-0">
           {i}
         </div>
       );
@@ -307,11 +307,11 @@ export default function EnduranceChallengesPage() {
                       <span className="text-slate-500">remaining</span>
                     </div>
                   ) : (
-                    <span className="text-amber-500 text-sm font-semibold uppercase tracking-wider">Time expired</span>
+                    <span className="text-red-400 text-sm font-semibold uppercase tracking-wider">Time expired</span>
                   )}
 
                   <div className="text-sm text-slate-400">
-                    XP earned: <span className="text-green-400 font-semibold">{xpEarned}</span>
+                    XP earned: <span className="text-red-400 font-semibold">{xpEarned}</span>
                   </div>
                 </div>
 
@@ -345,7 +345,7 @@ export default function EnduranceChallengesPage() {
                         <Button
                           data-testid={`button-complete-${challenge.id}`}
                           variant="outline"
-                          className="border-green-600 text-green-500 hover:bg-green-600 hover:text-white"
+                          className="border-red-700 text-red-500 hover:bg-red-700 hover:text-white"
                           onClick={() => handleComplete(challenge.id)}
                           disabled={updateMutation.isPending}
                         >
@@ -388,7 +388,7 @@ export default function EnduranceChallengesPage() {
               <div
                 key={challenge.id}
                 className={`bg-slate-900 border rounded-lg p-4 ${
-                  isCompleted ? 'border-green-600/30' : 'border-red-600/30'
+                  isCompleted ? 'border-red-700/30' : 'border-red-600/30'
                 }`}
                 data-testid={`card-challenge-${challenge.id}`}
               >
@@ -397,7 +397,7 @@ export default function EnduranceChallengesPage() {
                     <div className="flex items-center gap-2">
                       <h3 className="text-white font-semibold">{challenge.title}</h3>
                       {isPersonalBest && (
-                        <span className="flex items-center gap-1 text-xs text-amber-400 bg-amber-400/10 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                        <span className="flex items-center gap-1 text-xs text-red-400 bg-red-800/10 border border-red-700/30 px-2 py-0.5 rounded-full">
                           <Trophy size={12} /> Personal Best
                         </span>
                       )}
@@ -412,7 +412,7 @@ export default function EnduranceChallengesPage() {
                   <span
                     className={`text-xs uppercase tracking-wider px-2 py-1 rounded border font-semibold ${
                       isCompleted
-                        ? 'text-green-500 border-green-500 bg-green-500/20'
+                        ? 'text-red-500 border-red-700 bg-red-500/20'
                         : 'text-red-500 border-red-500 bg-red-500/20'
                     }`}
                   >

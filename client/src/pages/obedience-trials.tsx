@@ -7,9 +7,9 @@ import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/u
 import { useObedienceTrials, useCreateObedienceTrial, useUpdateObedienceTrial, useTrialSteps, useUpdateTrialStep, useAuth } from '@/lib/hooks';
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-500/20 text-yellow-500',
-  active: 'bg-blue-500/20 text-blue-500',
-  passed: 'bg-green-500/20 text-green-500',
+  pending: 'bg-red-700/20 text-red-400',
+  active: 'bg-red-700/20 text-red-400',
+  passed: 'bg-red-500/20 text-red-500',
   failed: 'bg-red-500/20 text-red-500',
 };
 
@@ -267,7 +267,7 @@ export default function ObedienceTrialsPage() {
               <Button
                 data-testid={`button-start-trial-${activeTrial.id}`}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white text-xs uppercase tracking-wider"
+                className="bg-red-700 hover:bg-red-600 text-white text-xs uppercase tracking-wider"
                 onClick={() => handleStart(activeTrial.id)}
               >
                 <Play size={14} className="mr-1" /> Start
@@ -289,18 +289,18 @@ export default function ObedienceTrialsPage() {
             {trialSteps.map((step) => (
               <div key={step.id} className="flex items-center gap-2 bg-slate-800 rounded px-3 py-2 text-sm">
                 <span className="text-red-500 font-bold text-xs">{step.stepOrder}.</span>
-                <span className={`flex-1 ${step.status === 'completed' ? 'text-green-400 line-through' : 'text-white'}`}>
+                <span className={`flex-1 ${step.status === 'completed' ? 'text-red-400 line-through' : 'text-white'}`}>
                   {step.instruction}
                 </span>
                 {step.status === 'completed' ? (
-                  <Check size={14} className="text-green-500" />
+                  <Check size={14} className="text-red-500" />
                 ) : (
                   activeTrial.status === 'active' && userRole === 'sub' && (
                     <Button
                       data-testid={`button-complete-step-${step.id}`}
                       size="sm"
                       variant="ghost"
-                      className="text-green-500 hover:text-green-400 h-6 px-2"
+                      className="text-red-500 hover:text-red-400 h-6 px-2"
                       onClick={() => handleCompleteStep(step.id)}
                       disabled={updateStepMutation.isPending}
                     >
@@ -317,7 +317,7 @@ export default function ObedienceTrialsPage() {
               <Button
                 data-testid={`button-pass-${activeTrial.id}`}
                 size="sm"
-                className="bg-green-600 hover:bg-green-700 text-white text-xs uppercase tracking-wider"
+                className="bg-red-700 hover:bg-red-600 text-white text-xs uppercase tracking-wider"
                 onClick={() => handleResolve(activeTrial.id, 'passed')}
                 disabled={updateTrialMutation.isPending}
               >
@@ -357,7 +357,7 @@ export default function ObedienceTrialsPage() {
                   {trial.status}
                 </span>
               </div>
-              <span className={`text-sm font-bold ${trial.status === 'passed' ? 'text-green-500' : 'text-red-500'}`}>
+              <span className={`text-sm font-bold ${trial.status === 'passed' ? 'text-red-500' : 'text-red-500'}`}>
                 {trial.score ?? 0}%
               </span>
             </div>

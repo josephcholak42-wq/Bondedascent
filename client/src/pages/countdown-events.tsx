@@ -18,9 +18,9 @@ function getCountdown(targetDate: string | Date) {
 }
 
 const categoryColor: Record<string, string> = {
-  special: 'text-amber-500 border-amber-500 bg-amber-500/20',
-  milestone: 'text-purple-500 border-purple-500 bg-purple-500/20',
-  play: 'text-pink-500 border-pink-500 bg-pink-500/20',
+  special: 'text-red-400 border-red-700 bg-red-700/20',
+  milestone: 'text-red-400 border-red-800 bg-red-800/20',
+  play: 'text-rose-400 border-rose-800 bg-rose-800/20',
   anniversary: 'text-red-500 border-red-500 bg-red-500/20',
 };
 

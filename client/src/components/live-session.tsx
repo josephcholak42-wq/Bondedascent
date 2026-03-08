@@ -40,7 +40,7 @@ function formatElapsed(seconds: number): string {
 function getIntensityGlow(intensity: number | null): string {
   const i = intensity ?? 1;
   if (i <= 3) return "0 0 30px rgba(30,58,95,0.3)";
-  if (i <= 6) return "0 0 40px rgba(146,64,14,0.3)";
+  if (i <= 6) return "0 0 40px rgba(153,27,27,0.3)";
   return "0 0 60px rgba(153,27,27,0.5)";
 }
 
@@ -314,8 +314,8 @@ export default function LiveSession({
               onClick={handlePause}
               className="px-5 py-3 rounded font-medium text-sm uppercase tracking-wider transition-colors"
               style={{
-                backgroundColor: isPaused ? "rgba(146,64,14,0.4)" : "rgba(146,64,14,0.2)",
-                color: "#f59e0b",
+                backgroundColor: isPaused ? "rgba(153,27,27,0.4)" : "rgba(153,27,27,0.2)",
+                color: "#dc2626",
               }}
             >
               {isPaused ? "RESUME" : "PAUSE"}

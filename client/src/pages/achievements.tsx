@@ -5,19 +5,19 @@ import { Button } from '@/components/ui/button';
 import { useAchievements, useAuth } from '@/lib/hooks';
 
 const tierConfig: Record<string, { color: string; border: string; glow: string }> = {
-  bronze: { color: 'text-amber-700', border: 'border-amber-700', glow: 'shadow-[0_0_12px_rgba(180,83,9,0.5)]' },
+  bronze: { color: 'text-red-400', border: 'border-red-700', glow: 'shadow-[0_0_12px_rgba(127,29,29,0.5)]' },
   silver: { color: 'text-slate-300', border: 'border-slate-300', glow: 'shadow-[0_0_12px_rgba(203,213,225,0.5)]' },
-  gold: { color: 'text-yellow-400', border: 'border-yellow-400', glow: 'shadow-[0_0_12px_rgba(250,204,21,0.5)]' },
-  platinum: { color: 'text-cyan-300', border: 'border-cyan-300', glow: 'shadow-[0_0_12px_rgba(103,232,249,0.5)]' },
-  diamond: { color: 'text-purple-400', border: 'border-purple-400', glow: 'shadow-[0_0_12px_rgba(192,132,252,0.5)]' },
+  gold: { color: 'text-red-400/80', border: 'border-red-800', glow: 'shadow-[0_0_12px_rgba(220,38,38,0.5)]' },
+  platinum: { color: 'text-red-400', border: 'border-red-700', glow: 'shadow-[0_0_12px_rgba(220,38,38,0.5)]' },
+  diamond: { color: 'text-red-300/70', border: 'border-red-800', glow: 'shadow-[0_0_12px_rgba(153,27,27,0.5)]' },
 };
 
 const tierIcons: Record<string, React.ReactNode> = {
-  bronze: <Medal size={28} className="text-amber-700" />,
+  bronze: <Medal size={28} className="text-red-400" />,
   silver: <Star size={28} className="text-slate-300" />,
-  gold: <Trophy size={28} className="text-yellow-400" />,
-  platinum: <Award size={28} className="text-cyan-300" />,
-  diamond: <Award size={28} className="text-purple-400" />,
+  gold: <Trophy size={28} className="text-red-400/80" />,
+  platinum: <Award size={28} className="text-red-400" />,
+  diamond: <Award size={28} className="text-red-300/70" />,
 };
 
 export default function AchievementsPage() {

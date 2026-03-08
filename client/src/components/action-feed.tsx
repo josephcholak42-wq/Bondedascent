@@ -30,7 +30,7 @@ interface ActionFeedProps {
 
 const TYPE_CONFIG: Record<FeedItemType, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string }> = {
   demand: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/60 to-red-950/20", glowColor: "shadow-red-500/20", icon: Siren, label: "DEMAND" },
-  command: { color: "text-orange-400", borderColor: "border-l-orange-500", bgColor: "bg-gradient-to-r from-orange-950/50 to-orange-950/15", glowColor: "shadow-orange-500/15", icon: Zap, label: "ORDER" },
+  command: { color: "text-red-400", borderColor: "border-l-red-600", bgColor: "bg-gradient-to-r from-red-950/50 to-red-950/15", glowColor: "shadow-red-800/20", icon: Zap, label: "ORDER" },
   accusation: { color: "text-rose-400", borderColor: "border-l-rose-500", bgColor: "bg-gradient-to-r from-rose-950/50 to-rose-950/15", glowColor: "shadow-rose-500/15", icon: AlertTriangle, label: "ACCUSATION" },
   task: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/40 to-red-950/10", glowColor: "shadow-red-500/10", icon: Target, label: "PROTOCOL" },
   punishment: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "bg-gradient-to-r from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT" },
@@ -62,7 +62,7 @@ function CountdownTimer({ seconds }: { seconds: number }) {
     return () => clearInterval(interval);
   }, [seconds]);
 
-  const urgency = remaining < 60 ? "text-red-400 animate-pulse" : remaining < 180 ? "text-orange-400" : "text-slate-400";
+  const urgency = remaining < 60 ? "text-red-400 animate-pulse" : remaining < 180 ? "text-red-400" : "text-slate-400";
   return (
     <span className={`text-sm font-mono font-black tabular-nums ${urgency}`}>
       {formatCountdown(remaining)}
@@ -175,7 +175,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
           <Button
             data-testid={`command-ack-${item.id}`}
             size="sm"
-            className="bg-orange-600 hover:bg-orange-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-orange-500/20"
+            className="bg-red-700 hover:bg-red-700 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-red-800/20"
             onClick={() => onAction(item.id, "acknowledge")}
           >
             ACK

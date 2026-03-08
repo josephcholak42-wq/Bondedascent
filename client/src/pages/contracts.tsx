@@ -7,7 +7,7 @@ import { FileText, Plus, Check, X, Clock, AlertTriangle, Shield } from "lucide-r
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "bg-neutral-800 text-neutral-300",
-  negotiating: "bg-amber-950 text-amber-400",
+  negotiating: "bg-red-950 text-red-400",
   active: "bg-red-950 text-red-400",
   expired: "bg-slate-700 text-slate-300",
   terminated: "bg-red-900 text-red-300",

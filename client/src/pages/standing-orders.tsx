@@ -9,15 +9,15 @@ import { PREBUILT_STANDING_ORDERS, STANDING_ORDER_CATEGORIES } from '@/lib/prebu
 
 const priorityColors: Record<string, string> = {
   urgent: 'text-red-500',
-  high: 'text-orange-500',
-  standard: 'text-yellow-500',
+  high: 'text-red-500',
+  standard: 'text-red-400',
   low: 'text-slate-400',
 };
 
 const priorityBgColors: Record<string, string> = {
   urgent: 'bg-red-500/20 text-red-500',
-  high: 'bg-orange-500/20 text-orange-500',
-  standard: 'bg-yellow-500/20 text-yellow-500',
+  high: 'bg-red-700/20 text-red-500',
+  standard: 'bg-red-700/20 text-red-400',
   low: 'bg-slate-400/20 text-slate-400',
 };
 
@@ -289,7 +289,7 @@ export default function StandingOrdersPage() {
                 )}
                 <span
                   data-testid={`text-order-status-${order.id}`}
-                  className={`text-xs ${order.active ? 'text-green-500' : 'text-slate-600'}`}
+                  className={`text-xs ${order.active ? 'text-red-500' : 'text-slate-600'}`}
                 >
                   {order.active ? 'Active' : 'Inactive'}
                 </span>
@@ -301,7 +301,7 @@ export default function StandingOrdersPage() {
                     data-testid={`button-toggle-order-${order.id}`}
                     variant="ghost"
                     size="sm"
-                    className={order.active ? 'text-green-500 hover:text-green-400' : 'text-slate-600 hover:text-slate-400'}
+                    className={order.active ? 'text-red-500 hover:text-red-400' : 'text-slate-600 hover:text-slate-400'}
                     onClick={() => handleToggleActive(order)}
                     disabled={updateMutation.isPending}
                   >

@@ -211,7 +211,7 @@ export default function RatingsPage() {
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Star size={16} className="text-yellow-500" />
+                <Star size={16} className="text-red-400" />
                 <span className="text-white font-bold text-lg" data-testid={`text-rating-overall-${rating.id}`}>
                   {rating.overall}/10
                 </span>

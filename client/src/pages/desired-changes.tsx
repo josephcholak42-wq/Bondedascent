@@ -8,22 +8,22 @@ import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import { PREBUILT_DESIRED_CHANGES, DESIRED_CHANGE_CATEGORIES } from '@/lib/prebuilt-desired-changes';
 
 const categoryColors: Record<string, string> = {
-  behavior: 'bg-blue-500/20 text-blue-500',
-  communication: 'bg-purple-500/20 text-purple-500',
-  physical: 'bg-pink-500/20 text-pink-500',
-  emotional: 'bg-amber-500/20 text-amber-500',
-  attitude: 'bg-orange-500/20 text-orange-500',
-  skill: 'bg-cyan-500/20 text-cyan-500',
-  habit: 'bg-green-500/20 text-green-500',
+  behavior: 'bg-red-700/20 text-red-400',
+  communication: 'bg-red-800/20 text-red-400',
+  physical: 'bg-rose-800/20 text-rose-400',
+  emotional: 'bg-red-700/20 text-red-400',
+  attitude: 'bg-red-700/20 text-red-500',
+  skill: 'bg-red-700/20 text-red-400',
+  habit: 'bg-red-500/20 text-red-500',
   appearance: 'bg-rose-500/20 text-rose-500',
-  mindset: 'bg-indigo-500/20 text-indigo-500',
-  routine: 'bg-teal-500/20 text-teal-500',
+  mindset: 'bg-red-700/20 text-red-400',
+  routine: 'bg-red-700/20 text-red-300',
   other: 'bg-slate-400/20 text-slate-400',
 };
 
 const statusStyles: Record<string, string> = {
   active: 'text-white',
-  achieved: 'text-green-500',
+  achieved: 'text-red-500',
   dismissed: 'text-slate-600',
 };
 
@@ -282,7 +282,7 @@ export default function DesiredChangesPage() {
                       data-testid={`button-achieve-change-${change.id}`}
                       variant="ghost"
                       size="sm"
-                      className="text-green-500 hover:text-green-400"
+                      className="text-red-500 hover:text-red-400"
                       onClick={() => handleStatusUpdate(change.id, 'achieved')}
                       disabled={updateMutation.isPending}
                     >

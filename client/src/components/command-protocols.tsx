@@ -157,7 +157,7 @@ function CountdownTimer({ seconds }: { seconds: number }) {
     const interval = setInterval(() => setRemaining(prev => Math.max(0, prev - 1)), 1000);
     return () => clearInterval(interval);
   }, [seconds]);
-  const urgency = remaining < 60 ? "text-red-400 animate-pulse" : remaining < 180 ? "text-orange-400" : "text-yellow-400";
+  const urgency = remaining < 60 ? "text-red-400 animate-pulse" : remaining < 180 ? "text-red-500/80" : "text-red-600/60";
   return (
     <span className={`text-sm font-mono font-black tabular-nums ${urgency}`}>
       {formatCountdown(remaining)}
@@ -188,7 +188,7 @@ function TrendArrow({ data }: { data?: number[] }) {
   if (!data || data.length < 2) return null;
   const last = data[data.length - 1];
   const prev = data[data.length - 2];
-  if (last > prev) return <ArrowUp size={10} className="text-emerald-400" />;
+  if (last > prev) return <ArrowUp size={10} className="text-red-400" />;
   if (last < prev) return <ArrowDown size={10} className="text-red-400" />;
   return <Minus size={8} className="text-slate-500" />;
 }
@@ -263,7 +263,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 hover:brightness-125 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-amber-500/30" : ""}`}
+      className={`group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 hover:brightness-125 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""}`}
       style={{ animation: "cp-card-enter 0.4s ease-out" }}
     >
       <div className="p-3.5 flex items-start gap-3">
@@ -280,7 +280,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isSelecting && setExpanded(!expanded)}>
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${config.color} opacity-80`}>{config.label}</span>
-            {isPinned && <Pin size={9} className="text-amber-400" />}
+            {isPinned && <Pin size={9} className="text-red-400" />}
             {item.countdown !== undefined && item.countdown > 0 && <CountdownTimer seconds={item.countdown} />}
           </div>
           <p className="text-sm font-bold text-white/90 leading-snug">{searchQuery ? highlightText(item.title, searchQuery) : item.title}</p>
@@ -301,13 +301,13 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
 
           {item.type === "checkin_review" && role === "dom" && (
             <div className="flex gap-2 mt-2.5 items-center">
-              <div className="flex items-center gap-1.5 bg-black/30 rounded-lg px-2 py-1 border border-purple-900/30">
-                <span className="text-[9px] text-purple-400 font-bold">PTS</span>
+              <div className="flex items-center gap-1.5 bg-black/30 rounded-lg px-2 py-1 border border-red-800/30">
+                <span className="text-[9px] text-red-400/70 font-bold">PTS</span>
                 <input data-testid={`checkin-xp-${item.id}`} type="number" value={xpAmount} onChange={(e) => setXpAmount(parseInt(e.target.value) || 0)}
                   className="w-10 bg-transparent text-xs text-white text-center focus:outline-none" min={0} max={100}
                 />
               </div>
-              <Button data-testid={`checkin-approve-${item.id}`} size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-emerald-500/20"
+              <Button data-testid={`checkin-approve-${item.id}`} size="sm" className="bg-red-800 hover:bg-red-700 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-900/30"
                 onClick={() => handleAction(item.id, "approve", xpAmount)}>ACCEPT</Button>
               <Button data-testid={`checkin-reject-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
                 onClick={() => handleAction(item.id, "reject")}>DENY</Button>
@@ -317,7 +317,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
 
         <div className="flex items-center gap-1 shrink-0">
           {onTogglePin && !isSelecting && (
-            <button onClick={() => onTogglePin(item.id)} className={`p-1 transition-colors cursor-pointer ${isPinned ? "text-amber-400" : "text-slate-700 hover:text-slate-400 opacity-0 group-hover:opacity-100"}`}
+            <button onClick={() => onTogglePin(item.id)} className={`p-1 transition-colors cursor-pointer ${isPinned ? "text-red-400" : "text-slate-700 hover:text-slate-400 opacity-0 group-hover:opacity-100"}`}
               data-testid={`pin-${item.id}`}>
               <Pin size={12} />
             </button>
@@ -329,15 +329,15 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
           )}
           {item.type === "command" && (
             <Button data-testid={`command-ack-${item.id}`} size="sm"
-              className="bg-orange-600 hover:bg-orange-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-orange-500/20"
+              className="bg-red-700 hover:bg-red-600 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-red-800/30"
               onClick={() => handleAction(item.id, "acknowledge")}>ACK</Button>
           )}
           {item.type === "task" && (
             <button data-testid={`task-toggle-${item.id}`}
               className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
-                item.data?.done ? "border-green-500 bg-green-500/20" : "border-blue-500/40 hover:border-blue-400 hover:bg-blue-500/10"
+                item.data?.done ? "border-red-700 bg-red-900/30" : "border-slate-600/40 hover:border-red-700 hover:bg-red-950/30"
               }`} onClick={() => handleAction(item.id, "toggle")}>
-              {item.data?.done && <CheckCircle size={14} className="text-green-400" />}
+              {item.data?.done && <CheckCircle size={14} className="text-red-400" />}
             </button>
           )}
           {item.type === "punishment" && (
@@ -345,11 +345,11 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
               onClick={() => handleAction(item.id, "complete")}>DONE</Button>
           )}
           {item.type === "reward" && !item.data?.unlocked && (
-            <Button data-testid={`reward-redeem-${item.id}`} size="sm" className="bg-amber-600 hover:bg-amber-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-amber-500/20"
+            <Button data-testid={`reward-redeem-${item.id}`} size="sm" className="bg-red-800 hover:bg-red-700 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-900/30"
               onClick={() => handleAction(item.id, "redeem")}>CLAIM</Button>
           )}
           {item.type === "dare" && !item.data?.completed && (
-            <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-fuchsia-600 hover:bg-fuchsia-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-fuchsia-500/20"
+            <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-red-800 hover:bg-red-700 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-900/30"
               onClick={() => handleAction(item.id, "complete")}>DONE</Button>
           )}
           {item.type === "notification" && (
@@ -369,16 +369,16 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
 
               <div className="flex flex-wrap gap-1.5 text-[9px]">
                 {item.data?.category && <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400 uppercase tracking-wider">{item.data.category}</span>}
-                {item.data?.frequency && <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 uppercase tracking-wider">{item.data.frequency}</span>}
+                {item.data?.frequency && <span className="px-2 py-0.5 rounded-full bg-red-900/20 border border-red-800/30 text-red-400/80 uppercase tracking-wider">{item.data.frequency}</span>}
                 {item.data?.status && <span className={`px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                  item.data.status === "completed" ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" :
+                  item.data.status === "completed" ? "bg-red-900/20 border border-red-800/30 text-red-400" :
                   item.data.status === "active" ? "bg-red-500/10 border border-red-500/20 text-red-400" :
                   "bg-white/5 border border-white/10 text-slate-400"
                 }`}>{item.data.status}</span>}
-                {item.data?.mood && <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 uppercase tracking-wider">{item.data.mood}</span>}
+                {item.data?.mood && <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-900/30 text-red-300/70 uppercase tracking-wider">{item.data.mood}</span>}
                 {item.data?.intensity && <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-300 uppercase tracking-wider">INT {item.data.intensity}/10</span>}
-                {item.data?.score && <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 uppercase tracking-wider">SCORE {item.data.score}/10</span>}
-                {item.data?.priority && <span className="px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 uppercase tracking-wider">{item.data.priority}</span>}
+                {item.data?.score && <span className="px-2 py-0.5 rounded-full bg-red-900/20 border border-red-800/25 text-red-300/80 uppercase tracking-wider">SCORE {item.data.score}/10</span>}
+                {item.data?.priority && <span className="px-2 py-0.5 rounded-full bg-red-950/30 border border-red-900/25 text-red-400/70 uppercase tracking-wider">{item.data.priority}</span>}
                 {item.data?.duration && <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400 uppercase tracking-wider">{item.data.duration}</span>}
                 {item.createdAt && <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-500">{timeAgo(item.createdAt)} ago</span>}
               </div>
@@ -390,7 +390,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
                     onKeyDown={(e) => { if (e.key === "Enter" && editTitle.trim()) { onEdit?.(item.type, rawId, { title: editTitle, text: editTitle }); setIsEditing(false); } }}
                     autoFocus
                   />
-                  <Button size="sm" className="h-7 px-2 text-[10px] bg-emerald-600 hover:bg-emerald-500"
+                  <Button size="sm" className="h-7 px-2 text-[10px] bg-red-800 hover:bg-red-700"
                     onClick={() => { if (editTitle.trim()) { onEdit?.(item.type, rawId, { title: editTitle, text: editTitle }); setIsEditing(false); } }}>Save</Button>
                   <Button size="sm" className="h-7 px-2 text-[10px] bg-slate-700 hover:bg-slate-600" onClick={() => setIsEditing(false)}>Cancel</Button>
                 </div>
@@ -486,14 +486,14 @@ function ActivityTimeline({ entries }: { entries: ActivityEntry[] }) {
   return (
     <div className="flex gap-2 overflow-x-auto scrollbar-none py-1 snap-x snap-mandatory" data-testid="activity-timeline">
       {entries.slice(0, 10).map((entry) => {
-        const actionColor = entry.action.includes("task") ? "border-l-blue-500" :
+        const actionColor = entry.action.includes("task") ? "border-l-red-700" :
           entry.action.includes("punishment") || entry.action.includes("punish") ? "border-l-red-500" :
-          entry.action.includes("reward") ? "border-l-amber-500" :
-          entry.action.includes("ritual") ? "border-l-orange-400" :
-          entry.action.includes("dare") ? "border-l-fuchsia-500" :
-          entry.action.includes("session") ? "border-l-pink-500" :
-          entry.action.includes("checkin") || entry.action.includes("check") ? "border-l-purple-500" :
-          "border-l-slate-600";
+          entry.action.includes("reward") ? "border-l-red-800" :
+          entry.action.includes("ritual") ? "border-l-red-600" :
+          entry.action.includes("dare") ? "border-l-rose-700" :
+          entry.action.includes("session") ? "border-l-rose-800" :
+          entry.action.includes("checkin") || entry.action.includes("check") ? "border-l-red-900" :
+          "border-l-slate-700";
         return (
           <div key={entry.id} className={`flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px]`}>
             <div className="flex-1 min-w-0">
@@ -685,7 +685,7 @@ export function CommandProtocols({
                 )}
                 {partnerPresence && (
                   <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/[0.03] border border-white/5">
-                    <span className={`w-1.5 h-1.5 rounded-full ${partnerPresence.online ? "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" : "bg-slate-600"}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${partnerPresence.online ? "bg-red-500 shadow-[0_0_6px_rgba(180,20,20,0.6)]" : "bg-slate-600"}`} />
                     <span className="text-[9px] font-bold text-slate-500 uppercase">{partnerName?.split(" ")[0] || "Partner"}</span>
                   </span>
                 )}
@@ -717,11 +717,11 @@ export function CommandProtocols({
             <div className="grid grid-cols-4 gap-2">
               <MetricCard label="Compliance" value={`${compliancePct}%`}
                 sub={`${completedProtocols}/${totalProtocols}`}
-                color={compliancePct >= 80 ? "emerald" : compliancePct >= 50 ? "amber" : "red"}
+                color="red"
                 trend={trendData?.completionTrend} />
-              <MetricCard label="Directives" value={pendingTasks.toString()} sub={`${tasks.filter(t => t.done).length} cleared`} color="blue" trend={trendData?.taskTrend} />
-              <MetricCard label="Orders" value={activeOrders.toString()} sub="enforced" color="cyan" trend={trendData?.orderTrend} />
-              <MetricCard label="Rituals" value={activeRituals.toString()} sub="mandated" color="amber" trend={trendData?.ritualTrend} />
+              <MetricCard label="Directives" value={pendingTasks.toString()} sub={`${tasks.filter(t => t.done).length} cleared`} color="crimson" trend={trendData?.taskTrend} />
+              <MetricCard label="Orders" value={activeOrders.toString()} sub="enforced" color="blood" trend={trendData?.orderTrend} />
+              <MetricCard label="Rituals" value={activeRituals.toString()} sub="mandated" color="dark" trend={trendData?.ritualTrend} />
             </div>
           </div>
 
@@ -736,7 +736,7 @@ export function CommandProtocols({
                   <div className="h-full rounded-full transition-all duration-1000"
                     style={{
                       width: `${partnerStats?.complianceRate ?? 0}%`,
-                      background: `linear-gradient(90deg, #dc2626, ${(partnerStats?.complianceRate ?? 0) >= 50 ? "#f59e0b" : "#dc2626"}, ${(partnerStats?.complianceRate ?? 0) >= 80 ? "#22c55e" : "#f59e0b"})`,
+                      background: `linear-gradient(90deg, #7f1d1d, ${(partnerStats?.complianceRate ?? 0) >= 50 ? "#991b1b" : "#7f1d1d"}, ${(partnerStats?.complianceRate ?? 0) >= 80 ? "#dc2626" : "#991b1b"})`,
                     }} />
                 </div>
               </div>
@@ -791,7 +791,7 @@ export function CommandProtocols({
             {sorted.length === 0 ? (
               <div className="text-center py-12" data-testid="cp-feed-empty">
                 <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3 border border-white/5">
-                  {debouncedSearch ? <Search size={28} className="text-slate-600" /> : <CheckCircle size={28} className="text-emerald-500/50" />}
+                  {debouncedSearch ? <Search size={28} className="text-slate-600" /> : <CheckCircle size={28} className="text-red-800/50" />}
                 </div>
                 <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em]">
                   {debouncedSearch ? "No results" : "STANDING BY"}
@@ -825,7 +825,7 @@ export function CommandProtocols({
               <div className="flex items-center gap-2 p-3 bg-slate-900/90 border border-red-500/30 rounded-xl backdrop-blur-sm">
                 <span className="text-[10px] font-black text-white uppercase tracking-wider">{selectedIds.size} selected</span>
                 <div className="flex-1" />
-                <Button size="sm" className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 font-bold" onClick={handleBulkComplete} data-testid="cp-bulk-complete">
+                <Button size="sm" className="h-7 px-3 text-[10px] bg-red-800 hover:bg-red-700 font-bold" onClick={handleBulkComplete} data-testid="cp-bulk-complete">
                   Complete
                 </Button>
                 <Button size="sm" className="h-7 px-3 text-[10px] bg-red-700 hover:bg-red-600 font-bold" onClick={handleBulkDelete} data-testid="cp-bulk-delete">
@@ -838,39 +838,39 @@ export function CommandProtocols({
           )}
 
           <div className="px-5 pb-3 space-y-2" data-testid="cp-feature-drawers">
-            <FeatureDrawer title="Quick Access" icon={<Zap size={14} className="text-amber-400" />}>
+            <FeatureDrawer title="Quick Access" icon={<Zap size={14} className="text-red-400" />}>
               <div className="grid grid-cols-4 gap-2">
-                <div className="bg-gradient-to-b from-amber-950/30 to-transparent border border-amber-500/20 rounded-xl p-2.5 text-center">
+                <div className="bg-gradient-to-b from-red-950/40 to-transparent border border-red-800/25 rounded-xl p-2.5 text-center">
                   <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Standing</div>
-                  <div className="text-sm font-black text-amber-400 tabular-nums leading-tight">{userStats?.xp ?? 0}</div>
+                  <div className="text-sm font-black text-red-400 tabular-nums leading-tight">{userStats?.xp ?? 0}</div>
                   <div className="text-[8px] text-slate-600 mt-0.5">Rank {userStats?.level ?? 1}</div>
                 </div>
-                <div className="bg-gradient-to-b from-emerald-950/30 to-transparent border border-emerald-500/20 rounded-xl p-2.5 text-center">
+                <div className="bg-gradient-to-b from-red-950/30 to-transparent border border-red-900/25 rounded-xl p-2.5 text-center">
                   <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Marks</div>
-                  <div className="text-sm font-black text-emerald-400 tabular-nums leading-tight">{userStats?.badges ?? 0}</div>
+                  <div className="text-sm font-black text-red-300 tabular-nums leading-tight">{userStats?.badges ?? 0}</div>
                   <div className="text-[8px] text-slate-600 mt-0.5">branded</div>
                 </div>
-                <div className="bg-gradient-to-b from-cyan-950/30 to-transparent border border-cyan-500/20 rounded-xl p-2.5 text-center">
+                <div className="bg-gradient-to-b from-red-950/25 to-transparent border border-red-900/20 rounded-xl p-2.5 text-center">
                   <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Timers</div>
-                  <div className="text-sm font-black text-cyan-400 tabular-nums leading-tight">{userStats?.activeTimers ?? 0}</div>
+                  <div className="text-sm font-black text-red-400/80 tabular-nums leading-tight">{userStats?.activeTimers ?? 0}</div>
                   <div className="text-[8px] text-slate-600 mt-0.5">active</div>
                 </div>
-                <div className="bg-gradient-to-b from-purple-950/30 to-transparent border border-purple-500/20 rounded-xl p-2.5 text-center">
+                <div className="bg-gradient-to-b from-red-950/35 to-transparent border border-red-800/20 rounded-xl p-2.5 text-center">
                   <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Control</div>
-                  <div className="text-sm font-black text-purple-400 tabular-nums leading-tight">{partnerStats?.complianceRate ?? compliancePct}%</div>
+                  <div className="text-sm font-black text-red-300/90 tabular-nums leading-tight">{partnerStats?.complianceRate ?? compliancePct}%</div>
                   <div className="text-[8px] text-slate-600 mt-0.5">held</div>
                 </div>
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Sticker Rewards" icon={<Sparkles size={14} className="text-yellow-400" />} count={stickers?.length}>
+            <FeatureDrawer title="Sticker Rewards" icon={<Sparkles size={14} className="text-red-400" />} count={stickers?.length}>
               {role === "dom" && onSendSticker ? (
                 <div className="space-y-3">
                   <div className="grid grid-cols-4 gap-2">
                     {STICKER_TYPES.map((s) => (
                       <button key={s.type} data-testid={`drawer-sticker-${s.type}`}
                         onClick={() => { onSendSticker(s.type, stickerMessage || undefined); feedbackSticker(); }}
-                        className="p-2.5 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-yellow-900/30 active:bg-yellow-900/30 active:border-yellow-500/50 active:shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                        className="p-2.5 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-red-900/40 active:bg-red-950/40 active:border-red-700/50 active:shadow-[0_0_10px_rgba(140,15,15,0.3)]">
                         <span className="text-xl">{s.emoji}</span>
                         <div className="text-[7px] text-slate-500 uppercase mt-0.5">{s.label}</div>
                       </button>
@@ -879,7 +879,7 @@ export function CommandProtocols({
                   <input data-testid="drawer-sticker-message" type="text" value={stickerMessage}
                     onChange={(e) => setStickerMessage(e.target.value)}
                     placeholder="Optional message..."
-                    className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-yellow-500/40" />
+                    className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/40" />
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -943,41 +943,41 @@ export function CommandProtocols({
 
             <FeatureDrawer title="Protocol & Structure" icon={<Flame size={14} className="text-red-400" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Flame size={14} />} label="Rituals" desc="Mandated routines" href="/rituals" color="text-orange-400" sexyIcon="rituals" />
-                <DrawerFeatureLink icon={<FileSignature size={14} />} label="Standing Orders" desc="Permanent directives" href="/standing-orders" color="text-red-400" sexyIcon="standing-orders" />
-                <DrawerFeatureLink icon={<Shield size={14} />} label="Limits" desc="Hard boundaries" href="/limits" color="text-blue-400" sexyIcon="limits" />
-                <DrawerFeatureLink icon={<Hand size={14} />} label="Permissions" desc="Requests & grants" href="/permission-requests" color="text-indigo-400" sexyIcon="permission-requests" />
-                <DrawerFeatureLink icon={<Target size={14} />} label="Desired Changes" desc="Required modifications" href="/desired-changes" color="text-teal-400" sexyIcon="standing-orders" />
+                <DrawerFeatureLink icon={<Flame size={14} />} label="Rituals" desc="Mandated routines" href="/rituals" color="text-red-400" sexyIcon="rituals" />
+                <DrawerFeatureLink icon={<FileSignature size={14} />} label="Standing Orders" desc="Permanent directives" href="/standing-orders" color="text-red-500" sexyIcon="standing-orders" />
+                <DrawerFeatureLink icon={<Shield size={14} />} label="Limits" desc="Hard boundaries" href="/limits" color="text-red-300" sexyIcon="limits" />
+                <DrawerFeatureLink icon={<Hand size={14} />} label="Permissions" desc="Requests & grants" href="/permission-requests" color="text-red-400/80" sexyIcon="permission-requests" />
+                <DrawerFeatureLink icon={<Target size={14} />} label="Desired Changes" desc="Required modifications" href="/desired-changes" color="text-red-300/80" sexyIcon="standing-orders" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Scenes & Trials" icon={<Dices size={14} className="text-amber-400" />}>
+            <FeatureDrawer title="Scenes & Trials" icon={<Dices size={14} className="text-red-400" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-green-400" sexyIcon="play-sessions" />
+                <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-red-400" sexyIcon="play-sessions" />
                 <DrawerFeatureLink icon={<Layers size={14} />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" sexyIcon="endurance" />
-                <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-amber-500" sexyIcon="enforce" />
-                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-fuchsia-400" sexyIcon="wheel-of-dares" />
-                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Stakes & bets" href="/wagers" color="text-yellow-400" sexyIcon="wagers" />
-                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed ordeals" href="/endurance-challenges" color="text-orange-500" sexyIcon="endurance" />
+                <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-red-400/80" sexyIcon="enforce" />
+                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-rose-400" sexyIcon="wheel-of-dares" />
+                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Stakes & bets" href="/wagers" color="text-red-300" sexyIcon="wagers" />
+                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed ordeals" href="/endurance-challenges" color="text-red-500/80" sexyIcon="endurance" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Bond & Reflection" icon={<HeartPulse size={14} className="text-pink-400" />}>
+            <FeatureDrawer title="Bond & Reflection" icon={<HeartPulse size={14} className="text-rose-500" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond status" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
-                <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-pink-300" sexyIcon="devotions" />
-                <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-purple-400" sexyIcon="secrets" />
-                <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-rose-400" sexyIcon="conflicts" />
+                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond status" href="/connection-pulse" color="text-rose-400" sexyIcon="connection-pulse" />
+                <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-rose-300" sexyIcon="devotions" />
+                <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-red-300/80" sexyIcon="secrets" />
+                <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-red-400" sexyIcon="conflicts" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Records & Surveillance" icon={<Award size={14} className="text-emerald-400" />}>
+            <FeatureDrawer title="Records & Surveillance" icon={<Award size={14} className="text-red-400" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-amber-400" sexyIcon="ratings" />
-                <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Earned marks" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
-                <DrawerFeatureLink icon={<Timer size={14} />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-cyan-400" sexyIcon="countdown-events" />
-                <DrawerFeatureLink icon={<Lock size={14} />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" sexyIcon="config" />
-                <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Restricted gallery" href="/locked-media" color="text-pink-400" sexyIcon="secrets" />
+                <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-red-400/80" sexyIcon="ratings" />
+                <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Earned marks" href="/achievements" color="text-red-300" sexyIcon="achievements" />
+                <DrawerFeatureLink icon={<Timer size={14} />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-red-400" sexyIcon="countdown-events" />
+                <DrawerFeatureLink icon={<Lock size={14} />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-red-500/80" sexyIcon="config" />
+                <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Restricted gallery" href="/locked-media" color="text-rose-400" sexyIcon="secrets" />
               </div>
             </FeatureDrawer>
           </div>
@@ -1010,7 +1010,7 @@ export function CommandProtocols({
                   <div className="space-y-3 animate-in slide-in-from-top-2 duration-300 pt-1">
                     <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
                       <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2 flex items-center gap-1.5">
-                        <Zap size={10} className="text-orange-400" /> Instant Order
+                        <Zap size={10} className="text-red-400" /> Instant Order
                       </div>
                       <div className="flex gap-2">
                         <input data-testid="cp-input-command" type="text" value={commandInput}
@@ -1018,7 +1018,7 @@ export function CommandProtocols({
                           onKeyDown={(e) => { if (e.key === "Enter" && commandInput.trim() && onQuickCommand) { onQuickCommand(commandInput); setCommandInput(""); } }}
                           placeholder="Issue an order..."
                           className="flex-1 bg-black/60 border border-red-900/30 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-red-500/40" />
-                        <Button size="sm" className="bg-orange-600 hover:bg-orange-500 h-8 px-3"
+                        <Button size="sm" className="bg-red-800 hover:bg-red-800 h-8 px-3"
                           disabled={!commandInput.trim()}
                           onClick={() => { if (commandInput.trim() && onQuickCommand) { onQuickCommand(commandInput); setCommandInput(""); } }}>
                           <SendHorizonal size={14} />
@@ -1090,14 +1090,14 @@ export function CommandProtocols({
 
 function MetricCard({ label, value, sub, color, trend }: { label: string; value: string; sub: string; color: string; trend?: number[] }) {
   const colorMap: Record<string, { text: string; border: string; bg: string; sparkColor: string }> = {
-    emerald: { text: "text-emerald-400", border: "border-emerald-500/20", bg: "from-emerald-950/30", sparkColor: "#34d399" },
-    amber: { text: "text-amber-400", border: "border-amber-500/20", bg: "from-amber-950/30", sparkColor: "#fbbf24" },
-    red: { text: "text-red-400", border: "border-red-500/20", bg: "from-red-950/30", sparkColor: "#f87171" },
-    blue: { text: "text-blue-400", border: "border-blue-500/20", bg: "from-blue-950/30", sparkColor: "#60a5fa" },
-    cyan: { text: "text-cyan-400", border: "border-cyan-500/20", bg: "from-cyan-950/30", sparkColor: "#22d3ee" },
-    purple: { text: "text-purple-400", border: "border-purple-500/20", bg: "from-purple-950/30", sparkColor: "#c084fc" },
+    red: { text: "text-red-400", border: "border-red-500/20", bg: "from-red-950/40", sparkColor: "#dc2626" },
+    crimson: { text: "text-red-500", border: "border-red-600/20", bg: "from-red-950/35", sparkColor: "#b91c1c" },
+    blood: { text: "text-red-400/80", border: "border-red-700/20", bg: "from-red-950/30", sparkColor: "#991b1b" },
+    dark: { text: "text-red-300", border: "border-red-800/20", bg: "from-red-950/25", sparkColor: "#7f1d1d" },
+    rose: { text: "text-rose-400", border: "border-rose-600/20", bg: "from-rose-950/30", sparkColor: "#e11d48" },
+    slate: { text: "text-slate-400", border: "border-slate-600/20", bg: "from-slate-900/30", sparkColor: "#64748b" },
   };
-  const c = colorMap[color] || colorMap.blue;
+  const c = colorMap[color] || colorMap.red;
 
   return (
     <div className={`bg-gradient-to-b ${c.bg} to-transparent border ${c.border} rounded-xl p-2.5 text-center`}>

@@ -27,7 +27,7 @@ function intensityColor(intensity: number): string {
 
 function intensityBg(intensity: number): string {
   if (intensity <= 3) return 'bg-slate-800';
-  if (intensity <= 6) return 'bg-amber-900';
+  if (intensity <= 6) return 'bg-red-800';
   return 'bg-red-700';
 }
 
@@ -503,7 +503,7 @@ export default function SceneScriptsPage() {
           </Button>
           <Button
             onClick={handleMarkReady}
-            className="bg-green-800 hover:bg-green-700 text-white flex-1"
+            className="bg-red-700 hover:bg-red-700 text-white flex-1"
             data-testid="button-mark-ready"
           >
             <Check className="w-4 h-4 mr-1" /> MARK READY
@@ -564,7 +564,7 @@ export default function SceneScriptsPage() {
                 <span
                   className={`text-xs px-2 py-1 rounded-full font-medium ${
                     script.status === 'ready'
-                      ? 'bg-green-900 text-green-300'
+                      ? 'bg-red-700 text-red-400'
                       : 'bg-slate-800 text-slate-400'
                   }`}
                   data-testid={`status-badge-${script.id}`}
