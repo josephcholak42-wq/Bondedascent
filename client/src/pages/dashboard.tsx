@@ -278,6 +278,13 @@ export default function BondedAscentApp() {
   const [worshipDone, setWorshipDone] = useState(false);
   const [aftercareActions, setAftercareActions] = useState<string[]>([]);
 
+  const activeOverlayRef = useRef(activeOverlay);
+  const modalRef = useRef(modal);
+  const activeViewRef = useRef(activeView);
+  useEffect(() => { activeOverlayRef.current = activeOverlay; }, [activeOverlay]);
+  useEffect(() => { modalRef.current = modal; }, [modal]);
+  useEffect(() => { activeViewRef.current = activeView; }, [activeView]);
+
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       const state = e.state;
@@ -287,25 +294,15 @@ export default function BondedAscentApp() {
         setActiveView(state.activeView || "dashboard");
         if (state.interrogationPhase) setInterrogationPhase(state.interrogationPhase);
       } else {
-        if (activeOverlay) {
-          e.preventDefault();
-          window.history.pushState({ dashboardNav: true, activeView, modal: null, activeOverlay: null }, "");
-          setActiveOverlay(null);
-        } else if (modal) {
-          e.preventDefault();
-          window.history.pushState({ dashboardNav: true, activeView, modal: null, activeOverlay: null }, "");
-          setModal(null);
-        } else if (activeView !== "dashboard") {
-          e.preventDefault();
-          window.history.pushState({ dashboardNav: true, activeView: "dashboard", modal: null, activeOverlay: null }, "");
-          setActiveView("dashboard");
-        }
+        setActiveOverlay(null);
+        setModal(null);
+        setActiveView("dashboard");
       }
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [activeView, modal, activeOverlay]);
+  }, []);
 
   const navigateView = useCallback((view: string) => {
     window.history.pushState({ dashboardNav: true, activeView: view, modal: null, activeOverlay: null }, "");
@@ -314,20 +311,20 @@ export default function BondedAscentApp() {
 
   const openModal = useCallback((m: string | null) => {
     if (m) {
-      window.history.pushState({ dashboardNav: true, activeView, modal: m, activeOverlay: null }, "");
+      window.history.pushState({ dashboardNav: true, activeView: activeViewRef.current, modal: m, activeOverlay: null }, "");
     }
     setModal(m);
-  }, [activeView]);
+  }, []);
 
   const openOverlay = useCallback((overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare" | null) => {
     if (overlay) {
-      window.history.pushState({ dashboardNav: true, activeView, modal: null, activeOverlay: overlay }, "");
+      window.history.pushState({ dashboardNav: true, activeView: activeViewRef.current, modal: null, activeOverlay: overlay }, "");
     }
     setActiveOverlay(overlay);
-  }, [activeView]);
+  }, []);
 
   const closeOverlay = useCallback(() => {
-    if (window.history.state?.dashboardNav) {
+    if (window.history.state?.dashboardNav && window.history.state?.activeOverlay) {
       window.history.back();
     } else {
       setActiveOverlay(null);
@@ -335,7 +332,7 @@ export default function BondedAscentApp() {
   }, []);
 
   const closeModal = useCallback(() => {
-    if (window.history.state?.dashboardNav) {
+    if (window.history.state?.dashboardNav && window.history.state?.modal) {
       window.history.back();
     } else {
       setModal(null);
@@ -4336,7 +4333,7 @@ export default function BondedAscentApp() {
       )}
 
       {activeOverlay === "interrogation" && interrogationPhase === "setup" && (
-        <div className="overlay-enter fixed inset-0 z-[80]">
+        <div className="overlay-enter fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4">
         <InterrogationSetup
           onSubmit={(data) => {
             setInterrogationConfig(data);
@@ -4379,7 +4376,7 @@ export default function BondedAscentApp() {
       )}
 
       {activeOverlay === "interrogation" && interrogationPhase === "results" && (
-        <div className="overlay-enter fixed inset-0 z-[80]">
+        <div className="overlay-enter fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4">
         <InterrogationResults
           session={{
             title: interrogationConfig?.title || "Interrogation",
