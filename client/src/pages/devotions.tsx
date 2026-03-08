@@ -8,10 +8,10 @@ import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import { PREBUILT_DEVOTIONS, DEVOTION_CATEGORIES } from '@/lib/prebuilt-devotions';
 
 const typeColors: Record<string, string> = {
-  affirmation: 'bg-pink-400/20 text-pink-400',
-  prayer: 'bg-purple-400/20 text-purple-400',
-  mantra: 'bg-amber-400/20 text-amber-400',
-  gratitude: 'bg-green-400/20 text-green-400',
+  affirmation: 'bg-rose-600/20 text-rose-600',
+  prayer: 'bg-red-400/20 text-red-400',
+  mantra: 'bg-slate-400/20 text-slate-400',
+  gratitude: 'bg-red-400/20 text-red-400',
 };
 
 export default function DevotionsPage() {
@@ -225,7 +225,7 @@ export default function DevotionsPage() {
                     {devotion.type}
                   </span>
                   {devotion.completed && (
-                    <span className="text-xs text-green-500 uppercase tracking-wider" data-testid={`text-completed-${devotion.id}`}>
+                    <span className="text-xs text-red-500 uppercase tracking-wider" data-testid={`text-completed-${devotion.id}`}>
                       Completed
                     </span>
                   )}
@@ -240,7 +240,7 @@ export default function DevotionsPage() {
                   data-testid={`button-toggle-devotion-${devotion.id}`}
                   variant="ghost"
                   size="sm"
-                  className={devotion.completed ? 'text-green-500 hover:text-green-400' : 'text-slate-600 hover:text-slate-400'}
+                  className={devotion.completed ? 'text-red-500 hover:text-red-400' : 'text-slate-600 hover:text-slate-400'}
                   onClick={() => handleToggleCompleted(devotion)}
                   disabled={updateMutation.isPending}
                 >

@@ -32,11 +32,11 @@ const TYPE_CONFIG: Record<FeedItemType, { color: string; borderColor: string; bg
   demand: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/60 to-red-950/20", glowColor: "shadow-red-500/20", icon: Siren, label: "DEMAND" },
   command: { color: "text-orange-400", borderColor: "border-l-orange-500", bgColor: "bg-gradient-to-r from-orange-950/50 to-orange-950/15", glowColor: "shadow-orange-500/15", icon: Zap, label: "ORDER" },
   accusation: { color: "text-rose-400", borderColor: "border-l-rose-500", bgColor: "bg-gradient-to-r from-rose-950/50 to-rose-950/15", glowColor: "shadow-rose-500/15", icon: AlertTriangle, label: "ACCUSATION" },
-  task: { color: "text-blue-400", borderColor: "border-l-blue-500", bgColor: "bg-gradient-to-r from-blue-950/40 to-blue-950/10", glowColor: "shadow-blue-500/10", icon: Target, label: "PROTOCOL" },
+  task: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/40 to-red-950/10", glowColor: "shadow-red-500/10", icon: Target, label: "PROTOCOL" },
   punishment: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "bg-gradient-to-r from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT" },
-  reward: { color: "text-amber-400", borderColor: "border-l-amber-500", bgColor: "bg-gradient-to-r from-amber-950/40 to-amber-950/10", glowColor: "shadow-amber-500/15", icon: Gift, label: "REWARD" },
-  dare: { color: "text-fuchsia-400", borderColor: "border-l-fuchsia-500", bgColor: "bg-gradient-to-r from-fuchsia-950/40 to-fuchsia-950/10", glowColor: "shadow-fuchsia-500/15", icon: Sparkles, label: "DARE" },
-  checkin_review: { color: "text-purple-400", borderColor: "border-l-purple-500", bgColor: "bg-gradient-to-r from-purple-950/40 to-purple-950/10", glowColor: "shadow-purple-500/15", icon: MessageSquare, label: "CHECK-IN" },
+  reward: { color: "text-slate-400", borderColor: "border-l-slate-300", bgColor: "bg-gradient-to-r from-slate-950/40 to-slate-950/10", glowColor: "shadow-slate-300/15", icon: Gift, label: "REWARD" },
+  dare: { color: "text-rose-500", borderColor: "border-l-rose-600", bgColor: "bg-gradient-to-r from-rose-950/40 to-rose-950/10", glowColor: "shadow-rose-600/15", icon: Sparkles, label: "DARE" },
+  checkin_review: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/40 to-red-950/10", glowColor: "shadow-red-500/15", icon: MessageSquare, label: "CHECK-IN" },
   notification: { color: "text-slate-400", borderColor: "border-l-slate-600", bgColor: "bg-gradient-to-r from-slate-900/50 to-slate-900/20", glowColor: "shadow-slate-500/5", icon: Bell, label: "INFO" },
 };
 
@@ -62,7 +62,7 @@ function CountdownTimer({ seconds }: { seconds: number }) {
     return () => clearInterval(interval);
   }, [seconds]);
 
-  const urgency = remaining < 60 ? "text-red-400 animate-pulse" : remaining < 180 ? "text-orange-400" : "text-yellow-400";
+  const urgency = remaining < 60 ? "text-red-400 animate-pulse" : remaining < 180 ? "text-orange-400" : "text-slate-400";
   return (
     <span className={`text-sm font-mono font-black tabular-nums ${urgency}`}>
       {formatCountdown(remaining)}
@@ -128,8 +128,8 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
 
         {item.type === "checkin_review" && role === "dom" && (
           <div className="flex gap-2 mt-2.5 items-center">
-            <div className="flex items-center gap-1.5 bg-black/30 rounded-lg px-2 py-1 border border-purple-900/30">
-              <span className="text-[9px] text-purple-400 font-bold">XP</span>
+            <div className="flex items-center gap-1.5 bg-black/30 rounded-lg px-2 py-1 border border-red-900/30">
+              <span className="text-[9px] text-red-400 font-bold">XP</span>
               <input
                 data-testid={`checkin-xp-${item.id}`}
                 type="number"
@@ -143,7 +143,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
             <Button
               data-testid={`checkin-approve-${item.id}`}
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-emerald-500/20"
+              className="bg-red-700 hover:bg-red-600 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-600/20"
               onClick={() => onAction(item.id, "approve", xpAmount)}
             >
               Approve
@@ -186,12 +186,12 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
             data-testid={`task-toggle-${item.id}`}
             className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${
               item.data?.done 
-                ? "border-green-500 bg-green-500/20" 
-                : "border-blue-500/40 hover:border-blue-400 hover:bg-blue-500/10"
+                ? "border-red-500 bg-red-500/20" 
+                : "border-red-500/40 hover:border-red-400 hover:bg-red-500/10"
             }`}
             onClick={() => onAction(item.id, "toggle")}
           >
-            {item.data?.done && <CheckCircle size={14} className="text-green-400" />}
+            {item.data?.done && <CheckCircle size={14} className="text-red-400" />}
           </button>
         )}
         {item.type === "punishment" && (
@@ -208,7 +208,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
           <Button
             data-testid={`reward-redeem-${item.id}`}
             size="sm"
-            className="bg-amber-600 hover:bg-amber-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-amber-500/20"
+            className="bg-slate-600 hover:bg-slate-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-slate-500/20"
             onClick={() => onAction(item.id, "redeem")}
           >
             Redeem
@@ -218,7 +218,7 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: ActionFe
           <Button
             data-testid={`dare-complete-${item.id}`}
             size="sm"
-            className="bg-fuchsia-600 hover:bg-fuchsia-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-fuchsia-500/20"
+            className="bg-rose-600 hover:bg-rose-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-rose-500/20"
             onClick={() => onAction(item.id, "complete")}
           >
             Done
@@ -304,8 +304,8 @@ export function ActionFeed({ items, onAction, role }: ActionFeedProps) {
 
       {sorted.length === 0 ? (
         <div className="text-center py-10" data-testid="feed-empty">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-            <CheckCircle size={28} className="text-emerald-500/40" />
+          <div className="w-16 h-16 rounded-full bg-red-600/10 flex items-center justify-center mx-auto mb-3">
+            <CheckCircle size={28} className="text-red-600/40" />
           </div>
           <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em]">All clear</p>
           <p className="text-[10px] text-slate-600 mt-1">Nothing requires your attention</p>

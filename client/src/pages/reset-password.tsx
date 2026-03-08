@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-900/10 blur-[100px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/10 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-slate-900/10 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="w-full max-w-md z-10 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center mb-10">
@@ -151,8 +151,8 @@ export default function ResetPasswordPage() {
           {step === 'token' && (
             <form onSubmit={handleResetPassword} className="space-y-6 animate-in slide-in-from-right duration-300">
               <div className="text-center mb-4">
-                <div className="inline-block px-4 py-2 bg-green-950/40 border border-green-500/30 rounded-xl mb-3">
-                  <p className="text-xs text-green-400 font-bold uppercase tracking-wider">Reset code verified</p>
+                <div className="inline-block px-4 py-2 bg-red-950/40 border border-red-500/30 rounded-xl mb-3">
+                  <p className="text-xs text-red-400 font-bold uppercase tracking-wider">Reset code verified</p>
                 </div>
                 <p className="text-sm text-slate-400">Now enter your new password.</p>
               </div>
@@ -207,7 +207,7 @@ export default function ResetPasswordPage() {
 
           {step === 'done' && (
             <div className="text-center space-y-6 animate-in zoom-in-95 duration-300">
-              <CheckCircle size={64} className="mx-auto text-green-500" />
+              <CheckCircle size={64} className="mx-auto text-red-500" />
               <div>
                 <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Password Reset</h3>
                 <p className="text-sm text-slate-400">Your password has been changed. You can now log in with your new password.</p>
@@ -215,7 +215,7 @@ export default function ResetPasswordPage() {
               <Button
                 data-testid="button-back-to-login"
                 onClick={() => setLocation('/auth')}
-                className="w-full py-6 bg-gradient-to-r from-green-800 to-green-950 hover:from-green-700 hover:to-green-900 border-t border-green-500/30 text-white font-black uppercase tracking-widest rounded-xl shadow-lg"
+                className="w-full py-6 bg-gradient-to-r from-red-800 to-red-950 hover:from-red-700 hover:to-red-900 border-t border-red-500/30 text-white font-black uppercase tracking-widest rounded-xl shadow-lg"
               >
                 Back to Login
               </Button>

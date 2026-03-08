@@ -2,11 +2,13 @@
 
 ## Overview
 
-BondedAscent is a full-stack web application designed for dynamic protocol management between paired users, featuring a gamified system with XP tracking, leveling, dares, rewards, punishments, journaling, notifications, and activity logging. It supports two distinct user roles ("sub" and "dom") with role-based interfaces and interactions. The application aims to provide a comprehensive platform for managing structured relationships with an emphasis on gamification, detailed tracking, and customizable interactions, all within a dark, dramatic aesthetic. Key features include an interactive "Velvet Mode" with role-specific orbital interfaces, a central "Command Center" for all interactions, and an extensive system for prebuilt content and customizable protocols.
+BondedAscent is a full-stack web application designed for dynamic protocol management between paired users, featuring a gamified system with XP tracking, leveling, dares, rewards, punishments, journaling, notifications, and activity logging. It supports two distinct user roles ("sub" and "dom") with role-based interfaces and interactions. The entire app is usable through the Command Center — a central hub integrating all app functionality. The aesthetic is dark, adult, rated-R: deep reds, blacks, crimsons, burgundy, charcoal, and blood-red accents only.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Color palette: Only deep reds (#991b1b, #7f1d1d), blacks (#030303, #0a0a0a), crimsons, burgundy, charcoal (slate-700/800), ash-white text (slate-300/400). NO bright/playful colors.
+Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 
 ## System Architecture
 
@@ -18,12 +20,23 @@ Preferred communication style: Simple, everyday language.
 - **Styling**: Tailwind CSS, CSS variables for theming, custom fonts (Montserrat, Playfair Display, Inter)
 - **Build Tool**: Vite
 - **Key Components**:
-    - **Velvet Mode**: Role-specific interactive dashboards with dynamic elements (e.g., rotating command words, devotion-pulse animation, compliance gauge, 3D Body Map).
-    - **Command Center**: A central hub (`CommandProtocols` component) integrating all app functionalities, featuring expandable feed cards, pinning, global search, live activity timeline, sparkline trend charts, and bulk actions across 24 item types.
-    - **Universal Creator**: A component (`UniversalCreator`) for creating various content types via a category picker grid and slash-command shortcuts.
+    - **Command Center**: Central hub (`CommandProtocols` component) integrating ALL app functionality — expandable feed cards, pinning, global search, live activity timeline, sparkline trend charts, bulk actions across 24+ feed types, feature drawers.
+    - **Live Session Engine** (`live-session.tsx`): Full-screen immersive session mode with Dom control panel and Sub receiver view, intensity-based visual effects, phase management, safe word support.
+    - **Interrogation Mode** (`interrogation.tsx`): Three components — InterrogationSetup (Dom), InterrogationMode (Sub full-screen Q&A with timer), InterrogationResults.
+    - **Confession Booth** (`confession-booth.tsx`): Full-screen overlay with Sub typing mode and Dom review/response mode.
+    - **Aftercare Checklist** (`aftercare-checklist.tsx`): Post-session checklist with calming dark aesthetic, mood rating, notes.
+    - **Mood Chart** (`mood-chart.tsx`): SVG line chart for mood/obedience history over 30 days.
+    - **Ambient Presence** (`ambient-presence.tsx`): Persistent indicator showing pending protocol count.
+    - **Universal Creator**: Content creation via category picker grid and slash-command shortcuts.
     - **Feature Drawers**: Collapsible sections for quick access, sticker rewards, access control, crisis override, protocol/structure, scenes/trials, bond/reflection, and records/surveillance.
-    - **Media Upload**: Polymorphic file attachment system with a reusable `<MediaUpload>` component.
-    - **Sexy Icon System**: AI-generated photorealistic 3D-rendered BDSM-themed icons with animations, replacing standard vector icons.
+    - **Media Upload**: Polymorphic file attachment system with `<MediaUpload>` component.
+
+### Pages
+- **Dashboard** (`dashboard.tsx`): Main view — only header, safeword, and CommandProtocols. No content below Command Center.
+- **Contracts** (`contracts.tsx`): Contract lifecycle with signing ceremony animation.
+- **Training Programs** (`training-programs.tsx`): Day-by-day training with progress ladder and graduation.
+- **Scene Scripts** (`scene-scripts.tsx`): Script builder with step editor, timeline visualization, preview mode.
+- **Analytics** (`analytics.tsx`): Three tabs — Analytics (charts/heatmaps), Calendar (monthly grid), Relationship (bond health).
 
 ### Backend
 - **Framework**: Express 5 with Node.js and TypeScript
@@ -31,6 +44,7 @@ Preferred communication style: Simple, everyday language.
 - **Authentication**: Passport.js with Local Strategy, session-based using `express-session` and `connect-pg-simple`.
 - **Password Hashing**: Node.js `crypto.scrypt`.
 - **Request Validation**: Zod schemas.
+- **Push Notifications**: web-push with VAPID keys (`server/push.ts`).
 - **Development**: Vite dev server as middleware with HMR.
 
 ### Data Storage
@@ -38,19 +52,30 @@ Preferred communication style: Simple, everyday language.
 - **ORM**: Drizzle ORM with `drizzle-zod`.
 - **Schema**: `shared/schema.ts` for shared client/server schema.
 - **Storage Layer**: Abstracted via `IStorage` interface in `server/storage.ts`.
+- **Tables** (43 total): users, tasks, check_ins, dares, rewards, punishments, journal_entries, notifications, activity_log, rituals, limits, secrets, wagers, ratings, countdown_events, standing_orders, permission_requests, devotions, conflicts, desired_changes, achievements, play_sessions, accusations, intensity_sessions, obedience_trials, trial_steps, sensation_cards, sensation_spins, sealed_orders, endurance_challenges, endurance_checkins, media, stickers, feature_settings, body_map_zones, push_subscriptions, contracts, confessions, training_programs, training_days, training_enrollments, scene_scripts, script_steps, interrogation_sessions, interrogation_questions, aftercare_items, streaks.
+
+### API Endpoints (key new ones)
+- `GET /api/trends` — 7-day rolling trend data for sparklines
+- `GET /api/streaks` — Current/longest streaks per type
+- `GET /api/analytics` — 30-day mood, task completion, active hours
+- `GET /api/analytics/relationship` — Days bonded, sessions, bond health
+- CRUD: `/api/contracts`, `/api/confessions`, `/api/training-programs`, `/api/scene-scripts`, `/api/interrogation-sessions`, `/api/aftercare-items`
+- `PUT /api/play-sessions/:id/live` — Live session state updates
+- `POST /api/rituals/:id/remind` — Trigger push notification reminder
 
 ### Core Architectural Decisions
-- **Role-Based Access Control**: `created_as_role` column on 32 content tables ensures data separation based on the user's role at creation. Read paths filter based on the viewing user's current role or partner's role for shared data.
-- **Pair-Aware Data Sharing**: Most data endpoints fetch and display data relevant to both paired users.
-- **Gamification Mechanics**: XP, leveling, dares, rewards, punishments, and check-ins drive user engagement.
-- **Content Management**: Extensive prebuilt libraries for punishments, rewards, scenes, rituals, standing orders, wagers, devotions, limits, and desired changes, all filterable and searchable.
-- **Dynamic Content Monetization**: Purchasable secrets, journal entries, and locked media using in-app currency (XP/sticker points).
-- **Media Handling**: Local file storage for uploads in `/uploads/` with a `media` table for metadata.
-- **Theming & Aesthetics**: Dark, dramatic aesthetic with red accents, custom fonts, and specific "Velvet Mode" visual enhancements.
-- **User Feedback**: Web Audio API and haptic feedback for key interactions.
+- **Command Center First**: Everything usable through Command Center. Dashboard shows only CommandProtocols.
+- **Done Removes Item**: Completed tasks/dares/punishments/rewards filtered from active feed.
+- **Role-Based Access Control**: `created_as_role` column on content tables ensures data separation.
+- **Pair-Aware Data Sharing**: Most data endpoints fetch data relevant to both paired users.
+- **Gamification Mechanics**: XP, leveling, dares, rewards, punishments, check-ins, streaks.
+- **Dark Aesthetic**: All UI uses crimson/charcoal/black palette. Sub role = deep wine/burgundy.
+- **PWA Support**: Manifest at `client/public/manifest.json` for home screen installation.
+- **Media Handling**: Local file storage in `/uploads/` with `media` table for metadata.
 - **Feature Toggles**: Dom users can enable/disable features for their sub.
 
 ## External Dependencies
 
 - **PostgreSQL**: Primary database for application data and session storage.
 - **Google Fonts**: Montserrat, Playfair Display, Inter for custom typography.
+- **web-push**: Push notifications via VAPID keys.

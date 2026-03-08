@@ -29,6 +29,10 @@ import SubStatusPage from "@/pages/sub-status";
 import DomOverviewPage from "@/pages/dom-overview";
 import ResetPasswordPage from "@/pages/reset-password";
 import LockedMediaPage from "@/pages/locked-media";
+import SceneScriptsPage from "@/pages/scene-scripts";
+import ContractsPage from "@/pages/contracts";
+import TrainingProgramsPage from "@/pages/training-programs";
+import AnalyticsPage from "@/pages/analytics";
 import { useAuth } from "@/lib/hooks";
 import { Loader2 } from "lucide-react";
 
@@ -92,6 +96,10 @@ function Router() {
       <Route path="/protocol-lockbox" component={() => <ProtectedRoute component={ProtocolLockboxPage} />} />
       <Route path="/endurance-challenges" component={() => <ProtectedRoute component={EnduranceChallengesPage} />} />
       <Route path="/locked-media" component={() => <ProtectedRoute component={LockedMediaPage} />} />
+      <Route path="/scene-scripts" component={() => <ProtectedRoute component={SceneScriptsPage} />} />
+      <Route path="/contracts" component={() => <ProtectedRoute component={ContractsPage} />} />
+      <Route path="/training-programs" component={() => <ProtectedRoute component={TrainingProgramsPage} />} />
+      <Route path="/analytics" component={() => <ProtectedRoute component={AnalyticsPage} />} />
       <Route path="/sub-status" component={() => <ProtectedRoute component={SubStatusPage} />} />
       <Route path="/dom-overview" component={() => <ProtectedRoute component={DomOverviewPage} />} />
       <Route path="/auth" component={AuthRoute} />

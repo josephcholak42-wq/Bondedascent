@@ -352,7 +352,7 @@ function HoverLabel({
       <div
         className={`px-3 py-1.5 rounded-full backdrop-blur-xl text-[10px] font-bold uppercase tracking-[0.15em] border transition-all duration-300 ${
           status === "desire"
-            ? "bg-amber-950/70 border-amber-500/40 text-amber-300 shadow-[0_0_15px_rgba(255,215,0,0.25)]"
+            ? "bg-red-950/70 border-red-500/40 text-red-300 shadow-[0_0_15px_rgba(220,38,38,0.25)]"
             : status === "void"
               ? "bg-slate-950/70 border-slate-600/30 text-slate-500"
               : "bg-white/5 border-white/15 text-white/70"
@@ -360,7 +360,7 @@ function HoverLabel({
       >
         {label}
         {status === "desire" && zoneData && (
-          <span className="ml-1.5 text-amber-400/60">{zoneData.intensity}%</span>
+          <span className="ml-1.5 text-red-400/60">{zoneData.intensity}%</span>
         )}
         {status === "void" && <span className="ml-1.5">🚫</span>}
       </div>
@@ -385,7 +385,7 @@ function ZoneLabel({
       <div
         className={`px-4 py-2 rounded-full backdrop-blur-xl text-xs font-bold uppercase tracking-[0.2em] border transition-all duration-500 ${
           activeZone.status === "desire"
-            ? "bg-amber-950/60 border-amber-500/40 text-amber-300 shadow-[0_0_20px_rgba(255,215,0,0.3)]"
+            ? "bg-red-950/60 border-red-500/40 text-red-300 shadow-[0_0_20px_rgba(220,38,38,0.3)]"
             : activeZone.status === "void"
               ? "bg-slate-950/60 border-slate-600/30 text-slate-500"
               : "bg-white/5 border-white/10 text-white/60"
@@ -396,7 +396,7 @@ function ZoneLabel({
         </span>
         {label}
         {activeZone.status === "desire" && (
-          <span className="ml-2 text-amber-400/60">{activeZone.intensity}%</span>
+          <span className="ml-2 text-red-400/60">{activeZone.intensity}%</span>
         )}
       </div>
     </div>
@@ -407,7 +407,7 @@ function IOSPulse({ active }: { active: boolean }) {
   if (!active) return null;
   return (
     <div className="absolute inset-0 z-20 pointer-events-none">
-      <div className="absolute inset-0 border-2 border-amber-400/30 rounded-2xl animate-ping" style={{ animationDuration: "1s" }} />
+      <div className="absolute inset-0 border-2 border-red-400/30 rounded-2xl animate-ping" style={{ animationDuration: "1s" }} />
     </div>
   );
 }
@@ -512,8 +512,8 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
     <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden" data-testid="body-map-3d">
       <div className="absolute top-3 left-0 right-0 z-30 flex justify-center pointer-events-none">
         <div className="flex items-center gap-3 text-[9px] uppercase tracking-[0.2em] font-bold">
-          <span className="text-amber-400/70 flex items-center gap-1" data-testid="text-desire-count">
-            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(255,215,0,0.5)]" />
+          <span className="text-red-400/70 flex items-center gap-1" data-testid="text-desire-count">
+            <span className="w-2 h-2 rounded-full bg-red-400 shadow-[0_0_6px_rgba(220,38,38,0.5)]" />
             {desireCount} desire
           </span>
           <span className="text-slate-600">|</span>
@@ -535,8 +535,8 @@ export default function BodyMap3D({ zones, onZoneUpdate, onReset }: BodyMap3DPro
       {loading && (
         <div className="absolute inset-0 z-40 flex items-center justify-center bg-black">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 size={24} className="text-amber-500/50 animate-spin" />
-            <span className="text-amber-500/50 text-[10px] uppercase tracking-[0.3em] font-bold">Loading Model</span>
+            <Loader2 size={24} className="text-red-500/50 animate-spin" />
+            <span className="text-red-500/50 text-[10px] uppercase tracking-[0.3em] font-bold">Loading Model</span>
           </div>
         </div>
       )}

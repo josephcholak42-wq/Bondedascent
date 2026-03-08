@@ -92,8 +92,8 @@ export default function DomOverviewPage() {
       icon: <ListChecks size={18} />,
       label: 'Assigned Tasks',
       count: activeTasks.length,
-      color: 'text-blue-400',
-      bgColor: 'bg-blue-500/10 border-blue-500/30',
+      color: 'text-slate-400',
+      bgColor: 'bg-slate-500/10 border-slate-500/30',
       href: '/',
       items: activeTasks.slice(0, 5).map((t: any) => ({
         text: t.text || t.title || t.name,
@@ -116,8 +116,8 @@ export default function DomOverviewPage() {
       icon: <Flame size={18} />,
       label: 'Assigned Rituals',
       count: activeRituals.length,
-      color: 'text-orange-400',
-      bgColor: 'bg-orange-500/10 border-orange-500/30',
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/10 border-red-500/30',
       href: '/rituals',
       items: activeRituals.slice(0, 5).map((r: any) => ({
         text: r.name || r.title,
@@ -140,8 +140,8 @@ export default function DomOverviewPage() {
       icon: <Shield size={18} />,
       label: 'Issued Trials',
       count: activeTrials.length,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10 border-amber-500/30',
+      color: 'text-slate-400',
+      bgColor: 'bg-slate-500/10 border-slate-500/30',
       href: '/obedience-trials',
       items: activeTrials.slice(0, 3).map((t: any) => ({
         text: t.title,
@@ -152,8 +152,8 @@ export default function DomOverviewPage() {
       icon: <Hourglass size={18} />,
       label: 'Active Challenges',
       count: activeChallenges.length,
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-500/10 border-orange-500/30',
+      color: 'text-red-500',
+      bgColor: 'bg-red-500/10 border-red-500/30',
       href: '/endurance-challenges',
       items: activeChallenges.slice(0, 3).map((c: any) => ({
         text: c.title,
@@ -164,8 +164,8 @@ export default function DomOverviewPage() {
       icon: <Lock size={18} />,
       label: 'Sealed Orders',
       count: pendingSealedOrders.length,
-      color: 'text-violet-400',
-      bgColor: 'bg-violet-500/10 border-violet-500/30',
+      color: 'text-slate-400',
+      bgColor: 'bg-slate-500/10 border-slate-500/30',
       href: '/protocol-lockbox',
       items: pendingSealedOrders.slice(0, 3).map((o: any) => ({
         text: o.title,
@@ -188,8 +188,8 @@ export default function DomOverviewPage() {
       icon: <Dices size={18} />,
       label: 'Wagers',
       count: activeWagers.length,
-      color: 'text-yellow-400',
-      bgColor: 'bg-yellow-500/10 border-yellow-500/30',
+      color: 'text-slate-400',
+      bgColor: 'bg-slate-500/10 border-slate-500/30',
       href: '/wagers',
       items: activeWagers.slice(0, 3).map((w: any) => ({
         text: w.title || w.description,
@@ -200,8 +200,8 @@ export default function DomOverviewPage() {
       icon: <Target size={18} />,
       label: 'Desired Changes',
       count: pendingChanges.length,
-      color: 'text-teal-400',
-      bgColor: 'bg-teal-500/10 border-teal-500/30',
+      color: 'text-slate-400',
+      bgColor: 'bg-slate-500/10 border-slate-500/30',
       href: '/desired-changes',
       items: pendingChanges.slice(0, 3).map((c: any) => ({
         text: c.title || c.description,
@@ -212,8 +212,8 @@ export default function DomOverviewPage() {
       icon: <Clock size={18} />,
       label: 'Countdown Events',
       count: upcomingCountdowns.length,
-      color: 'text-cyan-400',
-      bgColor: 'bg-cyan-500/10 border-cyan-500/30',
+      color: 'text-slate-400',
+      bgColor: 'bg-slate-500/10 border-slate-500/30',
       href: '/countdown-events',
       items: upcomingCountdowns.slice(0, 3).map((c: any) => ({
         text: c.title,
@@ -224,8 +224,8 @@ export default function DomOverviewPage() {
       icon: <Activity size={18} />,
       label: 'Planned Sessions',
       count: upcomingSessions.length,
-      color: 'text-green-400',
-      bgColor: 'bg-green-500/10 border-green-500/30',
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/10 border-red-500/30',
       href: '/play-sessions',
       items: upcomingSessions.slice(0, 3).map((s: any) => ({
         text: s.title || s.description,
@@ -240,14 +240,14 @@ export default function DomOverviewPage() {
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       urgent: 'bg-red-600/30 text-red-400',
-      active: 'bg-green-600/30 text-green-400',
-      pending: 'bg-amber-600/30 text-amber-400',
-      sealed: 'bg-violet-600/30 text-violet-400',
-      unlocked: 'bg-green-600/30 text-green-400',
+      active: 'bg-red-600/30 text-red-400',
+      pending: 'bg-slate-600/30 text-slate-400',
+      sealed: 'bg-slate-600/30 text-slate-400',
+      unlocked: 'bg-red-600/30 text-red-400',
       done: 'bg-slate-600/30 text-slate-400',
-      planned: 'bg-blue-600/30 text-blue-400',
+      planned: 'bg-slate-600/30 text-slate-400',
       failed: 'bg-red-600/30 text-red-400',
-      passed: 'bg-green-600/30 text-green-400',
+      passed: 'bg-red-600/30 text-red-400',
       standard: 'bg-slate-600/30 text-slate-400',
     };
     return map[status] || 'bg-slate-600/30 text-slate-400';
@@ -258,7 +258,7 @@ export default function DomOverviewPage() {
       <PageBreadcrumb current="Dom Overview" />
 
       <div className="flex items-center gap-3 mb-2">
-        <Crown className="text-amber-500" size={28} />
+        <Crown className="text-red-500" size={28} />
         <h1 className="text-2xl font-bold text-white uppercase tracking-wider" data-testid="text-page-title">
           Command Center
         </h1>
@@ -273,12 +273,12 @@ export default function DomOverviewPage() {
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Active</div>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center" data-testid="stat-pending-review">
-          <div className={`text-3xl font-black ${totalPendingReview > 0 ? 'text-amber-400' : 'text-slate-600'}`}>{totalPendingReview}</div>
+          <div className={`text-3xl font-black ${totalPendingReview > 0 ? 'text-red-400' : 'text-slate-600'}`}>{totalPendingReview}</div>
           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Needs Review</div>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 text-center" data-testid="stat-enforcement">
           <div className="flex items-center justify-center gap-1">
-            <div className={`text-3xl font-black ${enforcementLevel >= 4 ? 'text-red-400' : enforcementLevel >= 2 ? 'text-amber-400' : 'text-slate-400'}`}>
+            <div className={`text-3xl font-black ${enforcementLevel >= 4 ? 'text-red-400' : enforcementLevel >= 2 ? 'text-red-400' : 'text-slate-400'}`}>
               {enforcementLevel}
             </div>
             <div className="text-xs text-slate-500">/5</div>
@@ -298,19 +298,19 @@ export default function DomOverviewPage() {
       )}
 
       {(pendingCheckins.length > 0 || pendingAccusations.length > 0 || unacknowledgedCommands.length > 0) && (
-        <div className="bg-amber-950/30 border border-amber-600/40 rounded-xl p-4 mb-6" data-testid="needs-attention">
+        <div className="bg-red-950/30 border border-red-600/40 rounded-xl p-4 mb-6" data-testid="needs-attention">
           <div className="flex items-center gap-2 mb-3">
-            <Gauge size={16} className="text-amber-500" />
-            <span className="text-xs font-black text-amber-400 uppercase tracking-widest">Needs Your Attention</span>
+            <Gauge size={16} className="text-red-500" />
+            <span className="text-xs font-black text-red-400 uppercase tracking-widest">Needs Your Attention</span>
           </div>
           {pendingCheckins.length > 0 && (
             <button
               data-testid="link-pending-checkins"
               onClick={() => setLocation('/')}
-              className="w-full bg-amber-950/40 border border-amber-800/40 rounded-lg p-3 mb-2 flex items-center justify-between cursor-pointer hover:bg-amber-950/60 transition-colors"
+              className="w-full bg-red-950/40 border border-red-800/40 rounded-lg p-3 mb-2 flex items-center justify-between cursor-pointer hover:bg-red-950/60 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <Users size={14} className="text-amber-400" />
+                <Users size={14} className="text-red-400" />
                 <span className="text-sm text-white">{pendingCheckins.length} check-in{pendingCheckins.length > 1 ? 's' : ''} awaiting review</span>
               </div>
               <ChevronRight size={14} className="text-slate-600" />
@@ -320,18 +320,18 @@ export default function DomOverviewPage() {
             <button
               data-testid="link-pending-accusations"
               onClick={() => setLocation('/')}
-              className="w-full bg-amber-950/40 border border-amber-800/40 rounded-lg p-3 mb-2 flex items-center justify-between cursor-pointer hover:bg-amber-950/60 transition-colors"
+              className="w-full bg-red-950/40 border border-red-800/40 rounded-lg p-3 mb-2 flex items-center justify-between cursor-pointer hover:bg-red-950/60 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <AlertTriangle size={14} className="text-amber-400" />
+                <AlertTriangle size={14} className="text-red-400" />
                 <span className="text-sm text-white">{pendingAccusations.length} accusation{pendingAccusations.length > 1 ? 's' : ''} pending response</span>
               </div>
               <ChevronRight size={14} className="text-slate-600" />
             </button>
           )}
           {unacknowledgedCommands.length > 0 && (
-            <div className="bg-amber-950/40 border border-amber-800/40 rounded-lg p-3 flex items-center gap-2">
-              <Siren size={14} className="text-amber-400" />
+            <div className="bg-red-950/40 border border-red-800/40 rounded-lg p-3 flex items-center gap-2">
+              <Siren size={14} className="text-red-400" />
               <span className="text-sm text-white">{unacknowledgedCommands.length} command{unacknowledgedCommands.length > 1 ? 's' : ''} not yet acknowledged</span>
             </div>
           )}

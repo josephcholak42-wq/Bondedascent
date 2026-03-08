@@ -88,10 +88,10 @@ export default function LockedMediaPage() {
             {isDom ? "Upload locked photos & videos for your Sub to unlock" : "Unlock your Dom's hidden content with XP"}
           </p>
           <div className="flex items-center justify-center gap-2 mt-2">
-            <Coins size={14} className="text-amber-400" />
-            <span className="text-xs text-amber-400 font-bold">Your XP: {user?.xp || 0}</span>
+            <Coins size={14} className="text-red-400" />
+            <span className="text-xs text-red-400 font-bold">Your XP: {user?.xp || 0}</span>
             <span className="text-xs text-slate-500">|</span>
-            <span className="text-xs text-purple-400 font-bold">Sticker Points: {user?.stickerBalance || 0}</span>
+            <span className="text-xs text-slate-400 font-bold">Sticker Points: {user?.stickerBalance || 0}</span>
           </div>
         </div>
 
@@ -115,7 +115,7 @@ export default function LockedMediaPage() {
                 data-testid="button-upload"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadMutation.isPending}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500"
+                className="bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700"
               >
                 <Upload size={14} className="mr-1" />
                 {uploadMutation.isPending ? "Uploading..." : "Upload"}
@@ -132,7 +132,7 @@ export default function LockedMediaPage() {
 
           {partnerMedia.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-xs font-black uppercase tracking-wider text-amber-400">
+              <h2 className="text-xs font-black uppercase tracking-wider text-red-400">
                 {isDom ? "Sub's Uploads" : "Partner's Locked Content"}
               </h2>
               <div className="grid grid-cols-2 gap-3">
@@ -142,8 +142,8 @@ export default function LockedMediaPage() {
                     data-testid={`media-card-${m.id}`}
                     className={`relative rounded-xl border overflow-hidden ${
                       m.isLocked && !m.url
-                        ? "border-amber-500/30 bg-amber-950/20"
-                        : "border-green-500/30 bg-green-950/20"
+                        ? "border-red-500/30 bg-red-950/20"
+                        : "border-red-500/30 bg-red-950/20"
                     }`}
                   >
                     {m.url ? (
@@ -157,13 +157,13 @@ export default function LockedMediaPage() {
                           <img src={m.url} alt="" className="w-full h-full object-cover" />
                         )}
                         <div className="absolute top-2 right-2">
-                          <Unlock size={14} className="text-green-400" />
+                          <Unlock size={14} className="text-red-400" />
                         </div>
                       </div>
                     ) : (
                       <div className="aspect-square flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-900 to-black">
-                        <Lock size={24} className="text-amber-400" />
-                        <span className="text-[10px] text-amber-400 font-bold">{m.unlockCost} XP</span>
+                        <Lock size={24} className="text-red-400" />
+                        <span className="text-[10px] text-red-400 font-bold">{m.unlockCost} XP</span>
                         {m.mimeType?.startsWith("video") ? (
                           <Video size={14} className="text-slate-500" />
                         ) : (
@@ -172,7 +172,7 @@ export default function LockedMediaPage() {
                         <Button
                           data-testid={`unlock-media-${m.id}`}
                           size="sm"
-                          className="bg-amber-600 hover:bg-amber-500 h-6 px-3 text-[10px] font-bold"
+                          className="bg-red-600 hover:bg-red-500 h-6 px-3 text-[10px] font-bold"
                           onClick={() => unlockMutation.mutate(m.id)}
                           disabled={unlockMutation.isPending}
                         >
@@ -188,13 +188,13 @@ export default function LockedMediaPage() {
 
           {myMedia.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-xs font-black uppercase tracking-wider text-purple-400">Your Uploads</h2>
+              <h2 className="text-xs font-black uppercase tracking-wider text-slate-400">Your Uploads</h2>
               <div className="grid grid-cols-2 gap-3">
                 {myMedia.map((m: any) => (
                   <div
                     key={m.id}
                     data-testid={`my-media-${m.id}`}
-                    className="relative rounded-xl border border-purple-500/30 overflow-hidden"
+                    className="relative rounded-xl border border-slate-500/30 overflow-hidden"
                   >
                     <div
                       className="aspect-square cursor-pointer"
@@ -209,9 +209,9 @@ export default function LockedMediaPage() {
                     <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1 flex items-center justify-between">
                       <span className="text-[9px] text-slate-300">{m.unlockCost} XP</span>
                       {m.isLocked ? (
-                        <Lock size={10} className="text-amber-400" />
+                        <Lock size={10} className="text-red-400" />
                       ) : (
-                        <Unlock size={10} className="text-green-400" />
+                        <Unlock size={10} className="text-red-400" />
                       )}
                     </div>
                   </div>

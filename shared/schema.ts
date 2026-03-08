@@ -125,6 +125,7 @@ export const rituals = pgTable("rituals", {
   timeOfDay: text("time_of_day"),
   active: boolean("active").notNull().default(true),
   lastCompleted: timestamp("last_completed"),
+  reminderEnabled: boolean("reminder_enabled").notNull().default(true),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -271,6 +272,10 @@ export const playSessions = pgTable("play_sessions", {
   status: text("status").notNull().default("planned"),
   scheduledFor: timestamp("scheduled_for"),
   completedAt: timestamp("completed_at"),
+  currentInstruction: text("current_instruction"),
+  currentIntensity: integer("current_intensity"),
+  currentPhase: text("current_phase"),
+  isLive: boolean("is_live").notNull().default(false),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -770,3 +775,184 @@ export const bodyMapZones = pgTable("body_map_zones", {
 export const insertBodyMapZoneSchema = createInsertSchema(bodyMapZones).omit({ id: true, createdAt: true, updatedAt: true });
 export type BodyMapZone = typeof bodyMapZones.$inferSelect;
 export type InsertBodyMapZone = z.infer<typeof insertBodyMapZoneSchema>;
+
+export const contracts = pgTable("contracts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  creatorId: varchar("creator_id").notNull(),
+  partnerId: varchar("partner_id"),
+  title: text("title").notNull(),
+  terms: text("terms"),
+  limits: text("limits"),
+  safeword: text("safeword"),
+  duration: text("duration"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  status: text("status").notNull().default("draft"),
+  signedByCreator: boolean("signed_by_creator").notNull().default(false),
+  signedByPartner: boolean("signed_by_partner").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertContractSchema = createInsertSchema(contracts).omit({ id: true, createdAt: true, signedByCreator: true, signedByPartner: true, status: true });
+export type Contract = typeof contracts.$inferSelect;
+export type InsertContract = z.infer<typeof insertContractSchema>;
+
+export const confessions = pgTable("confessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  partnerId: varchar("partner_id"),
+  content: text("content").notNull(),
+  response: text("response"),
+  respondedAt: timestamp("responded_at"),
+  status: text("status").notNull().default("pending"),
+  consequenceType: text("consequence_type"),
+  consequenceId: varchar("consequence_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertConfessionSchema = createInsertSchema(confessions).omit({ id: true, createdAt: true, response: true, respondedAt: true, status: true, consequenceType: true, consequenceId: true });
+export type Confession = typeof confessions.$inferSelect;
+export type InsertConfession = z.infer<typeof insertConfessionSchema>;
+
+export const trainingPrograms = pgTable("training_programs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  creatorId: varchar("creator_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  durationDays: integer("duration_days").notNull().default(7),
+  category: text("category"),
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTrainingProgramSchema = createInsertSchema(trainingPrograms).omit({ id: true, createdAt: true, status: true });
+export type TrainingProgram = typeof trainingPrograms.$inferSelect;
+export type InsertTrainingProgram = z.infer<typeof insertTrainingProgramSchema>;
+
+export const trainingDays = pgTable("training_days", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  programId: varchar("program_id").notNull(),
+  dayNumber: integer("day_number").notNull(),
+  title: text("title").notNull(),
+  objectives: text("objectives"),
+  ritualIds: text("ritual_ids").array(),
+  taskIds: text("task_ids").array(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTrainingDaySchema = createInsertSchema(trainingDays).omit({ id: true, createdAt: true });
+export type TrainingDay = typeof trainingDays.$inferSelect;
+export type InsertTrainingDay = z.infer<typeof insertTrainingDaySchema>;
+
+export const trainingEnrollments = pgTable("training_enrollments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  programId: varchar("program_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  currentDay: integer("current_day").notNull().default(1),
+  status: text("status").notNull().default("active"),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const insertTrainingEnrollmentSchema = createInsertSchema(trainingEnrollments).omit({ id: true, completedAt: true, currentDay: true, status: true });
+export type TrainingEnrollment = typeof trainingEnrollments.$inferSelect;
+export type InsertTrainingEnrollment = z.infer<typeof insertTrainingEnrollmentSchema>;
+
+export const sceneScripts = pgTable("scene_scripts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  creatorId: varchar("creator_id").notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  estimatedDuration: integer("estimated_duration"),
+  category: text("category"),
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertSceneScriptSchema = createInsertSchema(sceneScripts).omit({ id: true, createdAt: true, status: true });
+export type SceneScript = typeof sceneScripts.$inferSelect;
+export type InsertSceneScript = z.infer<typeof insertSceneScriptSchema>;
+
+export const scriptSteps = pgTable("script_steps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  scriptId: varchar("script_id").notNull(),
+  stepOrder: integer("step_order").notNull(),
+  instruction: text("instruction").notNull(),
+  durationSeconds: integer("duration_seconds").notNull().default(60),
+  intensity: integer("intensity").notNull().default(5),
+  ambientTone: text("ambient_tone"),
+  branchCondition: text("branch_condition"),
+  branchTargetStep: integer("branch_target_step"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertScriptStepSchema = createInsertSchema(scriptSteps).omit({ id: true, createdAt: true });
+export type ScriptStep = typeof scriptSteps.$inferSelect;
+export type InsertScriptStep = z.infer<typeof insertScriptStepSchema>;
+
+export const interrogationSessions = pgTable("interrogation_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  inquisitorId: varchar("inquisitor_id").notNull(),
+  subjectId: varchar("subject_id").notNull(),
+  title: text("title").notNull(),
+  status: text("status").notNull().default("pending"),
+  totalQuestions: integer("total_questions").notNull().default(0),
+  correctAnswers: integer("correct_answers").notNull().default(0),
+  autoConsequence: boolean("auto_consequence").notNull().default(true),
+  consequencePerWrong: text("consequence_per_wrong"),
+  timeLimitPerQuestion: integer("time_limit_per_question").notNull().default(30),
+  score: integer("score").default(0),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertInterrogationSessionSchema = createInsertSchema(interrogationSessions).omit({ id: true, createdAt: true, startedAt: true, completedAt: true, correctAnswers: true, score: true, status: true });
+export type InterrogationSession = typeof interrogationSessions.$inferSelect;
+export type InsertInterrogationSession = z.infer<typeof insertInterrogationSessionSchema>;
+
+export const interrogationQuestions = pgTable("interrogation_questions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  questionOrder: integer("question_order").notNull(),
+  question: text("question").notNull(),
+  expectedAnswer: text("expected_answer"),
+  actualAnswer: text("actual_answer"),
+  correct: boolean("correct"),
+  answeredInSeconds: integer("answered_in_seconds"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertInterrogationQuestionSchema = createInsertSchema(interrogationQuestions).omit({ id: true, createdAt: true, actualAnswer: true, correct: true, answeredInSeconds: true });
+export type InterrogationQuestion = typeof interrogationQuestions.$inferSelect;
+export type InsertInterrogationQuestion = z.infer<typeof insertInterrogationQuestionSchema>;
+
+export const aftercareItems = pgTable("aftercare_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  type: text("type").notNull().default("custom"),
+  label: text("label").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAftercareItemSchema = createInsertSchema(aftercareItems).omit({ id: true, createdAt: true, completed: true, completedAt: true });
+export type AftercareItem = typeof aftercareItems.$inferSelect;
+export type InsertAftercareItem = z.infer<typeof insertAftercareItemSchema>;
+
+export const streaks = pgTable("streaks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  streakType: text("streak_type").notNull(),
+  currentCount: integer("current_count").notNull().default(0),
+  longestCount: integer("longest_count").notNull().default(0),
+  lastCompletedDate: text("last_completed_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertStreakSchema = createInsertSchema(streaks).omit({ id: true, createdAt: true, updatedAt: true, currentCount: true, longestCount: true, lastCompletedDate: true });
+export type Streak = typeof streaks.$inferSelect;
+export type InsertStreak = z.infer<typeof insertStreakSchema>;

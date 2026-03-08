@@ -9,6 +9,9 @@ import {
   demandTimers, quickCommands, presenceHeartbeats, accusations,
   intensitySessions, trialSteps, obedienceTrials, sensationCards, sensationSpins, sealedOrders, enduranceChallenges, enduranceCheckins,
   media, stickers, featureSettings, bodyMapZones,
+  contracts, confessions, trainingPrograms, trainingDays, trainingEnrollments,
+  sceneScripts, scriptSteps, interrogationSessions, interrogationQuestions,
+  aftercareItems, streaks,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -38,6 +41,17 @@ import {
   type Sticker, type InsertSticker,
   type FeatureSetting, type InsertFeatureSetting,
   type BodyMapZone, type InsertBodyMapZone,
+  type Contract, type InsertContract,
+  type Confession, type InsertConfession,
+  type TrainingProgram, type InsertTrainingProgram,
+  type TrainingDay, type InsertTrainingDay,
+  type TrainingEnrollment, type InsertTrainingEnrollment,
+  type SceneScript, type InsertSceneScript,
+  type ScriptStep, type InsertScriptStep,
+  type InterrogationSession, type InsertInterrogationSession,
+  type InterrogationQuestion, type InsertInterrogationQuestion,
+  type AftercareItem, type InsertAftercareItem,
+  type Streak,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -252,6 +266,46 @@ export interface IStorage {
   unlockJournalEntry(id: string, unlockedBy: string): Promise<JournalEntry | undefined>;
   getLockedMediaForPair(userIds: string[], role?: string): Promise<Media[]>;
   unlockMedia(id: string, unlockedBy: string): Promise<Media | undefined>;
+
+  getContracts(userId: string): Promise<Contract[]>;
+  createContract(contract: InsertContract): Promise<Contract>;
+  updateContract(id: string, data: Partial<Contract>): Promise<Contract | undefined>;
+
+  getConfessions(userId: string): Promise<Confession[]>;
+  createConfession(confession: InsertConfession): Promise<Confession>;
+  updateConfession(id: string, data: Partial<Confession>): Promise<Confession | undefined>;
+
+  getTrainingPrograms(userId: string): Promise<TrainingProgram[]>;
+  createTrainingProgram(program: InsertTrainingProgram): Promise<TrainingProgram>;
+  updateTrainingProgram(id: string, data: Partial<TrainingProgram>): Promise<TrainingProgram | undefined>;
+  getTrainingDays(programId: string): Promise<TrainingDay[]>;
+  createTrainingDay(day: InsertTrainingDay): Promise<TrainingDay>;
+  getTrainingEnrollments(userId: string): Promise<TrainingEnrollment[]>;
+  createTrainingEnrollment(enrollment: InsertTrainingEnrollment): Promise<TrainingEnrollment>;
+  updateTrainingEnrollment(id: string, data: Partial<TrainingEnrollment>): Promise<TrainingEnrollment | undefined>;
+
+  getSceneScripts(userId: string): Promise<SceneScript[]>;
+  createSceneScript(script: InsertSceneScript): Promise<SceneScript>;
+  updateSceneScript(id: string, data: Partial<SceneScript>): Promise<SceneScript | undefined>;
+  deleteSceneScript(id: string): Promise<void>;
+  getScriptSteps(scriptId: string): Promise<ScriptStep[]>;
+  createScriptStep(step: InsertScriptStep): Promise<ScriptStep>;
+  updateScriptStep(id: string, data: Partial<ScriptStep>): Promise<ScriptStep | undefined>;
+  deleteScriptStep(id: string): Promise<void>;
+
+  getInterrogationSessions(userId: string): Promise<InterrogationSession[]>;
+  createInterrogationSession(session: InsertInterrogationSession): Promise<InterrogationSession>;
+  updateInterrogationSession(id: string, data: Partial<InterrogationSession>): Promise<InterrogationSession | undefined>;
+  getInterrogationQuestions(sessionId: string): Promise<InterrogationQuestion[]>;
+  createInterrogationQuestion(question: InsertInterrogationQuestion): Promise<InterrogationQuestion>;
+  updateInterrogationQuestion(id: string, data: Partial<InterrogationQuestion>): Promise<InterrogationQuestion | undefined>;
+
+  getAftercareItems(sessionId: string): Promise<AftercareItem[]>;
+  createAftercareItem(item: InsertAftercareItem): Promise<AftercareItem>;
+  updateAftercareItem(id: string, data: Partial<AftercareItem>): Promise<AftercareItem | undefined>;
+
+  getStreaks(userId: string): Promise<Streak[]>;
+  upsertStreak(userId: string, streakType: string, date: string): Promise<Streak>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1048,6 +1102,175 @@ export class DatabaseStorage implements IStorage {
   async unlockMedia(id: string, unlockedBy: string): Promise<Media | undefined> {
     const [m] = await db.update(media).set({ isLocked: false, unlockedBy }).where(eq(media.id, id)).returning();
     return m;
+  }
+
+  async getContracts(userId: string): Promise<Contract[]> {
+    return db.select().from(contracts).where(eq(contracts.creatorId, userId)).orderBy(desc(contracts.createdAt));
+  }
+
+  async createContract(contract: InsertContract): Promise<Contract> {
+    const [c] = await db.insert(contracts).values(contract).returning();
+    return c;
+  }
+
+  async updateContract(id: string, data: Partial<Contract>): Promise<Contract | undefined> {
+    const [c] = await db.update(contracts).set(data).where(eq(contracts.id, id)).returning();
+    return c;
+  }
+
+  async getConfessions(userId: string): Promise<Confession[]> {
+    return db.select().from(confessions).where(eq(confessions.userId, userId)).orderBy(desc(confessions.createdAt));
+  }
+
+  async createConfession(confession: InsertConfession): Promise<Confession> {
+    const [c] = await db.insert(confessions).values(confession).returning();
+    return c;
+  }
+
+  async updateConfession(id: string, data: Partial<Confession>): Promise<Confession | undefined> {
+    const [c] = await db.update(confessions).set(data).where(eq(confessions.id, id)).returning();
+    return c;
+  }
+
+  async getTrainingPrograms(userId: string): Promise<TrainingProgram[]> {
+    return db.select().from(trainingPrograms).where(eq(trainingPrograms.creatorId, userId)).orderBy(desc(trainingPrograms.createdAt));
+  }
+
+  async createTrainingProgram(program: InsertTrainingProgram): Promise<TrainingProgram> {
+    const [p] = await db.insert(trainingPrograms).values(program).returning();
+    return p;
+  }
+
+  async updateTrainingProgram(id: string, data: Partial<TrainingProgram>): Promise<TrainingProgram | undefined> {
+    const [p] = await db.update(trainingPrograms).set(data).where(eq(trainingPrograms.id, id)).returning();
+    return p;
+  }
+
+  async getTrainingDays(programId: string): Promise<TrainingDay[]> {
+    return db.select().from(trainingDays).where(eq(trainingDays.programId, programId)).orderBy(desc(trainingDays.createdAt));
+  }
+
+  async createTrainingDay(day: InsertTrainingDay): Promise<TrainingDay> {
+    const [d] = await db.insert(trainingDays).values(day).returning();
+    return d;
+  }
+
+  async getTrainingEnrollments(userId: string): Promise<TrainingEnrollment[]> {
+    return db.select().from(trainingEnrollments).where(eq(trainingEnrollments.userId, userId));
+  }
+
+  async createTrainingEnrollment(enrollment: InsertTrainingEnrollment): Promise<TrainingEnrollment> {
+    const [e] = await db.insert(trainingEnrollments).values(enrollment).returning();
+    return e;
+  }
+
+  async updateTrainingEnrollment(id: string, data: Partial<TrainingEnrollment>): Promise<TrainingEnrollment | undefined> {
+    const [e] = await db.update(trainingEnrollments).set(data).where(eq(trainingEnrollments.id, id)).returning();
+    return e;
+  }
+
+  async getSceneScripts(userId: string): Promise<SceneScript[]> {
+    return db.select().from(sceneScripts).where(eq(sceneScripts.creatorId, userId)).orderBy(desc(sceneScripts.createdAt));
+  }
+
+  async createSceneScript(script: InsertSceneScript): Promise<SceneScript> {
+    const [s] = await db.insert(sceneScripts).values(script).returning();
+    return s;
+  }
+
+  async updateSceneScript(id: string, data: Partial<SceneScript>): Promise<SceneScript | undefined> {
+    const [s] = await db.update(sceneScripts).set(data).where(eq(sceneScripts.id, id)).returning();
+    return s;
+  }
+
+  async deleteSceneScript(id: string): Promise<void> {
+    await db.delete(sceneScripts).where(eq(sceneScripts.id, id));
+  }
+
+  async getScriptSteps(scriptId: string): Promise<ScriptStep[]> {
+    return db.select().from(scriptSteps).where(eq(scriptSteps.scriptId, scriptId)).orderBy(desc(scriptSteps.createdAt));
+  }
+
+  async createScriptStep(step: InsertScriptStep): Promise<ScriptStep> {
+    const [s] = await db.insert(scriptSteps).values(step).returning();
+    return s;
+  }
+
+  async updateScriptStep(id: string, data: Partial<ScriptStep>): Promise<ScriptStep | undefined> {
+    const [s] = await db.update(scriptSteps).set(data).where(eq(scriptSteps.id, id)).returning();
+    return s;
+  }
+
+  async deleteScriptStep(id: string): Promise<void> {
+    await db.delete(scriptSteps).where(eq(scriptSteps.id, id));
+  }
+
+  async getInterrogationSessions(userId: string): Promise<InterrogationSession[]> {
+    return db.select().from(interrogationSessions).where(eq(interrogationSessions.inquisitorId, userId)).orderBy(desc(interrogationSessions.createdAt));
+  }
+
+  async createInterrogationSession(session: InsertInterrogationSession): Promise<InterrogationSession> {
+    const [s] = await db.insert(interrogationSessions).values(session).returning();
+    return s;
+  }
+
+  async updateInterrogationSession(id: string, data: Partial<InterrogationSession>): Promise<InterrogationSession | undefined> {
+    const [s] = await db.update(interrogationSessions).set(data).where(eq(interrogationSessions.id, id)).returning();
+    return s;
+  }
+
+  async getInterrogationQuestions(sessionId: string): Promise<InterrogationQuestion[]> {
+    return db.select().from(interrogationQuestions).where(eq(interrogationQuestions.sessionId, sessionId)).orderBy(desc(interrogationQuestions.createdAt));
+  }
+
+  async createInterrogationQuestion(question: InsertInterrogationQuestion): Promise<InterrogationQuestion> {
+    const [q] = await db.insert(interrogationQuestions).values(question).returning();
+    return q;
+  }
+
+  async updateInterrogationQuestion(id: string, data: Partial<InterrogationQuestion>): Promise<InterrogationQuestion | undefined> {
+    const [q] = await db.update(interrogationQuestions).set(data).where(eq(interrogationQuestions.id, id)).returning();
+    return q;
+  }
+
+  async getAftercareItems(sessionId: string): Promise<AftercareItem[]> {
+    return db.select().from(aftercareItems).where(eq(aftercareItems.sessionId, sessionId)).orderBy(desc(aftercareItems.createdAt));
+  }
+
+  async createAftercareItem(item: InsertAftercareItem): Promise<AftercareItem> {
+    const [a] = await db.insert(aftercareItems).values(item).returning();
+    return a;
+  }
+
+  async updateAftercareItem(id: string, data: Partial<AftercareItem>): Promise<AftercareItem | undefined> {
+    const [a] = await db.update(aftercareItems).set(data).where(eq(aftercareItems.id, id)).returning();
+    return a;
+  }
+
+  async getStreaks(userId: string): Promise<Streak[]> {
+    return db.select().from(streaks).where(eq(streaks.userId, userId));
+  }
+
+  async upsertStreak(userId: string, streakType: string, date: string): Promise<Streak> {
+    const existing = await db.select().from(streaks).where(and(eq(streaks.userId, userId), eq(streaks.streakType, streakType)));
+    if (existing.length > 0) {
+      const streak = existing[0];
+      const lastDate = streak.lastCompletedDate;
+      const yesterday = new Date(date);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+      let newCount = 1;
+      if (lastDate === yesterdayStr) {
+        newCount = (streak.currentCount || 0) + 1;
+      } else if (lastDate === date) {
+        return streak;
+      }
+      const longestCount = Math.max(streak.longestCount || 0, newCount);
+      const [updated] = await db.update(streaks).set({ currentCount: newCount, longestCount, lastCompletedDate: date, updatedAt: new Date() }).where(eq(streaks.id, streak.id)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(streaks).values({ userId, streakType, currentCount: 1, longestCount: 1, lastCompletedDate: date }).returning();
+    return created;
   }
 }
 

@@ -1898,5 +1898,398 @@ export async function registerRoutes(
     res.json({ ...unlocked, url: unlocked?.url });
   });
 
+  // --- TRENDS ---
+  app.get("/api/trends", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const logs = await storage.getActivityLogForPair(userIds);
+    const now = new Date();
+    const days: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days.push(d.toISOString().split("T")[0]);
+    }
+    const completionTrend: number[] = [];
+    const taskTrend: number[] = [];
+    const orderTrend: number[] = [];
+    const ritualTrend: number[] = [];
+    for (const day of days) {
+      const dayLogs = logs.filter(l => l.createdAt && new Date(l.createdAt).toISOString().split("T")[0] === day);
+      completionTrend.push(dayLogs.filter(l => l.action.includes("completed")).length);
+      taskTrend.push(dayLogs.filter(l => l.action.includes("task")).length);
+      orderTrend.push(dayLogs.filter(l => l.action.includes("order") || l.action.includes("command")).length);
+      ritualTrend.push(dayLogs.filter(l => l.action.includes("ritual")).length);
+    }
+    res.json({ completionTrend, taskTrend, orderTrend, ritualTrend });
+  });
+
+  // --- STREAKS ---
+  app.get("/api/streaks", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const result = await storage.getStreaks(user.id);
+    res.json(result);
+  });
+
+  // --- ANALYTICS ---
+  app.get("/api/analytics", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const checkInList = await storage.getCheckIns(user.id);
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const recentCheckIns = checkInList.filter(c => c.createdAt && new Date(c.createdAt) >= thirtyDaysAgo);
+    const avgMood = recentCheckIns.length > 0 ? recentCheckIns.reduce((s, c) => s + c.mood, 0) / recentCheckIns.length : 0;
+    const avgObedience = recentCheckIns.length > 0 ? recentCheckIns.reduce((s, c) => s + c.obedience, 0) / recentCheckIns.length : 0;
+    const punishmentList = await storage.getPunishments(user.id);
+    const rewardList = await storage.getRewards(user.id);
+    const sessionList = await storage.getPlaySessions(user.id);
+    const taskList = await storage.getTasks(user.id);
+    const completedTasks = taskList.filter(t => t.done).length;
+    const taskCompletionRate = taskList.length > 0 ? Math.round((completedTasks / taskList.length) * 100) : 0;
+    const activityLogs = await storage.getActivityLog(user.id);
+    const recentActivity = activityLogs.filter(a => a.createdAt && new Date(a.createdAt) >= thirtyDaysAgo);
+    res.json({
+      avgMood: Math.round(avgMood * 10) / 10,
+      avgObedience: Math.round(avgObedience * 10) / 10,
+      totalCheckIns: recentCheckIns.length,
+      punishmentCount: punishmentList.length,
+      rewardCount: rewardList.length,
+      sessionCount: sessionList.length,
+      taskCompletionRate,
+      totalTasks: taskList.length,
+      completedTasks,
+      activityCount: recentActivity.length,
+    });
+  });
+
+  // --- ANALYTICS RELATIONSHIP ---
+  app.get("/api/analytics/relationship", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    if (!partner) {
+      return res.json({ daysBonded: 0, totalSessions: 0, combinedActivity: 0, bondHealthScore: 0 });
+    }
+    const daysBonded = user.createdAt ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    const userIds = [user.id, partner.id];
+    const sessions = await storage.getPlaySessionsForPair(userIds);
+    const activityLogs = await storage.getActivityLogForPair(userIds);
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recentActivity = activityLogs.filter(a => a.createdAt && new Date(a.createdAt) >= sevenDaysAgo);
+    const bondHealthScore = Math.min(100, Math.round((recentActivity.length / 7) * 10));
+    res.json({
+      daysBonded,
+      totalSessions: sessions.length,
+      combinedActivity: activityLogs.length,
+      bondHealthScore,
+    });
+  });
+
+  // --- CONTRACTS ---
+  app.get("/api/contracts", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getContracts(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/contracts", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, terms, limits, safeword, duration, startDate, endDate, partnerId } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const contract = await storage.createContract({
+      creatorId: user.id,
+      partnerId: partnerId || null,
+      title: title.trim(),
+      terms: terms || null,
+      limits: limits || null,
+      safeword: safeword || null,
+      duration: duration || null,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+    });
+    await storage.logActivity(user.id, "contract_created", title.trim(), user.role);
+    res.status(201).json(contract);
+  });
+
+  app.put("/api/contracts/:id", requireAuth, async (req, res) => {
+    const contract = await storage.updateContract(req.params.id, req.body);
+    if (!contract) return res.status(404).json({ message: "Not found" });
+    res.json(contract);
+  });
+
+  // --- CONFESSIONS ---
+  app.get("/api/confessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getConfessions(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/confessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { content, partnerId } = req.body;
+    if (!content?.trim()) return res.status(400).json({ message: "Content required" });
+    const confession = await storage.createConfession({
+      userId: user.id,
+      partnerId: partnerId || user.partnerId || null,
+      content: content.trim(),
+    });
+    await storage.logActivity(user.id, "confession_submitted", "New confession", user.role);
+    if (confession.partnerId) {
+      await notifyUser(confession.partnerId, `${user.username} submitted a confession`, "alert", user.role);
+    }
+    res.status(201).json(confession);
+  });
+
+  app.put("/api/confessions/:id", requireAuth, async (req, res) => {
+    const confession = await storage.updateConfession(req.params.id, req.body);
+    if (!confession) return res.status(404).json({ message: "Not found" });
+    res.json(confession);
+  });
+
+  // --- TRAINING PROGRAMS ---
+  app.get("/api/training-programs", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getTrainingPrograms(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/training-programs", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, durationDays, category } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const program = await storage.createTrainingProgram({
+      creatorId: user.id,
+      title: title.trim(),
+      description: description || null,
+      durationDays: durationDays || 7,
+      category: category || null,
+    });
+    await storage.logActivity(user.id, "training_program_created", title.trim(), user.role);
+    res.status(201).json(program);
+  });
+
+  app.put("/api/training-programs/:id", requireAuth, async (req, res) => {
+    const program = await storage.updateTrainingProgram(req.params.id, req.body);
+    if (!program) return res.status(404).json({ message: "Not found" });
+    res.json(program);
+  });
+
+  // --- TRAINING DAYS ---
+  app.get("/api/training-programs/:programId/days", requireAuth, async (req, res) => {
+    const days = await storage.getTrainingDays(req.params.programId);
+    res.json(days);
+  });
+
+  app.post("/api/training-days", requireAuth, async (req, res) => {
+    const { programId, dayNumber, title, objectives, ritualIds, taskIds } = req.body;
+    if (!programId || !title?.trim()) return res.status(400).json({ message: "programId and title required" });
+    const day = await storage.createTrainingDay({
+      programId,
+      dayNumber: dayNumber || 1,
+      title: title.trim(),
+      objectives: objectives || null,
+      ritualIds: ritualIds || null,
+      taskIds: taskIds || null,
+    });
+    res.status(201).json(day);
+  });
+
+  // --- TRAINING ENROLLMENTS ---
+  app.get("/api/training-enrollments", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getTrainingEnrollments(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/training-enrollments", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { programId } = req.body;
+    if (!programId) return res.status(400).json({ message: "programId required" });
+    const enrollment = await storage.createTrainingEnrollment({
+      programId,
+      userId: user.id,
+      startedAt: new Date(),
+    });
+    await storage.logActivity(user.id, "training_enrolled", `Enrolled in program`, user.role);
+    res.status(201).json(enrollment);
+  });
+
+  app.put("/api/training-enrollments/:id", requireAuth, async (req, res) => {
+    const enrollment = await storage.updateTrainingEnrollment(req.params.id, req.body);
+    if (!enrollment) return res.status(404).json({ message: "Not found" });
+    res.json(enrollment);
+  });
+
+  // --- SCENE SCRIPTS ---
+  app.get("/api/scene-scripts", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getSceneScripts(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/scene-scripts", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { title, description, estimatedDuration, category } = req.body;
+    if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    const script = await storage.createSceneScript({
+      creatorId: user.id,
+      title: title.trim(),
+      description: description || null,
+      estimatedDuration: estimatedDuration || null,
+      category: category || null,
+    });
+    await storage.logActivity(user.id, "scene_script_created", title.trim(), user.role);
+    res.status(201).json(script);
+  });
+
+  app.put("/api/scene-scripts/:id", requireAuth, async (req, res) => {
+    const script = await storage.updateSceneScript(req.params.id, req.body);
+    if (!script) return res.status(404).json({ message: "Not found" });
+    res.json(script);
+  });
+
+  app.delete("/api/scene-scripts/:id", requireAuth, async (req, res) => {
+    await storage.deleteSceneScript(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  // --- SCRIPT STEPS ---
+  app.get("/api/scene-scripts/:scriptId/steps", requireAuth, async (req, res) => {
+    const steps = await storage.getScriptSteps(req.params.scriptId);
+    res.json(steps);
+  });
+
+  app.post("/api/script-steps", requireAuth, async (req, res) => {
+    const { scriptId, stepOrder, instruction, durationSeconds, intensity, ambientTone, branchCondition, branchTargetStep } = req.body;
+    if (!scriptId || !instruction?.trim()) return res.status(400).json({ message: "scriptId and instruction required" });
+    const step = await storage.createScriptStep({
+      scriptId,
+      stepOrder: stepOrder || 1,
+      instruction: instruction.trim(),
+      durationSeconds: durationSeconds || 60,
+      intensity: intensity || 5,
+      ambientTone: ambientTone || null,
+      branchCondition: branchCondition || null,
+      branchTargetStep: branchTargetStep || null,
+    });
+    res.status(201).json(step);
+  });
+
+  app.put("/api/script-steps/:id", requireAuth, async (req, res) => {
+    const step = await storage.updateScriptStep(req.params.id, req.body);
+    if (!step) return res.status(404).json({ message: "Not found" });
+    res.json(step);
+  });
+
+  app.delete("/api/script-steps/:id", requireAuth, async (req, res) => {
+    await storage.deleteScriptStep(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  // --- INTERROGATION SESSIONS ---
+  app.get("/api/interrogation-sessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getInterrogationSessions(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/interrogation-sessions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { subjectId, title, totalQuestions, autoConsequence, consequencePerWrong, timeLimitPerQuestion } = req.body;
+    if (!title?.trim() || !subjectId) return res.status(400).json({ message: "Title and subjectId required" });
+    const session = await storage.createInterrogationSession({
+      inquisitorId: user.id,
+      subjectId,
+      title: title.trim(),
+      totalQuestions: totalQuestions || 0,
+      autoConsequence: autoConsequence !== undefined ? autoConsequence : true,
+      consequencePerWrong: consequencePerWrong || null,
+      timeLimitPerQuestion: timeLimitPerQuestion || 30,
+    });
+    await storage.logActivity(user.id, "interrogation_created", title.trim(), user.role);
+    await notifyUser(subjectId, `Interrogation session "${title.trim()}" created for you`, "alert", user.role);
+    res.status(201).json(session);
+  });
+
+  app.put("/api/interrogation-sessions/:id", requireAuth, async (req, res) => {
+    const session = await storage.updateInterrogationSession(req.params.id, req.body);
+    if (!session) return res.status(404).json({ message: "Not found" });
+    res.json(session);
+  });
+
+  // --- INTERROGATION QUESTIONS ---
+  app.get("/api/interrogation-sessions/:sessionId/questions", requireAuth, async (req, res) => {
+    const questions = await storage.getInterrogationQuestions(req.params.sessionId);
+    res.json(questions);
+  });
+
+  app.post("/api/interrogation-questions", requireAuth, async (req, res) => {
+    const { sessionId, questionOrder, question, expectedAnswer } = req.body;
+    if (!sessionId || !question?.trim()) return res.status(400).json({ message: "sessionId and question required" });
+    const q = await storage.createInterrogationQuestion({
+      sessionId,
+      questionOrder: questionOrder || 1,
+      question: question.trim(),
+      expectedAnswer: expectedAnswer || null,
+    });
+    res.status(201).json(q);
+  });
+
+  app.put("/api/interrogation-questions/:id", requireAuth, async (req, res) => {
+    const question = await storage.updateInterrogationQuestion(req.params.id, req.body);
+    if (!question) return res.status(404).json({ message: "Not found" });
+    res.json(question);
+  });
+
+  // --- AFTERCARE ITEMS ---
+  app.get("/api/aftercare/:sessionId", requireAuth, async (req, res) => {
+    const items = await storage.getAftercareItems(req.params.sessionId);
+    res.json(items);
+  });
+
+  app.post("/api/aftercare", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { sessionId, type, label } = req.body;
+    if (!sessionId || !label?.trim()) return res.status(400).json({ message: "sessionId and label required" });
+    const item = await storage.createAftercareItem({
+      sessionId,
+      userId: user.id,
+      type: type || "custom",
+      label: label.trim(),
+    });
+    res.status(201).json(item);
+  });
+
+  app.put("/api/aftercare/:id", requireAuth, async (req, res) => {
+    const item = await storage.updateAftercareItem(req.params.id, req.body);
+    if (!item) return res.status(404).json({ message: "Not found" });
+    res.json(item);
+  });
+
+  // --- PLAY SESSIONS LIVE ---
+  app.put("/api/play-sessions/:id/live", requireAuth, async (req, res) => {
+    const { currentInstruction, currentIntensity, currentPhase, isLive } = req.body;
+    const data: any = {};
+    if (currentInstruction !== undefined) data.currentInstruction = currentInstruction;
+    if (currentIntensity !== undefined) data.currentIntensity = currentIntensity;
+    if (currentPhase !== undefined) data.currentPhase = currentPhase;
+    if (isLive !== undefined) data.isLive = isLive;
+    const session = await storage.updatePlaySession(req.params.id, data);
+    if (!session) return res.status(404).json({ message: "Not found" });
+    res.json(session);
+  });
+
+  // --- RITUAL REMIND ---
+  app.post("/api/rituals/:id/remind", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const ritualList = await storage.getRituals(user.id);
+    const ritual = ritualList.find(r => r.id === req.params.id);
+    if (!ritual) return res.status(404).json({ message: "Ritual not found" });
+    const targetUserId = ritual.userId;
+    await sendPushToUser(targetUserId, "Ritual Reminder", `Don't forget: ${ritual.title}`, "ritual_reminder");
+    await notifyUser(targetUserId, `Reminder: ${ritual.title}`, "alert", user.role);
+    res.json({ message: "Reminder sent" });
+  });
+
   return httpServer;
 }

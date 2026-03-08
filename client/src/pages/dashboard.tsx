@@ -181,6 +181,7 @@ import {
   useUpdateBodyMapZone,
   useResetBodyMap,
   useUploadProfilePic,
+  useTrends,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -215,6 +216,7 @@ import {
   useDeleteCountdownEvent,
   useDeleteStandingOrder,
 } from "@/lib/hooks";
+import { AmbientPresence } from "@/components/ambient-presence";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 export default function BondedAscentApp() {
@@ -375,6 +377,7 @@ export default function BondedAscentApp() {
   const deleteLimitMutation = useDeleteLimit();
   const deleteCountdownEventMutation = useDeleteCountdownEvent();
   const deleteStandingOrderMutation = useDeleteStandingOrder();
+  const { data: trendData } = useTrends();
   const profilePicInputRef = useRef<HTMLInputElement>(null);
   const [stickerMessage, setStickerMessage] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -591,84 +594,20 @@ export default function BondedAscentApp() {
         onDelete={handleOnDelete}
         onEdit={handleOnEdit}
         recentActivity={recentActivityEntries}
-        trendData={{ completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
+        trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
       />
-
-      <div className="flex flex-col items-center gap-6 pt-4">
-        <input
-          ref={profilePicInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          data-testid="input-profile-pic"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) uploadProfilePicMutation.mutate(file);
-            e.target.value = "";
-          }}
-        />
-        <div className="flex items-center gap-8 relative">
-          <div className="text-center relative">
-            <button
-              onClick={() => profilePicInputRef.current?.click()}
-              className="w-20 h-20 rounded-full border-2 border-red-600 p-1 mb-2 bg-black shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer group relative overflow-hidden"
-              data-testid="button-upload-profile-pic"
-            >
-              {user?.profilePic ? (
-                <img src={user.profilePic} alt={user.username} className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                  <Shield size={32} className="text-red-500" />
-                </div>
-              )}
-              <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Camera size={20} className="text-white" />
-              </div>
-            </button>
-            <div className="text-sm font-bold text-white uppercase tracking-wider">
-              {user?.username}
-            </div>
-          </div>
-          <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-red-900 to-transparent relative opacity-50">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-red-600 rounded-full shadow-[0_0_15px_red]" />
-          </div>
-          <div className="text-center relative">
-            <div className="w-20 h-20 rounded-full border-2 border-slate-700 p-1 mb-2 bg-black">
-              {partner?.profilePic ? (
-                <img src={partner.profilePic} alt={partner.username} className="w-full h-full rounded-full object-cover" />
-              ) : (
-                <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                  <Heart
-                    size={32}
-                    className={partner ? "text-red-400" : "text-slate-600"}
-                  />
-                </div>
-              )}
-            </div>
-            <div className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-              {partner ? partner.username : "Not Paired"}
-            </div>
-          </div>
-        </div>
-
-        {!partner && (
-          <button
-            onClick={() => setModal("pair")}
-            className="w-full max-w-sm px-6 py-4 rounded-full flex justify-between items-center group active:scale-95 transition-all cursor-pointer bg-gradient-to-b from-red-700 to-red-950 border-t border-red-500/30 shadow-[0_0_20px_rgba(220,38,38,0.4)]"
-          >
-            <div className="flex items-center gap-3">
-              <Anchor size={20} className="text-white drop-shadow-md" />
-              <span className="font-black uppercase text-sm tracking-wider text-white">
-                Connect to your Sub
-              </span>
-            </div>
-            <ChevronRight
-              size={20}
-              className="text-white opacity-70 group-hover:translate-x-1 transition-transform"
-            />
-          </button>
-        )}
-      </div>
+      <input
+        ref={profilePicInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        data-testid="input-profile-pic"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) uploadProfilePicMutation.mutate(file);
+          e.target.value = "";
+        }}
+      />
     </div>
   );
 
@@ -685,16 +624,16 @@ export default function BondedAscentApp() {
     (accusations || []).filter((a: any) => a.status === "pending" && a.toUserId === user?.id).forEach((a: any) => {
       items.push({ id: a.id, type: "accusation", title: a.accusation, data: a, createdAt: a.createdAt });
     });
-    tasks.forEach((t) => {
+    tasks.filter((t: any) => !t.completed).forEach((t) => {
       items.push({ id: t.id, type: "task", title: t.text, data: t, createdAt: (t as any).createdAt });
     });
-    (punishments || []).filter((p: any) => p.userId === user?.id).forEach((p: any) => {
+    (punishments || []).filter((p: any) => p.userId === user?.id).filter((p: any) => p.status !== "completed").forEach((p: any) => {
       items.push({ id: p.id, type: "punishment", title: p.name, description: p.category ? `${p.category} · ${p.status || ""}` : p.status, data: p, createdAt: p.createdAt });
     });
-    dares.forEach((d: any) => {
+    dares.filter((d: any) => !d.completed).forEach((d: any) => {
       items.push({ id: d.id, type: "dare", title: d.text, data: d, createdAt: d.createdAt });
     });
-    (rewards || []).filter((r: any) => r.userId === user?.id).forEach((r: any) => {
+    (rewards || []).filter((r: any) => r.userId === user?.id).filter((r: any) => !r.redeemed).forEach((r: any) => {
       items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.slice(0, 10).forEach((n) => {
@@ -729,19 +668,19 @@ export default function BondedAscentApp() {
     (partnerCheckIns || []).filter((c: any) => c.status === "pending").forEach((c: any) => {
       items.push({ id: c.id, type: "checkin_review", title: `Check-In: Mood ${c.mood}/10, Obedience ${c.obedience}/10`, description: c.notes || undefined, data: c, createdAt: c.createdAt });
     });
-    (partnerTasks || []).forEach((t: any) => {
+    (partnerTasks || []).filter((t: any) => !t.completed).forEach((t: any) => {
       items.push({ id: t.id, type: "task", title: t.text, description: t.done ? "Completed" : "Assigned", data: { ...t, isPartnerTask: true }, createdAt: t.createdAt });
     });
-    (punishments || []).forEach((p: any) => {
+    (punishments || []).filter((p: any) => p.status !== "completed").forEach((p: any) => {
       items.push({ id: p.id, type: "punishment", title: p.name, description: `${p.status || "active"} · ${p.category || ""}`, data: p, createdAt: p.createdAt });
     });
-    (rewards || []).forEach((r: any) => {
+    (rewards || []).filter((r: any) => !r.redeemed).forEach((r: any) => {
       items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.slice(0, 10).forEach((n) => {
       items.push({ id: n.id, type: "notification", title: n.text, data: n, createdAt: (n as any).createdAt });
     });
-    dares.forEach((d: any) => {
+    dares.filter((d: any) => !d.completed).forEach((d: any) => {
       items.push({ id: d.id, type: "dare", title: d.text, description: d.completed ? "Completed" : "Active", data: d, createdAt: d.createdAt });
     });
     playSessions.forEach((s: any) => {
@@ -898,63 +837,20 @@ export default function BondedAscentApp() {
             onDelete={handleOnDelete}
             onEdit={handleOnEdit}
             recentActivity={recentActivityEntries}
-            trendData={{ completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
+            trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
           />
-
-          <div className="flex flex-col items-center gap-6 pt-4">
-            <input
-              ref={profilePicInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              data-testid="input-profile-pic-sub"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadProfilePicMutation.mutate(file);
-                e.target.value = "";
-              }}
-            />
-            <div className="flex items-center gap-8 relative">
-              <div className="text-center relative">
-                <button
-                  onClick={() => profilePicInputRef.current?.click()}
-                  className="w-20 h-20 rounded-full border-2 border-red-600 p-1 mb-2 bg-black shadow-[0_0_15px_rgba(220,38,38,0.3)] cursor-pointer group relative overflow-hidden"
-                  data-testid="button-upload-profile-pic-sub"
-                >
-                  {user?.profilePic ? (
-                    <img src={user.profilePic} alt={user.username} className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                      <Heart size={32} className="text-red-500" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Camera size={20} className="text-white" />
-                  </div>
-                </button>
-                <div className="text-sm font-bold text-white uppercase tracking-wider">
-                  {user?.username}
-                </div>
-              </div>
-              <div className="h-0.5 w-16 bg-gradient-to-r from-transparent via-red-900 to-transparent relative opacity-50">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-red-600 rounded-full shadow-[0_0_15px_red]" />
-              </div>
-              <div className="text-center relative">
-                <div className="w-20 h-20 rounded-full border-2 border-red-900 p-1 mb-2 bg-black">
-                  {partner?.profilePic ? (
-                    <img src={partner.profilePic} alt={partner.username} className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center">
-                      <Shield size={32} className="text-slate-600" />
-                    </div>
-                  )}
-                </div>
-                <div className="text-sm font-bold text-white uppercase tracking-wider">
-                  {partner ? partner.username : "Dominant"}
-                </div>
-              </div>
-            </div>
-          </div>
+          <input
+            ref={profilePicInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            data-testid="input-profile-pic-sub"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadProfilePicMutation.mutate(file);
+              e.target.value = "";
+            }}
+          />
         </div>
       );
     }
@@ -969,7 +865,7 @@ export default function BondedAscentApp() {
                 borderColor:
                   userRole === "dom"
                     ? "rgba(220,38,38,0.6)"
-                    : "rgba(168,85,247,0.6)",
+                    : "rgba(180,30,30,0.6)",
                 boxShadow: `0 0 20px var(--role-glow)`,
               }}
             >
@@ -977,7 +873,7 @@ export default function BondedAscentApp() {
                 <User
                   size={40}
                   className={
-                    userRole === "dom" ? "text-red-500" : "text-purple-400"
+                    userRole === "dom" ? "text-red-500" : "text-red-400"
                   }
                 />
               </div>
@@ -990,8 +886,8 @@ export default function BondedAscentApp() {
             </h2>
             <div className="flex items-center justify-center gap-2 mt-2">
               <div className="flex items-center gap-2 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-white/10">
-                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_lime]" />
-                <span className="text-xs font-bold text-green-500 uppercase">
+                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_rgba(180,30,30,0.5)]" />
+                <span className="text-xs font-bold text-red-500 uppercase">
                   Connected
                 </span>
               </div>
@@ -999,7 +895,7 @@ export default function BondedAscentApp() {
                 className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border ${
                   userRole === "dom"
                     ? "bg-red-900/40 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]"
-                    : "bg-purple-900/40 text-purple-300 border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
+                    : "bg-red-950/40 text-red-300 border-red-500/50 shadow-[0_0_10px_rgba(180,30,30,0.3)]"
                 }`}
               >
                 {userRole === "dom" ? "DOM" : "SUB"}
@@ -1166,7 +1062,7 @@ export default function BondedAscentApp() {
                 <button
                   data-testid={`button-complete-punishment-${p.id}`}
                   onClick={() => updatePunishmentStatusMutation.mutate({ punishmentId: p.id, status: "completed" })}
-                  className="ml-2 px-3 py-1.5 bg-green-900/30 hover:bg-green-800/50 border border-green-700/30 hover:border-green-500/50 rounded-lg text-[10px] font-bold text-green-400 uppercase tracking-wider transition-all cursor-pointer shrink-0"
+                  className="ml-2 px-3 py-1.5 bg-red-900/30 hover:bg-red-800/50 border border-red-700/30 hover:border-red-500/50 rounded-lg text-[10px] font-bold text-red-400 uppercase tracking-wider transition-all cursor-pointer shrink-0"
                 >
                   Done
                 </button>
@@ -1178,13 +1074,13 @@ export default function BondedAscentApp() {
                 {punishments.filter(p => p.status === "completed").map((p) => (
                   <div key={p.id} className="p-3 bg-slate-900/30 border border-slate-800/30 rounded-xl flex justify-between items-center opacity-50 mb-1.5">
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-green-500 uppercase tracking-wide text-sm line-through">{p.name}</div>
+                      <div className="font-bold text-red-500 uppercase tracking-wide text-sm line-through">{p.name}</div>
                       <div className="flex items-center gap-2 mt-0.5">
                         {p.category && <span className="text-[9px] text-slate-600 uppercase">{p.category}</span>}
                         {p.duration && <span className="text-[9px] text-slate-600 flex items-center gap-0.5"><Clock size={8} />{p.duration}</span>}
                       </div>
                     </div>
-                    <CheckCircle size={16} className="text-green-500 shrink-0" />
+                    <CheckCircle size={16} className="text-red-500 shrink-0" />
                   </div>
                 ))}
               </div>
@@ -1203,21 +1099,21 @@ export default function BondedAscentApp() {
             {rewards.filter(r => !r.unlocked).map((r) => (
               <div
                 key={r.id}
-                className="p-4 bg-purple-950/20 border border-purple-900/30 rounded-xl flex justify-between items-center"
+                className="p-4 bg-red-950/20 border border-red-900/30 rounded-xl flex justify-between items-center"
               >
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-slate-200 uppercase tracking-wide text-sm">
                     {r.name}
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    {r.category && <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
+                    {r.category && <span className="text-[9px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
                     {r.duration && <span className="text-[9px] text-slate-500">{r.duration}</span>}
                   </div>
                 </div>
                 <button
                   data-testid={`button-redeem-reward-${r.id}`}
                   onClick={() => toggleRewardMutation.mutate(r.id)}
-                  className="ml-2 px-3 py-1.5 bg-purple-900/30 hover:bg-purple-800/50 border border-purple-700/30 hover:border-purple-500/50 rounded-lg text-[10px] font-bold text-purple-400 uppercase tracking-wider transition-all cursor-pointer shrink-0"
+                  className="ml-2 px-3 py-1.5 bg-red-900/30 hover:bg-red-900/50 border border-red-700/30 hover:border-red-500/50 rounded-lg text-[10px] font-bold text-red-400 uppercase tracking-wider transition-all cursor-pointer shrink-0"
                 >
                   Redeem
                 </button>
@@ -1229,13 +1125,13 @@ export default function BondedAscentApp() {
                 {rewards.filter(r => r.unlocked).map((r) => (
                   <div key={r.id} className="p-3 bg-slate-900/30 border border-slate-800/30 rounded-xl flex justify-between items-center opacity-50 mb-1.5">
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-green-500 uppercase tracking-wide text-sm line-through">{r.name}</div>
+                      <div className="font-bold text-red-500 uppercase tracking-wide text-sm line-through">{r.name}</div>
                       <div className="flex items-center gap-2 mt-0.5">
                         {r.category && <span className="text-[9px] text-slate-600">{r.category}</span>}
                         {r.duration && <span className="text-[9px] text-slate-600">{r.duration}</span>}
                       </div>
                     </div>
-                    <CheckCircle size={16} className="text-green-500 shrink-0" />
+                    <CheckCircle size={16} className="text-red-500 shrink-0" />
                   </div>
                 ))}
               </div>
@@ -1296,7 +1192,7 @@ export default function BondedAscentApp() {
       return (
         <div className="animate-in slide-in-from-right duration-500 space-y-6">
           <h2 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-3">
-            <BookOpen size={24} className="text-pink-600" /> Reflection Journal
+            <BookOpen size={24} className="text-rose-800" /> Reflection Journal
           </h2>
           <div className="bg-slate-900/30 border border-white/5 p-6 rounded-2xl">
             <div className="mb-6">
@@ -1307,7 +1203,7 @@ export default function BondedAscentApp() {
                 data-testid="input-journal"
                 value={journalContent}
                 onChange={(e) => setJournalContent(e.target.value)}
-                className="w-full bg-black/50 border border-slate-800 rounded-xl p-4 text-slate-300 focus:outline-none focus:border-pink-500/50 min-h-[150px]"
+                className="w-full bg-black/50 border border-slate-800 rounded-xl p-4 text-slate-300 focus:outline-none focus:border-rose-700/50 min-h-[150px]"
                 placeholder="Write your thoughts here..."
               />
             </div>
@@ -1317,7 +1213,7 @@ export default function BondedAscentApp() {
               disabled={
                 createJournalMutation.isPending || !journalContent.trim()
               }
-              className="w-full bg-pink-900/50 border border-pink-500/30 text-pink-200 hover:bg-pink-800/50"
+              className="w-full bg-red-950/50 border border-rose-700/30 text-rose-400 hover:bg-rose-900/50"
             >
               {createJournalMutation.isPending ? (
                 <Loader2 className="animate-spin" size={16} />
@@ -1335,7 +1231,7 @@ export default function BondedAscentApp() {
                 key={entry.id}
                 className="bg-black/40 border border-white/5 p-4 rounded-xl"
               >
-                <div className="text-[10px] font-mono text-pink-500 mb-1">
+                <div className="text-[10px] font-mono text-rose-700 mb-1">
                   {new Date(entry.createdAt!).toLocaleDateString()}
                 </div>
                 <div className="text-sm text-slate-400 line-clamp-3 italic">
@@ -1357,7 +1253,7 @@ export default function BondedAscentApp() {
       return (
         <div className="animate-in slide-in-from-right duration-500 space-y-8">
           <h2 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-3">
-            <Activity size={24} className="text-emerald-500" /> Bond Statistics
+            <Activity size={24} className="text-red-600" /> Bond Statistics
           </h2>
 
           <div className="grid grid-cols-2 gap-4">
@@ -1395,7 +1291,7 @@ export default function BondedAscentApp() {
               </div>
             </div>
             <div className="bg-black/40 border border-white/5 p-4 rounded-xl text-center">
-              <div className="text-xl font-black text-purple-500">
+              <div className="text-xl font-black text-red-500">
                 {stats?.completedDares ?? 0}
               </div>
               <div className="text-[8px] text-slate-500 uppercase font-bold">
@@ -1403,7 +1299,7 @@ export default function BondedAscentApp() {
               </div>
             </div>
             <div className="bg-black/40 border border-white/5 p-4 rounded-xl text-center">
-              <div className="text-xl font-black text-pink-500">
+              <div className="text-xl font-black text-rose-700">
                 {stats?.totalJournalEntries ?? 0}
               </div>
               <div className="text-[8px] text-slate-500 uppercase font-bold">
@@ -1425,7 +1321,7 @@ export default function BondedAscentApp() {
               {
                 label: "Journal Entries",
                 val: Math.min((stats?.totalJournalEntries ?? 0) * 10, 100),
-                color: "bg-emerald-500",
+                color: "bg-red-600",
               },
               {
                 label: "Dares Completed",
@@ -1434,7 +1330,7 @@ export default function BondedAscentApp() {
                       ((stats?.completedDares ?? 0) / stats.totalDares) * 100,
                     )
                   : 0,
-                color: "bg-blue-500",
+                color: "bg-slate-500",
               },
             ].map((stat, i) => (
               <div key={i} className="space-y-2">
@@ -1468,6 +1364,8 @@ export default function BondedAscentApp() {
   return (
     <div className="flex h-[100dvh] bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
+
+      <AmbientPresence />
 
       {isCrisisMode && (
         <div className="fixed inset-0 z-[100] bg-red-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
@@ -1542,7 +1440,7 @@ export default function BondedAscentApp() {
                 className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest border ${
                   userRole === "dom"
                     ? "bg-red-900/40 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]"
-                    : "bg-purple-900/40 text-purple-300 border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.3)]"
+                    : "bg-red-950/40 text-red-300 border-red-500/50 shadow-[0_0_10px_rgba(180,30,30,0.3)]"
                 }`}
               >
                 {userRole === "dom" ? "DOM" : "SUB"}
@@ -1556,21 +1454,21 @@ export default function BondedAscentApp() {
             <button
               data-testid="button-safeword"
               onClick={() => setModal("safeword")}
-              className="w-full bg-gradient-to-r from-yellow-900/20 to-transparent border-l-4 border-yellow-500 p-4 rounded-r-xl flex items-center gap-4 hover:bg-yellow-900/30 transition-all group relative overflow-hidden cursor-pointer"
+              className="w-full bg-gradient-to-r from-yellow-900/20 to-transparent border-l-4 border-slate-300 p-4 rounded-r-xl flex items-center gap-4 hover:bg-slate-800/30 transition-all group relative overflow-hidden cursor-pointer"
             >
-              <div className="bg-yellow-500/10 p-2 rounded-full group-hover:scale-110 transition-transform z-10">
-                <ShieldAlert size={24} className="text-yellow-500" />
+              <div className="bg-slate-300/10 p-2 rounded-full group-hover:scale-110 transition-transform z-10">
+                <ShieldAlert size={24} className="text-slate-300" />
               </div>
               <div className="text-left z-10">
-                <div className="font-bold text-yellow-500 text-sm uppercase tracking-wider">
+                <div className="font-bold text-slate-300 text-sm uppercase tracking-wider">
                   Safeword / Emergency
                 </div>
-                <div className="text-[10px] text-yellow-500/50">
+                <div className="text-[10px] text-slate-300/50">
                   Tap to immediately pause everything
                 </div>
               </div>
               <ChevronRight
-                className="ml-auto text-yellow-500/50 z-10"
+                className="ml-auto text-slate-300/50 z-10"
                 size={20}
               />
             </button>
@@ -1611,14 +1509,14 @@ export default function BondedAscentApp() {
             <X size={20} />
           </button>
           <div className="absolute top-4 left-0 right-0 z-40 flex justify-center pointer-events-none">
-            <h2 className="text-[10px] font-black text-amber-400/60 uppercase tracking-[0.4em]">
+            <h2 className="text-[10px] font-black text-slate-400/60 uppercase tracking-[0.4em]">
               Map of Desire
             </h2>
           </div>
           <div className="w-full h-full">
             <React.Suspense fallback={
               <div className="w-full h-full flex items-center justify-center bg-black">
-                <div className="text-amber-500/50 text-xs uppercase tracking-widest animate-pulse">Loading 3D Model...</div>
+                <div className="text-slate-300/50 text-xs uppercase tracking-widest animate-pulse">Loading 3D Model...</div>
               </div>
             }>
               <BodyMap3D
@@ -1660,7 +1558,7 @@ export default function BondedAscentApp() {
               <div className="text-center p-4">
                 <ShieldAlert
                   size={64}
-                  className="mx-auto text-yellow-500 mb-6 animate-bounce"
+                  className="mx-auto text-slate-300 mb-6 animate-bounce"
                 />
                 <h2 className="text-2xl font-black text-white uppercase mb-4">
                   Safeword Triggered
@@ -1671,7 +1569,7 @@ export default function BondedAscentApp() {
                 <button
                   data-testid="button-resume"
                   onClick={() => setModal(null)}
-                  className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold uppercase rounded-lg cursor-pointer"
+                  className="w-full py-3 bg-slate-300 hover:bg-slate-400 text-black font-bold uppercase rounded-lg cursor-pointer"
                 >
                   Resume
                 </button>
@@ -1696,7 +1594,7 @@ export default function BondedAscentApp() {
                   </div>
                 )}
                 {pairSuccess && (
-                  <div className="bg-green-900/20 border border-green-500/30 p-3 rounded-lg text-xs text-green-400 flex items-center gap-2">
+                  <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-xs text-red-400 flex items-center gap-2">
                     <CheckCircle size={14} /> {pairSuccess}
                   </div>
                 )}
@@ -1839,7 +1737,7 @@ export default function BondedAscentApp() {
             {modal === "dom_tasks" && (
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center mb-4">
-                  <List size={48} className="mx-auto text-blue-500 mb-2" />
+                  <List size={48} className="mx-auto text-slate-500 mb-2" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Assign Protocols
                   </h2>
@@ -1872,11 +1770,11 @@ export default function BondedAscentApp() {
                           })()
                         }
                         placeholder="New Task Description..."
-                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-slate-500"
                       />
                       <Button
                         data-testid="button-dom-add-task"
-                        className="bg-blue-600 hover:bg-blue-500"
+                        className="bg-slate-600 hover:bg-slate-500"
                         onClick={() => {
                           if (newTaskText.trim()) {
                             createPartnerTaskMutation.mutate({
@@ -1905,7 +1803,7 @@ export default function BondedAscentApp() {
                             {t.text}
                           </span>
                           {t.done ? (
-                            <CheckCircle size={16} className="text-green-500" />
+                            <CheckCircle size={16} className="text-red-500" />
                           ) : (
                             <Clock size={16} className="text-slate-600" />
                           )}
@@ -1925,7 +1823,7 @@ export default function BondedAscentApp() {
             {modal === "dom_rewards" && (
               <div className="p-4 space-y-4 overflow-y-auto">
                 <div className="text-center mb-2">
-                  <Gift size={48} className="mx-auto text-purple-500 mb-2" />
+                  <Gift size={48} className="mx-auto text-red-500 mb-2" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Grant Rewards
                   </h2>
@@ -1947,12 +1845,12 @@ export default function BondedAscentApp() {
                         {rewards.map((r) => (
                           <div key={r.id} className="flex justify-between items-center p-3 bg-slate-900/50 border border-white/5 rounded-xl">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-purple-500/10 rounded-full text-purple-400"><Star size={14} /></div>
+                              <div className="p-2 bg-red-500/10 rounded-full text-red-400"><Star size={14} /></div>
                               <div>
                                 <span className="text-sm font-bold text-slate-300">{r.name}</span>
                                 {(r.category || r.duration) && (
                                   <div className="flex gap-2 mt-0.5">
-                                    {r.category && <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
+                                    {r.category && <span className="text-[9px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
                                     {r.duration && <span className="text-[9px] text-slate-500">{r.duration}</span>}
                                   </div>
                                 )}
@@ -1965,22 +1863,22 @@ export default function BondedAscentApp() {
                     )}
                     <div className="border-t border-white/5 pt-3">
                       <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Browse Pre-built Rewards</h3>
-                      <input data-testid="input-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-500 mb-2" style={{ fontSize: '16px' }} />
+                      <input data-testid="input-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-red-500 mb-2" style={{ fontSize: '16px' }} />
                       <div className="flex flex-wrap gap-1.5 mb-3">
-                        <button onClick={() => setRewardCategoryFilter(null)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!rewardCategoryFilter ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>All</button>
+                        <button onClick={() => setRewardCategoryFilter(null)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!rewardCategoryFilter ? "bg-red-700 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>All</button>
                         {REWARD_CATEGORIES.map((cat) => (
-                          <button key={cat} onClick={() => setRewardCategoryFilter(rewardCategoryFilter === cat ? null : cat)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${rewardCategoryFilter === cat ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>{cat}</button>
+                          <button key={cat} onClick={() => setRewardCategoryFilter(rewardCategoryFilter === cat ? null : cat)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${rewardCategoryFilter === cat ? "bg-red-700 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>{cat}</button>
                         ))}
                       </div>
                       <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
                         {PREBUILT_REWARDS.filter((r) => (!rewardCategoryFilter || r.category === rewardCategoryFilter) && (!rewardSearch || r.name.toLowerCase().includes(rewardSearch.toLowerCase()))).map((r, i) => (
-                          <button key={i} data-testid={`button-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-slate-900/50 hover:bg-purple-950/30 border border-white/5 hover:border-purple-500/30 rounded-lg transition-all cursor-pointer group">
+                          <button key={i} data-testid={`button-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-slate-900/50 hover:bg-red-950/30 border border-white/5 hover:border-red-500/30 rounded-lg transition-all cursor-pointer group">
                             <div className="flex justify-between items-start">
-                              <span className="text-xs font-medium text-slate-300 group-hover:text-purple-300 leading-tight">{r.name}</span>
-                              <Plus size={12} className="text-slate-600 group-hover:text-purple-400 shrink-0 ml-2 mt-0.5" />
+                              <span className="text-xs font-medium text-slate-300 group-hover:text-red-300 leading-tight">{r.name}</span>
+                              <Plus size={12} className="text-slate-600 group-hover:text-red-400 shrink-0 ml-2 mt-0.5" />
                             </div>
                             <div className="flex gap-2 mt-1">
-                              <span className="text-[9px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">{r.category}</span>
+                              <span className="text-[9px] text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">{r.category}</span>
                               <span className="text-[9px] text-slate-500">{r.duration}</span>
                             </div>
                           </button>
@@ -1993,8 +1891,8 @@ export default function BondedAscentApp() {
                     <div className="border-t border-white/5 pt-3">
                       <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Custom Reward</h3>
                       <div className="flex gap-2">
-                        <input data-testid="input-reward-name" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward name..." className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500" style={{ fontSize: '16px' }} />
-                        <Button data-testid="button-create-reward" className="bg-purple-600 hover:bg-purple-500 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
+                        <input data-testid="input-reward-name" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward name..." className="flex-1 bg-black/40 border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-red-500" style={{ fontSize: '16px' }} />
+                        <Button data-testid="button-create-reward" className="bg-red-700 hover:bg-red-500 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
                       </div>
                     </div>
                   </>
@@ -2168,7 +2066,7 @@ export default function BondedAscentApp() {
                 <div className="text-center mb-4">
                   <FileSignature
                     size={48}
-                    className="mx-auto text-emerald-500 mb-2"
+                    className="mx-auto text-red-600 mb-2"
                   />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Review Check-Ins
@@ -2194,7 +2092,7 @@ export default function BondedAscentApp() {
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex gap-2 items-center">
-                              <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">
+                              <span className="px-2 py-0.5 rounded bg-red-900/30 text-red-500 text-[10px] font-bold uppercase">
                                 Check-In
                               </span>
                               <span className="text-[10px] text-slate-500">
@@ -2225,7 +2123,7 @@ export default function BondedAscentApp() {
                             <Button
                               data-testid={`button-approve-${rev.id}`}
                               size="sm"
-                              className="flex-1 bg-emerald-600 hover:bg-emerald-500"
+                              className="flex-1 bg-red-700 hover:bg-red-600"
                               onClick={() =>
                                 reviewPartnerCheckInMutation.mutate({
                                   checkInId: rev.id,
@@ -2273,7 +2171,7 @@ export default function BondedAscentApp() {
                 <div className="text-center">
                   <Crosshair
                     size={48}
-                    className="mx-auto text-emerald-500 mb-4"
+                    className="mx-auto text-red-600 mb-4"
                   />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Interrogation
@@ -2290,8 +2188,8 @@ export default function BondedAscentApp() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    <div className="bg-emerald-950/20 border border-emerald-500/20 p-4 rounded-xl space-y-3">
-                      <div className="text-[10px] text-emerald-400 uppercase font-bold tracking-widest">
+                    <div className="bg-red-950/20 border border-red-600/20 p-4 rounded-xl space-y-3">
+                      <div className="text-[10px] text-red-500 uppercase font-bold tracking-widest">
                         Make an Accusation
                       </div>
                       <div className="flex gap-2">
@@ -2309,11 +2207,11 @@ export default function BondedAscentApp() {
                             }
                           }}
                           placeholder="State your accusation..."
-                          className="flex-1 bg-black/60 border border-emerald-900/50 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                          className="flex-1 bg-black/60 border border-red-900/50 rounded-lg px-4 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-red-600"
                         />
                         <Button
                           data-testid="button-send-accusation"
-                          className="bg-emerald-600 hover:bg-emerald-500 cursor-pointer"
+                          className="bg-red-700 hover:bg-red-600 cursor-pointer"
                           onClick={() => {
                             if (accusationInput.trim()) {
                               createAccusationMutation.mutate({
@@ -2335,7 +2233,7 @@ export default function BondedAscentApp() {
 
                     {partnerAccusations.length > 0 && (
                       <div className="space-y-3">
-                        <div className="text-[10px] text-emerald-400 uppercase font-bold tracking-widest">
+                        <div className="text-[10px] text-red-500 uppercase font-bold tracking-widest">
                           Accusations Log
                         </div>
                         {partnerAccusations.map((acc) => (
@@ -2345,7 +2243,7 @@ export default function BondedAscentApp() {
                           >
                             <div className="flex gap-2 items-center">
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${acc.status === "pending" ? "bg-red-900/30 text-red-400" : "bg-emerald-900/30 text-emerald-400"}`}
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${acc.status === "pending" ? "bg-red-900/30 text-red-400" : "bg-red-900/30 text-red-500"}`}
                               >
                                 {acc.status === "pending"
                                   ? "Awaiting Response"
@@ -2359,8 +2257,8 @@ export default function BondedAscentApp() {
                               "{acc.accusation}"
                             </div>
                             {acc.response && (
-                              <div className="bg-emerald-950/20 border border-emerald-500/10 p-3 rounded-lg">
-                                <div className="text-[9px] text-emerald-500 uppercase font-bold mb-1">
+                              <div className="bg-red-950/20 border border-red-600/10 p-3 rounded-lg">
+                                <div className="text-[9px] text-red-600 uppercase font-bold mb-1">
                                   Response
                                 </div>
                                 <div className="text-xs text-slate-300 italic">
@@ -2376,7 +2274,7 @@ export default function BondedAscentApp() {
                     {partnerCheckIns.filter((c) => c.status === "pending")
                       .length > 0 && (
                       <div className="space-y-3">
-                        <div className="text-[10px] text-emerald-400 uppercase font-bold tracking-widest">
+                        <div className="text-[10px] text-red-500 uppercase font-bold tracking-widest">
                           Pending Check-Ins
                         </div>
                         {partnerCheckIns
@@ -2387,7 +2285,7 @@ export default function BondedAscentApp() {
                               className="bg-slate-900/50 border border-white/5 p-4 rounded-xl space-y-3"
                             >
                               <div className="flex gap-2 items-center">
-                                <span className="px-2 py-0.5 rounded bg-emerald-900/30 text-emerald-400 text-[10px] font-bold uppercase">
+                                <span className="px-2 py-0.5 rounded bg-red-900/30 text-red-500 text-[10px] font-bold uppercase">
                                   Check-In
                                 </span>
                                 <span className="text-[10px] text-slate-500">
@@ -2419,7 +2317,7 @@ export default function BondedAscentApp() {
                                 <Button
                                   data-testid={`button-vinspect-approve-${rev.id}`}
                                   size="sm"
-                                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 cursor-pointer"
+                                  className="flex-1 bg-red-700 hover:bg-red-600 cursor-pointer"
                                   onClick={() =>
                                     reviewPartnerCheckInMutation.mutate({
                                       checkInId: rev.id,
@@ -2464,7 +2362,7 @@ export default function BondedAscentApp() {
                         <div className="text-center py-6">
                           <CheckCircle
                             size={32}
-                            className="mx-auto text-emerald-700 mb-2"
+                            className="mx-auto text-red-800 mb-2"
                           />
                           <div className="text-xs text-slate-600 uppercase tracking-widest">
                             No pending items
@@ -2479,7 +2377,7 @@ export default function BondedAscentApp() {
             {modal === "dom_direct" && (
               <div className="p-4 space-y-6">
                 <div className="text-center">
-                  <Film size={48} className="mx-auto text-purple-500 mb-4" />
+                  <Film size={48} className="mx-auto text-red-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Scene Director
                   </h2>
@@ -2488,11 +2386,11 @@ export default function BondedAscentApp() {
                   </p>
                 </div>
                 {scenePhase >= 0 && (
-                  <div className="bg-purple-950/30 border border-purple-500/30 p-4 rounded-2xl text-center space-y-3">
-                    <div className="text-[10px] text-purple-400 uppercase font-bold tracking-widest">
+                  <div className="bg-red-950/30 border border-red-500/30 p-4 rounded-2xl text-center space-y-3">
+                    <div className="text-[10px] text-red-400 uppercase font-bold tracking-widest">
                       Scene Active — {scenePhases[scenePhase]}
                     </div>
-                    <div className="text-3xl font-black text-purple-400 font-mono tracking-widest">
+                    <div className="text-3xl font-black text-red-400 font-mono tracking-widest">
                       {formatTimerDisplay(sceneTimer)}
                     </div>
                     <div className="flex gap-2 justify-center">
@@ -2500,7 +2398,7 @@ export default function BondedAscentApp() {
                         data-testid="button-dom-advance-scene"
                         size="sm"
                         onClick={advanceScene}
-                        className="bg-purple-600 hover:bg-purple-500 cursor-pointer"
+                        className="bg-red-700 hover:bg-red-500 cursor-pointer"
                       >
                         {scenePhase < scenePhases.length - 1
                           ? `Next: ${scenePhases[scenePhase + 1]}`
@@ -2524,24 +2422,24 @@ export default function BondedAscentApp() {
                       label: "Warm-Up",
                       desc: "Ease into the scene",
                       color:
-                        "bg-green-500/10 border-green-500/20 text-green-400",
+                        "bg-red-500/10 border-red-500/20 text-red-400",
                       activeColor:
-                        "bg-green-500/30 border-green-500/50 text-green-300 ring-1 ring-green-500/30",
+                        "bg-red-500/30 border-red-500/50 text-red-300 ring-1 ring-red-500/30",
                     },
                     {
                       label: "Main Scene",
                       desc: "Core intensity",
                       color:
-                        "bg-purple-500/10 border-purple-500/20 text-purple-400",
+                        "bg-red-500/10 border-red-500/20 text-red-400",
                       activeColor:
-                        "bg-purple-500/30 border-purple-500/50 text-purple-300 ring-1 ring-purple-500/30",
+                        "bg-red-500/30 border-red-500/50 text-red-300 ring-1 ring-red-500/30",
                     },
                     {
                       label: "Cooldown",
                       desc: "Wind down safely",
-                      color: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+                      color: "bg-slate-500/10 border-slate-500/20 text-slate-400",
                       activeColor:
-                        "bg-blue-500/30 border-blue-500/50 text-blue-300 ring-1 ring-blue-500/30",
+                        "bg-slate-500/30 border-slate-500/50 text-blue-300 ring-1 ring-slate-500/30",
                     },
                   ].map((phase, i) => (
                     <div
@@ -2558,7 +2456,7 @@ export default function BondedAscentApp() {
                           </div>
                         </div>
                         {scenePhase > i && (
-                          <Check size={14} className="text-green-500" />
+                          <Check size={14} className="text-red-500" />
                         )}
                         {scenePhase === i && (
                           <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
@@ -2571,7 +2469,7 @@ export default function BondedAscentApp() {
                   <Button
                     data-testid="button-dom-start-scene"
                     onClick={startScene}
-                    className="w-full bg-purple-600 hover:bg-purple-500 font-bold uppercase cursor-pointer"
+                    className="w-full bg-red-700 hover:bg-red-500 font-bold uppercase cursor-pointer"
                   >
                     <Play size={16} className="mr-2" /> Begin Scene
                   </Button>
@@ -2582,7 +2480,7 @@ export default function BondedAscentApp() {
             {modal === "dom_surveil" && (
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center">
-                  <FileText size={48} className="mx-auto text-cyan-500 mb-4" />
+                  <FileText size={48} className="mx-auto text-slate-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Surveillance
                   </h2>
@@ -2598,8 +2496,8 @@ export default function BondedAscentApp() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex items-center justify-center gap-2 text-[10px] text-cyan-500 font-bold uppercase animate-pulse">
-                      <span className="w-2 h-2 rounded-full bg-cyan-500" /> Live
+                    <div className="flex items-center justify-center gap-2 text-[10px] text-slate-500 font-bold uppercase animate-pulse">
+                      <span className="w-2 h-2 rounded-full bg-slate-500" /> Live
                       Feed
                     </div>
                     {partnerActivity.slice(0, 15).map((log) => (
@@ -2612,18 +2510,18 @@ export default function BondedAscentApp() {
                         </span>
                         <div className="mt-0.5">
                           {log.action.includes("task") ? (
-                            <CheckCircle size={12} className="text-green-500" />
+                            <CheckCircle size={12} className="text-red-500" />
                           ) : log.action.includes("dare") ? (
-                            <Dices size={12} className="text-purple-500" />
+                            <Dices size={12} className="text-red-500" />
                           ) : log.action.includes("check") ? (
                             <MessageSquare
                               size={12}
-                              className="text-blue-500"
+                              className="text-slate-500"
                             />
                           ) : log.action.includes("scene") ? (
-                            <Film size={12} className="text-purple-400" />
+                            <Film size={12} className="text-red-400" />
                           ) : (
-                            <Activity size={12} className="text-cyan-400" />
+                            <Activity size={12} className="text-slate-400" />
                           )}
                         </div>
                         <div>
@@ -2723,7 +2621,7 @@ export default function BondedAscentApp() {
                       >
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black
-                          ${selected ? "bg-rose-500 text-white" : i < 2 ? "bg-green-900/30 text-green-400" : i < 4 ? "bg-yellow-900/30 text-yellow-400" : "bg-red-900/30 text-red-400"}`}
+                          ${selected ? "bg-rose-500 text-white" : i < 2 ? "bg-red-900/30 text-red-400" : i < 4 ? "bg-slate-800/30 text-slate-400" : "bg-red-900/30 text-red-400"}`}
                         >
                           {selected ? <Check size={14} /> : lvlNum}
                         </div>
@@ -2761,15 +2659,15 @@ export default function BondedAscentApp() {
                   </div>
                   <div className="space-y-1 text-[9px] text-slate-600">
                     <div>
-                      <span className="text-green-400 font-bold">Lv1:</span> No
+                      <span className="text-red-400 font-bold">Lv1:</span> No
                       automatic tasks — gentle guidance only
                     </div>
                     <div>
-                      <span className="text-green-400 font-bold">Lv2:</span> 2
+                      <span className="text-red-400 font-bold">Lv2:</span> 2
                       reflection/devotion tasks auto-assigned
                     </div>
                     <div>
-                      <span className="text-yellow-400 font-bold">Lv3:</span> 3
+                      <span className="text-slate-400 font-bold">Lv3:</span> 3
                       tasks + timed check-in requirements
                     </div>
                     <div>
@@ -2788,7 +2686,7 @@ export default function BondedAscentApp() {
             {modal === "dom_bestow" && (
               <div className="p-4 space-y-4 overflow-y-auto">
                 <div className="text-center">
-                  <Gift size={48} className="mx-auto text-amber-500 mb-4" />
+                  <Gift size={48} className="mx-auto text-slate-300 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Bestow Rewards
                   </h2>
@@ -2806,26 +2704,26 @@ export default function BondedAscentApp() {
                       <div className="space-y-2 mb-2">
                         <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Bestowed Rewards</h3>
                         {rewards.map((r) => (
-                          <div key={r.id} className="flex justify-between items-center p-3 bg-amber-950/10 border border-amber-900/20 rounded-xl">
+                          <div key={r.id} className="flex justify-between items-center p-3 bg-amber-950/10 border border-slate-800/20 rounded-xl">
                             <div className="flex items-center gap-3">
-                              <div className="p-2 bg-amber-500/10 rounded-full text-amber-400"><Star size={14} /></div>
+                              <div className="p-2 bg-slate-300/10 rounded-full text-slate-400"><Star size={14} /></div>
                               <div>
                                 <span className="text-sm font-bold text-amber-200">{r.name}</span>
                                 <div className="flex gap-2 mt-0.5">
-                                  {r.category && <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">{r.category}</span>}
+                                  {r.category && <span className="text-[9px] text-slate-400 bg-slate-300/10 px-1.5 py-0.5 rounded">{r.category}</span>}
                                   {r.duration && <span className="text-[9px] text-amber-600">{r.duration}</span>}
                                   <span className="text-[9px] text-amber-600">{r.unlocked ? "Bestowed" : `Requires Lv ${r.unlockLevel}`}</span>
                                 </div>
                               </div>
                             </div>
-                            {r.unlocked ? <Check size={14} className="text-amber-400" /> : <Lock size={14} className="text-slate-600" />}
+                            {r.unlocked ? <Check size={14} className="text-slate-400" /> : <Lock size={14} className="text-slate-600" />}
                           </div>
                         ))}
                       </div>
                     )}
-                    <div className="border-t border-amber-900/20 pt-3">
+                    <div className="border-t border-slate-800/20 pt-3">
                       <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Browse Pre-built Rewards</h3>
-                      <input data-testid="input-bestow-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500 mb-2" style={{ fontSize: '16px' }} />
+                      <input data-testid="input-bestow-reward-search" type="text" value={rewardSearch} onChange={(e) => setRewardSearch(e.target.value)} placeholder="Search rewards..." className="w-full bg-black/40 border border-amber-900/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-300 mb-2" style={{ fontSize: '16px' }} />
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         <button onClick={() => setRewardCategoryFilter(null)} className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!rewardCategoryFilter ? "bg-amber-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>All</button>
                         {REWARD_CATEGORIES.map((cat) => (
@@ -2834,13 +2732,13 @@ export default function BondedAscentApp() {
                       </div>
                       <div className="space-y-1.5 max-h-[40vh] overflow-y-auto">
                         {PREBUILT_REWARDS.filter((r) => (!rewardCategoryFilter || r.category === rewardCategoryFilter) && (!rewardSearch || r.name.toLowerCase().includes(rewardSearch.toLowerCase()))).map((r, i) => (
-                          <button key={i} data-testid={`button-bestow-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-amber-950/10 hover:bg-amber-950/30 border border-amber-900/10 hover:border-amber-500/30 rounded-lg transition-all cursor-pointer group">
+                          <button key={i} data-testid={`button-bestow-prebuilt-reward-${i}`} onClick={() => { createPartnerRewardMutation.mutate({ name: r.name, category: r.category, duration: r.duration }); setRewardSearch(''); setRewardCategoryFilter(null); }} className="w-full text-left p-2.5 bg-amber-950/10 hover:bg-amber-950/30 border border-amber-900/10 hover:border-slate-300/30 rounded-lg transition-all cursor-pointer group">
                             <div className="flex justify-between items-start">
                               <span className="text-xs font-medium text-amber-200 group-hover:text-amber-100 leading-tight">{r.name}</span>
-                              <Plus size={12} className="text-amber-700 group-hover:text-amber-400 shrink-0 ml-2 mt-0.5" />
+                              <Plus size={12} className="text-amber-700 group-hover:text-slate-400 shrink-0 ml-2 mt-0.5" />
                             </div>
                             <div className="flex gap-2 mt-1">
-                              <span className="text-[9px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">{r.category}</span>
+                              <span className="text-[9px] text-slate-400 bg-slate-300/10 px-1.5 py-0.5 rounded">{r.category}</span>
                               <span className="text-[9px] text-amber-600">{r.duration}</span>
                             </div>
                           </button>
@@ -2850,11 +2748,11 @@ export default function BondedAscentApp() {
                         )}
                       </div>
                     </div>
-                    <div className="border-t border-amber-900/20 pt-3">
+                    <div className="border-t border-slate-800/20 pt-3">
                       <h3 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Custom Reward</h3>
                       <div className="flex gap-2">
-                        <input data-testid="input-dom-bestow-reward" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward to bestow..." className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-amber-500" style={{ fontSize: '16px' }} />
-                        <Button data-testid="button-dom-bestow-create" className="bg-amber-600 hover:bg-amber-500 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
+                        <input data-testid="input-dom-bestow-reward" type="text" value={newRewardName} onChange={(e) => setNewRewardName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && newRewardName.trim() && (() => { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); })()} placeholder="Custom reward to bestow..." className="flex-1 bg-black/40 border border-amber-900/30 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-slate-300" style={{ fontSize: '16px' }} />
+                        <Button data-testid="button-dom-bestow-create" className="bg-amber-600 hover:bg-slate-300 cursor-pointer" onClick={() => { if (newRewardName.trim()) { createPartnerRewardMutation.mutate({ name: newRewardName }); setNewRewardName(""); } }} disabled={createPartnerRewardMutation.isPending}><Plus size={16} /></Button>
                       </div>
                     </div>
                   </>
@@ -3048,7 +2946,7 @@ export default function BondedAscentApp() {
                               )}
                             </div>
                             <span
-                              className={`text-[9px] uppercase font-bold shrink-0 ${p.status === "completed" ? "text-green-500" : "text-orange-500"}`}
+                              className={`text-[9px] uppercase font-bold shrink-0 ${p.status === "completed" ? "text-red-500" : "text-orange-500"}`}
                             >
                               {p.status}
                             </span>
@@ -3222,7 +3120,7 @@ export default function BondedAscentApp() {
               <div className="text-center p-4">
                 <Dices
                   size={48}
-                  className={`mx-auto text-purple-500 mb-4 ${isSpinning ? "animate-spin" : ""}`}
+                  className={`mx-auto text-red-500 mb-4 ${isSpinning ? "animate-spin" : ""}`}
                 />
                 <h2 className="text-xl font-bold text-white mb-2">
                   Wheel of Dares
@@ -3230,10 +3128,10 @@ export default function BondedAscentApp() {
 
                 {wheelResult ? (
                   <div className="my-8 animate-in zoom-in-95">
-                    <div className="text-xs text-purple-400 uppercase tracking-widest mb-2">
+                    <div className="text-xs text-red-400 uppercase tracking-widest mb-2">
                       Fate Decided
                     </div>
-                    <div className="text-lg font-black text-white border p-4 rounded-xl bg-purple-900/20 border-purple-500/50">
+                    <div className="text-lg font-black text-white border p-4 rounded-xl bg-red-950/20 border-red-500/50">
                       {wheelResult}
                     </div>
                   </div>
@@ -3247,7 +3145,7 @@ export default function BondedAscentApp() {
                   data-testid="button-spin"
                   onClick={handleSpinWheel}
                   disabled={isSpinning}
-                  className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  className="w-full py-3 bg-red-700 hover:bg-red-500 text-white font-bold uppercase rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
                 >
                   {isSpinning ? "Spinning..." : "Spin Now"}
                 </button>
@@ -3271,7 +3169,7 @@ export default function BondedAscentApp() {
                           <button
                             data-testid={`button-complete-dare-${d.id}`}
                             onClick={() => completeDareMutation.mutate(d.id)}
-                            className="text-purple-400 hover:text-purple-300 text-[10px] uppercase font-bold cursor-pointer"
+                            className="text-red-400 hover:text-red-300 text-[10px] uppercase font-bold cursor-pointer"
                           >
                             Complete
                           </button>
@@ -3288,7 +3186,7 @@ export default function BondedAscentApp() {
                 <div className="text-center mb-6">
                   <MessageSquare
                     size={32}
-                    className="mx-auto text-blue-500 mb-2"
+                    className="mx-auto text-slate-500 mb-2"
                   />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Daily Check-In
@@ -3300,7 +3198,7 @@ export default function BondedAscentApp() {
                     <div>
                       <div className="flex justify-between items-center mb-4">
                         <Label className="text-slate-300">Current Mood</Label>
-                        <span className="text-xs font-mono text-blue-400">
+                        <span className="text-xs font-mono text-slate-400">
                           {checkInData.mood}/10
                         </span>
                       </div>
@@ -3322,7 +3220,7 @@ export default function BondedAscentApp() {
                     <Button
                       data-testid="button-checkin-next"
                       onClick={() => setCheckInStep(1)}
-                      className="w-full bg-blue-600 hover:bg-blue-500"
+                      className="w-full bg-slate-600 hover:bg-slate-500"
                     >
                       Next: Obedience Rating
                     </Button>
@@ -3336,7 +3234,7 @@ export default function BondedAscentApp() {
                         <Label className="text-slate-300">
                           Self-Rated Obedience
                         </Label>
-                        <span className="text-xs font-mono text-blue-400">
+                        <span className="text-xs font-mono text-slate-400">
                           {checkInData.obedience}/10
                         </span>
                       </div>
@@ -3369,7 +3267,7 @@ export default function BondedAscentApp() {
                       <Button
                         data-testid="button-checkin-next2"
                         onClick={() => setCheckInStep(2)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-500"
+                        className="flex-1 bg-slate-600 hover:bg-slate-500"
                       >
                         Next: Notes
                       </Button>
@@ -3392,12 +3290,12 @@ export default function BondedAscentApp() {
                             notes: e.target.value,
                           }))
                         }
-                        className="w-full bg-black/40 border border-slate-700 rounded-xl p-4 text-slate-300 text-sm focus:outline-none focus:border-blue-500/50 min-h-[100px]"
+                        className="w-full bg-black/40 border border-slate-700 rounded-xl p-4 text-slate-300 text-sm focus:outline-none focus:border-slate-500/50 min-h-[100px]"
                         placeholder="How are you feeling today? Any observations..."
                       />
                     </div>
-                    <div className="bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl">
-                      <div className="text-xs font-bold text-blue-400 uppercase mb-2">
+                    <div className="bg-slate-800/20 border border-slate-500/30 p-4 rounded-xl">
+                      <div className="text-xs font-bold text-slate-400 uppercase mb-2">
                         Summary
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
@@ -3427,7 +3325,7 @@ export default function BondedAscentApp() {
                         data-testid="button-submit-checkin"
                         onClick={handleSubmitCheckIn}
                         disabled={createCheckInMutation.isPending}
-                        className="flex-1 bg-blue-600 hover:bg-blue-500"
+                        className="flex-1 bg-slate-600 hover:bg-slate-500"
                       >
                         {createCheckInMutation.isPending ? (
                           <Loader2 className="animate-spin" size={16} />
@@ -3443,7 +3341,7 @@ export default function BondedAscentApp() {
 
             {modal === "badges" && (
               <div className="text-center p-4">
-                <Award size={48} className="mx-auto text-green-500 mb-4" />
+                <Award size={48} className="mx-auto text-red-500 mb-4" />
                 <h2 className="text-xl font-bold text-white uppercase mb-6">
                   Achievements
                 </h2>
@@ -3482,11 +3380,11 @@ export default function BondedAscentApp() {
                   ].map((badge, i) => (
                     <div
                       key={i}
-                      className={`p-3 rounded-xl border text-center ${badge.unlocked ? "bg-green-900/20 border-green-500/30" : "bg-black/20 border-slate-800 opacity-30"}`}
+                      className={`p-3 rounded-xl border text-center ${badge.unlocked ? "bg-red-900/20 border-red-500/30" : "bg-black/20 border-slate-800 opacity-30"}`}
                     >
                       <div
                         className={
-                          badge.unlocked ? "text-green-400" : "text-slate-600"
+                          badge.unlocked ? "text-red-400" : "text-slate-600"
                         }
                       >
                         {badge.icon}
@@ -3503,7 +3401,7 @@ export default function BondedAscentApp() {
             {modal === "aftercare" && (
               <div className="p-4 space-y-6">
                 <div className="text-center">
-                  <Heart size={48} className="mx-auto text-pink-500 mb-4" />
+                  <Heart size={48} className="mx-auto text-rose-700 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Aftercare Protocol
                   </h2>
@@ -3553,10 +3451,10 @@ export default function BondedAscentApp() {
                           }
                         }}
                         className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all cursor-pointer
-                          ${done ? "bg-pink-900/20 border-pink-500/30" : "bg-slate-900/50 border-white/5 hover:border-pink-500/50"}`}
+                          ${done ? "bg-pink-900/20 border-rose-700/30" : "bg-slate-900/50 border-white/5 hover:border-rose-700/50"}`}
                       >
                         <div
-                          className={done ? "text-pink-300" : "text-pink-400"}
+                          className={done ? "text-rose-500" : "text-rose-600"}
                         >
                           {item.icon}
                         </div>
@@ -3566,14 +3464,14 @@ export default function BondedAscentApp() {
                         <span className="text-[9px] text-slate-600">
                           {done ? "Done" : item.desc}
                         </span>
-                        {done && <Check size={12} className="text-pink-400" />}
+                        {done && <Check size={12} className="text-rose-600" />}
                       </button>
                     );
                   })}
                 </div>
                 {aftercareActions.length === 4 && (
-                  <div className="text-center bg-pink-900/20 border border-pink-500/20 p-4 rounded-xl">
-                    <div className="text-xs text-pink-400 font-bold uppercase">
+                  <div className="text-center bg-pink-900/20 border border-rose-700/20 p-4 rounded-xl">
+                    <div className="text-xs text-rose-600 font-bold uppercase">
                       Aftercare Complete
                     </div>
                     <div className="text-[10px] text-slate-500 mt-1">
@@ -3587,7 +3485,7 @@ export default function BondedAscentApp() {
             {modal === "worship" && (
               <div className="p-4 space-y-6">
                 <div className="text-center">
-                  <Star size={48} className="mx-auto text-amber-500 mb-4" />
+                  <Star size={48} className="mx-auto text-slate-300 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Altar of Worship
                   </h2>
@@ -3598,16 +3496,16 @@ export default function BondedAscentApp() {
                   </p>
                 </div>
                 <div
-                  className={`border p-6 rounded-2xl text-center transition-all ${worshipDone ? "bg-amber-900/20 border-amber-500/30" : "bg-amber-900/10 border-amber-500/20"}`}
+                  className={`border p-6 rounded-2xl text-center transition-all ${worshipDone ? "bg-slate-800/20 border-slate-300/30" : "bg-amber-900/10 border-slate-300/20"}`}
                 >
-                  <div className="text-xs text-amber-400/70 uppercase tracking-widest mb-2 font-bold">
+                  <div className="text-xs text-slate-400/70 uppercase tracking-widest mb-2 font-bold">
                     Daily Devotion
                   </div>
                   <div className="text-sm italic text-amber-200">
                     "Your guidance is my only path."
                   </div>
                   {worshipDone ? (
-                    <div className="mt-6 flex items-center justify-center gap-2 text-amber-400">
+                    <div className="mt-6 flex items-center justify-center gap-2 text-slate-400">
                       <Check size={18} />{" "}
                       <span className="text-xs font-bold uppercase">
                         Acknowledged
@@ -3623,7 +3521,7 @@ export default function BondedAscentApp() {
                           detail: "Daily devotion acknowledged",
                         });
                       }}
-                      className="mt-6 w-full bg-amber-600 hover:bg-amber-500 text-black font-black uppercase tracking-widest text-xs cursor-pointer"
+                      className="mt-6 w-full bg-amber-600 hover:bg-slate-300 text-black font-black uppercase tracking-widest text-xs cursor-pointer"
                     >
                       Acknowledge
                     </Button>
@@ -3634,7 +3532,7 @@ export default function BondedAscentApp() {
                     <div className="text-[10px] text-amber-600 uppercase font-bold tracking-widest mb-1">
                       Devoted to
                     </div>
-                    <div className="text-lg font-black text-amber-400 uppercase">
+                    <div className="text-lg font-black text-slate-400 uppercase">
                       {partner.username}
                     </div>
                   </div>
@@ -3718,16 +3616,16 @@ export default function BondedAscentApp() {
 
             {modal === "balance" && (
               <div className="p-4 space-y-6 text-center">
-                <Clock size={48} className="mx-auto text-yellow-500 mb-2" />
+                <Clock size={48} className="mx-auto text-slate-300 mb-2" />
                 <h2 className="text-xl font-bold text-white uppercase">
                   XP Balance
                 </h2>
-                <div className="bg-black/40 p-6 rounded-2xl border border-yellow-500/20 space-y-4">
+                <div className="bg-black/40 p-6 rounded-2xl border border-slate-300/20 space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-slate-400 uppercase font-bold">
                       Total XP
                     </span>
-                    <span className="text-xl font-black text-yellow-500">
+                    <span className="text-xl font-black text-slate-300">
                       {xp}
                     </span>
                   </div>
@@ -3820,7 +3718,7 @@ export default function BondedAscentApp() {
                             active
                               ? "bg-red-900/30 border-red-500/50 ring-1 ring-red-500/30"
                               : completed
-                                ? "bg-green-900/20 border-green-500/30"
+                                ? "bg-red-900/20 border-red-500/30"
                                 : "bg-slate-900/50 border-white/5 hover:border-red-500/50"
                           }
                           ${!!trainingActive && !active ? "opacity-40" : ""}`}
@@ -3830,7 +3728,7 @@ export default function BondedAscentApp() {
                             active
                               ? "text-red-400"
                               : completed
-                                ? "text-green-400"
+                                ? "text-red-400"
                                 : "text-red-400"
                           }
                         >
@@ -3843,14 +3741,14 @@ export default function BondedAscentApp() {
                           {completed ? "Completed" : item.desc}
                         </span>
                         {completed && (
-                          <Check size={12} className="text-green-500" />
+                          <Check size={12} className="text-red-500" />
                         )}
                       </button>
                     );
                   })}
                 </div>
                 {trainingCompleted.length > 0 && (
-                  <div className="text-center text-[10px] text-emerald-500 font-bold uppercase">
+                  <div className="text-center text-[10px] text-red-600 font-bold uppercase">
                     {trainingCompleted.length}/4 Exercises Complete
                   </div>
                 )}
@@ -3860,7 +3758,7 @@ export default function BondedAscentApp() {
             {modal === "scene" && (
               <div className="p-4 space-y-4 overflow-y-auto">
                 <div className="text-center">
-                  <Film size={48} className="mx-auto text-purple-500 mb-4" />
+                  <Film size={48} className="mx-auto text-red-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Scene Builder
                   </h2>
@@ -3870,11 +3768,11 @@ export default function BondedAscentApp() {
                 </div>
 
                 {scenePhase >= 0 && (
-                  <div className="bg-purple-950/30 border border-purple-500/30 p-4 rounded-2xl text-center space-y-3">
-                    <div className="text-[10px] text-purple-400 uppercase font-bold tracking-widest">
+                  <div className="bg-red-950/30 border border-red-500/30 p-4 rounded-2xl text-center space-y-3">
+                    <div className="text-[10px] text-red-400 uppercase font-bold tracking-widest">
                       Scene Active — {scenePhases[scenePhase]}
                     </div>
-                    <div className="text-3xl font-black text-purple-400 font-mono tracking-widest">
+                    <div className="text-3xl font-black text-red-400 font-mono tracking-widest">
                       {formatTimerDisplay(sceneTimer)}
                     </div>
                     <div className="flex gap-2 justify-center">
@@ -3882,7 +3780,7 @@ export default function BondedAscentApp() {
                         data-testid="button-advance-scene"
                         size="sm"
                         onClick={advanceScene}
-                        className="bg-purple-600 hover:bg-purple-500 cursor-pointer"
+                        className="bg-red-700 hover:bg-red-500 cursor-pointer"
                       >
                         {scenePhase < scenePhases.length - 1
                           ? `Next: ${scenePhases[scenePhase + 1]}`
@@ -3911,7 +3809,7 @@ export default function BondedAscentApp() {
                         value={sceneSearch}
                         onChange={(e) => setSceneSearch(e.target.value)}
                         placeholder="Search scenes or activities..."
-                        className="w-full bg-black/40 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                        className="w-full bg-black/40 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
                         style={{ fontSize: "16px" }}
                       />
                     </div>
@@ -3919,7 +3817,7 @@ export default function BondedAscentApp() {
                       <button
                         data-testid="button-scene-cat-all"
                         onClick={() => setSceneCategoryFilter(null)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!sceneCategoryFilter ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!sceneCategoryFilter ? "bg-red-700 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
                       >
                         All
                       </button>
@@ -3928,7 +3826,7 @@ export default function BondedAscentApp() {
                           key={cat}
                           data-testid={`button-scene-cat-${cat.toLowerCase().replace(/\s/g, "-")}`}
                           onClick={() => setSceneCategoryFilter(cat)}
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${sceneCategoryFilter === cat ? "bg-purple-600 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${sceneCategoryFilter === cat ? "bg-red-700 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}
                         >
                           {cat}
                         </button>
@@ -3955,22 +3853,22 @@ export default function BondedAscentApp() {
                               setSceneSearch("");
                               setSceneCategoryFilter(null);
                             }}
-                            className="w-full flex items-center gap-3 p-3 bg-purple-950/10 border border-purple-900/20 hover:bg-purple-900/30 hover:border-purple-500/40 rounded-xl transition-all cursor-pointer group text-left"
+                            className="w-full flex items-center gap-3 p-3 bg-red-950/10 border border-red-950/20 hover:bg-red-900/30 hover:border-red-500/40 rounded-xl transition-all cursor-pointer group text-left"
                           >
                             <div className="flex-1 min-w-0">
-                              <div className="text-xs text-purple-400 font-semibold group-hover:text-white transition-colors truncate">
+                              <div className="text-xs text-red-400 font-semibold group-hover:text-white transition-colors truncate">
                                 {s.name}
                               </div>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-[9px] text-slate-600 uppercase">{s.category}</span>
                                 <span className="text-[9px] text-slate-600">•</span>
-                                <span className="text-[9px] text-purple-500/60 flex items-center gap-0.5">
+                                <span className="text-[9px] text-red-500/60 flex items-center gap-0.5">
                                   <Clock size={8} />{s.duration}
                                 </span>
                                 <span className="text-[9px] text-slate-600">•</span>
                                 <div className="flex gap-0.5">
                                   {Array.from({ length: 10 }, (_, j) => (
-                                    <div key={j} className={`w-1 h-1 rounded-full ${j < s.intensity ? (s.intensity >= 8 ? "bg-red-500" : s.intensity >= 5 ? "bg-amber-500" : "bg-green-500") : "bg-slate-800"}`} />
+                                    <div key={j} className={`w-1 h-1 rounded-full ${j < s.intensity ? (s.intensity >= 8 ? "bg-red-500" : s.intensity >= 5 ? "bg-slate-300" : "bg-red-500") : "bg-slate-800"}`} />
                                   ))}
                                 </div>
                               </div>
@@ -3983,7 +3881,7 @@ export default function BondedAscentApp() {
                                 )}
                               </div>
                             </div>
-                            <Flame size={12} className="text-purple-900 group-hover:text-purple-400 transition-colors shrink-0" />
+                            <Flame size={12} className="text-red-900 group-hover:text-red-400 transition-colors shrink-0" />
                           </button>
                         ))}
                       {PREBUILT_SCENES
@@ -4006,20 +3904,20 @@ export default function BondedAscentApp() {
                     {
                       label: "Warm-Up",
                       desc: "Ease into the scene",
-                      color: "bg-green-500/10 border-green-500/20 text-green-400",
-                      activeColor: "bg-green-500/30 border-green-500/50 text-green-300 ring-1 ring-green-500/30",
+                      color: "bg-red-500/10 border-red-500/20 text-red-400",
+                      activeColor: "bg-red-500/30 border-red-500/50 text-red-300 ring-1 ring-red-500/30",
                     },
                     {
                       label: "Main Scene",
                       desc: "Core intensity",
-                      color: "bg-purple-500/10 border-purple-500/20 text-purple-400",
-                      activeColor: "bg-purple-500/30 border-purple-500/50 text-purple-300 ring-1 ring-purple-500/30",
+                      color: "bg-red-500/10 border-red-500/20 text-red-400",
+                      activeColor: "bg-red-500/30 border-red-500/50 text-red-300 ring-1 ring-red-500/30",
                     },
                     {
                       label: "Cooldown",
                       desc: "Wind down safely",
-                      color: "bg-blue-500/10 border-blue-500/20 text-blue-400",
-                      activeColor: "bg-blue-500/30 border-blue-500/50 text-blue-300 ring-1 ring-blue-500/30",
+                      color: "bg-slate-500/10 border-slate-500/20 text-slate-400",
+                      activeColor: "bg-slate-500/30 border-slate-500/50 text-blue-300 ring-1 ring-slate-500/30",
                     },
                   ].map((phase, i) => (
                     <div
@@ -4031,7 +3929,7 @@ export default function BondedAscentApp() {
                           <div className="text-xs font-bold uppercase tracking-widest">{phase.label}</div>
                           <div className="text-[9px] opacity-60 mt-0.5">{phase.desc}</div>
                         </div>
-                        {scenePhase > i && <Check size={14} className="text-green-500" />}
+                        {scenePhase > i && <Check size={14} className="text-red-500" />}
                         {scenePhase === i && <div className="w-2 h-2 rounded-full bg-current animate-pulse" />}
                       </div>
                     </div>
@@ -4041,7 +3939,7 @@ export default function BondedAscentApp() {
                   <Button
                     data-testid="button-start-scene"
                     onClick={startScene}
-                    className="w-full bg-purple-600 hover:bg-purple-500 font-bold uppercase cursor-pointer"
+                    className="w-full bg-red-700 hover:bg-red-500 font-bold uppercase cursor-pointer"
                   >
                     <Play size={16} className="mr-2" /> Start Live Scene
                   </Button>
@@ -4102,7 +4000,7 @@ export default function BondedAscentApp() {
                       >
                         <div
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black
-                          ${selected ? "bg-rose-500 text-white" : i < 2 ? "bg-green-900/30 text-green-400" : i < 4 ? "bg-yellow-900/30 text-yellow-400" : "bg-red-900/30 text-red-400"}`}
+                          ${selected ? "bg-rose-500 text-white" : i < 2 ? "bg-red-900/30 text-red-400" : i < 4 ? "bg-slate-800/30 text-slate-400" : "bg-red-900/30 text-red-400"}`}
                         >
                           {selected ? <Check size={14} /> : lvlNum}
                         </div>
@@ -4129,7 +4027,7 @@ export default function BondedAscentApp() {
             {modal === "logbook" && (
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center">
-                  <FileText size={48} className="mx-auto text-pink-500 mb-4" />
+                  <FileText size={48} className="mx-auto text-rose-700 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     Session Logbook
                   </h2>
@@ -4170,7 +4068,7 @@ export default function BondedAscentApp() {
             {modal === "vault" && (
               <div className="p-4 space-y-6">
                 <div className="text-center">
-                  <Box size={48} className="mx-auto text-indigo-500 mb-4" />
+                  <Box size={48} className="mx-auto text-red-500 mb-4" />
                   <h2 className="text-xl font-bold text-white uppercase">
                     The Vault
                   </h2>
@@ -4213,11 +4111,11 @@ export default function BondedAscentApp() {
                   ].map((badge, i) => (
                     <div
                       key={i}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border ${badge.unlocked ? "bg-indigo-900/20 border-indigo-500/30" : "bg-black/20 border-white/5 opacity-40"}`}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-xl border ${badge.unlocked ? "bg-red-900/20 border-red-500/30" : "bg-black/20 border-white/5 opacity-40"}`}
                     >
                       <div
                         className={
-                          badge.unlocked ? "text-indigo-400" : "text-slate-600"
+                          badge.unlocked ? "text-red-400" : "text-slate-600"
                         }
                       >
                         {badge.icon}
@@ -4226,7 +4124,7 @@ export default function BondedAscentApp() {
                         {badge.label}
                       </span>
                       {badge.unlocked && (
-                        <Unlock size={10} className="text-indigo-400" />
+                        <Unlock size={10} className="text-red-400" />
                       )}
                     </div>
                   ))}
@@ -4261,10 +4159,10 @@ export default function BondedAscentApp() {
                     </>
                   ) : scenePhase >= 0 ? (
                     <>
-                      <div className="text-[10px] text-purple-400 uppercase font-bold tracking-widest">
+                      <div className="text-[10px] text-red-400 uppercase font-bold tracking-widest">
                         Scene: {scenePhases[scenePhase]}
                       </div>
-                      <div className="text-4xl font-black text-purple-400 font-mono tracking-widest">
+                      <div className="text-4xl font-black text-red-400 font-mono tracking-widest">
                         {formatTimerDisplay(sceneTimer)}
                       </div>
                       <div className="flex gap-2 justify-center">
@@ -4272,7 +4170,7 @@ export default function BondedAscentApp() {
                           data-testid="button-timer-advance"
                           size="sm"
                           onClick={advanceScene}
-                          className="bg-purple-600 hover:bg-purple-500 cursor-pointer"
+                          className="bg-red-700 hover:bg-red-500 cursor-pointer"
                         >
                           {scenePhase < scenePhases.length - 1
                             ? "Next Phase"
@@ -4389,9 +4287,9 @@ function QuickAction({
   sexyIcon?: string;
 }) {
   const colors = {
-    yellow: "text-amber-400 bg-amber-900/20 border-amber-700/50",
+    yellow: "text-slate-400 bg-slate-800/20 border-slate-600/50",
     slate: "text-slate-300 bg-slate-800/50 border-slate-700",
-    green: "text-emerald-400 bg-emerald-900/20 border-emerald-700/50",
+    green: "text-red-500 bg-red-900/20 border-red-800/50",
     red: "text-red-500 bg-red-900/20 border-red-700/50",
   };
   return (
@@ -4515,16 +4413,16 @@ function PushNotificationToggle() {
   if (!supported) return null;
 
   return (
-    <div className="bg-gradient-to-r from-blue-950/50 to-black border border-blue-900/50 p-6 rounded-2xl flex items-center justify-between shadow-lg">
+    <div className="bg-gradient-to-r from-slate-900/50 to-black border border-slate-800/50 p-6 rounded-2xl flex items-center justify-between shadow-lg">
       <div className="flex items-center gap-5">
-        <div className="bg-blue-900/30 p-3 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-          <Bell size={24} className="text-blue-400" />
+        <div className="bg-slate-800/30 p-3 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+          <Bell size={24} className="text-slate-400" />
         </div>
         <div>
-          <div className="font-bold text-blue-400 text-lg uppercase tracking-wide">
+          <div className="font-bold text-slate-400 text-lg uppercase tracking-wide">
             Push Notifications
           </div>
-          <div className="text-xs text-blue-400/50 font-mono">
+          <div className="text-xs text-slate-400/50 font-mono">
             Get alerts for tasks, messages & more
           </div>
         </div>
@@ -4535,7 +4433,7 @@ function PushNotificationToggle() {
             data-testid="button-test-push"
             onClick={() => testMutation.mutate()}
             disabled={testMutation.isPending}
-            className="text-[10px] font-bold text-blue-400 uppercase tracking-wider bg-blue-900/30 px-3 py-1 rounded-full border border-blue-500/30 hover:bg-blue-900/50 cursor-pointer"
+            className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-800/30 px-3 py-1 rounded-full border border-slate-500/30 hover:bg-slate-800/50 cursor-pointer"
           >
             Test
           </button>
@@ -4544,7 +4442,7 @@ function PushNotificationToggle() {
           data-testid="button-push-toggle"
           onClick={handleToggle}
           disabled={loading}
-          className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 shadow-inner cursor-pointer ${pushEnabled ? "bg-blue-600 shadow-[0_0_10px_blue]" : "bg-slate-900 border border-slate-700"}`}
+          className={`w-14 h-8 rounded-full p-1 transition-colors duration-300 shadow-inner cursor-pointer ${pushEnabled ? "bg-slate-600 shadow-[0_0_10px_blue]" : "bg-slate-900 border border-slate-700"}`}
         >
           <div
             className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${pushEnabled ? "translate-x-6" : "translate-x-0"}`}
