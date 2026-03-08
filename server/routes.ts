@@ -2267,15 +2267,59 @@ export async function registerRoutes(
   });
 
   // --- PLAY SESSIONS LIVE ---
+  app.get("/api/play-sessions/active-live", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allSessions = await storage.getPlaySessionsForPair(userIds);
+    const liveSession = allSessions.find(s => s.isLive && s.status === "active");
+    res.json(liveSession || null);
+  });
+
+  app.post("/api/play-sessions/start-live", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (user.role !== "dom") {
+      return res.status(403).json({ message: "Only the Dom can start a live session" });
+    }
+    const partner = await storage.getPartner(user.id);
+    const session = await storage.createPlaySession({
+      userId: user.id,
+      partnerId: partner?.id,
+      title: "Live Session",
+      status: "active",
+      isLive: true,
+      currentPhase: "warmup",
+      currentIntensity: 5,
+      createdAsRole: user.role,
+    });
+    await storage.logActivity(user.id, "live_session_started", "Live Session started", user.role);
+    if (partner) {
+      await notifyUser(partner.id, "Your partner has started a Live Session. Join now!", "live_session");
+    }
+    res.status(201).json(session);
+  });
+
   app.put("/api/play-sessions/:id/live", requireAuth, async (req, res) => {
-    const { currentInstruction, currentIntensity, currentPhase, isLive } = req.body;
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allSessions = await storage.getPlaySessionsForPair(userIds);
+    const existing = allSessions.find(s => s.id === req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    const { currentInstruction, currentIntensity, currentPhase, isLive, status } = req.body;
     const data: any = {};
     if (currentInstruction !== undefined) data.currentInstruction = currentInstruction;
     if (currentIntensity !== undefined) data.currentIntensity = currentIntensity;
     if (currentPhase !== undefined) data.currentPhase = currentPhase;
     if (isLive !== undefined) data.isLive = isLive;
+    if (status !== undefined) data.status = status;
     const session = await storage.updatePlaySession(req.params.id, data);
     if (!session) return res.status(404).json({ message: "Not found" });
+    if (status === "completed" || isLive === false) {
+      if (partner) {
+        await notifyUser(partner.id, "The Live Session has ended.", "live_session_ended");
+      }
+    }
     res.json(session);
   });
 

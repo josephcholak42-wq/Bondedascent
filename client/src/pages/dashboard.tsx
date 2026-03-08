@@ -215,6 +215,9 @@ import {
   useDeleteLimit,
   useDeleteCountdownEvent,
   useDeleteStandingOrder,
+  useActiveLiveSession,
+  useStartLiveSession,
+  useUpdateLiveSession,
 } from "@/lib/hooks";
 import { AmbientPresence } from "@/components/ambient-presence";
 import LiveSession from "@/components/live-session";
@@ -420,6 +423,10 @@ export default function BondedAscentApp() {
   const { data: countdownEvents = [] } = useCountdownEvents();
   const { data: playSessions = [] } = usePlaySessions();
   const createPlaySessionMutation = useCreatePlaySession();
+  const startLiveSessionMutation = useStartLiveSession();
+  const updateLiveSessionMutation = useUpdateLiveSession();
+  const { data: activeLiveSession } = useActiveLiveSession(activeOverlay === "live-session" || activeOverlay === null);
+  const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
 
   const { data: stickersList = [] } = useStickers();
   const sendStickerMutation = useSendSticker();
@@ -660,7 +667,19 @@ export default function BondedAscentApp() {
         onToggleFeature={(key, enabled) => { toggleFeatureMutation.mutate({ featureKey: key, enabled }); }}
         userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
         onCrisisMode={(active) => setIsCrisisMode(active)}
-        onLaunchOverlay={(overlay) => { openOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
+        onLaunchOverlay={(overlay) => {
+          if (overlay === "live-session" && user?.role === "dom") {
+            startLiveSessionMutation.mutate(undefined, {
+              onSuccess: (session: any) => {
+                setLiveSessionId(session.id);
+                openOverlay(overlay);
+              },
+            });
+          } else {
+            openOverlay(overlay);
+          }
+          if (overlay === "interrogation") setInterrogationPhase("setup");
+        }}
         onCreate={handleOnCreate}
         onDelete={handleOnDelete}
         onEdit={handleOnEdit}
@@ -904,7 +923,19 @@ export default function BondedAscentApp() {
             isAssigning={createTaskMutation.isPending}
             stickers={stickersList.filter((s: any) => s.recipientId === user?.id)}
             userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
-            onLaunchOverlay={(overlay) => { openOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
+            onLaunchOverlay={(overlay) => {
+              if (overlay === "live-session" && user?.role === "dom") {
+                startLiveSessionMutation.mutate(undefined, {
+                  onSuccess: (session: any) => {
+                    setLiveSessionId(session.id);
+                    openOverlay(overlay);
+                  },
+                });
+              } else {
+                openOverlay(overlay);
+              }
+              if (overlay === "interrogation") setInterrogationPhase("setup");
+            }}
             onCreate={handleOnCreate}
             onDelete={handleOnDelete}
             onEdit={handleOnEdit}
@@ -4286,23 +4317,54 @@ export default function BondedAscentApp() {
         </div>
       )}
 
+      {!activeOverlay && activeLiveSession && activeLiveSession.userId !== user?.id && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-pulse">
+          <button
+            data-testid="join-live-session-banner"
+            onClick={() => {
+              setLiveSessionId(activeLiveSession.id);
+              openOverlay("live-session");
+            }}
+            className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-red-950 to-red-900 border border-red-600/40 rounded-2xl shadow-lg shadow-red-900/30 cursor-pointer hover:border-red-500/60 transition-all"
+          >
+            <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
+            <span className="text-sm font-semibold text-red-200">Your partner started a Live Session</span>
+            <span className="text-xs text-red-400 font-bold uppercase tracking-wide ml-2">Join Now</span>
+          </button>
+        </div>
+      )}
+
       {activeOverlay === "live-session" && (
         <div className="overlay-enter fixed inset-0 z-[80]">
         <LiveSession
-          sessionId="live"
+          sessionId={liveSessionId || activeLiveSession?.id || "live"}
           userRole={user?.role === "dom" ? "dom" : "sub"}
           session={{
-            id: "live",
-            title: "Live Session",
-            currentInstruction: null,
-            currentIntensity: 5,
-            currentPhase: "warmup",
-            isLive: true,
-            status: "active",
+            id: liveSessionId || activeLiveSession?.id || "live",
+            title: activeLiveSession?.title || "Live Session",
+            currentInstruction: activeLiveSession?.currentInstruction || null,
+            currentIntensity: activeLiveSession?.currentIntensity ?? 5,
+            currentPhase: activeLiveSession?.currentPhase || "warmup",
+            isLive: activeLiveSession?.isLive ?? true,
+            status: activeLiveSession?.status || "active",
           }}
-          onUpdateSession={() => {}}
-          onEndSession={() => closeOverlay()}
-          onClose={() => closeOverlay()}
+          onUpdateSession={(data) => {
+            const sid = liveSessionId || activeLiveSession?.id;
+            if (sid) {
+              updateLiveSessionMutation.mutate({ id: sid, data });
+            }
+          }}
+          onEndSession={() => {
+            const sid = liveSessionId || activeLiveSession?.id;
+            if (sid) {
+              updateLiveSessionMutation.mutate({ id: sid, data: { isLive: false, status: "completed" } });
+            }
+            setLiveSessionId(null);
+            closeOverlay();
+          }}
+          onClose={() => {
+            closeOverlay();
+          }}
         />
         </div>
       )}

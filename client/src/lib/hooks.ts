@@ -1995,6 +1995,29 @@ export function useUpdateLiveSession() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/play-sessions"] });
+      qc.invalidateQueries({ queryKey: ["/api/play-sessions/active-live"] });
+    },
+  });
+}
+
+export function useActiveLiveSession(enabled: boolean = true) {
+  return useQuery<any>({
+    queryKey: ["/api/play-sessions/active-live"],
+    refetchInterval: enabled ? 3000 : false,
+    enabled,
+  });
+}
+
+export function useStartLiveSession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/play-sessions/start-live", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/play-sessions"] });
+      qc.invalidateQueries({ queryKey: ["/api/play-sessions/active-live"] });
     },
   });
 }

@@ -454,6 +454,10 @@ export const insertPlaySessionSchema = createInsertSchema(playSessions).pick({
   status: true,
   scheduledFor: true,
   createdAsRole: true,
+  isLive: true,
+  currentPhase: true,
+  currentIntensity: true,
+  currentInstruction: true,
 });
 
 // Types

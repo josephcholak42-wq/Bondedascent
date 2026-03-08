@@ -28,7 +28,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **Build Tool**: Vite
 - **Key Components**:
     - **Command Center**: Central hub (`CommandProtocols` component) integrating ALL app functionality — expandable feed cards, pinning, global search, live activity timeline, sparkline trend charts, bulk actions across 24+ feed types, feature drawers.
-    - **Live Session Engine** (`live-session.tsx`): Full-screen immersive session mode with Dom control panel and Sub receiver view, intensity-based visual effects, phase management, safe word support.
+    - **Live Session Engine** (`live-session.tsx`): Full-screen immersive session mode with Dom control panel and Sub receiver view, intensity-based visual effects, phase management, safe word support. **Partner-synced**: Dom starts session via API (`POST /api/play-sessions/start-live`), Sub auto-detects via polling (`GET /api/play-sessions/active-live` every 3s) and sees join banner. Instructions/intensity/phase sync in real-time via `PUT /api/play-sessions/:id/live`. Push notification sent to partner on start/end.
     - **Interrogation Mode** (`interrogation.tsx`): Three components — InterrogationSetup (Dom), InterrogationMode (Sub full-screen Q&A with timer), InterrogationResults.
     - **Confession Booth** (`confession-booth.tsx`): Full-screen overlay with Sub typing mode and Dom review/response mode.
     - **Aftercare Checklist** (`aftercare-checklist.tsx`): Post-session checklist with calming dark aesthetic, mood rating, notes.
@@ -67,7 +67,9 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - `GET /api/analytics` — 30-day mood, task completion, active hours
 - `GET /api/analytics/relationship` — Days bonded, sessions, bond health
 - CRUD: `/api/contracts`, `/api/confessions`, `/api/training-programs`, `/api/scene-scripts`, `/api/interrogation-sessions`, `/api/aftercare-items`
-- `PUT /api/play-sessions/:id/live` — Live session state updates
+- `POST /api/play-sessions/start-live` — Dom starts a partner-synced live session (creates DB record, notifies partner)
+- `GET /api/play-sessions/active-live` — Polls for any active live session in the pair (Sub auto-detect)
+- `PUT /api/play-sessions/:id/live` — Live session state updates (instruction, intensity, phase, end)
 - `POST /api/rituals/:id/remind` — Trigger push notification reminder
 
 ### Core Architectural Decisions
