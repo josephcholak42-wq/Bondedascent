@@ -182,6 +182,7 @@ import {
   useResetBodyMap,
   useUploadProfilePic,
   useTrends,
+  useUpdateTask,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -218,6 +219,8 @@ import {
   useActiveLiveSession,
   useStartLiveSession,
   useUpdateLiveSession,
+  useUpdateRitual,
+  useUpdateStandingOrder,
 } from "@/lib/hooks";
 import { AmbientPresence } from "@/components/ambient-presence";
 import LiveSession from "@/components/live-session";
@@ -454,6 +457,9 @@ export default function BondedAscentApp() {
   const deleteLimitMutation = useDeleteLimit();
   const deleteCountdownEventMutation = useDeleteCountdownEvent();
   const deleteStandingOrderMutation = useDeleteStandingOrder();
+  const updateTaskMutation = useUpdateTask();
+  const updateRitualMutation = useUpdateRitual();
+  const updateStandingOrderMutation = useUpdateStandingOrder();
   const { data: trendData } = useTrends();
   const profilePicInputRef = useRef<HTMLInputElement>(null);
   const [stickerMessage, setStickerMessage] = useState("");
@@ -807,13 +813,16 @@ export default function BondedAscentApp() {
   }, [partnerCheckIns, partnerTasks, punishments, rewards, notifications, dares, playSessions, countdownEvents, wagers, ratingsList, desiredChanges, secrets, devotionsList, conflictsList, limitsList, permissionRequests]);
 
   const recentActivityEntries = useMemo((): ActivityEntry[] => {
+    const seen = new Set<string>();
     const entries: ActivityEntry[] = [];
-    (activityLog || []).slice(0, 20).forEach((a: any) => {
-      entries.push({ id: a.id?.toString() || `a-${Math.random()}`, action: a.action, detail: a.detail, userId: a.userId, createdAt: a.createdAt });
-    });
-    (partnerActivity || []).slice(0, 20).forEach((a: any) => {
-      entries.push({ id: a.id?.toString() || `pa-${Math.random()}`, action: a.action, detail: a.detail, userId: a.userId, createdAt: a.createdAt });
-    });
+    const addEntry = (a: any, prefix: string) => {
+      const id = a.id?.toString() || `${prefix}-${Math.random()}`;
+      if (seen.has(id)) return;
+      seen.add(id);
+      entries.push({ id, action: a.action, detail: a.detail, userId: a.userId, createdAt: a.createdAt });
+    };
+    (activityLog || []).slice(0, 20).forEach((a: any) => addEntry(a, "a"));
+    (partnerActivity || []).slice(0, 20).forEach((a: any) => addEntry(a, "pa"));
     entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return entries.slice(0, 10);
   }, [activityLog, partnerActivity]);
@@ -860,8 +869,13 @@ export default function BondedAscentApp() {
     }
   }, [deleteTaskMutation, deleteRitualMutation, deleteLimitMutation, deleteCountdownEventMutation, deleteStandingOrderMutation, dismissNotificationMutation, updatePunishmentStatusMutation, toggleRewardMutation, completeDareMutation]);
 
-  const handleOnEdit = useCallback((_type: string, _id: string, _data: Record<string, any>) => {
-  }, []);
+  const handleOnEdit = useCallback((type: string, id: string, data: Record<string, any>) => {
+    switch (type) {
+      case "task": updateTaskMutation.mutate({ id, text: data.text || data.title }); break;
+      case "ritual": updateRitualMutation.mutate({ id, title: data.title || data.text }); break;
+      case "standing_order": updateStandingOrderMutation.mutate({ id, title: data.title || data.text }); break;
+    }
+  }, [updateTaskMutation, updateRitualMutation, updateStandingOrderMutation]);
 
   const handleFeedAction = useCallback((itemId: string, action: string, payload?: any) => {
     switch (action) {

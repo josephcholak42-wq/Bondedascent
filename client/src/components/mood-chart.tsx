@@ -139,6 +139,22 @@ function MoodChart({ data }: MoodChartProps) {
             <>
               <circle cx={xScale(i)} cy={yScale(d.mood)} r="4" fill={COLORS.mood} />
               <circle cx={xScale(i)} cy={yScale(d.obedience)} r="4" fill={COLORS.obedience} />
+              <rect
+                x={xScale(i) - 40}
+                y={Math.min(yScale(d.mood), yScale(d.obedience)) - 38}
+                width={80}
+                height={32}
+                rx={6}
+                fill="#0a0a0a"
+                stroke="#333"
+                strokeWidth={1}
+              />
+              <text x={xScale(i)} y={Math.min(yScale(d.mood), yScale(d.obedience)) - 26} textAnchor="middle" fill={COLORS.mood} fontSize="10" fontWeight="bold">
+                Mood: {d.mood}
+              </text>
+              <text x={xScale(i)} y={Math.min(yScale(d.mood), yScale(d.obedience)) - 14} textAnchor="middle" fill={COLORS.obedience} fontSize="10" fontWeight="bold">
+                Obed: {d.obedience}
+              </text>
             </>
           )}
         </g>

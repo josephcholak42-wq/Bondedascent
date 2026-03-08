@@ -92,10 +92,27 @@ export async function registerRoutes(
     res.status(201).json(task);
   });
 
+  app.patch("/api/tasks/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allTasks = await storage.getTasksForPair(userIds);
+    const owned = allTasks.find(t => t.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Task not found" });
+    const { text } = req.body;
+    const data: any = {};
+    if (text !== undefined) data.text = text;
+    const task = await storage.updateTask(req.params.id, data);
+    if (!task) return res.status(404).json({ message: "Task not found" });
+    res.json(task);
+  });
+
   app.patch("/api/tasks/:id/toggle", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const tasks = await storage.getTasks(user.id);
-    const owned = tasks.find(t => t.id === req.params.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allTasks = await storage.getTasksForPair(userIds);
+    const owned = allTasks.find(t => t.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Task not found" });
 
     const task = await storage.toggleTask(req.params.id);
@@ -116,8 +133,10 @@ export async function registerRoutes(
 
   app.delete("/api/tasks/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const tasks = await storage.getTasks(user.id);
-    const owned = tasks.find(t => t.id === req.params.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allTasks = await storage.getTasksForPair(userIds);
+    const owned = allTasks.find(t => t.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Task not found" });
 
     await storage.deleteTask(req.params.id);
@@ -161,7 +180,9 @@ export async function registerRoutes(
       return res.status(400).json({ message: "Invalid review data" });
     }
 
-    const checkIns = await storage.getCheckIns(user.id);
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const checkIns = await storage.getCheckInsForPair(userIds);
     const owned = checkIns.find(c => c.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Check-in not found" });
 

@@ -112,6 +112,21 @@ export function useToggleTask() {
   });
 }
 
+export function useUpdateTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; text?: string }) => {
+      const res = await apiRequest("PATCH", `/api/tasks/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
 export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({

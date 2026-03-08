@@ -66,6 +66,7 @@ export interface IStorage {
   getTasks(userId: string): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
   toggleTask(taskId: string): Promise<Task | undefined>;
+  updateTask(taskId: string, data: Partial<Task>): Promise<Task | undefined>;
   deleteTask(taskId: string): Promise<void>;
 
   getCheckIns(userId: string): Promise<CheckIn[]>;
@@ -357,6 +358,11 @@ export class DatabaseStorage implements IStorage {
     const [existing] = await db.select().from(tasks).where(eq(tasks.id, taskId));
     if (!existing) return undefined;
     const [updated] = await db.update(tasks).set({ done: !existing.done }).where(eq(tasks.id, taskId)).returning();
+    return updated;
+  }
+
+  async updateTask(taskId: string, data: Partial<Task>): Promise<Task | undefined> {
+    const [updated] = await db.update(tasks).set(data).where(eq(tasks.id, taskId)).returning();
     return updated;
   }
 

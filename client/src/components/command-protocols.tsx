@@ -496,7 +496,7 @@ function ActivityTimeline({ entries }: { entries: ActivityEntry[] }) {
           entry.action.includes("checkin") || entry.action.includes("check") ? "border-l-red-900" :
           "border-l-slate-700";
         return (
-          <div key={entry.id} className={`flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px]`}>
+          <div key={`timeline-${entry.id}`} className={`flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px]`}>
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-slate-300 truncate leading-tight">{entry.detail || entry.action.replace(/_/g, " ")}</p>
             </div>
