@@ -325,7 +325,7 @@ export function InterrogationSetup({
               onChange={(e) =>
                 updateQuestion(i, "expectedAnswer", e.target.value)
               }
-              placeholder="Expected answer..."
+              placeholder="Hint / expected answer (optional)..."
               style={{
                 flex: 1,
                 background: "#0f0f0f",
@@ -430,9 +430,9 @@ export function InterrogationMode({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [timeLeft, setTimeLeft] = useState(session.timeLimitPerQuestion);
-  const [correctCount, setCorrectCount] = useState(0);
+  const [answeredCount, setAnsweredCount] = useState(0);
   const [flash, setFlash] = useState<
-    "ACCEPTED" | "DENIED" | "FAILED" | null
+    "SUBMITTED" | "FAILED" | null
   >(null);
   const [hasVibrated25, setHasVibrated25] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -460,7 +460,7 @@ export function InterrogationMode({
   }, [currentIndex, totalQuestions, timeLimit, onComplete]);
 
   const showFlash = useCallback(
-    (type: "ACCEPTED" | "DENIED" | "FAILED", duration: number) => {
+    (type: "SUBMITTED" | "FAILED", duration: number) => {
       setFlash(type);
       if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
       flashTimeoutRef.current = setTimeout(() => {
@@ -478,19 +478,9 @@ export function InterrogationMode({
 
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const isCorrect =
-      currentQuestion.expectedAnswer !== null &&
-      trimmedAnswer.toLowerCase() ===
-        currentQuestion.expectedAnswer.toLowerCase();
-
     onAnswer(currentQuestion.id, trimmedAnswer, Math.round(elapsed));
-
-    if (isCorrect) {
-      setCorrectCount((prev) => prev + 1);
-      showFlash("ACCEPTED", 300);
-    } else {
-      showFlash("DENIED", 300);
-    }
+    setAnsweredCount((prev) => prev + 1);
+    showFlash("SUBMITTED", 300);
   }, [currentQuestion, answer, flash, onAnswer, showFlash]);
 
   const handleTimeUp = useCallback(() => {
@@ -555,8 +545,7 @@ export function InterrogationMode({
   const strokeDashoffset = circumference * (1 - timeRatio);
 
   const getFlashColor = () => {
-    if (flash === "ACCEPTED") return "#14532d";
-    if (flash === "DENIED") return "#991b1b";
+    if (flash === "SUBMITTED") return "#94a3b8";
     if (flash === "FAILED") return "#dc2626";
     return "transparent";
   };
@@ -617,7 +606,7 @@ export function InterrogationMode({
           letterSpacing: 2,
         }}
       >
-        {correctCount}/{totalQuestions}
+        {answeredCount}/{totalQuestions}
       </div>
 
       <button
@@ -738,6 +727,292 @@ export function InterrogationMode({
       >
         Question {currentIndex + 1} of {totalQuestions}
       </div>
+    </div>
+  );
+}
+
+export function InterrogationGrading({
+  session,
+  answers,
+  onGraded,
+  onClose,
+}: {
+  session: { title: string; timeLimitPerQuestion?: number };
+  answers: Array<{
+    question: string;
+    expectedAnswer: string | null;
+    actualAnswer: string | null;
+    answeredInSeconds: number | null;
+    questionOrder: number;
+  }>;
+  onGraded: (graded: Array<{ questionOrder: number; correct: boolean }>) => void;
+  onClose: () => void;
+}) {
+  const sorted = [...answers].sort((a, b) => a.questionOrder - b.questionOrder);
+  const [grades, setGrades] = useState<Record<number, boolean | null>>({});
+  const timeLimit = session.timeLimitPerQuestion ?? 30;
+  const hesitationThreshold = timeLimit * 0.8;
+
+  const allGraded = sorted.every((q) => grades[q.questionOrder] !== undefined && grades[q.questionOrder] !== null);
+  const correctCount = Object.values(grades).filter((v) => v === true).length;
+  const gradedCount = Object.values(grades).filter((v) => v !== undefined && v !== null).length;
+
+  const handleSubmitGrades = () => {
+    if (!allGraded) return;
+    const graded = sorted.map((q) => ({
+      questionOrder: q.questionOrder,
+      correct: grades[q.questionOrder] ?? false,
+    }));
+    onGraded(graded);
+  };
+
+  return (
+    <div
+      data-testid="interrogation-grading"
+      style={{
+        background: "#1a1a1a",
+        borderRadius: 8,
+        padding: 24,
+        maxWidth: 600,
+        width: "100%",
+        color: "#e2e8f0",
+        fontFamily: "'Playfair Display', serif",
+        maxHeight: "80vh",
+        overflowY: "auto",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+          paddingBottom: 16,
+          borderBottom: "1px solid #222",
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: "#94a3b8",
+              margin: "0 0 4px 0",
+              textTransform: "uppercase",
+              letterSpacing: 2,
+            }}
+          >
+            GRADE RESPONSES
+          </h2>
+          <div style={{ fontSize: 13, color: "#475569" }}>{session.title}</div>
+        </div>
+        <button
+          data-testid="button-close-grading"
+          onClick={onClose}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#64748b",
+            fontSize: 20,
+            cursor: "pointer",
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      <div
+        style={{
+          textAlign: "center",
+          marginBottom: 20,
+          fontSize: 14,
+          color: "#64748b",
+          letterSpacing: 1,
+          textTransform: "uppercase",
+        }}
+      >
+        {gradedCount}/{sorted.length} graded — {correctCount} correct
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {sorted.map((q, i) => {
+          const isHesitation =
+            q.answeredInSeconds !== null &&
+            q.answeredInSeconds > hesitationThreshold;
+          const grade = grades[q.questionOrder];
+
+          return (
+            <div
+              key={i}
+              data-testid={`grading-card-${i}`}
+              style={{
+                background: "#0f0f0f",
+                borderRadius: 6,
+                padding: 16,
+                border: grade === true
+                  ? "1px solid #14532d"
+                  : grade === false
+                    ? "1px solid #7f1d1d"
+                    : "1px solid #333",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  marginBottom: 8,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                  }}
+                >
+                  Q{q.questionOrder + 1}
+                </span>
+                {isHesitation && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: "#92400e",
+                      textTransform: "uppercase",
+                      letterSpacing: 1,
+                      fontWeight: 700,
+                    }}
+                  >
+                    HESITATION
+                  </span>
+                )}
+              </div>
+              <div
+                style={{
+                  fontSize: 15,
+                  color: "#e2e8f0",
+                  marginBottom: 8,
+                  fontWeight: 600,
+                }}
+              >
+                {q.question}
+              </div>
+              {q.expectedAnswer && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#475569",
+                    marginBottom: 6,
+                  }}
+                >
+                  <span style={{ textTransform: "uppercase", letterSpacing: 1 }}>
+                    Expected:{" "}
+                  </span>
+                  <span style={{ color: "#64748b" }}>
+                    {q.expectedAnswer}
+                  </span>
+                </div>
+              )}
+              <div
+                style={{
+                  fontSize: 13,
+                  color: q.actualAnswer ? "#e2e8f0" : "#991b1b",
+                  marginBottom: 12,
+                  padding: "8px 12px",
+                  background: "#0a0a0a",
+                  borderRadius: 4,
+                  border: "1px solid #222",
+                  fontFamily: "'Courier New', monospace",
+                }}
+              >
+                {q.actualAnswer || "(no answer — timed out)"}
+              </div>
+              {q.answeredInSeconds !== null && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: "#475569",
+                    marginBottom: 10,
+                    textTransform: "uppercase",
+                    letterSpacing: 1,
+                  }}
+                >
+                  Answered in {q.answeredInSeconds}s
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  data-testid={`button-correct-${i}`}
+                  onClick={() => setGrades((prev) => ({ ...prev, [q.questionOrder]: true }))}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    borderRadius: 4,
+                    border: grade === true ? "2px solid #14532d" : "1px solid #333",
+                    background: grade === true ? "#14532d" : "#0a0a0a",
+                    color: grade === true ? "#e2e8f0" : "#64748b",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: "'Playfair Display', serif",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  CORRECT
+                </button>
+                <button
+                  data-testid={`button-wrong-${i}`}
+                  onClick={() => setGrades((prev) => ({ ...prev, [q.questionOrder]: false }))}
+                  style={{
+                    flex: 1,
+                    padding: "10px 16px",
+                    borderRadius: 4,
+                    border: grade === false ? "2px solid #7f1d1d" : "1px solid #333",
+                    background: grade === false ? "#7f1d1d" : "#0a0a0a",
+                    color: grade === false ? "#e2e8f0" : "#64748b",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: "'Playfair Display', serif",
+                    letterSpacing: 2,
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  WRONG
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        data-testid="button-finalize-grades"
+        onClick={handleSubmitGrades}
+        disabled={!allGraded}
+        style={{
+          width: "100%",
+          marginTop: 24,
+          background: allGraded ? "#7f1d1d" : "#222",
+          border: "none",
+          borderRadius: 4,
+          padding: "14px 24px",
+          color: allGraded ? "#e2e8f0" : "#475569",
+          fontSize: 15,
+          fontWeight: 700,
+          fontFamily: "'Playfair Display', serif",
+          letterSpacing: 3,
+          textTransform: "uppercase",
+          cursor: allGraded ? "pointer" : "not-allowed",
+          opacity: allGraded ? 1 : 0.5,
+          transition: "all 0.2s ease",
+        }}
+      >
+        FINALIZE GRADES
+      </button>
     </div>
   );
 }

@@ -225,7 +225,7 @@ import {
 import { AmbientPresence } from "@/components/ambient-presence";
 import LiveSession from "@/components/live-session";
 import ConfessionBooth from "@/components/confession-booth";
-import { InterrogationSetup, InterrogationMode, InterrogationResults } from "@/components/interrogation";
+import { InterrogationSetup, InterrogationMode, InterrogationGrading, InterrogationResults } from "@/components/interrogation";
 import AftercareChecklist from "@/components/aftercare-checklist";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
@@ -262,7 +262,7 @@ export default function BondedAscentApp() {
 
 
   const [activeOverlay, setActiveOverlay] = useState<"live-session" | "interrogation" | "confession-booth" | "aftercare" | null>(null);
-  const [interrogationPhase, setInterrogationPhase] = useState<"setup" | "active" | "results">("setup");
+  const [interrogationPhase, setInterrogationPhase] = useState<"setup" | "active" | "grading" | "results">("setup");
   const [interrogationConfig, setInterrogationConfig] = useState<any>(null);
   const [interrogationAnswers, setInterrogationAnswers] = useState<any[]>([]);
 
@@ -4445,7 +4445,29 @@ export default function BondedAscentApp() {
               questionOrder: parseInt(questionId.replace("q-", "")),
             }]);
           }}
-          onComplete={() => setInterrogationPhase("results")}
+          onComplete={() => setInterrogationPhase("grading")}
+          onClose={() => closeOverlay()}
+        />
+        </div>
+      )}
+
+      {activeOverlay === "interrogation" && interrogationPhase === "grading" && (
+        <div className="overlay-enter fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4">
+        <InterrogationGrading
+          session={{
+            title: interrogationConfig?.title || "Interrogation",
+            timeLimitPerQuestion: interrogationConfig?.timeLimitPerQuestion || 30,
+          }}
+          answers={interrogationAnswers}
+          onGraded={(graded) => {
+            setInterrogationAnswers((prev: any[]) =>
+              prev.map((a: any) => {
+                const grade = graded.find((g) => g.questionOrder === a.questionOrder);
+                return grade ? { ...a, correct: grade.correct } : a;
+              })
+            );
+            setInterrogationPhase("results");
+          }}
           onClose={() => closeOverlay()}
         />
         </div>
