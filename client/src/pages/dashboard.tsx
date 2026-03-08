@@ -278,6 +278,70 @@ export default function BondedAscentApp() {
   const [worshipDone, setWorshipDone] = useState(false);
   const [aftercareActions, setAftercareActions] = useState<string[]>([]);
 
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      const state = e.state;
+      if (state?.dashboardNav) {
+        setActiveOverlay(state.activeOverlay || null);
+        setModal(state.modal || null);
+        setActiveView(state.activeView || "dashboard");
+        if (state.interrogationPhase) setInterrogationPhase(state.interrogationPhase);
+      } else {
+        if (activeOverlay) {
+          e.preventDefault();
+          window.history.pushState({ dashboardNav: true, activeView, modal: null, activeOverlay: null }, "");
+          setActiveOverlay(null);
+        } else if (modal) {
+          e.preventDefault();
+          window.history.pushState({ dashboardNav: true, activeView, modal: null, activeOverlay: null }, "");
+          setModal(null);
+        } else if (activeView !== "dashboard") {
+          e.preventDefault();
+          window.history.pushState({ dashboardNav: true, activeView: "dashboard", modal: null, activeOverlay: null }, "");
+          setActiveView("dashboard");
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [activeView, modal, activeOverlay]);
+
+  const navigateView = useCallback((view: string) => {
+    window.history.pushState({ dashboardNav: true, activeView: view, modal: null, activeOverlay: null }, "");
+    setActiveView(view);
+  }, []);
+
+  const openModal = useCallback((m: string | null) => {
+    if (m) {
+      window.history.pushState({ dashboardNav: true, activeView, modal: m, activeOverlay: null }, "");
+    }
+    setModal(m);
+  }, [activeView]);
+
+  const openOverlay = useCallback((overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare" | null) => {
+    if (overlay) {
+      window.history.pushState({ dashboardNav: true, activeView, modal: null, activeOverlay: overlay }, "");
+    }
+    setActiveOverlay(overlay);
+  }, [activeView]);
+
+  const closeOverlay = useCallback(() => {
+    if (window.history.state?.dashboardNav) {
+      window.history.back();
+    } else {
+      setActiveOverlay(null);
+    }
+  }, []);
+
+  const closeModal = useCallback(() => {
+    if (window.history.state?.dashboardNav) {
+      window.history.back();
+    } else {
+      setModal(null);
+    }
+  }, []);
+
   const { data: user } = useAuth();
   const logoutMutation = useLogout();
   const switchRoleMutation = useSwitchRole();
@@ -434,7 +498,7 @@ export default function BondedAscentApp() {
       obedience: checkInData.obedience,
       notes: checkInData.notes || undefined,
     });
-    setModal(null);
+    closeModal();
     setCheckInStep(0);
     setCheckInData({ mood: 5, obedience: 5, notes: "" });
   };
@@ -447,7 +511,7 @@ export default function BondedAscentApp() {
   const handleSwitchRole = async () => {
     const newRole = userRole === "sub" ? "dom" : "sub";
     await switchRoleMutation.mutateAsync(newRole);
-    setActiveView("dashboard");
+    navigateView("dashboard");
   };
 
   const handleCreateReward = () => {
@@ -599,7 +663,7 @@ export default function BondedAscentApp() {
         onToggleFeature={(key, enabled) => { toggleFeatureMutation.mutate({ featureKey: key, enabled }); }}
         userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
         onCrisisMode={(active) => setIsCrisisMode(active)}
-        onLaunchOverlay={(overlay) => { setActiveOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
+        onLaunchOverlay={(overlay) => { openOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
         onCreate={handleOnCreate}
         onDelete={handleOnDelete}
         onEdit={handleOnEdit}
@@ -843,7 +907,7 @@ export default function BondedAscentApp() {
             isAssigning={createTaskMutation.isPending}
             stickers={stickersList.filter((s: any) => s.recipientId === user?.id)}
             userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
-            onLaunchOverlay={(overlay) => { setActiveOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
+            onLaunchOverlay={(overlay) => { openOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
             onCreate={handleOnCreate}
             onDelete={handleOnDelete}
             onEdit={handleOnEdit}
@@ -993,7 +1057,7 @@ export default function BondedAscentApp() {
               <ProfileItem
                 icon={<Anchor size={20} />}
                 label="Connect to Partner"
-                onClick={() => setModal("pair")}
+                onClick={() => openModal("pair")}
               />
             )}
           </div>
@@ -1005,7 +1069,7 @@ export default function BondedAscentApp() {
             <ProfileItem
               icon={<Zap size={20} />}
               label="Punishments & Rewards"
-              onClick={() => setActiveView("punishments")}
+              onClick={() => navigateView("punishments")}
             />
           </div>
 
@@ -1034,7 +1098,7 @@ export default function BondedAscentApp() {
       return (
         <div className="animate-in slide-in-from-right duration-500 space-y-6">
           <button
-            onClick={() => setActiveView("profile")}
+            onClick={() => navigateView("profile")}
             className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 uppercase text-xs font-bold tracking-widest cursor-pointer"
           >
             <ChevronRight className="rotate-180" size={14} /> Back to Profile
@@ -1407,28 +1471,28 @@ export default function BondedAscentApp() {
           <SidebarIcon
             icon={<Home />}
             active={activeView === "dashboard"}
-            onClick={() => setActiveView("dashboard")}
+            onClick={() => navigateView("dashboard")}
           />
           <SidebarIcon
             icon={<Terminal />}
             active={activeView === "resume"}
-            onClick={() => setActiveView("resume")}
+            onClick={() => navigateView("resume")}
           />
           <SidebarIcon
             icon={<BookOpen />}
             active={activeView === "journal"}
-            onClick={() => setActiveView("journal")}
+            onClick={() => navigateView("journal")}
           />
           <SidebarIcon
             icon={<Activity />}
             active={activeView === "stats"}
-            onClick={() => setActiveView("stats")}
+            onClick={() => navigateView("stats")}
           />
           <div className="mt-auto pt-8 border-t border-white/10 w-full flex justify-center">
             <SidebarIcon
               icon={<Settings />}
               active={activeView === "profile"}
-              onClick={() => setActiveView("profile")}
+              onClick={() => navigateView("profile")}
             />
           </div>
         </div>
@@ -1464,7 +1528,7 @@ export default function BondedAscentApp() {
           <div className="max-w-4xl mx-auto space-y-6">
             <button
               data-testid="button-safeword"
-              onClick={() => setModal("safeword")}
+              onClick={() => openModal("safeword")}
               className="w-full bg-gradient-to-r from-red-950/30 to-transparent border-l-4 border-slate-300 p-4 rounded-r-xl flex items-center gap-4 hover:bg-slate-800/30 transition-all group relative overflow-hidden cursor-pointer"
             >
               <div className="bg-slate-300/10 p-2 rounded-full group-hover:scale-110 transition-transform z-10">
@@ -1493,10 +1557,10 @@ export default function BondedAscentApp() {
             icon={<Home />}
             label="Home"
             active={activeView === "dashboard"}
-            onClick={() => setActiveView("dashboard")}
+            onClick={() => navigateView("dashboard")}
           />
           <div
-            onClick={() => setActiveView("profile")}
+            onClick={() => navigateView("profile")}
             className={`mb-2 w-14 h-14 rounded-full border-2 border-slate-800 flex items-center justify-center shadow-lg transition-transform active:scale-95 cursor-pointer ${activeView === "profile" ? "bg-red-600 border-red-400 text-white shadow-[0_0_15px_red]" : "bg-slate-900 text-slate-400"}`}
           >
             <Menu size={26} />
@@ -1505,7 +1569,7 @@ export default function BondedAscentApp() {
             icon={<Activity />}
             label="Stats"
             active={activeView === "stats"}
-            onClick={() => setActiveView("stats")}
+            onClick={() => navigateView("stats")}
           />
         </div>
       </div>
@@ -1514,7 +1578,7 @@ export default function BondedAscentApp() {
         <div className="fixed inset-0 z-[60] bg-black animate-in fade-in duration-300" data-testid="body-map-fullscreen">
           <button
             data-testid="button-close-body-map"
-            onClick={() => setModal(null)}
+            onClick={() => closeModal()}
             className="absolute top-4 right-4 z-50 w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 transition-all backdrop-blur-sm cursor-pointer"
           >
             <X size={20} />
@@ -1552,7 +1616,7 @@ export default function BondedAscentApp() {
             <button
               data-testid="button-close-modal"
               onClick={() => {
-                setModal(null);
+                closeModal();
                 setPunishSearch("");
                 setPunishCategoryFilter(null);
                 setRewardSearch("");
@@ -1579,7 +1643,7 @@ export default function BondedAscentApp() {
                 </p>
                 <button
                   data-testid="button-resume"
-                  onClick={() => setModal(null)}
+                  onClick={() => closeModal()}
                   className="w-full py-3 bg-slate-300 hover:bg-slate-400 text-black font-bold uppercase rounded-lg cursor-pointer"
                 >
                   Resume
@@ -1693,7 +1757,7 @@ export default function BondedAscentApp() {
                               );
                               setPairCodeInput("");
                               setTimeout(() => {
-                                setModal(null);
+                                closeModal();
                                 setPairSuccess(null);
                               }, 2000);
                             } catch (e: any) {
@@ -1721,7 +1785,7 @@ export default function BondedAscentApp() {
                             );
                             setPairCodeInput("");
                             setTimeout(() => {
-                              setModal(null);
+                              closeModal();
                               setPairSuccess(null);
                             }, 2000);
                           } catch (e: any) {
@@ -1990,7 +2054,7 @@ export default function BondedAscentApp() {
                                 category: p.category,
                                 duration: p.duration,
                               });
-                              setModal(null);
+                              closeModal();
                               setPunishSearch("");
                               setPunishCategoryFilter(null);
                             }}
@@ -2058,7 +2122,7 @@ export default function BondedAscentApp() {
                                 name: newPunishmentName,
                               });
                               setNewPunishmentName("");
-                              setModal(null);
+                              closeModal();
                             }
                           }}
                           disabled={createPartnerPunishmentMutation.isPending}
@@ -2854,7 +2918,7 @@ export default function BondedAscentApp() {
                                 action: "decree_issued",
                                 detail: p.name,
                               });
-                              setModal(null);
+                              closeModal();
                               setPunishSearch("");
                               setPunishCategoryFilter(null);
                             }}
@@ -2922,7 +2986,7 @@ export default function BondedAscentApp() {
                                 name: newPunishmentName,
                               });
                               setNewPunishmentName("");
-                              setModal(null);
+                              closeModal();
                             }
                           }}
                           disabled={createPartnerPunishmentMutation.isPending}
@@ -3000,7 +3064,7 @@ export default function BondedAscentApp() {
                       size="sm"
                       onClick={() => {
                         setIsCrisisMode(true);
-                        setModal(null);
+                        closeModal();
                         logActivityMutation.mutate({
                           action: "crisis_forced",
                           detail: "Dom activated crisis mode",
@@ -3860,7 +3924,7 @@ export default function BondedAscentApp() {
                                 activities: s.activities,
                                 status: "planned",
                               });
-                              setModal(null);
+                              closeModal();
                               setSceneSearch("");
                               setSceneCategoryFilter(null);
                             }}
@@ -4214,7 +4278,7 @@ export default function BondedAscentApp() {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => setModal(null)}
+                  onClick={() => closeModal()}
                   className="border-slate-800 cursor-pointer"
                 >
                   Close
@@ -4240,8 +4304,8 @@ export default function BondedAscentApp() {
             status: "active",
           }}
           onUpdateSession={() => {}}
-          onEndSession={() => setActiveOverlay(null)}
-          onClose={() => setActiveOverlay(null)}
+          onEndSession={() => closeOverlay()}
+          onClose={() => closeOverlay()}
         />
         </div>
       )}
@@ -4250,7 +4314,7 @@ export default function BondedAscentApp() {
         <div className="overlay-enter fixed inset-0 z-[80]">
         <ConfessionBooth
           isOpen={true}
-          onClose={() => setActiveOverlay(null)}
+          onClose={() => closeOverlay()}
           onSubmit={(content) => {
             fetch("/api/confessions", {
               method: "POST",
@@ -4279,7 +4343,7 @@ export default function BondedAscentApp() {
             setInterrogationAnswers([]);
             setInterrogationPhase("active");
           }}
-          onClose={() => setActiveOverlay(null)}
+          onClose={() => closeOverlay()}
         />
         </div>
       )}
@@ -4309,7 +4373,7 @@ export default function BondedAscentApp() {
             }]);
           }}
           onComplete={() => setInterrogationPhase("results")}
-          onClose={() => setActiveOverlay(null)}
+          onClose={() => closeOverlay()}
         />
         </div>
       )}
@@ -4325,7 +4389,7 @@ export default function BondedAscentApp() {
             timeLimitPerQuestion: interrogationConfig?.timeLimitPerQuestion || 30,
           }}
           questions={interrogationAnswers}
-          onClose={() => setActiveOverlay(null)}
+          onClose={() => closeOverlay()}
         />
         </div>
       )}
@@ -4341,9 +4405,9 @@ export default function BondedAscentApp() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ notes, mood, sessionId: "manual" }),
             });
-            setActiveOverlay(null);
+            closeOverlay();
           }}
-          onClose={() => setActiveOverlay(null)}
+          onClose={() => closeOverlay()}
         />
         </div>
       )}
