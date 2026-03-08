@@ -217,6 +217,10 @@ import {
   useDeleteStandingOrder,
 } from "@/lib/hooks";
 import { AmbientPresence } from "@/components/ambient-presence";
+import LiveSession from "@/components/live-session";
+import ConfessionBooth from "@/components/confession-booth";
+import { InterrogationSetup, InterrogationMode, InterrogationResults } from "@/components/interrogation";
+import AftercareChecklist from "@/components/aftercare-checklist";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 export default function BondedAscentApp() {
@@ -250,6 +254,11 @@ export default function BondedAscentApp() {
   const [pairError, setPairError] = useState<string | null>(null);
   const [pairSuccess, setPairSuccess] = useState<string | null>(null);
 
+
+  const [activeOverlay, setActiveOverlay] = useState<"live-session" | "interrogation" | "confession-booth" | "aftercare" | null>(null);
+  const [interrogationPhase, setInterrogationPhase] = useState<"setup" | "active" | "results">("setup");
+  const [interrogationConfig, setInterrogationConfig] = useState<any>(null);
+  const [interrogationAnswers, setInterrogationAnswers] = useState<any[]>([]);
 
   const [trainingActive, setTrainingActive] = useState<string | null>(null);
   const [trainingTimer, setTrainingTimer] = useState(0);
@@ -590,6 +599,7 @@ export default function BondedAscentApp() {
         onToggleFeature={(key, enabled) => { toggleFeatureMutation.mutate({ featureKey: key, enabled }); }}
         userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
         onCrisisMode={(active) => setIsCrisisMode(active)}
+        onLaunchOverlay={(overlay) => { setActiveOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
         onCreate={handleOnCreate}
         onDelete={handleOnDelete}
         onEdit={handleOnEdit}
@@ -833,6 +843,7 @@ export default function BondedAscentApp() {
             isAssigning={createTaskMutation.isPending}
             stickers={stickersList.filter((s: any) => s.recipientId === user?.id)}
             userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
+            onLaunchOverlay={(overlay) => { setActiveOverlay(overlay); if (overlay === "interrogation") setInterrogationPhase("setup"); }}
             onCreate={handleOnCreate}
             onDelete={handleOnDelete}
             onEdit={handleOnEdit}
@@ -4212,6 +4223,117 @@ export default function BondedAscentApp() {
             )}
           </div>
         </div>
+      )}
+
+      {activeOverlay === "live-session" && (
+        <LiveSession
+          sessionId="live"
+          userRole={user?.role === "dom" ? "dom" : "sub"}
+          session={{
+            id: "live",
+            title: "Live Session",
+            currentInstruction: null,
+            currentIntensity: 5,
+            currentPhase: "warmup",
+            isLive: true,
+            status: "active",
+          }}
+          onUpdateSession={() => {}}
+          onEndSession={() => setActiveOverlay(null)}
+          onClose={() => setActiveOverlay(null)}
+        />
+      )}
+
+      {activeOverlay === "confession-booth" && (
+        <ConfessionBooth
+          isOpen={true}
+          onClose={() => setActiveOverlay(null)}
+          onSubmit={(content) => {
+            fetch("/api/confessions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ content }),
+            });
+          }}
+          confessions={[]}
+          onRespond={(id, response, status) => {
+            fetch(`/api/confessions/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ response, status }),
+            });
+          }}
+          userRole={user?.role === "dom" ? "dom" : "sub"}
+        />
+      )}
+
+      {activeOverlay === "interrogation" && interrogationPhase === "setup" && (
+        <InterrogationSetup
+          onSubmit={(data) => {
+            setInterrogationConfig(data);
+            setInterrogationAnswers([]);
+            setInterrogationPhase("active");
+          }}
+          onClose={() => setActiveOverlay(null)}
+        />
+      )}
+
+      {activeOverlay === "interrogation" && interrogationPhase === "active" && interrogationConfig && (
+        <InterrogationMode
+          session={{
+            id: "manual",
+            title: interrogationConfig.title || "Interrogation",
+            timeLimitPerQuestion: interrogationConfig.timeLimitPerQuestion || 30,
+          }}
+          questions={(interrogationConfig.questions || []).map((q: any, i: number) => ({
+            id: `q-${i}`,
+            question: q.question,
+            expectedAnswer: q.expectedAnswer || null,
+            questionOrder: i,
+          }))}
+          onAnswer={(questionId, answer, timeSeconds) => {
+            setInterrogationAnswers((prev: any[]) => [...prev, {
+              question: interrogationConfig.questions?.find((_: any, i: number) => `q-${i}` === questionId)?.question || "",
+              expectedAnswer: interrogationConfig.questions?.find((_: any, i: number) => `q-${i}` === questionId)?.expectedAnswer || null,
+              actualAnswer: answer,
+              correct: null,
+              answeredInSeconds: timeSeconds,
+              questionOrder: parseInt(questionId.replace("q-", "")),
+            }]);
+          }}
+          onComplete={() => setInterrogationPhase("results")}
+          onClose={() => setActiveOverlay(null)}
+        />
+      )}
+
+      {activeOverlay === "interrogation" && interrogationPhase === "results" && (
+        <InterrogationResults
+          session={{
+            title: interrogationConfig?.title || "Interrogation",
+            totalQuestions: interrogationConfig?.questions?.length || 0,
+            correctAnswers: interrogationAnswers.filter((a: any) => a.correct).length,
+            score: interrogationConfig?.questions?.length ? Math.round((interrogationAnswers.filter((a: any) => a.correct).length / interrogationConfig.questions.length) * 100) : 0,
+            timeLimitPerQuestion: interrogationConfig?.timeLimitPerQuestion || 30,
+          }}
+          questions={interrogationAnswers}
+          onClose={() => setActiveOverlay(null)}
+        />
+      )}
+
+      {activeOverlay === "aftercare" && (
+        <AftercareChecklist
+          isOpen={true}
+          sessionId="manual"
+          onComplete={(notes, mood) => {
+            fetch("/api/aftercare", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ notes, mood, sessionId: "manual" }),
+            });
+            setActiveOverlay(null);
+          }}
+          onClose={() => setActiveOverlay(null)}
+        />
       )}
     </div>
   );

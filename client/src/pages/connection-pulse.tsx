@@ -29,8 +29,8 @@ export default function ConnectionPulsePage() {
   };
 
   const getBondColor = (rate: number) => {
-    if (rate >= 80) return 'text-red-500 shadow-[0_0_30px_rgba(220,38,38,0.4)]';
-    if (rate >= 50) return 'text-red-400 shadow-[0_0_30px_rgba(153,27,27,0.4)]';
+    if (rate >= 80) return 'text-[#d4a24e] shadow-[0_0_30px_rgba(180,120,40,0.4)]';
+    if (rate >= 50) return 'text-[#e87640] shadow-[0_0_30px_rgba(194,65,12,0.4)]';
     return 'text-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)]';
   };
 

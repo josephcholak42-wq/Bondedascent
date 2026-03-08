@@ -37,7 +37,7 @@ interface SexyIconProps {
   name: string;
   size?: number;
   className?: string;
-  glow?: "gold" | "red" | "crimson" | "none";
+  glow?: "gold" | "red" | "crimson" | "bronze" | "ember" | "none";
   animate?: boolean;
   fallback?: React.ReactNode;
 }
@@ -73,9 +73,11 @@ export function SexyIcon({ name, size = 48, className = "", glow = "gold", anima
   }
 
   const glowHover: Record<string, string> = {
-    gold: "0 0 20px rgba(220, 38, 38, 0.5), 0 0 40px rgba(153, 27, 27, 0.25)",
+    gold: "0 0 20px rgba(180, 120, 40, 0.5), 0 0 40px rgba(146, 64, 14, 0.25)",
     red: "0 0 20px rgba(220, 38, 38, 0.5), 0 0 40px rgba(220, 38, 38, 0.25)",
     crimson: "0 0 20px rgba(153, 27, 27, 0.5), 0 0 40px rgba(127, 29, 29, 0.25)",
+    bronze: "0 0 20px rgba(120, 53, 15, 0.5), 0 0 40px rgba(69, 26, 3, 0.25)",
+    ember: "0 0 20px rgba(194, 65, 12, 0.5), 0 0 40px rgba(154, 52, 18, 0.25)",
     none: "none",
   };
 

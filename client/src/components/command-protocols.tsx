@@ -6,8 +6,8 @@ import {
   FileSignature, RotateCcw, ListChecks, TrendingUp,
   CircleDot, Timer, ShieldAlert, Lock, Unlock,
   SendHorizonal, Plus, Crown, Crosshair,
-  Award, Star, Heart, Camera, Dices, BookOpen,
-  RefreshCw, Sliders, Play, Hand, Layers, Hourglass,
+  Award, Star, Heart, Camera, Dices, BookOpen, Film,
+  RefreshCw, Sliders, Play, Hand, Layers, Hourglass, GraduationCap, BarChart3,
   HeartPulse, ChevronRight, Search, Pin, Trash2, Pencil,
   ArrowUp, ArrowDown, Minus, Square, CheckSquare
 } from "lucide-react";
@@ -98,6 +98,7 @@ interface CommandProtocolsProps {
   onToggleFeature?: (featureKey: string, enabled: boolean) => void;
   userStats?: UserStatsData;
   onCrisisMode?: (active: boolean) => void;
+  onLaunchOverlay?: (overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare") => void;
   onCreate?: (type: string, data: Record<string, any>) => void;
   onDelete?: (type: string, id: string) => void;
   onEdit?: (type: string, id: string, data: Record<string, any>) => void;
@@ -112,24 +113,24 @@ const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor:
   checkin_review: { color: "text-slate-400", borderColor: "border-l-slate-500", bgColor: "from-slate-900/40 to-slate-900/10", glowColor: "shadow-slate-500/15", icon: MessageSquare, label: "CHECK-IN", priority: 3 },
   task: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-700/10", icon: Target, label: "DIRECTIVE", priority: 4 },
   standing_order: { color: "text-red-400", borderColor: "border-l-red-800", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-800/10", icon: FileSignature, label: "STANDING ORDER", priority: 5 },
-  ritual: { color: "text-red-300", borderColor: "border-l-red-900", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-900/10", icon: RotateCcw, label: "RITUAL", priority: 6 },
+  ritual: { color: "text-[#c9956a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#78350f]/15", icon: RotateCcw, label: "RITUAL", priority: 6 },
   punishment: { color: "text-red-500", borderColor: "border-l-red-700", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT", priority: 7 },
-  reward: { color: "text-slate-300", borderColor: "border-l-slate-500", bgColor: "from-slate-900/40 to-slate-900/10", glowColor: "shadow-slate-500/15", icon: Gift, label: "REWARD", priority: 8 },
-  dare: { color: "text-rose-400", borderColor: "border-l-rose-700", bgColor: "from-rose-950/40 to-rose-950/10", glowColor: "shadow-rose-700/15", icon: Sparkles, label: "DARE", priority: 9 },
+  reward: { color: "text-[#d4a24e]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#92400e]/20", icon: Gift, label: "REWARD", priority: 8 },
+  dare: { color: "text-[#e87640]", borderColor: "border-l-[#9a3412]", bgColor: "from-[#431407]/45 to-[#431407]/10", glowColor: "shadow-[#9a3412]/15", icon: Sparkles, label: "DARE", priority: 9 },
   notification: { color: "text-slate-500", borderColor: "border-l-slate-700", bgColor: "from-slate-900/50 to-slate-900/20", glowColor: "shadow-slate-700/5", icon: Bell, label: "INFO", priority: 10 },
-  journal: { color: "text-red-300", borderColor: "border-l-red-900", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-900/10", icon: BookOpen, label: "JOURNAL", priority: 11 },
-  play_session: { color: "text-rose-400", borderColor: "border-l-rose-600", bgColor: "from-rose-950/40 to-rose-950/10", glowColor: "shadow-rose-600/10", icon: Play, label: "SESSION", priority: 12 },
-  countdown_event: { color: "text-red-400", borderColor: "border-l-red-800", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-800/10", icon: Timer, label: "COUNTDOWN", priority: 13 },
-  wager: { color: "text-slate-400", borderColor: "border-l-slate-600", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-600/10", icon: Dices, label: "WAGER", priority: 14 },
-  devotion: { color: "text-rose-300", borderColor: "border-l-rose-700", bgColor: "from-rose-950/30 to-rose-950/10", glowColor: "shadow-rose-700/10", icon: Heart, label: "DEVOTION", priority: 15 },
+  journal: { color: "text-[#b8845a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: BookOpen, label: "JOURNAL", priority: 11 },
+  play_session: { color: "text-[#ea7e4a]", borderColor: "border-l-[#c2410c]", bgColor: "from-[#431407]/40 to-[#431407]/10", glowColor: "shadow-[#9a3412]/15", icon: Play, label: "SESSION", priority: 12 },
+  countdown_event: { color: "text-[#e06830]", borderColor: "border-l-[#9a3412]", bgColor: "from-[#431407]/30 to-[#431407]/10", glowColor: "shadow-[#9a3412]/10", icon: Timer, label: "COUNTDOWN", priority: 13 },
+  wager: { color: "text-[#c9956a]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Dices, label: "WAGER", priority: 14 },
+  devotion: { color: "text-[#c9845a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: Heart, label: "DEVOTION", priority: 15 },
   secret: { color: "text-slate-300", borderColor: "border-l-slate-600", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-600/10", icon: Eye, label: "SECRET", priority: 16 },
   conflict: { color: "text-red-400", borderColor: "border-l-red-600", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-600/10", icon: AlertTriangle, label: "CONFLICT", priority: 17 },
-  rating: { color: "text-slate-300", borderColor: "border-l-slate-500", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-500/10", icon: Star, label: "RATING", priority: 18 },
+  rating: { color: "text-[#d4a24e]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Star, label: "RATING", priority: 18 },
   permission_request: { color: "text-slate-400", borderColor: "border-l-slate-600", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-600/10", icon: Hand, label: "PERMISSION", priority: 19 },
-  desired_change: { color: "text-red-300", borderColor: "border-l-red-800", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-800/10", icon: Target, label: "CHANGE", priority: 20 },
+  desired_change: { color: "text-[#b8845a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: Target, label: "CHANGE", priority: 20 },
   limit: { color: "text-slate-400", borderColor: "border-l-slate-500", bgColor: "from-slate-900/40 to-slate-900/15", glowColor: "shadow-slate-500/10", icon: Shield, label: "LIMIT", priority: 21 },
-  achievement: { color: "text-red-300", borderColor: "border-l-red-800", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-800/10", icon: Award, label: "ACHIEVEMENT", priority: 22 },
-  sticker_received: { color: "text-rose-300", borderColor: "border-l-rose-700", bgColor: "from-rose-950/30 to-rose-950/10", glowColor: "shadow-rose-700/10", icon: Sparkles, label: "STICKER", priority: 23 },
+  achievement: { color: "text-[#d4a24e]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/35 to-[#451a03]/10", glowColor: "shadow-[#92400e]/15", icon: Award, label: "ACHIEVEMENT", priority: 22 },
+  sticker_received: { color: "text-[#d4a24e]", borderColor: "border-l-[#b45309]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Sparkles, label: "STICKER", priority: 23 },
 };
 
 const FILTER_OPTIONS = [
@@ -511,7 +512,7 @@ export function CommandProtocols({
   role, feedItems, standingOrders, rituals, tasks,
   onAction, onAssignTask, onQuickCommand, onDemandTimer, onToggleLockdown,
   partnerStats, partnerPresence, partnerName, lockdownStatus, enforcementLevel, isAssigning,
-  stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onCreate,
+  stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onLaunchOverlay, onCreate,
   onDelete, onEdit, recentActivity, trendData,
 }: CommandProtocolsProps) {
   const [filter, setFilter] = useState("all");
@@ -719,9 +720,9 @@ export function CommandProtocols({
                 sub={`${completedProtocols}/${totalProtocols}`}
                 color="red"
                 trend={trendData?.completionTrend} />
-              <MetricCard label="Directives" value={pendingTasks.toString()} sub={`${tasks.filter(t => t.done).length} cleared`} color="crimson" trend={trendData?.taskTrend} />
-              <MetricCard label="Orders" value={activeOrders.toString()} sub="enforced" color="blood" trend={trendData?.orderTrend} />
-              <MetricCard label="Rituals" value={activeRituals.toString()} sub="mandated" color="dark" trend={trendData?.ritualTrend} />
+              <MetricCard label="Directives" value={pendingTasks.toString()} sub={`${tasks.filter(t => t.done).length} cleared`} color="ember" trend={trendData?.taskTrend} />
+              <MetricCard label="Orders" value={activeOrders.toString()} sub="enforced" color="crimson" trend={trendData?.orderTrend} />
+              <MetricCard label="Rituals" value={activeRituals.toString()} sub="mandated" color="bronze" trend={trendData?.ritualTrend} />
             </div>
           </div>
 
@@ -736,7 +737,7 @@ export function CommandProtocols({
                   <div className="h-full rounded-full transition-all duration-1000"
                     style={{
                       width: `${partnerStats?.complianceRate ?? 0}%`,
-                      background: `linear-gradient(90deg, #7f1d1d, ${(partnerStats?.complianceRate ?? 0) >= 50 ? "#991b1b" : "#7f1d1d"}, ${(partnerStats?.complianceRate ?? 0) >= 80 ? "#dc2626" : "#991b1b"})`,
+                      background: `linear-gradient(90deg, #7f1d1d, ${(partnerStats?.complianceRate ?? 0) >= 50 ? "#92400e" : "#7f1d1d"}, ${(partnerStats?.complianceRate ?? 0) >= 80 ? "#d4a24e" : "#92400e"})`,
                     }} />
                 </div>
               </div>
@@ -951,33 +952,63 @@ export function CommandProtocols({
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Scenes & Trials" icon={<Dices size={14} className="text-red-400" />}>
+            {onLaunchOverlay && (
+              <FeatureDrawer title="Immersive Modes" icon={<Zap size={14} className="text-red-500" />}>
+                <div className="space-y-1.5">
+                  <button data-testid="launch-live-session" onClick={() => onLaunchOverlay("live-session")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-red-950/40 to-slate-950/60 border border-red-600/20 rounded-xl hover:border-red-500/40 hover:from-red-950/60 transition-all cursor-pointer group text-left">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="play-sessions" size={28} glow="crimson" /></div>
+                    <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-red-300 uppercase tracking-wide group-hover:text-red-200">Live Session</div><div className="text-[9px] text-slate-500 mt-0.5">Full-screen immersive mode</div></div>
+                  </button>
+                  {role === "dom" && (
+                    <button data-testid="launch-interrogation" onClick={() => onLaunchOverlay("interrogation")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-red-950/40 to-slate-950/60 border border-red-600/20 rounded-xl hover:border-red-500/40 hover:from-red-950/60 transition-all cursor-pointer group text-left">
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="enforce" size={28} glow="crimson" /></div>
+                      <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-red-300 uppercase tracking-wide group-hover:text-red-200">Interrogation</div><div className="text-[9px] text-slate-500 mt-0.5">Timed Q&A under pressure</div></div>
+                    </button>
+                  )}
+                  <button data-testid="launch-confession-booth" onClick={() => onLaunchOverlay("confession-booth")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-[#451a03]/40 to-slate-950/60 border border-[#78350f]/20 rounded-xl hover:border-[#b87333]/40 hover:from-[#451a03]/60 transition-all cursor-pointer group text-left">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="secrets" size={28} glow="bronze" /></div>
+                    <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-[#c9956a] uppercase tracking-wide group-hover:text-[#d4a24e]">Confession Booth</div><div className="text-[9px] text-slate-500 mt-0.5">Private confessions & review</div></div>
+                  </button>
+                  <button data-testid="launch-aftercare" onClick={() => onLaunchOverlay("aftercare")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-[#451a03]/40 to-slate-950/60 border border-[#78350f]/20 rounded-xl hover:border-[#b87333]/40 hover:from-[#451a03]/60 transition-all cursor-pointer group text-left">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="connection-pulse" size={28} glow="bronze" /></div>
+                    <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-[#c9956a] uppercase tracking-wide group-hover:text-[#d4a24e]">Aftercare</div><div className="text-[9px] text-slate-500 mt-0.5">Post-session checklist</div></div>
+                  </button>
+                </div>
+              </FeatureDrawer>
+            )}
+
+            <FeatureDrawer title="Scenes & Trials" icon={<Dices size={14} className="text-[#e87640]" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-red-400" sexyIcon="play-sessions" />
-                <DrawerFeatureLink icon={<Layers size={14} />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" sexyIcon="endurance" />
-                <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-red-400/80" sexyIcon="enforce" />
-                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-rose-400" sexyIcon="wheel-of-dares" />
-                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Stakes & bets" href="/wagers" color="text-red-300" sexyIcon="wagers" />
-                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed ordeals" href="/endurance-challenges" color="text-red-500/80" sexyIcon="endurance" />
+                <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-[#ea7e4a]" sexyIcon="play-sessions" />
+                <DrawerFeatureLink icon={<Film size={14} />} label="Scene Scripts" desc="Step-by-step scripts" href="/scene-scripts" color="text-[#e87640]" sexyIcon="play-sessions" />
+                <DrawerFeatureLink icon={<Layers size={14} />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-[#e06830]" sexyIcon="endurance" />
+                <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-red-400" sexyIcon="enforce" />
+                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-[#ea7e4a]" sexyIcon="wheel-of-dares" />
+                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Stakes & bets" href="/wagers" color="text-[#c9956a]" sexyIcon="wagers" />
+                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed ordeals" href="/endurance-challenges" color="text-[#e06830]" sexyIcon="endurance" />
+                <DrawerFeatureLink icon={<GraduationCap size={14} />} label="Training Programs" desc="Multi-week curricula" href="/training-programs" color="text-[#b87333]" sexyIcon="endurance" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Bond & Reflection" icon={<HeartPulse size={14} className="text-rose-500" />}>
+            <FeatureDrawer title="Bond & Reflection" icon={<HeartPulse size={14} className="text-[#c9845a]" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond status" href="/connection-pulse" color="text-rose-400" sexyIcon="connection-pulse" />
-                <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-rose-300" sexyIcon="devotions" />
-                <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-red-300/80" sexyIcon="secrets" />
+                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond status" href="/connection-pulse" color="text-[#c9845a]" sexyIcon="connection-pulse" />
+                <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-[#b8845a]" sexyIcon="devotions" />
+                <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-slate-300" sexyIcon="secrets" />
                 <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-red-400" sexyIcon="conflicts" />
+                <DrawerFeatureLink icon={<FileSignature size={14} />} label="Contracts" desc="Binding agreements" href="/contracts" color="text-[#d4a24e]" sexyIcon="standing-orders" />
+                <DrawerFeatureLink icon={<BookOpen size={14} />} label="Journal" desc="Reflections & logs" href="/secrets" color="text-[#b8845a]" sexyIcon="secrets" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Records & Surveillance" icon={<Award size={14} className="text-red-400" />}>
+            <FeatureDrawer title="Records & Surveillance" icon={<Award size={14} className="text-[#d4a24e]" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-red-400/80" sexyIcon="ratings" />
-                <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Earned marks" href="/achievements" color="text-red-300" sexyIcon="achievements" />
-                <DrawerFeatureLink icon={<Timer size={14} />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-red-400" sexyIcon="countdown-events" />
+                <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-[#d4a24e]" sexyIcon="ratings" />
+                <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Earned marks" href="/achievements" color="text-[#d4a24e]" sexyIcon="achievements" />
+                <DrawerFeatureLink icon={<BarChart3 size={14} />} label="Analytics" desc="Charts & insights" href="/analytics" color="text-[#e87640]" sexyIcon="ratings" />
+                <DrawerFeatureLink icon={<Timer size={14} />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-[#e06830]" sexyIcon="countdown-events" />
                 <DrawerFeatureLink icon={<Lock size={14} />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-red-500/80" sexyIcon="config" />
-                <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Restricted gallery" href="/locked-media" color="text-rose-400" sexyIcon="secrets" />
+                <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Restricted gallery" href="/locked-media" color="text-slate-400" sexyIcon="secrets" />
               </div>
             </FeatureDrawer>
           </div>
@@ -1096,6 +1127,9 @@ function MetricCard({ label, value, sub, color, trend }: { label: string; value:
     dark: { text: "text-red-300", border: "border-red-800/20", bg: "from-red-950/25", sparkColor: "#7f1d1d" },
     rose: { text: "text-rose-400", border: "border-rose-600/20", bg: "from-rose-950/30", sparkColor: "#e11d48" },
     slate: { text: "text-slate-400", border: "border-slate-600/20", bg: "from-slate-900/30", sparkColor: "#64748b" },
+    gold: { text: "text-[#d4a24e]", border: "border-[#92400e]/20", bg: "from-[#451a03]/35", sparkColor: "#d4a24e" },
+    bronze: { text: "text-[#b87333]", border: "border-[#78350f]/20", bg: "from-[#451a03]/30", sparkColor: "#b87333" },
+    ember: { text: "text-[#e87640]", border: "border-[#9a3412]/20", bg: "from-[#431407]/35", sparkColor: "#e87640" },
   };
   const c = colorMap[color] || colorMap.red;
 

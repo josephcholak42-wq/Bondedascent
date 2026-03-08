@@ -7,7 +7,14 @@ BondedAscent is a full-stack web application designed for dynamic protocol manag
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-Color palette: Only deep reds (#991b1b, #7f1d1d), blacks (#030303, #0a0a0a), crimsons, burgundy, charcoal (slate-700/800), ash-white text (slate-300/400). NO bright/playful colors.
+Color palette: Five dark accent families — NO bright/playful colors.
+  - **Blood Red**: #dc2626, #991b1b, #7f1d1d (demands, commands, punishments, conflicts)
+  - **Dark Gold**: #d4a24e, #92400e, #451a03 (rewards, achievements, ratings, stickers, wagers)
+  - **Blood Orange/Ember**: #e87640, #c2410c, #9a3412, #431407 (dares, sessions, countdowns)
+  - **Deep Bronze**: #b87333, #78350f, #451a03 (rituals, devotions, journal, desired changes)
+  - **Ash/Slate**: slate-300/400/500/600 (info, permissions, limits, secrets)
+  - **Blacks**: #030303, #0a0a0a backgrounds; ash-white text (slate-300/400, #c8bfb6)
+  - CSS variables: --accent-gold, --accent-bronze, --accent-ember, --accent-ash (defined in index.css)
 Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 
 ## System Architecture

@@ -20,8 +20,8 @@ const COLORS = {
   background: "#0a0a0a",
   grid: "#1a1a1a",
   label: "#94a3b8",
-  mood: "#991b1b",
-  obedience: "#7f1d1d",
+  mood: "#c2410c",
+  obedience: "#92400e",
 };
 
 function MoodChart({ data }: MoodChartProps) {

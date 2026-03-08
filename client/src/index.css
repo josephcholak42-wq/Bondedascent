@@ -48,6 +48,16 @@
   --role-glow: rgba(180, 20, 20, 0.4);
   --role-accent-bg: rgba(100, 10, 10, 0.35);
   --role-accent-border: rgba(180, 20, 20, 0.35);
+  --accent-gold: #d4a24e;
+  --accent-gold-dark: #92400e;
+  --accent-gold-deep: #451a03;
+  --accent-bronze: #b87333;
+  --accent-bronze-dark: #78350f;
+  --accent-ember: #e87640;
+  --accent-ember-dark: #9a3412;
+  --accent-ember-deep: #431407;
+  --accent-ash: #c4b5a0;
+  --accent-ash-dark: #a89480;
 }
 
 :root[data-role="dom"] {

@@ -60,9 +60,9 @@ function ComplianceChart({ data }: { data: number[] }) {
           <text x={PAD.left - 6} y={yS(v)} textAnchor="end" dominantBaseline="middle" fill="#94a3b8" fontSize="9">{v}%</text>
         </g>
       ))}
-      <path d={path} fill="none" stroke="#991b1b" strokeWidth="2" />
+      <path d={path} fill="none" stroke="#c2410c" strokeWidth="2" />
       {pts.map((v, i) => (
-        <circle key={i} cx={xS(i)} cy={yS(v)} r="2.5" fill="#991b1b" />
+        <circle key={i} cx={xS(i)} cy={yS(v)} r="2.5" fill="#c2410c" />
       ))}
     </svg>
   );
@@ -72,9 +72,9 @@ function Heatmap({ data }: { data: number[] }) {
   const days = data.length >= 28 ? data.slice(-28) : [...Array(28 - data.length).fill(0), ...data];
   const cellColor = (c: number) => {
     if (c === 0) return "#0a0a0a";
-    if (c <= 2) return "#450a0a";
-    if (c <= 5) return "#7f1d1d";
-    return "#991b1b";
+    if (c <= 2) return "#431407";
+    if (c <= 5) return "#9a3412";
+    return "#c2410c";
   };
 
   return (
@@ -103,11 +103,11 @@ function PunishmentRewardBar({ punishments, rewards }: { punishments: number; re
     <div data-testid="bar-punishment-reward">
       <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
         <span style={{ color: "#991b1b", fontSize: 14 }}>Punishments: {punishments}</span>
-        <span style={{ color: "#94a3b8", fontSize: 14 }}>Rewards: {rewards}</span>
+        <span style={{ color: "#d4a24e", fontSize: 14 }}>Rewards: {rewards}</span>
       </div>
       <div style={{ display: "flex", height: 24, borderRadius: 6, overflow: "hidden", backgroundColor: "#1a1a1a" }}>
         <div style={{ width: `${(punishments / total) * 100}%`, backgroundColor: "#991b1b", transition: "width 0.3s" }} />
-        <div style={{ width: `${(rewards / total) * 100}%`, backgroundColor: "#2a2a2a", transition: "width 0.3s" }} />
+        <div style={{ width: `${(rewards / total) * 100}%`, backgroundColor: "#92400e", transition: "width 0.3s" }} />
       </div>
     </div>
   );
@@ -127,7 +127,7 @@ function ActiveHoursChart({ data }: { data: number[] }) {
               width: "100%",
               height: `${(count / max) * 100}%`,
               minHeight: count > 0 ? 4 : 1,
-              backgroundColor: count > 0 ? "#991b1b" : "#1a1a1a",
+              backgroundColor: count > 0 ? "#78350f" : "#1a1a1a",
               borderRadius: 2,
             }}
           />
@@ -147,7 +147,7 @@ function StreakRecords({ streaks }: { streaks: StreakData[] }) {
       {streaks.map((s, i) => (
         <div key={i} data-testid={`streak-${i}`} style={{ display: "flex", justifyContent: "space-between", padding: "8px 12px", backgroundColor: "#0a0a0a", borderRadius: 6 }}>
           <span style={{ color: "#e2e8f0", textTransform: "capitalize" }}>{s.type}</span>
-          <span style={{ color: "#94a3b8" }}>Current: <span style={{ color: "#991b1b" }}>{s.current}</span> | Longest: <span style={{ color: "#991b1b" }}>{s.longest}</span></span>
+          <span style={{ color: "#94a3b8" }}>Current: <span style={{ color: "#e87640" }}>{s.current}</span> | Longest: <span style={{ color: "#d4a24e" }}>{s.longest}</span></span>
         </div>
       ))}
     </div>
@@ -185,9 +185,9 @@ function CalendarTab() {
   }
 
   const dotColor = (type: string) => {
-    if (type.includes("session")) return "#4a0519";
-    if (type.includes("check") || type.includes("checkin")) return "#3b0764";
-    if (type.includes("ritual")) return "#451a03";
+    if (type.includes("session")) return "#9a3412";
+    if (type.includes("check") || type.includes("checkin")) return "#78350f";
+    if (type.includes("ritual")) return "#92400e";
     return "#991b1b";
   };
 
@@ -287,7 +287,7 @@ function RelationshipTab() {
     <div data-testid="tab-relationship">
       <div style={{ textAlign: "center", marginBottom: 32 }}>
         <p style={{ color: "#94a3b8", fontSize: 13, marginBottom: 4, letterSpacing: 2, textTransform: "uppercase" }}>Days Bonded</p>
-        <h2 data-testid="text-days-bonded" style={{ fontFamily: "'Playfair Display', serif", color: "#991b1b", fontSize: 64, fontWeight: 700, lineHeight: 1 }}>{daysBonded}</h2>
+        <h2 data-testid="text-days-bonded" style={{ fontFamily: "'Playfair Display', serif", color: "#d4a24e", fontSize: 64, fontWeight: 700, lineHeight: 1 }}>{daysBonded}</h2>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
@@ -308,7 +308,7 @@ function RelationshipTab() {
       <div data-testid="gauge-bond-health" style={{ marginBottom: 24 }}>
         <p style={{ color: "#94a3b8", fontSize: 12, marginBottom: 6 }}>Bond Health</p>
         <div style={{ height: 16, backgroundColor: "#2a2a2a", borderRadius: 8, overflow: "hidden" }}>
-          <div style={{ height: "100%", width: `${bondHealth}%`, backgroundColor: "#991b1b", borderRadius: 8, transition: "width 0.5s" }} />
+          <div style={{ height: "100%", width: `${bondHealth}%`, background: "linear-gradient(90deg, #7f1d1d, #92400e, #d4a24e)", borderRadius: 8, transition: "width 0.5s" }} />
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
           <span style={{ color: "#94a3b8", fontSize: 10 }}>0</span>
@@ -331,7 +331,7 @@ function RelationshipTab() {
               backgroundColor: "#0a0a0a",
               borderRadius: 6,
               opacity: daysBonded >= m.threshold ? 1 : 0.35,
-              border: daysBonded >= m.threshold ? "1px solid #991b1b" : "1px solid #1a1a1a",
+              border: daysBonded >= m.threshold ? "1px solid #92400e" : "1px solid #1a1a1a",
             }}
           >
             <span style={{ fontSize: 20 }}>{m.icon}</span>

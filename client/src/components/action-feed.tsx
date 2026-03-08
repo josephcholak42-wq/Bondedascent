@@ -34,8 +34,8 @@ const TYPE_CONFIG: Record<FeedItemType, { color: string; borderColor: string; bg
   accusation: { color: "text-rose-400", borderColor: "border-l-rose-500", bgColor: "bg-gradient-to-r from-rose-950/50 to-rose-950/15", glowColor: "shadow-rose-500/15", icon: AlertTriangle, label: "ACCUSATION" },
   task: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/40 to-red-950/10", glowColor: "shadow-red-500/10", icon: Target, label: "PROTOCOL" },
   punishment: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "bg-gradient-to-r from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT" },
-  reward: { color: "text-slate-400", borderColor: "border-l-slate-300", bgColor: "bg-gradient-to-r from-slate-950/40 to-slate-950/10", glowColor: "shadow-slate-300/15", icon: Gift, label: "REWARD" },
-  dare: { color: "text-rose-500", borderColor: "border-l-rose-600", bgColor: "bg-gradient-to-r from-rose-950/40 to-rose-950/10", glowColor: "shadow-rose-600/15", icon: Sparkles, label: "DARE" },
+  reward: { color: "text-[#d4a24e]", borderColor: "border-l-[#92400e]", bgColor: "bg-gradient-to-r from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#92400e]/20", icon: Gift, label: "REWARD" },
+  dare: { color: "text-[#e87640]", borderColor: "border-l-[#9a3412]", bgColor: "bg-gradient-to-r from-[#431407]/45 to-[#431407]/10", glowColor: "shadow-[#9a3412]/15", icon: Sparkles, label: "DARE" },
   checkin_review: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "bg-gradient-to-r from-red-950/40 to-red-950/10", glowColor: "shadow-red-500/15", icon: MessageSquare, label: "CHECK-IN" },
   notification: { color: "text-slate-400", borderColor: "border-l-slate-600", bgColor: "bg-gradient-to-r from-slate-900/50 to-slate-900/20", glowColor: "shadow-slate-500/5", icon: Bell, label: "INFO" },
 };
