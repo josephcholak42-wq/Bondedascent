@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useLocation, Link as WouterLink } from "wouter";
 import { SexyIcon } from "@/components/sexy-icon";
 import {
@@ -197,8 +197,24 @@ import {
   SCENE_CATEGORIES,
   type PrebuiltScene,
 } from "@/lib/prebuilt-scenes";
-import { type FeedItem } from "@/components/action-feed";
-import { CommandProtocols } from "@/components/command-protocols";
+import { CommandProtocols, type FeedItem, type ActivityEntry } from "@/components/command-protocols";
+import {
+  useCreateRitual,
+  useCreateStandingOrder,
+  useCreateWager,
+  useCreateDevotion,
+  useCreateSecret,
+  useCreateLimit,
+  useCreateConflict,
+  useCreateDesiredChange,
+  useCreateCountdownEvent,
+  useCreateRating,
+  useCreatePermissionRequest,
+  useDeleteRitual,
+  useDeleteLimit,
+  useDeleteCountdownEvent,
+  useDeleteStandingOrder,
+} from "@/lib/hooks";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 export default function BondedAscentApp() {
@@ -344,6 +360,21 @@ export default function BondedAscentApp() {
   const uploadMediaMutation = useUploadMedia();
   const deleteMediaMutation = useDeleteMedia();
   const uploadProfilePicMutation = useUploadProfilePic();
+  const createRitualMutation = useCreateRitual();
+  const createStandingOrderMutation = useCreateStandingOrder();
+  const createWagerMutation = useCreateWager();
+  const createDevotionMutation = useCreateDevotion();
+  const createSecretMutation = useCreateSecret();
+  const createLimitMutation = useCreateLimit();
+  const createConflictMutation = useCreateConflict();
+  const createDesiredChangeMutation = useCreateDesiredChange();
+  const createCountdownEventMutation = useCreateCountdownEvent();
+  const createRatingMutation = useCreateRating();
+  const createPermissionRequestMutation = useCreatePermissionRequest();
+  const deleteRitualMutation = useDeleteRitual();
+  const deleteLimitMutation = useDeleteLimit();
+  const deleteCountdownEventMutation = useDeleteCountdownEvent();
+  const deleteStandingOrderMutation = useDeleteStandingOrder();
   const profilePicInputRef = useRef<HTMLInputElement>(null);
   const [stickerMessage, setStickerMessage] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -550,6 +581,17 @@ export default function BondedAscentApp() {
         lockdownStatus={lockdownStatus?.lockedDown ?? false}
         enforcementLevel={(partnerEnforcement as any)?.enforcementLevel}
         isAssigning={createPartnerTaskMutation.isPending}
+        stickers={stickersList}
+        onSendSticker={(stickerType, message) => { sendStickerMutation.mutate({ stickerType, message }); }}
+        featureSettings={featureSettingsList}
+        onToggleFeature={(key, enabled) => { toggleFeatureMutation.mutate({ featureKey: key, enabled }); }}
+        userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
+        onCrisisMode={(active) => setIsCrisisMode(active)}
+        onCreate={handleOnCreate}
+        onDelete={handleOnDelete}
+        onEdit={handleOnEdit}
+        recentActivity={recentActivityEntries}
+        trendData={{ completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
       />
 
       <div className="flex flex-col items-center gap-6 pt-4">
@@ -635,51 +677,162 @@ export default function BondedAscentApp() {
     const activeDemands = (demandTimers || []).filter((t: any) => !t.responded && new Date(t.expiresAt) > new Date());
     activeDemands.forEach((t: any) => {
       const remaining = Math.max(0, Math.ceil((new Date(t.expiresAt).getTime() - Date.now()) / 1000));
-      items.push({ id: t.id, type: "demand", title: t.message, countdown: remaining, data: t });
+      items.push({ id: t.id, type: "demand", title: t.message, countdown: remaining, data: t, createdAt: t.createdAt });
     });
     (quickCommands || []).filter((c: any) => !c.acknowledged).forEach((c: any) => {
-      items.push({ id: c.id, type: "command", title: c.message, data: c });
+      items.push({ id: c.id, type: "command", title: c.message, data: c, createdAt: c.createdAt });
     });
     (accusations || []).filter((a: any) => a.status === "pending" && a.toUserId === user?.id).forEach((a: any) => {
-      items.push({ id: a.id, type: "accusation", title: a.accusation, data: a });
+      items.push({ id: a.id, type: "accusation", title: a.accusation, data: a, createdAt: a.createdAt });
     });
-    tasks.filter((t) => !t.done).forEach((t) => {
-      items.push({ id: t.id, type: "task", title: t.text, data: t });
+    tasks.forEach((t) => {
+      items.push({ id: t.id, type: "task", title: t.text, data: t, createdAt: (t as any).createdAt });
     });
-    (punishments || []).filter((p: any) => p.status === "active" && p.userId === user?.id).forEach((p: any) => {
-      items.push({ id: p.id, type: "punishment", title: p.name, description: p.category ? `${p.category} · ${p.duration || ""}` : undefined, data: p });
+    (punishments || []).filter((p: any) => p.userId === user?.id).forEach((p: any) => {
+      items.push({ id: p.id, type: "punishment", title: p.name, description: p.category ? `${p.category} · ${p.status || ""}` : p.status, data: p, createdAt: p.createdAt });
     });
-    dares.filter((d: any) => !d.completed).forEach((d: any) => {
-      items.push({ id: d.id, type: "dare", title: d.text, data: d });
+    dares.forEach((d: any) => {
+      items.push({ id: d.id, type: "dare", title: d.text, data: d, createdAt: d.createdAt });
     });
-    (rewards || []).filter((r: any) => !r.unlocked && r.userId === user?.id).forEach((r: any) => {
-      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r });
+    (rewards || []).filter((r: any) => r.userId === user?.id).forEach((r: any) => {
+      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.slice(0, 10).forEach((n) => {
-      items.push({ id: n.id, type: "notification", title: n.text, data: n });
+      items.push({ id: n.id, type: "notification", title: n.text, data: n, createdAt: (n as any).createdAt });
+    });
+    journalEntries.slice(0, 20).forEach((j: any) => {
+      items.push({ id: j.id, type: "journal", title: j.content?.slice(0, 80) || "Journal entry", description: j.mood ? `Mood: ${j.mood}` : undefined, data: j, createdAt: j.createdAt });
+    });
+    devotionsList.forEach((d: any) => {
+      items.push({ id: d.id, type: "devotion", title: d.title || d.text, description: d.description, data: d, createdAt: d.createdAt });
+    });
+    secrets.forEach((s: any) => {
+      items.push({ id: s.id, type: "secret", title: s.content?.slice(0, 60) || "Secret", data: s, createdAt: s.createdAt });
+    });
+    permissionRequests.forEach((p: any) => {
+      items.push({ id: p.id, type: "permission_request", title: p.title || p.request, description: p.reason, data: p, createdAt: p.createdAt });
+    });
+    limitsList.forEach((l: any) => {
+      items.push({ id: l.id, type: "limit", title: l.title || l.description, description: l.type === "hard" ? "Hard limit" : "Soft limit", data: l, createdAt: l.createdAt });
+    });
+    conflictsList.forEach((c: any) => {
+      items.push({ id: c.id, type: "conflict", title: c.title || c.description, description: c.status, data: c, createdAt: c.createdAt });
+    });
+    stickersList.filter((s: any) => s.recipientId === user?.id).slice(0, 10).forEach((s: any) => {
+      items.push({ id: s.id?.toString() || `sticker-${s.id}`, type: "sticker_received", title: `Received ${s.stickerType}`, description: s.message || undefined, data: s, createdAt: s.createdAt });
     });
     return items;
-  }, [demandTimers, quickCommands, accusations, tasks, punishments, dares, rewards, notifications, user?.id]);
+  }, [demandTimers, quickCommands, accusations, tasks, punishments, dares, rewards, notifications, user?.id, journalEntries, devotionsList, secrets, permissionRequests, limitsList, conflictsList, stickersList]);
 
   const buildDomFeedItems = useCallback((): FeedItem[] => {
     const items: FeedItem[] = [];
     (partnerCheckIns || []).filter((c: any) => c.status === "pending").forEach((c: any) => {
-      items.push({ id: c.id, type: "checkin_review", title: `Check-In: Mood ${c.mood}/10, Obedience ${c.obedience}/10`, description: c.notes || undefined, data: c });
+      items.push({ id: c.id, type: "checkin_review", title: `Check-In: Mood ${c.mood}/10, Obedience ${c.obedience}/10`, description: c.notes || undefined, data: c, createdAt: c.createdAt });
     });
-    (partnerTasks || []).filter((t: any) => !t.done).forEach((t: any) => {
-      items.push({ id: t.id, type: "task", title: t.text, description: "Assigned to partner", data: { ...t, isPartnerTask: true } });
+    (partnerTasks || []).forEach((t: any) => {
+      items.push({ id: t.id, type: "task", title: t.text, description: t.done ? "Completed" : "Assigned", data: { ...t, isPartnerTask: true }, createdAt: t.createdAt });
     });
-    (punishments || []).filter((p: any) => p.status === "active").forEach((p: any) => {
-      items.push({ id: p.id, type: "punishment", title: p.name, description: `Active · ${p.category || ""}`, data: p });
+    (punishments || []).forEach((p: any) => {
+      items.push({ id: p.id, type: "punishment", title: p.name, description: `${p.status || "active"} · ${p.category || ""}`, data: p, createdAt: p.createdAt });
     });
-    (rewards || []).filter((r: any) => !r.unlocked).forEach((r: any) => {
-      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r });
+    (rewards || []).forEach((r: any) => {
+      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.slice(0, 10).forEach((n) => {
-      items.push({ id: n.id, type: "notification", title: n.text, data: n });
+      items.push({ id: n.id, type: "notification", title: n.text, data: n, createdAt: (n as any).createdAt });
+    });
+    dares.forEach((d: any) => {
+      items.push({ id: d.id, type: "dare", title: d.text, description: d.completed ? "Completed" : "Active", data: d, createdAt: d.createdAt });
+    });
+    playSessions.forEach((s: any) => {
+      items.push({ id: s.id, type: "play_session", title: s.title || s.name || "Play Session", description: s.status, data: s, createdAt: s.createdAt });
+    });
+    countdownEvents.forEach((e: any) => {
+      items.push({ id: e.id, type: "countdown_event", title: e.title || e.name, description: e.eventDate ? `Date: ${new Date(e.eventDate).toLocaleDateString()}` : undefined, data: e, createdAt: e.createdAt });
+    });
+    wagers.forEach((w: any) => {
+      items.push({ id: w.id, type: "wager", title: w.title || w.description, description: w.stakes, data: w, createdAt: w.createdAt });
+    });
+    ratingsList.slice(0, 10).forEach((r: any) => {
+      items.push({ id: r.id, type: "rating", title: `Rating: ${r.score || r.rating}/10`, description: r.notes || r.comment, data: { ...r, score: r.score || r.rating }, createdAt: r.createdAt });
+    });
+    desiredChanges.forEach((d: any) => {
+      items.push({ id: d.id, type: "desired_change", title: d.title || d.description, description: d.priority ? `Priority: ${d.priority}` : undefined, data: d, createdAt: d.createdAt });
+    });
+    secrets.forEach((s: any) => {
+      items.push({ id: s.id, type: "secret", title: s.content?.slice(0, 60) || "Secret", data: s, createdAt: s.createdAt });
+    });
+    devotionsList.forEach((d: any) => {
+      items.push({ id: d.id, type: "devotion", title: d.title || d.text, description: d.description, data: d, createdAt: d.createdAt });
+    });
+    conflictsList.forEach((c: any) => {
+      items.push({ id: c.id, type: "conflict", title: c.title || c.description, description: c.status, data: c, createdAt: c.createdAt });
+    });
+    limitsList.forEach((l: any) => {
+      items.push({ id: l.id, type: "limit", title: l.title || l.description, description: l.type === "hard" ? "Hard limit" : "Soft limit", data: l, createdAt: l.createdAt });
+    });
+    permissionRequests.forEach((p: any) => {
+      items.push({ id: p.id, type: "permission_request", title: p.title || p.request, description: `${p.status || "pending"} · ${p.reason || ""}`, data: p, createdAt: p.createdAt });
     });
     return items;
-  }, [partnerCheckIns, partnerTasks, punishments, rewards, notifications]);
+  }, [partnerCheckIns, partnerTasks, punishments, rewards, notifications, dares, playSessions, countdownEvents, wagers, ratingsList, desiredChanges, secrets, devotionsList, conflictsList, limitsList, permissionRequests]);
+
+  const recentActivityEntries = useMemo((): ActivityEntry[] => {
+    const entries: ActivityEntry[] = [];
+    (activityLog || []).slice(0, 20).forEach((a: any) => {
+      entries.push({ id: a.id?.toString() || `a-${Math.random()}`, action: a.action, detail: a.detail, userId: a.userId, createdAt: a.createdAt });
+    });
+    (partnerActivity || []).slice(0, 20).forEach((a: any) => {
+      entries.push({ id: a.id?.toString() || `pa-${Math.random()}`, action: a.action, detail: a.detail, userId: a.userId, createdAt: a.createdAt });
+    });
+    entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return entries.slice(0, 10);
+  }, [activityLog, partnerActivity]);
+
+  const handleOnCreate = useCallback((type: string, data: Record<string, any>) => {
+    switch (type) {
+      case "task":
+        if (userRole === "dom") createPartnerTaskMutation.mutate({ text: data.text });
+        else createTaskMutation.mutate({ text: data.text });
+        break;
+      case "reward": createRewardMutation.mutate({ name: data.text || data.name, category: data.category }); break;
+      case "punishment": createPunishmentMutation.mutate({ name: data.text || data.name, category: data.category }); break;
+      case "ritual": createRitualMutation.mutate({ title: data.text || data.title, frequency: data.frequency || "daily" }); break;
+      case "standing_order": createStandingOrderMutation.mutate({ title: data.text || data.title, description: data.description }); break;
+      case "dare": spinDareMutation.mutate(); break;
+      case "journal": createJournalMutation.mutate({ content: data.text || data.content, mood: data.mood }); break;
+      case "checkin": createCheckInMutation.mutate({ mood: data.mood || 5, obedience: data.obedience || 5, notes: data.text || data.notes || "" }); break;
+      case "wager": createWagerMutation.mutate({ title: data.text || data.title, stakes: data.stakes, deadline: data.deadline }); break;
+      case "devotion": createDevotionMutation.mutate({ content: data.text || data.description || data.title }); break;
+      case "secret": createSecretMutation.mutate({ title: data.title || "Secret", content: data.text || data.content }); break;
+      case "limit": createLimitMutation.mutate({ name: data.text || data.name || data.title, level: data.level || data.limitType || "soft", description: data.description }); break;
+      case "conflict": createConflictMutation.mutate({ title: data.text || data.title, description: data.description }); break;
+      case "desired_change": createDesiredChangeMutation.mutate({ title: data.text || data.title, description: data.description, priority: data.priority || "medium" }); break;
+      case "countdown_event": createCountdownEventMutation.mutate({ title: data.text || data.title, targetDate: data.eventDate || data.targetDate || new Date().toISOString() }); break;
+      case "rating": createRatingMutation.mutate({ ratedUserId: partner?.id || "", overall: data.score || 5, notes: data.text || data.notes }); break;
+      case "permission_request": createPermissionRequestMutation.mutate({ title: data.text || data.title, description: data.reason || data.description }); break;
+      case "accusation": createAccusationMutation.mutate({ accusation: data.text }); break;
+      case "play_session": createPlaySessionMutation.mutate({ title: data.text || data.title, mood: data.mood, intensity: data.intensity }); break;
+    }
+    logActivityMutation.mutate({ action: `created_${type}`, detail: data.text || data.title || type });
+  }, [userRole, createPartnerTaskMutation, createTaskMutation, createRewardMutation, createPunishmentMutation, createRitualMutation, createStandingOrderMutation, spinDareMutation, createJournalMutation, createCheckInMutation, createWagerMutation, createDevotionMutation, createSecretMutation, createLimitMutation, createConflictMutation, createDesiredChangeMutation, createCountdownEventMutation, createRatingMutation, createPermissionRequestMutation, createAccusationMutation, createPlaySessionMutation, logActivityMutation]);
+
+  const handleOnDelete = useCallback((type: string, id: string) => {
+    switch (type) {
+      case "task": deleteTaskMutation.mutate(id); break;
+      case "ritual": deleteRitualMutation.mutate(id); break;
+      case "limit": deleteLimitMutation.mutate(id); break;
+      case "countdown_event": deleteCountdownEventMutation.mutate(id); break;
+      case "standing_order": deleteStandingOrderMutation.mutate(id); break;
+      case "notification": dismissNotificationMutation.mutate(id); break;
+      case "punishment": updatePunishmentStatusMutation.mutate({ id, status: "completed" }); break;
+      case "reward": toggleRewardMutation.mutate(id); break;
+      case "dare": completeDareMutation.mutate(id); break;
+    }
+  }, [deleteTaskMutation, deleteRitualMutation, deleteLimitMutation, deleteCountdownEventMutation, deleteStandingOrderMutation, dismissNotificationMutation, updatePunishmentStatusMutation, toggleRewardMutation, completeDareMutation]);
+
+  const handleOnEdit = useCallback((_type: string, _id: string, _data: Record<string, any>) => {
+  }, []);
 
   const handleFeedAction = useCallback((itemId: string, action: string, payload?: any) => {
     switch (action) {
@@ -737,10 +890,15 @@ export default function BondedAscentApp() {
             onAssignTask={(text) => { createTaskMutation.mutate({ text }); }}
             partnerPresence={partnerPresence}
             partnerName={partner?.username}
-            enforcementLevel={(partnerEnforcement as any)?.enforcementLevel}
+            enforcementLevel={(myEnforcement as any)?.enforcementLevel}
             isAssigning={createTaskMutation.isPending}
             stickers={stickersList.filter((s: any) => s.recipientId === user?.id)}
-            userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1 }}
+            userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
+            onCreate={handleOnCreate}
+            onDelete={handleOnDelete}
+            onEdit={handleOnEdit}
+            recentActivity={recentActivityEntries}
+            trendData={{ completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
           />
 
           <div className="flex flex-col items-center gap-6 pt-4">

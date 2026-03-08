@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
   AlertTriangle, Bell, CheckCircle, Clock, Gift, Gavel,
   MessageSquare, Siren, Target, Zap, X, Send, Sparkles,
@@ -8,7 +8,8 @@ import {
   SendHorizonal, Plus, Crown, Crosshair,
   Award, Star, Heart, Camera, Dices, BookOpen,
   RefreshCw, Sliders, Play, Hand, Layers, Hourglass,
-  HeartPulse, ChevronRight
+  HeartPulse, ChevronRight, Search, Pin, Trash2, Pencil,
+  ArrowUp, ArrowDown, Minus, Square, CheckSquare
 } from "lucide-react";
 import { Link as WouterLink } from "wouter";
 import { Switch } from "@/components/ui/switch";
@@ -16,11 +17,16 @@ import { FeatureDrawer } from "@/components/feature-drawer";
 import { Button } from "@/components/ui/button";
 import { SexyIcon } from "@/components/sexy-icon";
 import { UniversalCreator } from "@/components/universal-creator";
+import { feedbackComplete, feedbackUrgent, feedbackDelete, feedbackTap, feedbackSticker } from "@/lib/feedback";
 
 export type FeedItemType =
   | "demand" | "command" | "accusation" | "task"
   | "punishment" | "reward" | "dare" | "checkin_review"
-  | "notification" | "standing_order" | "ritual";
+  | "notification" | "standing_order" | "ritual"
+  | "journal" | "play_session" | "countdown_event" | "wager"
+  | "devotion" | "secret" | "conflict" | "rating"
+  | "permission_request" | "desired_change" | "limit"
+  | "achievement" | "sticker_received";
 
 export interface FeedItem {
   id: string;
@@ -54,6 +60,21 @@ export interface UserStatsData {
   activeTimers?: number;
 }
 
+export interface ActivityEntry {
+  id: string;
+  action: string;
+  detail?: string;
+  userId?: string;
+  createdAt: string | Date;
+}
+
+export interface TrendData {
+  completionTrend?: number[];
+  taskTrend?: number[];
+  orderTrend?: number[];
+  ritualTrend?: number[];
+}
+
 interface CommandProtocolsProps {
   role: "dom" | "sub";
   feedItems: FeedItem[];
@@ -78,6 +99,10 @@ interface CommandProtocolsProps {
   userStats?: UserStatsData;
   onCrisisMode?: (active: boolean) => void;
   onCreate?: (type: string, data: Record<string, any>) => void;
+  onDelete?: (type: string, id: string) => void;
+  onEdit?: (type: string, id: string, data: Record<string, any>) => void;
+  recentActivity?: ActivityEntry[];
+  trendData?: TrendData;
 }
 
 const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string; priority: number }> = {
@@ -85,21 +110,38 @@ const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor:
   command: { color: "text-orange-400", borderColor: "border-l-orange-500", bgColor: "from-orange-950/50 to-orange-950/15", glowColor: "shadow-orange-500/15", icon: Zap, label: "ORDER", priority: 1 },
   accusation: { color: "text-rose-400", borderColor: "border-l-rose-500", bgColor: "from-rose-950/50 to-rose-950/15", glowColor: "shadow-rose-500/15", icon: AlertTriangle, label: "ACCUSATION", priority: 2 },
   checkin_review: { color: "text-purple-400", borderColor: "border-l-purple-500", bgColor: "from-purple-950/40 to-purple-950/10", glowColor: "shadow-purple-500/15", icon: MessageSquare, label: "CHECK-IN", priority: 3 },
-  task: { color: "text-blue-400", borderColor: "border-l-blue-500", bgColor: "from-blue-950/40 to-blue-950/10", glowColor: "shadow-blue-500/10", icon: Target, label: "PROTOCOL", priority: 4 },
+  task: { color: "text-blue-400", borderColor: "border-l-blue-500", bgColor: "from-blue-950/40 to-blue-950/10", glowColor: "shadow-blue-500/10", icon: Target, label: "DIRECTIVE", priority: 4 },
   standing_order: { color: "text-cyan-400", borderColor: "border-l-cyan-500", bgColor: "from-cyan-950/40 to-cyan-950/10", glowColor: "shadow-cyan-500/10", icon: FileSignature, label: "STANDING ORDER", priority: 5 },
   ritual: { color: "text-amber-300", borderColor: "border-l-amber-400", bgColor: "from-amber-950/40 to-amber-950/10", glowColor: "shadow-amber-400/10", icon: RotateCcw, label: "RITUAL", priority: 6 },
   punishment: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT", priority: 7 },
   reward: { color: "text-amber-400", borderColor: "border-l-amber-500", bgColor: "from-amber-950/40 to-amber-950/10", glowColor: "shadow-amber-500/15", icon: Gift, label: "REWARD", priority: 8 },
   dare: { color: "text-fuchsia-400", borderColor: "border-l-fuchsia-500", bgColor: "from-fuchsia-950/40 to-fuchsia-950/10", glowColor: "shadow-fuchsia-500/15", icon: Sparkles, label: "DARE", priority: 9 },
   notification: { color: "text-slate-400", borderColor: "border-l-slate-600", bgColor: "from-slate-900/50 to-slate-900/20", glowColor: "shadow-slate-500/5", icon: Bell, label: "INFO", priority: 10 },
+  journal: { color: "text-purple-300", borderColor: "border-l-purple-400", bgColor: "from-purple-950/30 to-purple-950/10", glowColor: "shadow-purple-400/10", icon: BookOpen, label: "JOURNAL", priority: 11 },
+  play_session: { color: "text-pink-400", borderColor: "border-l-pink-500", bgColor: "from-pink-950/40 to-pink-950/10", glowColor: "shadow-pink-500/10", icon: Play, label: "SESSION", priority: 12 },
+  countdown_event: { color: "text-emerald-400", borderColor: "border-l-emerald-500", bgColor: "from-emerald-950/30 to-emerald-950/10", glowColor: "shadow-emerald-500/10", icon: Timer, label: "COUNTDOWN", priority: 13 },
+  wager: { color: "text-amber-300", borderColor: "border-l-amber-400", bgColor: "from-amber-950/30 to-amber-950/10", glowColor: "shadow-amber-400/10", icon: Dices, label: "WAGER", priority: 14 },
+  devotion: { color: "text-rose-300", borderColor: "border-l-rose-400", bgColor: "from-rose-950/30 to-rose-950/10", glowColor: "shadow-rose-400/10", icon: Heart, label: "DEVOTION", priority: 15 },
+  secret: { color: "text-violet-400", borderColor: "border-l-violet-500", bgColor: "from-violet-950/30 to-violet-950/10", glowColor: "shadow-violet-500/10", icon: Eye, label: "SECRET", priority: 16 },
+  conflict: { color: "text-orange-400", borderColor: "border-l-orange-400", bgColor: "from-orange-950/30 to-orange-950/10", glowColor: "shadow-orange-400/10", icon: AlertTriangle, label: "CONFLICT", priority: 17 },
+  rating: { color: "text-yellow-400", borderColor: "border-l-yellow-500", bgColor: "from-yellow-950/30 to-yellow-950/10", glowColor: "shadow-yellow-500/10", icon: Star, label: "RATING", priority: 18 },
+  permission_request: { color: "text-blue-300", borderColor: "border-l-blue-400", bgColor: "from-blue-950/30 to-blue-950/10", glowColor: "shadow-blue-400/10", icon: Hand, label: "PERMISSION", priority: 19 },
+  desired_change: { color: "text-teal-400", borderColor: "border-l-teal-500", bgColor: "from-teal-950/30 to-teal-950/10", glowColor: "shadow-teal-500/10", icon: Target, label: "CHANGE", priority: 20 },
+  limit: { color: "text-slate-300", borderColor: "border-l-slate-400", bgColor: "from-slate-900/40 to-slate-900/15", glowColor: "shadow-slate-400/10", icon: Shield, label: "LIMIT", priority: 21 },
+  achievement: { color: "text-emerald-300", borderColor: "border-l-emerald-400", bgColor: "from-emerald-950/30 to-emerald-950/10", glowColor: "shadow-emerald-400/10", icon: Award, label: "ACHIEVEMENT", priority: 22 },
+  sticker_received: { color: "text-pink-300", borderColor: "border-l-pink-400", bgColor: "from-pink-950/30 to-pink-950/10", glowColor: "shadow-pink-400/10", icon: Sparkles, label: "STICKER", priority: 23 },
 };
 
 const FILTER_OPTIONS = [
   { key: "all", label: "All", icon: Eye },
   { key: "urgent", label: "Urgent", icon: Flame, types: ["demand", "command", "accusation"] },
-  { key: "protocols", label: "Protocols", icon: ListChecks, types: ["task", "standing_order", "ritual"] },
+  { key: "protocols", label: "Directives", icon: ListChecks, types: ["task", "standing_order", "ritual"] },
   { key: "consequences", label: "Consequences", icon: Gavel, types: ["reward", "punishment", "dare"] },
   { key: "reviews", label: "Reviews", icon: MessageSquare, types: ["checkin_review", "notification"] },
+  { key: "scenes", label: "Scenes", icon: Play, types: ["play_session", "wager", "countdown_event"] },
+  { key: "connection", label: "Connection", icon: Heart, types: ["devotion", "secret", "conflict", "rating"] },
+  { key: "structure", label: "Structure", icon: Shield, types: ["permission_request", "desired_change", "limit"] },
+  { key: "journal", label: "Journal", icon: BookOpen, types: ["journal"] },
 ];
 
 function formatCountdown(seconds: number) {
@@ -123,32 +165,80 @@ function CountdownTimer({ seconds }: { seconds: number }) {
   );
 }
 
-function ProtocolProgressRing({ completed, total, size = 64 }: { completed: number; total: number; size?: number }) {
-  const pct = total > 0 ? (completed / total) * 100 : 0;
-  const radius = (size - 8) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (pct / 100) * circumference;
-  const color = pct >= 80 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
-
+function Sparkline({ data, color = "#ef4444", width = 48, height = 18 }: { data?: number[]; color?: string; width?: number; height?: number }) {
+  const pts = data && data.length > 1 ? data : [0, 0, 0, 0, 0, 0, 0];
+  const max = Math.max(...pts, 1);
+  const min = Math.min(...pts, 0);
+  const range = max - min || 1;
+  const points = pts.map((v, i) => {
+    const x = (i / (pts.length - 1)) * width;
+    const y = height - ((v - min) / range) * (height - 2) - 1;
+    return `${x},${y}`;
+  }).join(" ");
+  const areaPoints = `0,${height} ${points} ${width},${height}`;
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle cx={size/2} cy={size/2} r={radius} stroke="rgba(255,255,255,0.05)" strokeWidth="4" fill="none" />
-        <circle cx={size/2} cy={size/2} r={radius} stroke={color} strokeWidth="4" fill="none"
-          strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 1s ease-out" }}
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-black text-white">{Math.round(pct)}%</span>
-      </div>
-    </div>
+    <svg width={width} height={height} className="block">
+      <polygon points={areaPoints} fill={color} opacity="0.15" />
+      <polyline points={points} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
   );
 }
 
-function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: (id: string, action: string, payload?: any) => void; role: string }) {
+function TrendArrow({ data }: { data?: number[] }) {
+  if (!data || data.length < 2) return null;
+  const last = data[data.length - 1];
+  const prev = data[data.length - 2];
+  if (last > prev) return <ArrowUp size={10} className="text-emerald-400" />;
+  if (last < prev) return <ArrowDown size={10} className="text-red-400" />;
+  return <Minus size={8} className="text-slate-500" />;
+}
+
+function timeAgo(date: string | Date): string {
+  const now = Date.now();
+  const d = new Date(date).getTime();
+  const diff = Math.floor((now - d) / 1000);
+  if (diff < 60) return `${diff}s`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  return `${Math.floor(diff / 86400)}d`;
+}
+
+function highlightText(text: string, query: string) {
+  if (!query) return text;
+  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? <mark key={i} className="bg-red-500/40 text-white rounded-sm px-0.5">{part}</mark> : part
+  );
+}
+
+const PINNED_KEY = "cp-pinned-items";
+function getPinnedIds(): Set<string> {
+  try { return new Set(JSON.parse(localStorage.getItem(PINNED_KEY) || "[]")); } catch { return new Set(); }
+}
+function savePinnedIds(ids: Set<string>) {
+  localStorage.setItem(PINNED_KEY, JSON.stringify([...ids]));
+}
+
+function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, isSelecting, isSelected, onToggleSelect, onDelete, onEdit }: {
+  item: FeedItem;
+  onAction: (id: string, action: string, payload?: any) => void;
+  role: string;
+  searchQuery?: string;
+  isPinned?: boolean;
+  onTogglePin?: (id: string) => void;
+  isSelecting?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
+  onDelete?: (type: string, id: string) => void;
+  onEdit?: (type: string, id: string, data: Record<string, any>) => void;
+}) {
   const [responseText, setResponseText] = useState("");
   const [xpAmount, setXpAmount] = useState(10);
+  const [expanded, setExpanded] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.notification;
   const Icon = config.icon;
   const isUrgent = ["demand", "command", "accusation"].includes(item.type);
@@ -166,89 +256,175 @@ function FeedCard({ item, onAction, role }: { item: FeedItem; onAction: (id: str
     onAction(id, action, payload);
   };
 
+  const rawId = item.id.replace(/^(so-|rit-)/, "");
+  const canEdit = ["task", "standing_order", "ritual"].includes(item.type);
+  const canDelete = ["task", "ritual", "limit", "countdown_event", "standing_order", "notification", "punishment", "reward", "dare"].includes(item.type);
+
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`group border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl p-3.5 flex items-start gap-3 transition-all duration-300 hover:brightness-125 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""}`}
+      className={`group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 hover:brightness-125 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-amber-500/30" : ""}`}
       style={{ animation: "cp-card-enter 0.4s ease-out" }}
     >
-      <div className={`mt-0.5 ${config.color} shrink-0`}>
-        <div className={`w-8 h-8 rounded-lg ${isUrgent ? "bg-white/10" : "bg-white/5"} flex items-center justify-center`}>
-          <Icon size={16} />
-        </div>
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${config.color} opacity-80`}>{config.label}</span>
-          {item.countdown !== undefined && item.countdown > 0 && <CountdownTimer seconds={item.countdown} />}
-        </div>
-        <p className="text-sm font-bold text-white/90 leading-snug">{item.title}</p>
-        {item.description && <p className="text-[11px] text-slate-400/80 mt-1 line-clamp-2">{item.description}</p>}
-
-        {item.type === "accusation" && (
-          <div className="flex gap-2 mt-2.5">
-            <input data-testid={`accusation-response-${item.id}`} value={responseText} onChange={(e) => setResponseText(e.target.value)}
-              placeholder="Your response..." className="flex-1 bg-black/40 border border-rose-900/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/60"
-              onKeyDown={(e) => { if (e.key === "Enter" && responseText.trim()) { handleAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}
-            />
-            <Button data-testid={`accusation-send-${item.id}`} size="sm" className="bg-rose-600 hover:bg-rose-500 h-8 px-3 shadow-lg shadow-rose-500/20"
-              onClick={() => { if (responseText.trim()) { handleAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}>
-              <Send size={12} />
-            </Button>
-          </div>
-        )}
-
-        {item.type === "checkin_review" && role === "dom" && (
-          <div className="flex gap-2 mt-2.5 items-center">
-            <div className="flex items-center gap-1.5 bg-black/30 rounded-lg px-2 py-1 border border-purple-900/30">
-              <span className="text-[9px] text-purple-400 font-bold">XP</span>
-              <input data-testid={`checkin-xp-${item.id}`} type="number" value={xpAmount} onChange={(e) => setXpAmount(parseInt(e.target.value) || 0)}
-                className="w-10 bg-transparent text-xs text-white text-center focus:outline-none" min={0} max={100}
-              />
-            </div>
-            <Button data-testid={`checkin-approve-${item.id}`} size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-emerald-500/20"
-              onClick={() => handleAction(item.id, "approve", xpAmount)}>Approve</Button>
-            <Button data-testid={`checkin-reject-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
-              onClick={() => handleAction(item.id, "reject")}>Reject</Button>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-1.5 shrink-0">
-        {item.type === "demand" && (
-          <Button data-testid={`demand-respond-${item.id}`} size="sm"
-            className="bg-red-600 hover:bg-red-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-red-500/30 animate-pulse"
-            onClick={() => handleAction(item.id, "respond")}>RESPOND</Button>
-        )}
-        {item.type === "command" && (
-          <Button data-testid={`command-ack-${item.id}`} size="sm"
-            className="bg-orange-600 hover:bg-orange-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-orange-500/20"
-            onClick={() => handleAction(item.id, "acknowledge")}>ACK</Button>
-        )}
-        {item.type === "task" && (
-          <button data-testid={`task-toggle-${item.id}`}
-            className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all ${
-              item.data?.done ? "border-green-500 bg-green-500/20" : "border-blue-500/40 hover:border-blue-400 hover:bg-blue-500/10"
-            }`} onClick={() => handleAction(item.id, "toggle")}>
-            {item.data?.done && <CheckCircle size={14} className="text-green-400" />}
+      <div className="p-3.5 flex items-start gap-3">
+        {isSelecting && (
+          <button onClick={() => onToggleSelect?.(item.id)} className="mt-1 shrink-0 cursor-pointer" data-testid={`select-${item.id}`}>
+            {isSelected ? <CheckSquare size={16} className="text-red-400" /> : <Square size={16} className="text-slate-600" />}
           </button>
         )}
-        {item.type === "punishment" && (
-          <Button data-testid={`punishment-complete-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
-            onClick={() => handleAction(item.id, "complete")}>Done</Button>
-        )}
-        {item.type === "reward" && !item.data?.unlocked && (
-          <Button data-testid={`reward-redeem-${item.id}`} size="sm" className="bg-amber-600 hover:bg-amber-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-amber-500/20"
-            onClick={() => handleAction(item.id, "redeem")}>Redeem</Button>
-        )}
-        {item.type === "dare" && !item.data?.completed && (
-          <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-fuchsia-600 hover:bg-fuchsia-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-fuchsia-500/20"
-            onClick={() => handleAction(item.id, "complete")}>Done</Button>
-        )}
-        {item.type === "notification" && (
-          <button data-testid={`notification-dismiss-${item.id}`} className="text-slate-600 hover:text-white transition-colors p-1"
-            onClick={() => handleAction(item.id, "dismiss")}><X size={14} /></button>
-        )}
+        <div className={`mt-0.5 ${config.color} shrink-0 cursor-pointer`} onClick={() => setExpanded(!expanded)}>
+          <div className={`w-8 h-8 rounded-lg ${isUrgent ? "bg-white/10" : "bg-white/5"} flex items-center justify-center`}>
+            <Icon size={16} />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isSelecting && setExpanded(!expanded)}>
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${config.color} opacity-80`}>{config.label}</span>
+            {isPinned && <Pin size={9} className="text-amber-400" />}
+            {item.countdown !== undefined && item.countdown > 0 && <CountdownTimer seconds={item.countdown} />}
+          </div>
+          <p className="text-sm font-bold text-white/90 leading-snug">{searchQuery ? highlightText(item.title, searchQuery) : item.title}</p>
+          {item.description && !expanded && <p className="text-[11px] text-slate-400/80 mt-1 line-clamp-1">{searchQuery ? highlightText(item.description, searchQuery) : item.description}</p>}
+
+          {item.type === "accusation" && (
+            <div className="flex gap-2 mt-2.5">
+              <input data-testid={`accusation-response-${item.id}`} value={responseText} onChange={(e) => setResponseText(e.target.value)}
+                placeholder="Your response..." className="flex-1 bg-black/40 border border-rose-900/40 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-rose-500/60"
+                onKeyDown={(e) => { if (e.key === "Enter" && responseText.trim()) { handleAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}
+              />
+              <Button data-testid={`accusation-send-${item.id}`} size="sm" className="bg-rose-600 hover:bg-rose-500 h-8 px-3 shadow-lg shadow-rose-500/20"
+                onClick={() => { if (responseText.trim()) { handleAction(item.id, "respond", responseText.trim()); setResponseText(""); } }}>
+                <Send size={12} />
+              </Button>
+            </div>
+          )}
+
+          {item.type === "checkin_review" && role === "dom" && (
+            <div className="flex gap-2 mt-2.5 items-center">
+              <div className="flex items-center gap-1.5 bg-black/30 rounded-lg px-2 py-1 border border-purple-900/30">
+                <span className="text-[9px] text-purple-400 font-bold">PTS</span>
+                <input data-testid={`checkin-xp-${item.id}`} type="number" value={xpAmount} onChange={(e) => setXpAmount(parseInt(e.target.value) || 0)}
+                  className="w-10 bg-transparent text-xs text-white text-center focus:outline-none" min={0} max={100}
+                />
+              </div>
+              <Button data-testid={`checkin-approve-${item.id}`} size="sm" className="bg-emerald-600 hover:bg-emerald-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-emerald-500/20"
+                onClick={() => handleAction(item.id, "approve", xpAmount)}>ACCEPT</Button>
+              <Button data-testid={`checkin-reject-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
+                onClick={() => handleAction(item.id, "reject")}>DENY</Button>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          {onTogglePin && !isSelecting && (
+            <button onClick={() => onTogglePin(item.id)} className={`p-1 transition-colors cursor-pointer ${isPinned ? "text-amber-400" : "text-slate-700 hover:text-slate-400 opacity-0 group-hover:opacity-100"}`}
+              data-testid={`pin-${item.id}`}>
+              <Pin size={12} />
+            </button>
+          )}
+          {item.type === "demand" && (
+            <Button data-testid={`demand-respond-${item.id}`} size="sm"
+              className="bg-red-600 hover:bg-red-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-red-500/30 animate-pulse"
+              onClick={() => handleAction(item.id, "respond")}>RESPOND</Button>
+          )}
+          {item.type === "command" && (
+            <Button data-testid={`command-ack-${item.id}`} size="sm"
+              className="bg-orange-600 hover:bg-orange-500 h-8 px-4 text-[10px] font-black tracking-wider shadow-lg shadow-orange-500/20"
+              onClick={() => handleAction(item.id, "acknowledge")}>ACK</Button>
+          )}
+          {item.type === "task" && (
+            <button data-testid={`task-toggle-${item.id}`}
+              className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
+                item.data?.done ? "border-green-500 bg-green-500/20" : "border-blue-500/40 hover:border-blue-400 hover:bg-blue-500/10"
+              }`} onClick={() => handleAction(item.id, "toggle")}>
+              {item.data?.done && <CheckCircle size={14} className="text-green-400" />}
+            </button>
+          )}
+          {item.type === "punishment" && (
+            <Button data-testid={`punishment-complete-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
+              onClick={() => handleAction(item.id, "complete")}>DONE</Button>
+          )}
+          {item.type === "reward" && !item.data?.unlocked && (
+            <Button data-testid={`reward-redeem-${item.id}`} size="sm" className="bg-amber-600 hover:bg-amber-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-amber-500/20"
+              onClick={() => handleAction(item.id, "redeem")}>CLAIM</Button>
+          )}
+          {item.type === "dare" && !item.data?.completed && (
+            <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-fuchsia-600 hover:bg-fuchsia-500 h-8 px-3 text-[10px] font-bold shadow-lg shadow-fuchsia-500/20"
+              onClick={() => handleAction(item.id, "complete")}>DONE</Button>
+          )}
+          {item.type === "notification" && (
+            <button data-testid={`notification-dismiss-${item.id}`} className="text-slate-600 hover:text-white transition-colors p-1 cursor-pointer"
+              onClick={() => handleAction(item.id, "dismiss")}><X size={14} /></button>
+          )}
+        </div>
+      </div>
+
+      <div className="grid transition-all duration-300 ease-in-out" style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}>
+        <div className="overflow-hidden">
+          <div className="px-3.5 pb-3.5 pt-0 border-t border-white/5 mt-0">
+            <div className="pt-3 space-y-2.5">
+              {item.description && (
+                <p className="text-xs text-slate-300/80 leading-relaxed">{item.description}</p>
+              )}
+
+              <div className="flex flex-wrap gap-1.5 text-[9px]">
+                {item.data?.category && <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400 uppercase tracking-wider">{item.data.category}</span>}
+                {item.data?.frequency && <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 uppercase tracking-wider">{item.data.frequency}</span>}
+                {item.data?.status && <span className={`px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                  item.data.status === "completed" ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" :
+                  item.data.status === "active" ? "bg-red-500/10 border border-red-500/20 text-red-400" :
+                  "bg-white/5 border border-white/10 text-slate-400"
+                }`}>{item.data.status}</span>}
+                {item.data?.mood && <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 uppercase tracking-wider">{item.data.mood}</span>}
+                {item.data?.intensity && <span className="px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-300 uppercase tracking-wider">INT {item.data.intensity}/10</span>}
+                {item.data?.score && <span className="px-2 py-0.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 uppercase tracking-wider">SCORE {item.data.score}/10</span>}
+                {item.data?.priority && <span className="px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 uppercase tracking-wider">{item.data.priority}</span>}
+                {item.data?.duration && <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400 uppercase tracking-wider">{item.data.duration}</span>}
+                {item.createdAt && <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-500">{timeAgo(item.createdAt)} ago</span>}
+              </div>
+
+              {isEditing && canEdit ? (
+                <div className="flex gap-2 mt-1">
+                  <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)}
+                    className="flex-1 bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-red-500/40"
+                    onKeyDown={(e) => { if (e.key === "Enter" && editTitle.trim()) { onEdit?.(item.type, rawId, { title: editTitle, text: editTitle }); setIsEditing(false); } }}
+                    autoFocus
+                  />
+                  <Button size="sm" className="h-7 px-2 text-[10px] bg-emerald-600 hover:bg-emerald-500"
+                    onClick={() => { if (editTitle.trim()) { onEdit?.(item.type, rawId, { title: editTitle, text: editTitle }); setIsEditing(false); } }}>Save</Button>
+                  <Button size="sm" className="h-7 px-2 text-[10px] bg-slate-700 hover:bg-slate-600" onClick={() => setIsEditing(false)}>Cancel</Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 pt-1">
+                  {canEdit && onEdit && (
+                    <button onClick={() => { setEditTitle(item.title); setIsEditing(true); }}
+                      className="flex items-center gap-1 text-[9px] text-slate-500 hover:text-white transition-colors cursor-pointer uppercase tracking-wider"
+                      data-testid={`edit-${item.id}`}>
+                      <Pencil size={10} /> Edit
+                    </button>
+                  )}
+                  {canDelete && onDelete && (
+                    showDeleteConfirm ? (
+                      <div className="flex items-center gap-1.5 text-[9px]">
+                        <span className="text-red-400 font-bold uppercase tracking-wider">Delete?</span>
+                        <button onClick={() => { onDelete(item.type, rawId); feedbackDelete(); setShowDeleteConfirm(false); }}
+                          className="text-red-400 hover:text-red-300 font-bold uppercase tracking-wider cursor-pointer" data-testid={`confirm-delete-${item.id}`}>Yes</button>
+                        <button onClick={() => setShowDeleteConfirm(false)}
+                          className="text-slate-500 hover:text-white font-bold uppercase tracking-wider cursor-pointer">No</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setShowDeleteConfirm(true)}
+                        className="flex items-center gap-1 text-[9px] text-slate-600 hover:text-red-400 transition-colors cursor-pointer uppercase tracking-wider"
+                        data-testid={`delete-${item.id}`}>
+                        <Trash2 size={10} /> Remove
+                      </button>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -270,7 +446,7 @@ function getStickerEmoji(type: string) {
 }
 
 const FEATURE_TOGGLES = [
-  { key: "dares", label: "Wheel of Dares", icon: Dices },
+  { key: "dares", label: "Dares", icon: Dices },
   { key: "journal", label: "Journal", icon: BookOpen },
   { key: "rewards", label: "Rewards", icon: Gift },
   { key: "stickers", label: "Stickers", icon: Sparkles },
@@ -305,20 +481,79 @@ function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon }: 
   );
 }
 
+function ActivityTimeline({ entries }: { entries: ActivityEntry[] }) {
+  if (!entries || entries.length === 0) return null;
+  return (
+    <div className="flex gap-2 overflow-x-auto scrollbar-none py-1 snap-x snap-mandatory" data-testid="activity-timeline">
+      {entries.slice(0, 10).map((entry) => {
+        const actionColor = entry.action.includes("task") ? "border-l-blue-500" :
+          entry.action.includes("punishment") || entry.action.includes("punish") ? "border-l-red-500" :
+          entry.action.includes("reward") ? "border-l-amber-500" :
+          entry.action.includes("ritual") ? "border-l-orange-400" :
+          entry.action.includes("dare") ? "border-l-fuchsia-500" :
+          entry.action.includes("session") ? "border-l-pink-500" :
+          entry.action.includes("checkin") || entry.action.includes("check") ? "border-l-purple-500" :
+          "border-l-slate-600";
+        return (
+          <div key={entry.id} className={`flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px]`}>
+            <div className="flex-1 min-w-0">
+              <p className="text-[9px] text-slate-300 truncate leading-tight">{entry.detail || entry.action.replace(/_/g, " ")}</p>
+            </div>
+            <span className="text-[8px] text-slate-600 font-mono tabular-nums shrink-0">{timeAgo(entry.createdAt)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function CommandProtocols({
   role, feedItems, standingOrders, rituals, tasks,
   onAction, onAssignTask, onQuickCommand, onDemandTimer, onToggleLockdown,
   partnerStats, partnerPresence, partnerName, lockdownStatus, enforcementLevel, isAssigning,
   stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onCreate,
+  onDelete, onEdit, recentActivity, trendData,
 }: CommandProtocolsProps) {
   const [filter, setFilter] = useState("all");
-  const [newTaskText, setNewTaskText] = useState("");
   const [commandInput, setCommandInput] = useState("");
   const [demandMessage, setDemandMessage] = useState("");
   const [demandDuration, setDemandDuration] = useState(5);
   const [showControlPanel, setShowControlPanel] = useState(false);
   const [stickerMessage, setStickerMessage] = useState("");
   const [crisisModeActive, setCrisisModeActive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(getPinnedIds);
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 200);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    if (searchOpen && searchInputRef.current) searchInputRef.current.focus();
+  }, [searchOpen]);
+
+  const togglePin = useCallback((id: string) => {
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      savePinnedIds(next);
+      return next;
+    });
+  }, []);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
 
   const protocolItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = [];
@@ -326,6 +561,7 @@ export function CommandProtocols({
       items.push({
         id: `so-${o.id}`, type: "standing_order", title: o.title || o.text,
         description: o.description || "Active directive", data: { ...o, isStandingOrder: true },
+        createdAt: o.createdAt,
       });
     });
     rituals.filter((r: any) => r.active).forEach((r: any) => {
@@ -334,6 +570,7 @@ export function CommandProtocols({
         id: `rit-${r.id}`, type: "ritual", title: r.title,
         description: `${r.frequency || "Daily"}${r.timeOfDay ? ` · ${r.timeOfDay}` : ""}${completed ? " · Done today" : ""}`,
         data: { ...r, isRitual: true, completed },
+        createdAt: r.createdAt,
       });
     });
     return items;
@@ -342,20 +579,28 @@ export function CommandProtocols({
   const allItems = useMemo(() => [...feedItems, ...protocolItems], [feedItems, protocolItems]);
 
   const filtered = useMemo(() => {
-    return allItems.filter((item) => {
-      if (filter === "all") return true;
+    let items = allItems;
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      items = items.filter(i => i.title.toLowerCase().includes(q) || (i.description && i.description.toLowerCase().includes(q)));
+    }
+    if (filter !== "all") {
       const opt = FILTER_OPTIONS.find(o => o.key === filter);
-      return opt?.types?.includes(item.type) ?? true;
-    });
-  }, [allItems, filter]);
+      if (opt?.types) items = items.filter(i => opt.types!.includes(i.type));
+    }
+    return items;
+  }, [allItems, filter, debouncedSearch]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
+      const aPinned = pinnedIds.has(a.id) ? 0 : 1;
+      const bPinned = pinnedIds.has(b.id) ? 0 : 1;
+      if (aPinned !== bPinned) return aPinned - bPinned;
       const pa = TYPE_CONFIG[a.type]?.priority ?? 10;
       const pb = TYPE_CONFIG[b.type]?.priority ?? 10;
       return pa - pb;
     });
-  }, [filtered]);
+  }, [filtered, pinnedIds]);
 
   const urgentCount = allItems.filter(i => ["demand", "command", "accusation"].includes(i.type)).length;
   const totalProtocols = tasks.length + standingOrders.filter((o: any) => o.status === "active").length + rituals.filter((r: any) => r.active).length;
@@ -363,6 +608,33 @@ export function CommandProtocols({
   const pendingTasks = tasks.filter(t => !t.done).length;
   const activeOrders = standingOrders.filter((o: any) => o.status === "active").length;
   const activeRituals = rituals.filter((r: any) => r.active).length;
+
+  const handleBulkComplete = () => {
+    selectedIds.forEach(id => {
+      const item = allItems.find(i => i.id === id);
+      if (!item) return;
+      if (item.type === "task") onAction(id, "toggle");
+      else if (item.type === "punishment" || item.type === "dare") onAction(id, "complete");
+    });
+    setSelectedIds(new Set());
+    setIsSelecting(false);
+    feedbackComplete();
+  };
+
+  const handleBulkDelete = () => {
+    if (!onDelete) return;
+    selectedIds.forEach(id => {
+      const item = allItems.find(i => i.id === id);
+      if (!item) return;
+      const rawId = id.replace(/^(so-|rit-)/, "");
+      onDelete(item.type, rawId);
+    });
+    setSelectedIds(new Set());
+    setIsSelecting(false);
+    feedbackDelete();
+  };
+
+  const compliancePct = totalProtocols > 0 ? Math.round((completedProtocols / totalProtocols) * 100) : 0;
 
   return (
     <div className="space-y-4" data-testid="command-protocols">
@@ -372,7 +644,6 @@ export function CommandProtocols({
         @keyframes cp-border-pulse { 0%, 100% { border-color: rgba(220,38,38,0.15); } 50% { border-color: rgba(220,38,38,0.35); } }
         @keyframes cp-scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
         @keyframes cp-pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.5); } }
-        @keyframes cp-shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
       `}</style>
 
       <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-b from-slate-900/95 via-slate-950 to-black"
@@ -381,7 +652,6 @@ export function CommandProtocols({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(220,38,38,0.08),transparent_60%)] pointer-events-none" />
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-900/20 to-transparent" />
-
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.02]">
           <div className="absolute inset-0 w-full h-[200%]" style={{ animation: "cp-scan 12s linear infinite", background: "linear-gradient(180deg, transparent 0%, rgba(220,38,38,0.1) 50%, transparent 100%)" }} />
         </div>
@@ -395,18 +665,22 @@ export function CommandProtocols({
                 </div>
                 <div>
                   <h2 className="text-base font-black text-white uppercase tracking-[0.12em]">
-                    {role === "dom" ? "Command Center" : "Command Center"}
+                    Command Center
                   </h2>
                   <p className="text-[10px] text-red-400/50 font-mono uppercase tracking-[0.2em]">
-                    {role === "dom" ? "Protocols & Operations" : "Orders & Protocols"}
+                    {role === "dom" ? "Total Authority" : "Standing Orders"}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) { setSearchQuery(""); setDebouncedSearch(""); } }}
+                  className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-colors cursor-pointer" data-testid="cp-search-toggle">
+                  <Search size={14} className={searchOpen ? "text-red-400" : "text-slate-500"} />
+                </button>
                 {urgentCount > 0 && (
                   <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30">
                     <span className="w-1.5 h-1.5 rounded-full bg-red-500" style={{ animation: "cp-pulse-dot 2s ease-in-out infinite" }} />
-                    <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">{urgentCount} urgent</span>
+                    <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">{urgentCount}</span>
                   </span>
                 )}
                 {partnerPresence && (
@@ -419,14 +693,35 @@ export function CommandProtocols({
             </div>
           </div>
 
+          {searchOpen && (
+            <div className="px-5 pt-3 animate-in slide-in-from-top-2 duration-200">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input ref={searchInputRef} data-testid="cp-search-input" type="text" value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); setDebouncedSearch(""); } }}
+                  placeholder="Search all protocols, orders, entries..."
+                  className="w-full bg-black/60 border border-red-900/30 rounded-xl pl-9 pr-8 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/40"
+                />
+                {searchQuery && (
+                  <button onClick={() => { setSearchQuery(""); setDebouncedSearch(""); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white cursor-pointer">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="px-5 pt-3 pb-2">
             <div className="grid grid-cols-4 gap-2">
-              <MetricCard label="Completion" value={`${totalProtocols > 0 ? Math.round((completedProtocols / totalProtocols) * 100) : 0}%`}
+              <MetricCard label="Compliance" value={`${compliancePct}%`}
                 sub={`${completedProtocols}/${totalProtocols}`}
-                color={completedProtocols / (totalProtocols || 1) >= 0.8 ? "emerald" : completedProtocols / (totalProtocols || 1) >= 0.5 ? "amber" : "red"} />
-              <MetricCard label="Tasks" value={pendingTasks.toString()} sub={`${tasks.filter(t => t.done).length} done`} color="blue" />
-              <MetricCard label="Orders" value={activeOrders.toString()} sub="active" color="cyan" />
-              <MetricCard label="Rituals" value={activeRituals.toString()} sub="scheduled" color="amber" />
+                color={compliancePct >= 80 ? "emerald" : compliancePct >= 50 ? "amber" : "red"}
+                trend={trendData?.completionTrend} />
+              <MetricCard label="Directives" value={pendingTasks.toString()} sub={`${tasks.filter(t => t.done).length} cleared`} color="blue" trend={trendData?.taskTrend} />
+              <MetricCard label="Orders" value={activeOrders.toString()} sub="enforced" color="cyan" trend={trendData?.orderTrend} />
+              <MetricCard label="Rituals" value={activeRituals.toString()} sub="mandated" color="amber" trend={trendData?.ritualTrend} />
             </div>
           </div>
 
@@ -434,7 +729,7 @@ export function CommandProtocols({
             <div className="px-5 py-2">
               <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">Compliance</span>
+                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">Obedience</span>
                   <span className="text-sm font-black text-white tabular-nums">{partnerStats?.complianceRate ?? 0}%</span>
                 </div>
                 <div className="relative h-2 bg-black/40 rounded-full overflow-hidden">
@@ -448,69 +743,112 @@ export function CommandProtocols({
             </div>
           )}
 
+          {recentActivity && recentActivity.length > 0 && (
+            <div className="px-5 py-1">
+              <ActivityTimeline entries={recentActivity} />
+            </div>
+          )}
+
           <div className="px-5 pt-1 pb-1">
-            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {FILTER_OPTIONS.map((opt) => {
-                const FilterIcon = opt.icon;
-                const count = opt.types ? allItems.filter(i => opt.types!.includes(i.type)).length : allItems.length;
-                const isActive = filter === opt.key;
-                const isUrgentFilter = opt.key === "urgent" && urgentCount > 0;
-                return (
-                  <button key={opt.key} data-testid={`cp-filter-${opt.key}`} onClick={() => setFilter(opt.key)}
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
-                      isActive
-                        ? isUrgentFilter
-                          ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/10"
-                          : "bg-white/10 text-white border border-white/20 shadow-lg shadow-white/5"
-                        : isUrgentFilter
-                          ? "bg-red-950/30 text-red-400/70 border border-red-900/30 hover:bg-red-500/15"
-                          : "bg-white/[0.03] text-slate-500 border border-white/5 hover:text-slate-300 hover:bg-white/[0.06]"
-                    }`}>
-                    <FilterIcon size={10} />
-                    {opt.label}
-                    {count > 0 && (
-                      <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${isUrgentFilter ? "bg-red-500/30 text-red-300" : "bg-white/10 text-white/50"}`}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-1.5">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1">
+                {FILTER_OPTIONS.map((opt) => {
+                  const FilterIcon = opt.icon;
+                  const count = opt.types ? allItems.filter(i => opt.types!.includes(i.type)).length : allItems.length;
+                  const isActive = filter === opt.key;
+                  const isUrgentFilter = opt.key === "urgent" && urgentCount > 0;
+                  return (
+                    <button key={opt.key} data-testid={`cp-filter-${opt.key}`} onClick={() => setFilter(opt.key)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                        isActive
+                          ? isUrgentFilter
+                            ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/10"
+                            : "bg-white/10 text-white border border-white/20 shadow-lg shadow-white/5"
+                          : isUrgentFilter
+                            ? "bg-red-950/30 text-red-400/70 border border-red-900/30 hover:bg-red-500/15"
+                            : "bg-white/[0.03] text-slate-500 border border-white/5 hover:text-slate-300 hover:bg-white/[0.06]"
+                      }`}>
+                      <FilterIcon size={10} />
+                      {opt.label}
+                      {count > 0 && (
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${isUrgentFilter ? "bg-red-500/30 text-red-300" : "bg-white/10 text-white/50"}`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <button onClick={() => { setIsSelecting(!isSelecting); if (isSelecting) setSelectedIds(new Set()); }}
+                className={`p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${isSelecting ? "bg-red-500/20 border-red-500/40 text-red-400" : "bg-white/[0.03] border-white/5 text-slate-600 hover:text-slate-300"}`}
+                data-testid="cp-select-toggle">
+                <CheckSquare size={12} />
+              </button>
             </div>
           </div>
 
           <div className="px-5 pb-4">
             {sorted.length === 0 ? (
               <div className="text-center py-12" data-testid="cp-feed-empty">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3 border border-emerald-500/20">
-                  <CheckCircle size={28} className="text-emerald-500/50" />
+                <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3 border border-white/5">
+                  {debouncedSearch ? <Search size={28} className="text-slate-600" /> : <CheckCircle size={28} className="text-emerald-500/50" />}
                 </div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em]">All protocols clear</p>
-                <p className="text-[10px] text-slate-600 mt-1">Nothing requires attention right now</p>
+                <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em]">
+                  {debouncedSearch ? "No results" : "STANDING BY"}
+                </p>
+                <p className="text-[10px] text-slate-600 mt-1">
+                  {debouncedSearch ? `Nothing matches "${debouncedSearch}"` : "No active directives"}
+                </p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[420px] overflow-y-auto scrollbar-thin pr-1">
+              <div className="space-y-2 max-h-[520px] overflow-y-auto scrollbar-thin pr-1">
                 {sorted.map((item, i) => (
-                  <div key={`${item.type}-${item.id}`} style={{ animationDelay: `${i * 40}ms` }}>
-                    <FeedCard item={item} onAction={onAction} role={role} />
+                  <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${i * 30}ms` }}>
+                    <FeedCard item={item} onAction={onAction} role={role}
+                      searchQuery={debouncedSearch || undefined}
+                      isPinned={pinnedIds.has(item.id)}
+                      onTogglePin={togglePin}
+                      isSelecting={isSelecting}
+                      isSelected={selectedIds.has(item.id)}
+                      onToggleSelect={toggleSelect}
+                      onDelete={onDelete}
+                      onEdit={onEdit}
+                    />
                   </div>
                 ))}
               </div>
             )}
           </div>
 
+          {isSelecting && selectedIds.size > 0 && (
+            <div className="sticky bottom-0 px-5 pb-4 pt-2 bg-gradient-to-t from-black via-black/95 to-transparent" data-testid="cp-bulk-actions">
+              <div className="flex items-center gap-2 p-3 bg-slate-900/90 border border-red-500/30 rounded-xl backdrop-blur-sm">
+                <span className="text-[10px] font-black text-white uppercase tracking-wider">{selectedIds.size} selected</span>
+                <div className="flex-1" />
+                <Button size="sm" className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 font-bold" onClick={handleBulkComplete} data-testid="cp-bulk-complete">
+                  Complete
+                </Button>
+                <Button size="sm" className="h-7 px-3 text-[10px] bg-red-700 hover:bg-red-600 font-bold" onClick={handleBulkDelete} data-testid="cp-bulk-delete">
+                  Remove
+                </Button>
+                <button onClick={() => { setSelectedIds(new Set()); setIsSelecting(false); }}
+                  className="p-1 text-slate-500 hover:text-white cursor-pointer"><X size={14} /></button>
+              </div>
+            </div>
+          )}
+
           <div className="px-5 pb-3 space-y-2" data-testid="cp-feature-drawers">
             <FeatureDrawer title="Quick Access" icon={<Zap size={14} className="text-amber-400" />}>
               <div className="grid grid-cols-4 gap-2">
                 <div className="bg-gradient-to-b from-amber-950/30 to-transparent border border-amber-500/20 rounded-xl p-2.5 text-center">
-                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Balance</div>
-                  <div className="text-sm font-black text-amber-400 tabular-nums leading-tight">{userStats?.xp ?? 0} XP</div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">Lv {userStats?.level ?? 1}</div>
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Standing</div>
+                  <div className="text-sm font-black text-amber-400 tabular-nums leading-tight">{userStats?.xp ?? 0}</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">Rank {userStats?.level ?? 1}</div>
                 </div>
                 <div className="bg-gradient-to-b from-emerald-950/30 to-transparent border border-emerald-500/20 rounded-xl p-2.5 text-center">
-                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Badges</div>
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Marks</div>
                   <div className="text-sm font-black text-emerald-400 tabular-nums leading-tight">{userStats?.badges ?? 0}</div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">earned</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">branded</div>
                 </div>
                 <div className="bg-gradient-to-b from-cyan-950/30 to-transparent border border-cyan-500/20 rounded-xl p-2.5 text-center">
                   <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Timers</div>
@@ -518,9 +856,9 @@ export function CommandProtocols({
                   <div className="text-[8px] text-slate-600 mt-0.5">active</div>
                 </div>
                 <div className="bg-gradient-to-b from-purple-950/30 to-transparent border border-purple-500/20 rounded-xl p-2.5 text-center">
-                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Stats</div>
-                  <div className="text-sm font-black text-purple-400 tabular-nums leading-tight">{partnerStats?.complianceRate ?? 0}%</div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">compliance</div>
+                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Control</div>
+                  <div className="text-sm font-black text-purple-400 tabular-nums leading-tight">{partnerStats?.complianceRate ?? compliancePct}%</div>
+                  <div className="text-[8px] text-slate-600 mt-0.5">held</div>
                 </div>
               </div>
             </FeatureDrawer>
@@ -531,7 +869,7 @@ export function CommandProtocols({
                   <div className="grid grid-cols-4 gap-2">
                     {STICKER_TYPES.map((s) => (
                       <button key={s.type} data-testid={`drawer-sticker-${s.type}`}
-                        onClick={() => onSendSticker(s.type, stickerMessage || undefined)}
+                        onClick={() => { onSendSticker(s.type, stickerMessage || undefined); feedbackSticker(); }}
                         className="p-2.5 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-yellow-900/30 active:bg-yellow-900/30 active:border-yellow-500/50 active:shadow-[0_0_10px_rgba(234,179,8,0.2)]">
                         <span className="text-xl">{s.emoji}</span>
                         <div className="text-[7px] text-slate-500 uppercase mt-0.5">{s.label}</div>
@@ -556,14 +894,14 @@ export function CommandProtocols({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-600 text-center py-2">No stickers yet</p>
+                    <p className="text-[10px] text-slate-600 text-center py-2">No stickers received</p>
                   )}
                 </div>
               )}
             </FeatureDrawer>
 
             {role === "dom" && onToggleFeature && (
-              <FeatureDrawer title="Feature Controls" icon={<Sliders size={14} className="text-red-400" />}>
+              <FeatureDrawer title="Access Control" icon={<Sliders size={14} className="text-red-400" />}>
                 <div className="space-y-2">
                   {FEATURE_TOGGLES.map((feature) => {
                     const FeatureIcon = feature.icon;
@@ -585,13 +923,13 @@ export function CommandProtocols({
             )}
 
             {role === "dom" && onCrisisMode && (
-              <FeatureDrawer title="Crisis Mode" icon={<ShieldAlert size={14} className="text-red-500" />}>
+              <FeatureDrawer title="Crisis Override" icon={<ShieldAlert size={14} className="text-red-500" />}>
                 <div className="flex items-center justify-between p-3 bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 rounded-xl">
                   <div className="flex items-center gap-3">
                     <ShieldAlert size={20} className="text-red-500" />
                     <div>
-                      <div className="text-[11px] font-bold text-white uppercase tracking-wider">Force Crisis Mode</div>
-                      <div className="text-[9px] text-slate-500">Pause all activities immediately</div>
+                      <div className="text-[11px] font-bold text-white uppercase tracking-wider">Force Crisis</div>
+                      <div className="text-[9px] text-slate-500">Halt all operations</div>
                     </div>
                   </div>
                   <button data-testid="drawer-crisis-toggle"
@@ -605,41 +943,41 @@ export function CommandProtocols({
 
             <FeatureDrawer title="Protocol & Structure" icon={<Flame size={14} className="text-red-400" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Flame size={14} />} label="Rituals" desc="Daily routines & habits" href="/rituals" color="text-orange-400" sexyIcon="rituals" />
+                <DrawerFeatureLink icon={<Flame size={14} />} label="Rituals" desc="Mandated routines" href="/rituals" color="text-orange-400" sexyIcon="rituals" />
                 <DrawerFeatureLink icon={<FileSignature size={14} />} label="Standing Orders" desc="Permanent directives" href="/standing-orders" color="text-red-400" sexyIcon="standing-orders" />
-                <DrawerFeatureLink icon={<Shield size={14} />} label="Limits" desc="Boundaries & safety" href="/limits" color="text-blue-400" sexyIcon="limits" />
-                <DrawerFeatureLink icon={<Hand size={14} />} label="Permissions" desc="Requests & approvals" href="/permission-requests" color="text-indigo-400" sexyIcon="permission-requests" />
-                <DrawerFeatureLink icon={<Target size={14} />} label="Desired Changes" desc="Growth requests" href="/desired-changes" color="text-teal-400" sexyIcon="standing-orders" />
+                <DrawerFeatureLink icon={<Shield size={14} />} label="Limits" desc="Hard boundaries" href="/limits" color="text-blue-400" sexyIcon="limits" />
+                <DrawerFeatureLink icon={<Hand size={14} />} label="Permissions" desc="Requests & grants" href="/permission-requests" color="text-indigo-400" sexyIcon="permission-requests" />
+                <DrawerFeatureLink icon={<Target size={14} />} label="Desired Changes" desc="Required modifications" href="/desired-changes" color="text-teal-400" sexyIcon="standing-orders" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Challenges & Games" icon={<Dices size={14} className="text-amber-400" />}>
+            <FeatureDrawer title="Scenes & Trials" icon={<Dices size={14} className="text-amber-400" />}>
               <div className="space-y-1.5">
                 <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-green-400" sexyIcon="play-sessions" />
                 <DrawerFeatureLink icon={<Layers size={14} />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-red-500" sexyIcon="endurance" />
                 <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-amber-500" sexyIcon="enforce" />
-                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random card spins" href="/sensation-roulette" color="text-fuchsia-400" sexyIcon="wheel-of-dares" />
-                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Bets & stakes" href="/wagers" color="text-yellow-400" sexyIcon="wagers" />
-                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed challenges" href="/endurance-challenges" color="text-orange-500" sexyIcon="endurance" />
+                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-fuchsia-400" sexyIcon="wheel-of-dares" />
+                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Stakes & bets" href="/wagers" color="text-yellow-400" sexyIcon="wagers" />
+                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed ordeals" href="/endurance-challenges" color="text-orange-500" sexyIcon="endurance" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Connection & Reflection" icon={<HeartPulse size={14} className="text-pink-400" />}>
+            <FeatureDrawer title="Bond & Reflection" icon={<HeartPulse size={14} className="text-pink-400" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond health" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
+                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond status" href="/connection-pulse" color="text-pink-400" sexyIcon="connection-pulse" />
                 <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-pink-300" sexyIcon="devotions" />
                 <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-purple-400" sexyIcon="secrets" />
                 <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-rose-400" sexyIcon="conflicts" />
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Tracking & Progress" icon={<Award size={14} className="text-emerald-400" />}>
+            <FeatureDrawer title="Records & Surveillance" icon={<Award size={14} className="text-emerald-400" />}>
               <div className="space-y-1.5">
                 <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-amber-400" sexyIcon="ratings" />
-                <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Milestones & badges" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
+                <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Earned marks" href="/achievements" color="text-emerald-400" sexyIcon="achievements" />
                 <DrawerFeatureLink icon={<Timer size={14} />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-cyan-400" sexyIcon="countdown-events" />
                 <DrawerFeatureLink icon={<Lock size={14} />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-violet-400" sexyIcon="config" />
-                <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Hidden gallery" href="/locked-media" color="text-pink-400" sexyIcon="secrets" />
+                <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Restricted gallery" href="/locked-media" color="text-pink-400" sexyIcon="secrets" />
               </div>
             </FeatureDrawer>
           </div>
@@ -663,7 +1001,7 @@ export function CommandProtocols({
                   className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:bg-white/[0.04] transition-colors cursor-pointer">
                   <span className="flex items-center gap-2">
                     <Crown size={12} className="text-red-500" />
-                    Control Panel
+                    Direct Control
                   </span>
                   {showControlPanel ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                 </button>
@@ -672,7 +1010,7 @@ export function CommandProtocols({
                   <div className="space-y-3 animate-in slide-in-from-top-2 duration-300 pt-1">
                     <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
                       <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2 flex items-center gap-1.5">
-                        <Zap size={10} className="text-orange-400" /> Quick Command
+                        <Zap size={10} className="text-orange-400" /> Instant Order
                       </div>
                       <div className="flex gap-2">
                         <input data-testid="cp-input-command" type="text" value={commandInput}
@@ -690,7 +1028,7 @@ export function CommandProtocols({
 
                     <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
                       <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] mb-2 flex items-center gap-1.5">
-                        <Timer size={10} className="text-red-400" /> Demand Timer
+                        <Timer size={10} className="text-red-400" /> Timed Demand
                       </div>
                       <div className="space-y-2">
                         <input data-testid="cp-input-demand" type="text" value={demandMessage}
@@ -705,7 +1043,7 @@ export function CommandProtocols({
                           <Button size="sm" className="bg-red-600 hover:bg-red-500 ml-auto h-7 text-[10px] px-3"
                             disabled={!demandMessage.trim()}
                             onClick={() => { if (demandMessage.trim() && onDemandTimer) { onDemandTimer(demandMessage, demandDuration); setDemandMessage(""); } }}>
-                            Set Demand
+                            SET
                           </Button>
                         </div>
                       </div>
@@ -717,7 +1055,7 @@ export function CommandProtocols({
                           <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em] flex items-center gap-1.5">
                             <Lock size={9} className="text-red-400" /> Lockdown
                           </div>
-                          <p className="text-[8px] text-slate-600 mt-0.5">Restrict to tasks</p>
+                          <p className="text-[8px] text-slate-600 mt-0.5">Restrict to directives</p>
                         </div>
                         <button data-testid="cp-lockdown-toggle"
                           onClick={() => onToggleLockdown && onToggleLockdown(!lockdownStatus)}
@@ -750,22 +1088,29 @@ export function CommandProtocols({
   );
 }
 
-function MetricCard({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
-  const colors: Record<string, string> = {
-    emerald: "text-emerald-400 border-emerald-500/20 from-emerald-950/30",
-    amber: "text-amber-400 border-amber-500/20 from-amber-950/30",
-    red: "text-red-400 border-red-500/20 from-red-950/30",
-    blue: "text-blue-400 border-blue-500/20 from-blue-950/30",
-    cyan: "text-cyan-400 border-cyan-500/20 from-cyan-950/30",
-    purple: "text-purple-400 border-purple-500/20 from-purple-950/30",
+function MetricCard({ label, value, sub, color, trend }: { label: string; value: string; sub: string; color: string; trend?: number[] }) {
+  const colorMap: Record<string, { text: string; border: string; bg: string; sparkColor: string }> = {
+    emerald: { text: "text-emerald-400", border: "border-emerald-500/20", bg: "from-emerald-950/30", sparkColor: "#34d399" },
+    amber: { text: "text-amber-400", border: "border-amber-500/20", bg: "from-amber-950/30", sparkColor: "#fbbf24" },
+    red: { text: "text-red-400", border: "border-red-500/20", bg: "from-red-950/30", sparkColor: "#f87171" },
+    blue: { text: "text-blue-400", border: "border-blue-500/20", bg: "from-blue-950/30", sparkColor: "#60a5fa" },
+    cyan: { text: "text-cyan-400", border: "border-cyan-500/20", bg: "from-cyan-950/30", sparkColor: "#22d3ee" },
+    purple: { text: "text-purple-400", border: "border-purple-500/20", bg: "from-purple-950/30", sparkColor: "#c084fc" },
   };
-  const c = colors[color] || colors.blue;
-  const [textColor, borderC, bgC] = c.split(" ");
+  const c = colorMap[color] || colorMap.blue;
 
   return (
-    <div className={`bg-gradient-to-b ${bgC} to-transparent border ${borderC} rounded-xl p-2.5 text-center`}>
+    <div className={`bg-gradient-to-b ${c.bg} to-transparent border ${c.border} rounded-xl p-2.5 text-center`}>
       <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{label}</div>
-      <div className={`text-lg font-black ${textColor} tabular-nums leading-tight`}>{value}</div>
+      <div className="flex items-center justify-center gap-1">
+        <span className={`text-lg font-black ${c.text} tabular-nums leading-tight`}>{value}</span>
+        <TrendArrow data={trend} />
+      </div>
+      {trend && trend.length > 1 && (
+        <div className="flex justify-center mt-1">
+          <Sparkline data={trend} color={c.sparkColor} />
+        </div>
+      )}
       <div className="text-[8px] text-slate-600 mt-0.5">{sub}</div>
     </div>
   );
