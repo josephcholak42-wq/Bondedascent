@@ -4226,6 +4226,7 @@ export default function BondedAscentApp() {
       )}
 
       {activeOverlay === "live-session" && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
         <LiveSession
           sessionId="live"
           userRole={user?.role === "dom" ? "dom" : "sub"}
@@ -4242,9 +4243,11 @@ export default function BondedAscentApp() {
           onEndSession={() => setActiveOverlay(null)}
           onClose={() => setActiveOverlay(null)}
         />
+        </div>
       )}
 
       {activeOverlay === "confession-booth" && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
         <ConfessionBooth
           isOpen={true}
           onClose={() => setActiveOverlay(null)}
@@ -4265,9 +4268,11 @@ export default function BondedAscentApp() {
           }}
           userRole={user?.role === "dom" ? "dom" : "sub"}
         />
+        </div>
       )}
 
       {activeOverlay === "interrogation" && interrogationPhase === "setup" && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
         <InterrogationSetup
           onSubmit={(data) => {
             setInterrogationConfig(data);
@@ -4276,9 +4281,11 @@ export default function BondedAscentApp() {
           }}
           onClose={() => setActiveOverlay(null)}
         />
+        </div>
       )}
 
       {activeOverlay === "interrogation" && interrogationPhase === "active" && interrogationConfig && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
         <InterrogationMode
           session={{
             id: "manual",
@@ -4304,9 +4311,11 @@ export default function BondedAscentApp() {
           onComplete={() => setInterrogationPhase("results")}
           onClose={() => setActiveOverlay(null)}
         />
+        </div>
       )}
 
       {activeOverlay === "interrogation" && interrogationPhase === "results" && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
         <InterrogationResults
           session={{
             title: interrogationConfig?.title || "Interrogation",
@@ -4318,9 +4327,11 @@ export default function BondedAscentApp() {
           questions={interrogationAnswers}
           onClose={() => setActiveOverlay(null)}
         />
+        </div>
       )}
 
       {activeOverlay === "aftercare" && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
         <AftercareChecklist
           isOpen={true}
           sessionId="manual"
@@ -4334,6 +4345,7 @@ export default function BondedAscentApp() {
           }}
           onClose={() => setActiveOverlay(null)}
         />
+        </div>
       )}
     </div>
   );

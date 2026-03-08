@@ -58,6 +58,8 @@
   --accent-ember-deep: #431407;
   --accent-ash: #c4b5a0;
   --accent-ash-dark: #a89480;
+  --spring-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --smooth-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 :root[data-role="dom"] {
@@ -92,10 +94,9 @@
   }
 }
 
-/* Custom Animation Utilities */
 .animate-in {
   animation-duration: 0.5s;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-timing-function: var(--smooth-ease);
   animation-fill-mode: both;
 }
 
@@ -135,8 +136,13 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes overlayEnter {
+  from { opacity: 0; transform: scale(0.96); backdrop-filter: blur(0px); }
+  to { opacity: 1; transform: scale(1); backdrop-filter: blur(16px); }
+}
+
 .sexy-icon {
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
+  transition: transform 0.3s var(--spring-ease), filter 0.4s ease;
   animation: sexyShimmer 4s ease-in-out infinite;
   filter: drop-shadow(0 0 6px rgba(140, 15, 15, 0.3));
 }
@@ -223,10 +229,136 @@
   100% { transform: translateY(100%); }
 }
 
+@keyframes darkShimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes checkDraw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes actionFlash {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes floatEmber {
+  0% { transform: translateY(0) scale(1); opacity: 0.4; }
+  50% { transform: translateY(-20px) scale(1.2); opacity: 0.7; }
+  100% { transform: translateY(-40px) scale(0.8); opacity: 0; }
+}
+
+@keyframes heatShimmer {
+  0%, 100% { filter: blur(0px); opacity: 0.3; }
+  50% { filter: blur(1px); opacity: 0.6; }
+}
+
+.fluid-spring {
+  transition-timing-function: var(--spring-ease);
+  transition-duration: 400ms;
+}
+
+.fluid-smooth {
+  transition-timing-function: var(--smooth-ease);
+  transition-duration: 500ms;
+}
+
+.fluid-fade-mask {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 4%,
+    black 96%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 4%,
+    black 96%,
+    transparent 100%
+  );
+}
+
+.fluid-stagger > * {
+  animation: drawerChildEnter 0.35s var(--spring-ease) both;
+}
+.fluid-stagger > *:nth-child(1) { animation-delay: 30ms; }
+.fluid-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.fluid-stagger > *:nth-child(3) { animation-delay: 90ms; }
+.fluid-stagger > *:nth-child(4) { animation-delay: 120ms; }
+.fluid-stagger > *:nth-child(5) { animation-delay: 150ms; }
+.fluid-stagger > *:nth-child(6) { animation-delay: 180ms; }
+.fluid-stagger > *:nth-child(7) { animation-delay: 210ms; }
+.fluid-stagger > *:nth-child(8) { animation-delay: 240ms; }
+.fluid-stagger > *:nth-child(n+9) { animation-delay: 270ms; }
+
+@keyframes drawerChildEnter {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cp-feed-scroll {
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 20, 20, 0.3) transparent;
+}
+.cp-feed-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.cp-feed-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cp-feed-scroll::-webkit-scrollbar-thumb {
+  background: rgba(120, 20, 20, 0.25);
+  border-radius: 4px;
+}
+.cp-feed-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 20, 20, 0.45);
+}
+
+.cp-filter-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(140, 15, 15, 0.06) 40%,
+    rgba(140, 15, 15, 0.08) 50%,
+    rgba(140, 15, 15, 0.06) 60%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 200% 100%;
+  animation: darkShimmer 2s ease-in-out infinite;
+}
+
+.overlay-enter {
+  animation: overlayEnter 0.4s var(--smooth-ease) both;
+}
+
+.press-feedback {
+  transition: transform 0.15s var(--spring-ease), filter 0.15s ease;
+}
+.press-feedback:active {
+  transform: scale(0.95);
+  filter: brightness(0.85);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sexy-icon, .sexy-icon-interactive:hover, .sexy-icon-tap, .sexy-icon-throb {
     animation: none !important;
     transition: none !important;
     transform: none !important;
+  }
+  .fluid-spring, .fluid-smooth, .fluid-stagger > *, .overlay-enter, .press-feedback {
+    animation: none !important;
+    transition: none !important;
   }
 }

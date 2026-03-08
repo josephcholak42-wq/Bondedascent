@@ -264,8 +264,8 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 hover:brightness-125 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""}`}
-      style={{ animation: "cp-card-enter 0.4s ease-out" }}
+      className={`group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 hover:brightness-110 hover:-translate-y-[1px] hover:shadow-lg hover:shadow-black/30 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""}`}
+      style={{ animation: "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
     >
       <div className="p-3.5 flex items-start gap-3">
         {isSelecting && (
@@ -360,9 +360,9 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         </div>
       </div>
 
-      <div className="grid transition-all duration-300 ease-in-out" style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}>
+      <div className="grid transition-all duration-400" style={{ gridTemplateRows: expanded ? "1fr" : "0fr", transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
         <div className="overflow-hidden">
-          <div className="px-3.5 pb-3.5 pt-0 border-t border-white/5 mt-0">
+          <div className={`px-3.5 pb-3.5 pt-0 border-t border-white/5 mt-0 transition-opacity duration-300 ${expanded ? "opacity-100" : "opacity-0"}`}>
             <div className="pt-3 space-y-2.5">
               {item.description && (
                 <p className="text-xs text-slate-300/80 leading-relaxed">{item.description}</p>
@@ -640,22 +640,43 @@ export function CommandProtocols({
   return (
     <div className="space-y-4" data-testid="command-protocols">
       <style>{`
-        @keyframes cp-card-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes cp-glow { 0%, 100% { box-shadow: 0 0 20px rgba(220,38,38,0.08), inset 0 1px 0 rgba(255,255,255,0.03); } 50% { box-shadow: 0 0 40px rgba(220,38,38,0.15), inset 0 1px 0 rgba(255,255,255,0.06); } }
-        @keyframes cp-border-pulse { 0%, 100% { border-color: rgba(220,38,38,0.15); } 50% { border-color: rgba(220,38,38,0.35); } }
-        @keyframes cp-scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
-        @keyframes cp-pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.5); } }
+        @keyframes cp-card-enter {
+          from { opacity: 0; transform: translateY(10px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes cp-glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(140,15,15,0.1), 0 0 60px rgba(140,15,15,0.03), inset 0 1px 0 rgba(255,255,255,0.03); }
+          50% { box-shadow: 0 0 40px rgba(140,15,15,0.18), 0 0 80px rgba(140,15,15,0.06), inset 0 1px 0 rgba(255,255,255,0.06); }
+        }
+        @keyframes cp-border-pulse {
+          0%, 100% { border-color: rgba(140,15,15,0.15); }
+          50% { border-color: rgba(140,15,15,0.35); }
+        }
+        @keyframes cp-scan {
+          from { transform: translateY(-100%); }
+          to { transform: translateY(100%); }
+        }
+        @keyframes cp-pulse-dot {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.5); }
+        }
+        @keyframes cp-action-flash {
+          0% { opacity: 0; }
+          30% { opacity: 0.15; }
+          100% { opacity: 0; }
+        }
       `}</style>
 
       <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-b from-slate-900/95 via-slate-950 to-black"
         style={{ animation: "cp-glow 4s ease-in-out infinite, cp-border-pulse 4s ease-in-out infinite" }}>
 
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(220,38,38,0.08),transparent_60%)] pointer-events-none" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/40 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-900/20 to-transparent" />
-        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.02]">
-          <div className="absolute inset-0 w-full h-[200%]" style={{ animation: "cp-scan 12s linear infinite", background: "linear-gradient(180deg, transparent 0%, rgba(220,38,38,0.1) 50%, transparent 100%)" }} />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(140,15,15,0.1),transparent_60%)] pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-900/15 to-transparent" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.015]">
+          <div className="absolute inset-0 w-full h-[200%]" style={{ animation: "cp-scan 16s linear infinite", background: "linear-gradient(180deg, transparent 0%, rgba(140,15,15,0.08) 50%, transparent 100%)" }} />
         </div>
+        <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none" style={{ animation: "heatShimmer 8s ease-in-out infinite", background: "radial-gradient(ellipse at center top, rgba(140,15,15,0.04), transparent 70%)" }} />
 
         <div className="relative">
           <div className="p-5 pb-0">
@@ -665,7 +686,7 @@ export function CommandProtocols({
                   <SexyIcon name={role === "dom" ? "command-center" : "assign-tasks"} size={28} fallbackIcon={<Zap size={20} className="text-red-400" />} />
                 </div>
                 <div>
-                  <h2 className="text-base font-black text-white uppercase tracking-[0.12em]">
+                  <h2 className="text-base font-black text-white uppercase tracking-[0.12em]" style={{ textShadow: "0 0 20px rgba(140,15,15,0.3), 0 2px 4px rgba(0,0,0,0.5)" }}>
                     Command Center
                   </h2>
                   <p className="text-[10px] text-red-400/50 font-mono uppercase tracking-[0.2em]">
@@ -752,7 +773,7 @@ export function CommandProtocols({
 
           <div className="px-5 pt-1 pb-1">
             <div className="flex items-center gap-1.5">
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1">
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1 cp-filter-scroll">
                 {FILTER_OPTIONS.map((opt) => {
                   const FilterIcon = opt.icon;
                   const count = opt.types ? allItems.filter(i => opt.types!.includes(i.type)).length : allItems.length;
@@ -760,7 +781,7 @@ export function CommandProtocols({
                   const isUrgentFilter = opt.key === "urgent" && urgentCount > 0;
                   return (
                     <button key={opt.key} data-testid={`cp-filter-${opt.key}`} onClick={() => setFilter(opt.key)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 cursor-pointer press-feedback transition-all duration-300 ${
                         isActive
                           ? isUrgentFilter
                             ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/10"
@@ -772,7 +793,7 @@ export function CommandProtocols({
                       <FilterIcon size={10} />
                       {opt.label}
                       {count > 0 && (
-                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${isUrgentFilter ? "bg-red-500/30 text-red-300" : "bg-white/10 text-white/50"}`}>
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full transition-all duration-300 ${isUrgentFilter ? "bg-red-500/30 text-red-300" : "bg-white/10 text-white/50"}`}>
                           {count}
                         </span>
                       )}
@@ -802,9 +823,9 @@ export function CommandProtocols({
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[520px] overflow-y-auto scrollbar-thin pr-1">
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto cp-feed-scroll fluid-fade-mask pr-1">
                 {sorted.map((item, i) => (
-                  <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${i * 30}ms` }}>
+                  <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${Math.min(i * 40, 600)}ms` }}>
                     <FeedCard item={item} onAction={onAction} role={role}
                       searchQuery={debouncedSearch || undefined}
                       isPinned={pinnedIds.has(item.id)}
