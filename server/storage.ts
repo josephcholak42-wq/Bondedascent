@@ -52,6 +52,8 @@ import {
   type InterrogationQuestion, type InsertInterrogationQuestion,
   type AftercareItem, type InsertAftercareItem,
   type Streak,
+  simulations,
+  type Simulation, type InsertSimulation,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -338,6 +340,12 @@ export interface IStorage {
   getSensationCardById(id: string): Promise<SensationCard | undefined>;
   getSensationSpinById(id: string): Promise<SensationSpin | undefined>;
   getAccusationById(id: string): Promise<Accusation | undefined>;
+
+  createSimulation(data: InsertSimulation): Promise<Simulation>;
+  getActiveSimulation(userId: string): Promise<Simulation | undefined>;
+  deactivateSimulation(id: string): Promise<Simulation | undefined>;
+  updateSimulationGeneratedItems(id: string, generatedItems: any): Promise<Simulation | undefined>;
+  deactivateSimulationItems(simulationId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1454,6 +1462,52 @@ export class DatabaseStorage implements IStorage {
   async getAccusationById(id: string): Promise<Accusation | undefined> {
     const [row] = await db.select().from(accusations).where(eq(accusations.id, id)).limit(1);
     return row;
+  }
+
+  async createSimulation(data: InsertSimulation): Promise<Simulation> {
+    const [sim] = await db.insert(simulations).values(data).returning();
+    return sim;
+  }
+
+  async getActiveSimulation(userId: string): Promise<Simulation | undefined> {
+    const [sim] = await db.select().from(simulations)
+      .where(and(
+        or(eq(simulations.userId, userId), eq(simulations.partnerId, userId)),
+        eq(simulations.active, true)
+      ))
+      .limit(1);
+    return sim;
+  }
+
+  async deactivateSimulation(id: string): Promise<Simulation | undefined> {
+    const [sim] = await db.update(simulations)
+      .set({ active: false, deactivatedAt: new Date() })
+      .where(eq(simulations.id, id))
+      .returning();
+    return sim;
+  }
+
+  async updateSimulationGeneratedItems(id: string, generatedItems: any): Promise<Simulation | undefined> {
+    const [sim] = await db.update(simulations)
+      .set({ generatedItems })
+      .where(eq(simulations.id, id))
+      .returning();
+    return sim;
+  }
+
+  async deactivateSimulationItems(simulationId: string): Promise<void> {
+    await db.update(tasks)
+      .set({ done: true })
+      .where(eq(tasks.simulationId, simulationId));
+    await db.update(rituals)
+      .set({ active: false })
+      .where(eq(rituals.simulationId, simulationId));
+    await db.update(standingOrders)
+      .set({ active: false })
+      .where(eq(standingOrders.simulationId, simulationId));
+    await db.update(dares)
+      .set({ completed: true })
+      .where(eq(dares.simulationId, simulationId));
   }
 }
 

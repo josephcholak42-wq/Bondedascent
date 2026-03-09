@@ -98,12 +98,13 @@ interface CommandProtocolsProps {
   onToggleFeature?: (featureKey: string, enabled: boolean) => void;
   userStats?: UserStatsData;
   onCrisisMode?: (active: boolean) => void;
-  onLaunchOverlay?: (overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare") => void;
+  onLaunchOverlay?: (overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare" | "autodom") => void;
   onCreate?: (type: string, data: Record<string, any>) => void;
   onDelete?: (type: string, id: string) => void;
   onEdit?: (type: string, id: string, data: Record<string, any>) => void;
   recentActivity?: ActivityEntry[];
   trendData?: TrendData;
+  activeSimulation?: any;
 }
 
 const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string; priority: number }> = {
@@ -521,7 +522,7 @@ export function CommandProtocols({
   onAction, onAssignTask, onQuickCommand, onDemandTimer, onToggleLockdown,
   partnerStats, partnerPresence, partnerName, lockdownStatus, enforcementLevel, isAssigning,
   stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onLaunchOverlay, onCreate,
-  onDelete, onEdit, recentActivity, trendData,
+  onDelete, onEdit, recentActivity, trendData, activeSimulation,
 }: CommandProtocolsProps) {
   const [filter, setFilter] = useState("all");
   const [commandInput, setCommandInput] = useState("");
@@ -802,6 +803,21 @@ export function CommandProtocols({
               </div>
             </div>
           </div>
+
+          {activeSimulation && activeSimulation.active && (
+            <div className="mx-5 mt-3">
+              <button data-testid="simulation-banner" onClick={() => onLaunchOverlay?.("autodom")} className="w-full flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#7f1d1d]/60 via-[#431407]/40 to-[#7f1d1d]/60 border border-[#e87640]/40 rounded-xl cursor-pointer hover:border-[#e87640]/60 transition-all group" style={{ animation: "pulse 3s ease-in-out infinite" }}>
+                <Flame size={16} className="text-[#e87640] shrink-0" />
+                <div className="flex-1 text-left">
+                  <span className="text-[10px] font-bold text-[#e87640] uppercase tracking-wider">Auto-Dom Level {activeSimulation.level} Active</span>
+                  <span className="text-[9px] text-slate-500 ml-2">
+                    {activeSimulation.mode === "switch" ? "Switch Mode" : activeSimulation.mode === "sub-dom" ? "Sub & Dom" : "Dom & Sub"}
+                  </span>
+                </div>
+                <span className="text-[9px] text-slate-600 group-hover:text-slate-400">Manage</span>
+              </button>
+            </div>
+          )}
 
           {searchOpen && (
             <div className="px-5 pt-3 animate-in slide-in-from-top-2 duration-200">
@@ -1121,6 +1137,10 @@ export function CommandProtocols({
                   <button data-testid="launch-aftercare" onClick={() => onLaunchOverlay("aftercare")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-[#451a03]/40 to-slate-950/60 border border-[#78350f]/20 rounded-xl hover:border-[#b87333]/40 hover:from-[#451a03]/60 transition-all cursor-pointer group text-left">
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="connection-pulse" size={28} glow="bronze" /></div>
                     <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-[#c9956a] uppercase tracking-wide group-hover:text-[#d4a24e]">Aftercare</div><div className="text-[9px] text-slate-500 mt-0.5">Post-session checklist</div></div>
+                  </button>
+                  <button data-testid="launch-autodom" onClick={() => onLaunchOverlay("autodom")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-[#7f1d1d]/50 to-[#431407]/50 border border-[#e87640]/30 rounded-xl hover:border-[#e87640]/60 hover:from-[#7f1d1d]/70 transition-all cursor-pointer group text-left">
+                    <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#e87640]/20 to-[#dc2626]/20 flex items-center justify-center shrink-0"><Flame size={18} className="text-[#e87640] group-hover:text-[#ff9050]" /></div>
+                    <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-[#e87640] uppercase tracking-wide group-hover:text-[#ff9050]">Auto-Dom</div><div className="text-[9px] text-slate-500 mt-0.5">AI-powered simulation engine</div></div>
                   </button>
                 </div>
               </FeatureDrawer>

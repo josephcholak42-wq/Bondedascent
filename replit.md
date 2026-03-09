@@ -32,6 +32,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
     - **Interrogation Mode** (`interrogation.tsx`): Three components — InterrogationSetup (Dom), InterrogationMode (Sub full-screen Q&A with timer), InterrogationResults. Partner-synced via SSE events.
     - **Confession Booth** (`confession-booth.tsx`): Full-screen overlay with Sub typing mode and Dom review/response mode.
     - **Aftercare Checklist** (`aftercare-checklist.tsx`): Post-session checklist with calming dark aesthetic, mood rating, notes.
+    - **Auto-Dom Simulation** (`auto-dom-simulation.tsx`): Full-screen overlay to activate AI simulation at intensity 1–10. Three modes: Dom & Sub, Switch (both get both roles), Sub & Dom (reversed). Generates tasks, rituals, standing orders, dares for each user per role-side. Content tagged with `simulationId` for cleanup on deactivation.
     - **Mood Chart** (`mood-chart.tsx`): SVG line chart for mood/obedience history over 30 days.
     - **Ambient Presence** (`ambient-presence.tsx`): Persistent indicator showing pending protocol count.
     - **Universal Creator**: Content creation via category picker grid and slash-command shortcuts.
@@ -63,7 +64,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **ORM**: Drizzle ORM with `drizzle-zod`.
 - **Schema**: `shared/schema.ts` for shared client/server schema.
 - **Storage Layer**: Abstracted via `IStorage` interface in `server/storage.ts`.
-- **Tables** (43 total): users, tasks, check_ins, dares, rewards, punishments, journal_entries, notifications, activity_log, rituals, limits, secrets, wagers, ratings, countdown_events, standing_orders, permission_requests, devotions, conflicts, desired_changes, achievements, play_sessions, accusations, intensity_sessions, obedience_trials, trial_steps, sensation_cards, sensation_spins, sealed_orders, endurance_challenges, endurance_checkins, media, stickers, feature_settings, body_map_zones, push_subscriptions, contracts, confessions, training_programs, training_days, training_enrollments, scene_scripts, script_steps, interrogation_sessions, interrogation_questions, aftercare_items, streaks.
+- **Tables** (44 total): users, tasks, check_ins, dares, rewards, punishments, journal_entries, notifications, activity_log, rituals, limits, secrets, wagers, ratings, countdown_events, standing_orders, permission_requests, devotions, conflicts, desired_changes, achievements, play_sessions, accusations, intensity_sessions, obedience_trials, trial_steps, sensation_cards, sensation_spins, sealed_orders, endurance_challenges, endurance_checkins, media, stickers, feature_settings, body_map_zones, push_subscriptions, contracts, confessions, training_programs, training_days, training_enrollments, scene_scripts, script_steps, interrogation_sessions, interrogation_questions, aftercare_items, streaks, simulations.
 
 ### API Endpoints (key new ones)
 - `GET /api/sse` — Server-Sent Events endpoint for real-time partner sync (auto-reconnect)

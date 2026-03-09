@@ -5,6 +5,7 @@ import { setupAuth } from "./auth";
 import { sendPushToUser, getVapidPublicKey } from "./push";
 import { addSSEClient, sendToUser, sendToUsers } from "./sse";
 import { type User, type InterrogationSession } from "@shared/schema";
+import { generateSimulation } from "./simulation-engine";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -2736,6 +2737,72 @@ export async function registerRoutes(
     await sendPushToUser(targetUserId, "Ritual Reminder", `Don't forget: ${ritual.title}`, "ritual_reminder");
     await notifyUser(targetUserId, `Reminder: ${ritual.title}`, "alert", user.role);
     res.json({ message: "Reminder sent" });
+  });
+
+  // --- AUTO-DOM SIMULATION ---
+  app.get("/api/simulation/active", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const sim = await storage.getActiveSimulation(user.id);
+    res.json(sim || null);
+  });
+
+  app.post("/api/simulation/activate", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "You must be paired to activate a simulation" });
+
+    const { level, mode } = req.body;
+    if (!level || level < 1 || level > 10) return res.status(400).json({ message: "Level must be between 1 and 10" });
+    if (!["dom-sub", "switch", "sub-dom"].includes(mode)) return res.status(400).json({ message: "Invalid mode" });
+
+    const existing = await storage.getActiveSimulation(user.id);
+    if (existing) return res.status(400).json({ message: "A simulation is already active. Deactivate it first." });
+
+    const sim = await storage.createSimulation({
+      userId: user.id,
+      partnerId: user.partnerId,
+      level,
+      mode,
+    });
+
+    const summary = await generateSimulation(user.id, user.partnerId, level, mode, sim.id, storage);
+
+    await storage.updateSimulationGeneratedItems(sim.id, summary);
+
+    await storage.logActivity(user.id, "simulation_activated", `Activated Auto-Dom Level ${level} (${mode})`, user.role);
+
+    const partner = await storage.getPartner(user.id);
+    if (partner) {
+      await notifyUser(partner.id, `Auto-Dom Level ${level} has been activated (${mode} mode)`, "simulation", user.role);
+      sendToUser(partner.id, "simulation-activated", { simulationId: sim.id, level, mode });
+      await sendPushToUser(partner.id, "Auto-Dom Activated", `Level ${level} simulation is now active in ${mode} mode`, "simulation");
+    }
+    sendToUser(user.id, "simulation-activated", { simulationId: sim.id, level, mode });
+
+    const finalSim = await storage.getActiveSimulation(user.id);
+    res.json(finalSim);
+  });
+
+  app.post("/api/simulation/deactivate", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const sim = await storage.getActiveSimulation(user.id);
+    if (!sim) return res.status(404).json({ message: "No active simulation found" });
+
+    await storage.deactivateSimulationItems(sim.id);
+    const deactivated = await storage.deactivateSimulation(sim.id);
+
+    await storage.logActivity(user.id, "simulation_deactivated", `Deactivated Auto-Dom Level ${sim.level}`, user.role);
+
+    if (user.partnerId) {
+      const partner = await storage.getPartner(user.id);
+      if (partner) {
+        await notifyUser(partner.id, `Auto-Dom simulation has been deactivated`, "simulation", user.role);
+        sendToUser(partner.id, "simulation-deactivated", { simulationId: sim.id });
+        await sendPushToUser(partner.id, "Auto-Dom Deactivated", "The simulation has been turned off", "simulation");
+      }
+    }
+    sendToUser(user.id, "simulation-deactivated", { simulationId: sim.id });
+
+    res.json(deactivated);
   });
 
   return httpServer;

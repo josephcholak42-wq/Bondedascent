@@ -26,6 +26,7 @@ export const tasks = pgTable("tasks", {
   assignedBy: varchar("assigned_by"),
   text: text("text").notNull(),
   done: boolean("done").notNull().default(false),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -47,6 +48,7 @@ export const dares = pgTable("dares", {
   userId: varchar("user_id").notNull(),
   text: text("text").notNull(),
   completed: boolean("completed").notNull().default(false),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -126,6 +128,7 @@ export const rituals = pgTable("rituals", {
   active: boolean("active").notNull().default(true),
   lastCompleted: timestamp("last_completed"),
   reminderEnabled: boolean("reminder_enabled").notNull().default(true),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -199,6 +202,7 @@ export const standingOrders = pgTable("standing_orders", {
   description: text("description"),
   priority: text("priority").notNull().default("standard"),
   active: boolean("active").notNull().default(true),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -960,3 +964,19 @@ export const streaks = pgTable("streaks", {
 export const insertStreakSchema = createInsertSchema(streaks).omit({ id: true, createdAt: true, updatedAt: true, currentCount: true, longestCount: true, lastCompletedDate: true });
 export type Streak = typeof streaks.$inferSelect;
 export type InsertStreak = z.infer<typeof insertStreakSchema>;
+
+export const simulations = pgTable("simulations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  partnerId: varchar("partner_id").notNull(),
+  level: integer("level").notNull(),
+  mode: text("mode").notNull().default("dom-sub"),
+  active: boolean("active").notNull().default(true),
+  generatedItems: jsonb("generated_items"),
+  createdAt: timestamp("created_at").defaultNow(),
+  deactivatedAt: timestamp("deactivated_at"),
+});
+
+export const insertSimulationSchema = createInsertSchema(simulations).omit({ id: true, createdAt: true, deactivatedAt: true, active: true });
+export type Simulation = typeof simulations.$inferSelect;
+export type InsertSimulation = z.infer<typeof insertSimulationSchema>;

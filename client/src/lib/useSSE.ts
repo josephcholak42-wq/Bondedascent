@@ -61,6 +61,26 @@ export function useSSE(enabled: boolean = true) {
         qc.invalidateQueries({ queryKey: ["/api/presence"] });
       });
 
+      es.addEventListener("simulation-activated", () => {
+        qc.invalidateQueries({ queryKey: ["/api/simulation/active"] });
+        qc.invalidateQueries({ queryKey: ["/api/tasks"] });
+        qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+        qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+        qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+        qc.invalidateQueries({ queryKey: ["/api/dares"] });
+        qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
+      });
+
+      es.addEventListener("simulation-deactivated", () => {
+        qc.invalidateQueries({ queryKey: ["/api/simulation/active"] });
+        qc.invalidateQueries({ queryKey: ["/api/tasks"] });
+        qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+        qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+        qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+        qc.invalidateQueries({ queryKey: ["/api/dares"] });
+        qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
+      });
+
       es.onerror = () => {
         es.close();
         esRef.current = null;

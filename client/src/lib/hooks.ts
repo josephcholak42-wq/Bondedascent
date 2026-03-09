@@ -2140,3 +2140,58 @@ export function useStartLiveSession() {
     retry: 1,
   });
 }
+
+export function useActiveSimulation() {
+  return useQuery<any>({
+    queryKey: ["/api/simulation/active"],
+    refetchInterval: 10000,
+  });
+}
+
+export function useActivateSimulation() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async (data: { level: number; mode: string }) => {
+      const res = await apiRequest("POST", "/api/simulation/activate", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/simulation/active"] });
+      qc.invalidateQueries({ queryKey: ["/api/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/dares"] });
+      qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
+      toast({ title: "Auto-Dom Activated", description: "Simulation protocols have been generated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Activation failed", description: error.message || "Could not activate simulation", variant: "destructive" });
+    },
+  });
+}
+
+export function useDeactivateSimulation() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/simulation/deactivate", {});
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/simulation/active"] });
+      qc.invalidateQueries({ queryKey: ["/api/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
+      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
+      qc.invalidateQueries({ queryKey: ["/api/dares"] });
+      qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
+      toast({ title: "Auto-Dom Deactivated", description: "All simulation protocols have been removed" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Deactivation failed", description: error.message || "Could not deactivate simulation", variant: "destructive" });
+    },
+  });
+}

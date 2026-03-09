@@ -224,6 +224,9 @@ import {
   useUpdateLiveSession,
   useUpdateRitual,
   useUpdateStandingOrder,
+  useActiveSimulation,
+  useActivateSimulation,
+  useDeactivateSimulation,
 } from "@/lib/hooks";
 import { AmbientPresence } from "@/components/ambient-presence";
 import { useSSE } from "@/lib/useSSE";
@@ -233,6 +236,7 @@ import LiveSession from "@/components/live-session";
 import ConfessionBooth from "@/components/confession-booth";
 import { InterrogationSetup, InterrogationMode, InterrogationGrading, InterrogationResults, InterrogationWaiting } from "@/components/interrogation";
 import AftercareChecklist from "@/components/aftercare-checklist";
+import AutoDomSimulation from "@/components/auto-dom-simulation";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 export default function BondedAscentApp() {
@@ -383,6 +387,9 @@ export default function BondedAscentApp() {
   const startLiveSessionMutation = useStartLiveSession();
   const updateLiveSessionMutation = useUpdateLiveSession();
   const { data: activeLiveSession } = useActiveLiveSession(activeOverlay === "live-session" || activeOverlay === null);
+  const { data: activeSimulation } = useActiveSimulation();
+  const activateSimulationMutation = useActivateSimulation();
+  const deactivateSimulationMutation = useDeactivateSimulation();
   const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -633,6 +640,7 @@ export default function BondedAscentApp() {
         onEdit={handleOnEdit}
         recentActivity={recentActivityEntries}
         trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
+        activeSimulation={activeSimulation}
       />
       <input
         ref={profilePicInputRef}
@@ -897,6 +905,7 @@ export default function BondedAscentApp() {
             onEdit={handleOnEdit}
             recentActivity={recentActivityEntries}
             trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
+            activeSimulation={activeSimulation}
           />
           <input
             ref={profilePicInputRef}
@@ -4552,6 +4561,28 @@ export default function BondedAscentApp() {
           }}
           onClose={() => closeOverlay()}
         />
+        </div>
+      )}
+
+      {activeOverlay === "autodom" && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
+          <AutoDomSimulation
+            activeSimulation={activeSimulation || null}
+            onActivate={(level, mode) => {
+              activateSimulationMutation.mutate({ level, mode }, {
+                onSuccess: () => closeOverlay(),
+              });
+            }}
+            onDeactivate={() => {
+              deactivateSimulationMutation.mutate(undefined, {
+                onSuccess: () => closeOverlay(),
+              });
+            }}
+            onClose={() => closeOverlay()}
+            isActivating={activateSimulationMutation.isPending}
+            isDeactivating={deactivateSimulationMutation.isPending}
+            partnerName={partner?.username}
+          />
         </div>
       )}
     </div>
