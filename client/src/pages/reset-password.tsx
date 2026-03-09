@@ -164,7 +164,7 @@ export default function ResetPasswordPage() {
                 <div className="inline-block px-4 py-2 bg-red-950/40 border border-red-500/30 rounded-xl mb-3">
                   <p className="text-xs text-red-400 font-bold uppercase tracking-wider">Code Sent</p>
                 </div>
-                <p className="text-sm text-slate-400">A 6-digit reset code has been generated. Ask your partner or administrator for the code.</p>
+                <p className="text-sm text-slate-400">A 6-digit reset code has been sent to your partner as a notification.</p>
               </div>
 
               <div className="space-y-2">

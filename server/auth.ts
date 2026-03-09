@@ -8,6 +8,8 @@ import { storage } from "./storage";
 import { type User } from "@shared/schema";
 import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
+import { sendToUser } from "./sse";
+import { sendPushToUser } from "./push";
 
 const scryptAsync = promisify(scrypt);
 
@@ -156,10 +158,17 @@ export function setupAuth(app: Express) {
           [user.id, code, expiresAt]
         );
 
+        if (user.partnerId) {
+          const notifText = `Password reset code for ${user.displayName || username}: ${code} (expires in 15 min)`;
+          await storage.createNotification({ userId: user.partnerId, text: notifText, type: "alert" });
+          sendToUser(user.partnerId, "notification", { text: notifText, type: "alert" });
+          sendPushToUser(user.partnerId, "BondedAscent Alert", notifText, "alert").catch(() => {});
+        }
+
         console.log(`[RESET CODE] User "${username}" reset code generated (expires in 15 min)`);
       }
 
-      res.json({ message: "If an account exists with that username, a reset code has been generated. Check with your partner for the code." });
+      res.json({ message: "If an account exists with that username, a reset code has been sent to your partner." });
     } catch (err) {
       next(err);
     }
