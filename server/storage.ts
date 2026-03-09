@@ -1,4 +1,4 @@
-import { eq, desc, and, inArray } from "drizzle-orm";
+import { eq, desc, and, or, inArray } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, tasks, checkIns, dares, rewards, punishments,
@@ -297,6 +297,8 @@ export interface IStorage {
   deleteScriptStep(id: string): Promise<void>;
 
   getInterrogationSessions(userId: string): Promise<InterrogationSession[]>;
+  getInterrogationSessionById(id: string): Promise<InterrogationSession | undefined>;
+  getActiveInterrogationSession(userId: string): Promise<InterrogationSession | null>;
   createInterrogationSession(session: InsertInterrogationSession): Promise<InterrogationSession>;
   updateInterrogationSession(id: string, data: Partial<InterrogationSession>): Promise<InterrogationSession | undefined>;
   getInterrogationQuestions(sessionId: string): Promise<InterrogationQuestion[]>;
@@ -1223,6 +1225,21 @@ export class DatabaseStorage implements IStorage {
 
   async getInterrogationSessions(userId: string): Promise<InterrogationSession[]> {
     return db.select().from(interrogationSessions).where(eq(interrogationSessions.inquisitorId, userId)).orderBy(desc(interrogationSessions.createdAt));
+  }
+
+  async getInterrogationSessionById(id: string): Promise<InterrogationSession | undefined> {
+    const [s] = await db.select().from(interrogationSessions).where(eq(interrogationSessions.id, id)).limit(1);
+    return s;
+  }
+
+  async getActiveInterrogationSession(userId: string): Promise<InterrogationSession | null> {
+    const rows = await db.select().from(interrogationSessions).where(
+      and(
+        or(eq(interrogationSessions.inquisitorId, userId), eq(interrogationSessions.subjectId, userId)),
+        or(eq(interrogationSessions.status, "active"), eq(interrogationSessions.status, "answered"))
+      )
+    ).orderBy(desc(interrogationSessions.createdAt)).limit(1);
+    return rows[0] || null;
   }
 
   async createInterrogationSession(session: InsertInterrogationSession): Promise<InterrogationSession> {

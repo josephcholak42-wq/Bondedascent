@@ -1256,3 +1256,105 @@ export function InterrogationResults({
     </div>
   );
 }
+
+export function InterrogationWaiting({
+  session,
+  status,
+  onClose,
+}: {
+  session: { title: string; totalQuestions: number };
+  status: "waiting" | "answered";
+  onClose: () => void;
+}) {
+  const [dots, setDots] = useState("");
+
+  useEffect(() => {
+    if (status !== "waiting") return;
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+    }, 600);
+    return () => clearInterval(interval);
+  }, [status]);
+
+  return (
+    <div
+      data-testid="interrogation-waiting"
+      style={{
+        background: "#1a1a1a",
+        borderRadius: 8,
+        padding: 40,
+        maxWidth: 500,
+        width: "100%",
+        color: "#e2e8f0",
+        fontFamily: "'Playfair Display', serif",
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 14,
+          color: "#991b1b",
+          textTransform: "uppercase",
+          letterSpacing: 3,
+          marginBottom: 24,
+          fontWeight: 700,
+        }}
+      >
+        INTERROGATION ACTIVE
+      </div>
+      <h2
+        style={{
+          fontSize: 22,
+          fontWeight: 700,
+          color: "#94a3b8",
+          margin: "0 0 12px 0",
+        }}
+      >
+        {session.title}
+      </h2>
+      <div
+        style={{
+          fontSize: 14,
+          color: "#475569",
+          marginBottom: 32,
+        }}
+      >
+        {session.totalQuestions} question{session.totalQuestions !== 1 ? "s" : ""} assigned
+      </div>
+      <div
+        style={{
+          fontSize: 18,
+          color: status === "answered" ? "#14532d" : "#64748b",
+          fontWeight: 700,
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          marginBottom: 32,
+          minHeight: 30,
+        }}
+      >
+        {status === "answered"
+          ? "ANSWERS SUBMITTED — READY TO GRADE"
+          : `AWAITING SUBJECT'S RESPONSES${dots}`}
+      </div>
+      <button
+        data-testid="button-close-waiting"
+        onClick={onClose}
+        style={{
+          background: "#222",
+          border: "1px solid #333",
+          borderRadius: 4,
+          padding: "12px 24px",
+          color: "#64748b",
+          fontSize: 13,
+          fontWeight: 700,
+          fontFamily: "'Playfair Display', serif",
+          letterSpacing: 2,
+          textTransform: "uppercase",
+          cursor: "pointer",
+        }}
+      >
+        {status === "answered" ? "CLOSE" : "CANCEL"}
+      </button>
+    </div>
+  );
+}

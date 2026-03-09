@@ -228,7 +228,7 @@ import {
 import { AmbientPresence } from "@/components/ambient-presence";
 import LiveSession from "@/components/live-session";
 import ConfessionBooth from "@/components/confession-booth";
-import { InterrogationSetup, InterrogationMode, InterrogationGrading, InterrogationResults } from "@/components/interrogation";
+import { InterrogationSetup, InterrogationMode, InterrogationGrading, InterrogationResults, InterrogationWaiting } from "@/components/interrogation";
 import AftercareChecklist from "@/components/aftercare-checklist";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
@@ -265,9 +265,11 @@ export default function BondedAscentApp() {
 
 
   const [activeOverlay, setActiveOverlay] = useState<"live-session" | "interrogation" | "confession-booth" | "aftercare" | null>(null);
-  const [interrogationPhase, setInterrogationPhase] = useState<"setup" | "active" | "grading" | "results">("setup");
+  const [interrogationPhase, setInterrogationPhase] = useState<"setup" | "active" | "waiting" | "grading" | "results">("setup");
   const [interrogationConfig, setInterrogationConfig] = useState<any>(null);
   const [interrogationAnswers, setInterrogationAnswers] = useState<any[]>([]);
+  const [interrogationSessionId, setInterrogationSessionId] = useState<string | null>(null);
+  const [interrogationDbQuestions, setInterrogationDbQuestions] = useState<any[]>([]);
 
   const [trainingActive, setTrainingActive] = useState<string | null>(null);
   const [trainingTimer, setTrainingTimer] = useState(0);
@@ -436,6 +438,51 @@ export default function BondedAscentApp() {
   const updateLiveSessionMutation = useUpdateLiveSession();
   const { data: activeLiveSession } = useActiveLiveSession(activeOverlay === "live-session" || activeOverlay === null);
   const [liveSessionId, setLiveSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user || !partner) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch("/api/interrogation-sessions/active", { credentials: "include" });
+        if (!res.ok) return;
+        const session = await res.json();
+        if (!session) return;
+
+        if (session.status === "active" && session.subjectId === user.id && activeOverlay !== "interrogation") {
+          const qRes = await fetch(`/api/interrogation-sessions/${session.id}/questions`, { credentials: "include" });
+          const dbQuestions = qRes.ok ? await qRes.json() : [];
+          setInterrogationSessionId(session.id);
+          setInterrogationDbQuestions(dbQuestions);
+          setInterrogationConfig({
+            title: session.title,
+            timeLimitPerQuestion: session.timeLimitPerQuestion,
+            questions: dbQuestions.map((q: any) => ({ question: q.question, expectedAnswer: q.expectedAnswer })),
+          });
+          setInterrogationAnswers([]);
+          setInterrogationPhase("active");
+          setActiveOverlay("interrogation");
+          window.history.pushState({ overlay: "interrogation", interrogationPhase: "active" }, "");
+        }
+
+        if (session.status === "answered" && session.inquisitorId === user.id && interrogationPhase === "waiting") {
+          const qRes = await fetch(`/api/interrogation-sessions/${session.id}/questions`, { credentials: "include" });
+          const dbQuestions = qRes.ok ? await qRes.json() : [];
+          setInterrogationDbQuestions(dbQuestions);
+          setInterrogationAnswers(dbQuestions.map((q: any) => ({
+            question: q.question,
+            expectedAnswer: q.expectedAnswer,
+            actualAnswer: q.actualAnswer,
+            correct: q.correct,
+            answeredInSeconds: q.answeredInSeconds,
+            questionOrder: q.questionOrder,
+            questionId: q.id,
+          })));
+          setInterrogationPhase("grading");
+        }
+      } catch {}
+    }, 3000);
+    return () => clearInterval(poll);
+  }, [user, partner, activeOverlay, interrogationPhase]);
 
   const { data: stickersList = [] } = useStickers();
   const sendStickerMutation = useSendSticker();
@@ -4417,12 +4464,56 @@ export default function BondedAscentApp() {
       {activeOverlay === "interrogation" && interrogationPhase === "setup" && (
         <div className="overlay-enter fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4">
         <InterrogationSetup
-          onSubmit={(data) => {
-            setInterrogationConfig(data);
-            setInterrogationAnswers([]);
-            setInterrogationPhase("active");
+          onSubmit={async (data) => {
+            if (!partner) return;
+            try {
+              const res = await fetch("/api/interrogation-sessions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                  subjectId: partner.id,
+                  title: data.title,
+                  totalQuestions: data.questions.length,
+                  autoConsequence: data.autoConsequence,
+                  consequencePerWrong: data.consequencePerWrong,
+                  timeLimitPerQuestion: data.timeLimitPerQuestion,
+                  questions: data.questions,
+                }),
+              });
+              if (!res.ok) return;
+              const session = await res.json();
+              setInterrogationSessionId(session.id);
+              setInterrogationConfig(data);
+              setInterrogationAnswers([]);
+              setInterrogationPhase("waiting");
+              window.history.pushState({ overlay: "interrogation", interrogationPhase: "waiting" }, "");
+            } catch {}
           }}
           onClose={() => closeOverlay()}
+        />
+        </div>
+      )}
+
+      {activeOverlay === "interrogation" && interrogationPhase === "waiting" && (
+        <div className="overlay-enter fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4">
+        <InterrogationWaiting
+          session={{
+            title: interrogationConfig?.title || "Interrogation",
+            totalQuestions: interrogationConfig?.questions?.length || 0,
+          }}
+          status="waiting"
+          onClose={() => {
+            if (interrogationSessionId) {
+              fetch(`/api/interrogation-sessions/${interrogationSessionId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ status: "cancelled" }),
+              }).catch(() => {});
+            }
+            closeOverlay();
+          }}
         />
         </div>
       )}
@@ -4431,27 +4522,56 @@ export default function BondedAscentApp() {
         <div className="overlay-enter fixed inset-0 z-[80]">
         <InterrogationMode
           session={{
-            id: "manual",
+            id: interrogationSessionId || "manual",
             title: interrogationConfig.title || "Interrogation",
             timeLimitPerQuestion: interrogationConfig.timeLimitPerQuestion || 30,
           }}
-          questions={(interrogationConfig.questions || []).map((q: any, i: number) => ({
-            id: `q-${i}`,
-            question: q.question,
-            expectedAnswer: q.expectedAnswer || null,
-            questionOrder: i,
-          }))}
-          onAnswer={(questionId, answer, timeSeconds) => {
+          questions={interrogationDbQuestions.length > 0
+            ? interrogationDbQuestions.sort((a: any, b: any) => a.questionOrder - b.questionOrder).map((q: any) => ({
+                id: q.id,
+                question: q.question,
+                expectedAnswer: q.expectedAnswer || null,
+                questionOrder: q.questionOrder,
+              }))
+            : (interrogationConfig.questions || []).map((q: any, i: number) => ({
+                id: `q-${i}`,
+                question: q.question,
+                expectedAnswer: q.expectedAnswer || null,
+                questionOrder: i,
+              }))
+          }
+          onAnswer={async (questionId, answer, timeSeconds) => {
+            if (interrogationDbQuestions.length > 0 && !questionId.startsWith("q-")) {
+              await fetch(`/api/interrogation-questions/${questionId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ actualAnswer: answer, answeredInSeconds: timeSeconds }),
+              }).catch(() => {});
+            }
             setInterrogationAnswers((prev: any[]) => [...prev, {
-              question: interrogationConfig.questions?.find((_: any, i: number) => `q-${i}` === questionId)?.question || "",
-              expectedAnswer: interrogationConfig.questions?.find((_: any, i: number) => `q-${i}` === questionId)?.expectedAnswer || null,
+              question: interrogationDbQuestions.find((q: any) => q.id === questionId)?.question
+                || interrogationConfig.questions?.find((_: any, i: number) => `q-${i}` === questionId)?.question || "",
+              expectedAnswer: interrogationDbQuestions.find((q: any) => q.id === questionId)?.expectedAnswer
+                || interrogationConfig.questions?.find((_: any, i: number) => `q-${i}` === questionId)?.expectedAnswer || null,
               actualAnswer: answer,
               correct: null,
               answeredInSeconds: timeSeconds,
-              questionOrder: parseInt(questionId.replace("q-", "")),
+              questionOrder: interrogationDbQuestions.findIndex((q: any) => q.id === questionId) >= 0
+                ? interrogationDbQuestions.findIndex((q: any) => q.id === questionId)
+                : parseInt(questionId.replace("q-", "")),
+              questionId,
             }]);
           }}
-          onComplete={() => setInterrogationPhase("grading")}
+          onComplete={async () => {
+            if (interrogationSessionId) {
+              await fetch(`/api/interrogation-sessions/${interrogationSessionId}/submit-answers`, {
+                method: "PUT",
+                credentials: "include",
+              }).catch(() => {});
+            }
+            closeOverlay();
+          }}
           onClose={() => closeOverlay()}
         />
         </div>
@@ -4465,13 +4585,40 @@ export default function BondedAscentApp() {
             timeLimitPerQuestion: interrogationConfig?.timeLimitPerQuestion || 30,
           }}
           answers={interrogationAnswers}
-          onGraded={(graded) => {
-            setInterrogationAnswers((prev: any[]) =>
-              prev.map((a: any) => {
-                const grade = graded.find((g) => g.questionOrder === a.questionOrder);
-                return grade ? { ...a, correct: grade.correct } : a;
-              })
-            );
+          onGraded={async (graded) => {
+            if (interrogationSessionId) {
+              const grades = graded.map((g) => {
+                const answer = interrogationAnswers.find((a: any) => a.questionOrder === g.questionOrder);
+                return { questionId: answer?.questionId || "", correct: g.correct };
+              });
+              try {
+                const res = await fetch(`/api/interrogation-sessions/${interrogationSessionId}/grade`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ grades }),
+                });
+                if (res.ok) {
+                  const { questions: gradedQuestions } = await res.json();
+                  setInterrogationAnswers(gradedQuestions.map((q: any) => ({
+                    question: q.question,
+                    expectedAnswer: q.expectedAnswer,
+                    actualAnswer: q.actualAnswer,
+                    correct: q.correct,
+                    answeredInSeconds: q.answeredInSeconds,
+                    questionOrder: q.questionOrder,
+                    questionId: q.id,
+                  })));
+                }
+              } catch {}
+            } else {
+              setInterrogationAnswers((prev: any[]) =>
+                prev.map((a: any) => {
+                  const grade = graded.find((g) => g.questionOrder === a.questionOrder);
+                  return grade ? { ...a, correct: grade.correct } : a;
+                })
+              );
+            }
             setInterrogationPhase("results");
           }}
           onClose={() => closeOverlay()}
@@ -4484,9 +4631,9 @@ export default function BondedAscentApp() {
         <InterrogationResults
           session={{
             title: interrogationConfig?.title || "Interrogation",
-            totalQuestions: interrogationConfig?.questions?.length || 0,
+            totalQuestions: interrogationConfig?.questions?.length || interrogationAnswers.length,
             correctAnswers: interrogationAnswers.filter((a: any) => a.correct).length,
-            score: interrogationConfig?.questions?.length ? Math.round((interrogationAnswers.filter((a: any) => a.correct).length / interrogationConfig.questions.length) * 100) : 0,
+            score: (interrogationConfig?.questions?.length || interrogationAnswers.length) ? Math.round((interrogationAnswers.filter((a: any) => a.correct).length / (interrogationConfig?.questions?.length || interrogationAnswers.length)) * 100) : 0,
             timeLimitPerQuestion: interrogationConfig?.timeLimitPerQuestion || 30,
           }}
           questions={interrogationAnswers}

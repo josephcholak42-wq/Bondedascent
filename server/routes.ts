@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { sendPushToUser, getVapidPublicKey } from "./push";
-import { type User } from "@shared/schema";
+import { type User, type InterrogationSession } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -2331,39 +2331,112 @@ export async function registerRoutes(
     res.json(list);
   });
 
+  app.get("/api/interrogation-sessions/active", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const active = await storage.getActiveInterrogationSession(user.id);
+    res.json(active);
+  });
+
   app.post("/api/interrogation-sessions", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { subjectId, title, totalQuestions, autoConsequence, consequencePerWrong, timeLimitPerQuestion } = req.body;
+    const { subjectId, title, totalQuestions, autoConsequence, consequencePerWrong, timeLimitPerQuestion, questions } = req.body;
     if (!title?.trim() || !subjectId) return res.status(400).json({ message: "Title and subjectId required" });
     const session = await storage.createInterrogationSession({
       inquisitorId: user.id,
       subjectId,
       title: title.trim(),
-      totalQuestions: totalQuestions || 0,
+      totalQuestions: totalQuestions || (questions?.length || 0),
       autoConsequence: autoConsequence !== undefined ? autoConsequence : true,
       consequencePerWrong: consequencePerWrong || null,
       timeLimitPerQuestion: timeLimitPerQuestion || 30,
     });
+    if (questions && Array.isArray(questions)) {
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        if (q.question?.trim()) {
+          await storage.createInterrogationQuestion({
+            sessionId: session.id,
+            questionOrder: i,
+            question: q.question.trim(),
+            expectedAnswer: q.expectedAnswer || null,
+          });
+        }
+      }
+    }
+    await storage.updateInterrogationSession(session.id, { status: "active", startedAt: new Date() });
     await storage.logActivity(user.id, "interrogation_created", title.trim(), user.role);
-    await notifyUser(subjectId, `Interrogation session "${title.trim()}" created for you`, "alert", user.role);
-    res.status(201).json(session);
+    await notifyUser(subjectId, `You are being interrogated: "${title.trim()}"`, "alert", user.role);
+    const updated = await storage.updateInterrogationSession(session.id, { status: "active" });
+    res.status(201).json(updated || session);
   });
 
   app.put("/api/interrogation-sessions/:id", requireAuth, async (req, res) => {
-    const session = await storage.updateInterrogationSession(req.params.id, req.body);
-    if (!session) return res.status(404).json({ message: "Not found" });
+    const user = req.user as User;
+    const existing = await storage.getInterrogationSessionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.inquisitorId !== user.id && existing.subjectId !== user.id) return res.status(403).json({ message: "Forbidden" });
+    const allowed: Partial<typeof existing> = {};
+    if (req.body.status === "cancelled" && existing.inquisitorId === user.id) allowed.status = "cancelled";
+    const session = await storage.updateInterrogationSession(req.params.id, allowed);
     res.json(session);
+  });
+
+  app.put("/api/interrogation-sessions/:id/submit-answers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getInterrogationSessionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.subjectId !== user.id) return res.status(403).json({ message: "Only the subject can submit answers" });
+    const session = await storage.updateInterrogationSession(req.params.id, { status: "answered" });
+    if (!session) return res.status(404).json({ message: "Not found" });
+    await notifyUser(session.inquisitorId, `Interrogation "${session.title}" answers submitted — ready for grading`, "alert", user.role);
+    res.json(session);
+  });
+
+  app.put("/api/interrogation-sessions/:id/grade", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getInterrogationSessionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.inquisitorId !== user.id) return res.status(403).json({ message: "Only the inquisitor can grade" });
+    const { grades } = req.body;
+    if (!grades || !Array.isArray(grades)) return res.status(400).json({ message: "grades array required" });
+    const sessionQuestions = await storage.getInterrogationQuestions(req.params.id);
+    const sessionQuestionIds = new Set(sessionQuestions.map(q => q.id));
+    for (const g of grades) {
+      if (!sessionQuestionIds.has(g.questionId)) continue;
+      await storage.updateInterrogationQuestion(g.questionId, { correct: g.correct });
+    }
+    const questions = await storage.getInterrogationQuestions(req.params.id);
+    const correctCount = questions.filter(q => q.correct === true).length;
+    const total = questions.length;
+    const score = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+    const session = await storage.updateInterrogationSession(req.params.id, {
+      status: "graded",
+      correctAnswers: correctCount,
+      score,
+      completedAt: new Date(),
+    });
+    if (!session) return res.status(404).json({ message: "Not found" });
+    await notifyUser(session.subjectId, `Interrogation "${session.title}" graded — Score: ${score}%`, "alert", "dom");
+    res.json({ session, questions });
   });
 
   // --- INTERROGATION QUESTIONS ---
   app.get("/api/interrogation-sessions/:sessionId/questions", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getInterrogationSessionById(req.params.sessionId);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.inquisitorId !== user.id && existing.subjectId !== user.id) return res.status(403).json({ message: "Forbidden" });
     const questions = await storage.getInterrogationQuestions(req.params.sessionId);
     res.json(questions);
   });
 
   app.post("/api/interrogation-questions", requireAuth, async (req, res) => {
+    const user = req.user as User;
     const { sessionId, questionOrder, question, expectedAnswer } = req.body;
     if (!sessionId || !question?.trim()) return res.status(400).json({ message: "sessionId and question required" });
+    const existing = await storage.getInterrogationSessionById(sessionId);
+    if (!existing) return res.status(404).json({ message: "Session not found" });
+    if (existing.inquisitorId !== user.id) return res.status(403).json({ message: "Only the inquisitor can add questions" });
     const q = await storage.createInterrogationQuestion({
       sessionId,
       questionOrder: questionOrder || 1,
@@ -2374,9 +2447,24 @@ export async function registerRoutes(
   });
 
   app.put("/api/interrogation-questions/:id", requireAuth, async (req, res) => {
-    const question = await storage.updateInterrogationQuestion(req.params.id, req.body);
+    const user = req.user as User;
+    const question = await storage.updateInterrogationQuestion(req.params.id, {});
     if (!question) return res.status(404).json({ message: "Not found" });
-    res.json(question);
+    const existing = await storage.getInterrogationSessionById(question.sessionId);
+    if (!existing) return res.status(404).json({ message: "Session not found" });
+    if (existing.subjectId !== user.id && existing.inquisitorId !== user.id) return res.status(403).json({ message: "Forbidden" });
+    const allowed: any = {};
+    if (existing.subjectId === user.id) {
+      if (req.body.actualAnswer !== undefined) allowed.actualAnswer = req.body.actualAnswer;
+      if (req.body.answeredInSeconds !== undefined) allowed.answeredInSeconds = req.body.answeredInSeconds;
+    }
+    if (existing.inquisitorId === user.id) {
+      if (req.body.correct !== undefined) allowed.correct = req.body.correct;
+      if (req.body.question !== undefined) allowed.question = req.body.question;
+      if (req.body.expectedAnswer !== undefined) allowed.expectedAnswer = req.body.expectedAnswer;
+    }
+    const updated = await storage.updateInterrogationQuestion(req.params.id, allowed);
+    res.json(updated);
   });
 
   // --- AFTERCARE ITEMS ---
