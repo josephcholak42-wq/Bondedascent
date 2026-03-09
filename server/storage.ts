@@ -1,4 +1,4 @@
-import { eq, desc, and, or, inArray } from "drizzle-orm";
+import { eq, desc, and, or, inArray, isNull, isNotNull } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, tasks, checkIns, dares, rewards, punishments,
@@ -84,11 +84,17 @@ export interface IStorage {
   createReward(reward: InsertReward): Promise<Reward>;
   toggleReward(rewardId: string): Promise<Reward | undefined>;
   deleteReward(rewardId: string): Promise<void>;
+  claimReward(rewardId: string): Promise<Reward | undefined>;
+  redeemReward(rewardId: string): Promise<Reward | undefined>;
+  getRewardChest(userId: string): Promise<Reward[]>;
 
   getPunishments(userId: string): Promise<Punishment[]>;
   createPunishment(punishment: InsertPunishment): Promise<Punishment>;
   updatePunishmentStatus(punishmentId: string, status: string): Promise<Punishment | undefined>;
   deletePunishment(punishmentId: string): Promise<void>;
+  stockpilePunishment(punishmentId: string): Promise<Punishment | undefined>;
+  deployPunishment(punishmentId: string): Promise<Punishment | undefined>;
+  getPunishmentChest(userId: string): Promise<Punishment[]>;
 
   getJournalEntries(userId: string, role?: string): Promise<JournalEntry[]>;
   createJournalEntry(entry: InsertJournal): Promise<JournalEntry>;
@@ -461,6 +467,20 @@ export class DatabaseStorage implements IStorage {
     await db.delete(rewards).where(eq(rewards.id, rewardId));
   }
 
+  async claimReward(rewardId: string): Promise<Reward | undefined> {
+    const [updated] = await db.update(rewards).set({ claimedAt: new Date() }).where(eq(rewards.id, rewardId)).returning();
+    return updated;
+  }
+
+  async redeemReward(rewardId: string): Promise<Reward | undefined> {
+    const [updated] = await db.update(rewards).set({ redeemedAt: new Date(), unlocked: true }).where(eq(rewards.id, rewardId)).returning();
+    return updated;
+  }
+
+  async getRewardChest(userId: string): Promise<Reward[]> {
+    return db.select().from(rewards).where(and(eq(rewards.userId, userId), isNotNull(rewards.claimedAt), isNull(rewards.redeemedAt))).orderBy(desc(rewards.claimedAt));
+  }
+
   async getPunishments(userId: string): Promise<Punishment[]> {
     return db.select().from(punishments).where(eq(punishments.userId, userId)).orderBy(desc(punishments.createdAt));
   }
@@ -477,6 +497,20 @@ export class DatabaseStorage implements IStorage {
 
   async deletePunishment(punishmentId: string): Promise<void> {
     await db.delete(punishments).where(eq(punishments.id, punishmentId));
+  }
+
+  async stockpilePunishment(punishmentId: string): Promise<Punishment | undefined> {
+    const [updated] = await db.update(punishments).set({ stockpiledAt: new Date(), status: "stockpiled" }).where(eq(punishments.id, punishmentId)).returning();
+    return updated;
+  }
+
+  async deployPunishment(punishmentId: string): Promise<Punishment | undefined> {
+    const [updated] = await db.update(punishments).set({ deployedAt: new Date(), status: "active" }).where(eq(punishments.id, punishmentId)).returning();
+    return updated;
+  }
+
+  async getPunishmentChest(userId: string): Promise<Punishment[]> {
+    return db.select().from(punishments).where(and(eq(punishments.assignedBy, userId), isNotNull(punishments.stockpiledAt), isNull(punishments.deployedAt))).orderBy(desc(punishments.stockpiledAt));
   }
 
   async getJournalEntries(userId: string, role?: string): Promise<JournalEntry[]> {

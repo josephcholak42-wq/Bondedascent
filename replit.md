@@ -37,6 +37,10 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
     - **Ambient Presence** (`ambient-presence.tsx`): Persistent indicator showing pending protocol count.
     - **Universal Creator**: Content creation via category picker grid and slash-command shortcuts.
     - **Feature Drawers**: Collapsible sections for quick access, sticker rewards, access control, crisis override, protocol/structure, scenes/trials, bond/reflection, and records/surveillance.
+    - **Reward Chest** (`reward-chest.tsx`): Sub-side treasure chest UI. Sub claims rewards from feed into chest, then redeems them to partner when ready. Dark gold/bronze aesthetic.
+    - **Punishment Chest** (`punishment-chest.tsx`): Dom-side punishment arsenal. Dom stockpiles punishments, deploys them onto Sub at chosen time. Blood red/black aesthetic with prebuilt punishment grid.
+    - **Sticker Board** (`sticker-board.tsx`): Post-It note board where Dom pins sticker+comment notes on Sub's profile. Random rotations, color-coded by sticker type, serif italic text.
+    - **Profile Picture Upload**: Circular avatar with camera overlay, uploads via existing `POST /api/user/profile-pic`. Visible in header, profile, partner display, and mobile nav.
     - **Media Upload**: Polymorphic file attachment system with `<MediaUpload>` component.
 
 ### Pages
@@ -78,6 +82,9 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - `PUT /api/play-sessions/:id/live` — Live session state updates (instruction, intensity, phase, end)
 - `POST /api/rituals/:id/remind` — Trigger push notification reminder
 - `GET /api/dashboard-init` — Batch endpoint fetching all dashboard data in one request; frontend `useDashboardInit()` hook seeds TanStack Query cache
+- Reward Chest: `GET /api/rewards/chest`, `PATCH /api/rewards/:id/claim`, `PATCH /api/rewards/:id/redeem`
+- Punishment Chest: `GET /api/punishments/chest`, `POST /api/punishments/stockpile`, `PATCH /api/punishments/:id/deploy`
+- Sticker Board: `GET /api/sticker-board/:userId`
 
 ### Core Architectural Decisions
 - **Command Center First**: Everything usable through Command Center. Dashboard shows only CommandProtocols.

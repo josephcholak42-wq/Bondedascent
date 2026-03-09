@@ -61,6 +61,8 @@ export const rewards = pgTable("rewards", {
   duration: text("duration"),
   unlocked: boolean("unlocked").notNull().default(false),
   unlockLevel: integer("unlock_level").notNull().default(1),
+  claimedAt: timestamp("claimed_at"),
+  redeemedAt: timestamp("redeemed_at"),
   simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -74,6 +76,8 @@ export const punishments = pgTable("punishments", {
   category: text("category"),
   duration: text("duration"),
   status: text("status").notNull().default("active"),
+  stockpiledAt: timestamp("stockpiled_at"),
+  deployedAt: timestamp("deployed_at"),
   simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -338,6 +342,7 @@ export const insertPunishmentSchema = createInsertSchema(punishments).pick({
   name: true,
   category: true,
   duration: true,
+  status: true,
   createdAsRole: true,
 });
 

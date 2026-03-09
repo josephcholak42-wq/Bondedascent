@@ -364,9 +364,12 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
             <Button data-testid={`punishment-complete-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
               onClick={() => handleAction(item.id, "complete")}>DONE</Button>
           )}
-          {item.type === "reward" && !item.data?.unlocked && (
-            <Button data-testid={`reward-redeem-${item.id}`} size="sm" className="bg-red-800 hover:bg-red-700 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-900/30"
-              onClick={() => handleAction(item.id, "redeem")}>CLAIM</Button>
+          {item.type === "reward" && !item.data?.unlocked && !item.data?.claimedAt && (
+            <Button data-testid={`reward-claim-${item.id}`} size="sm" className="bg-[#b87333] hover:bg-[#d4a24e] text-black h-8 px-3 text-[10px] font-black shadow-lg shadow-[#b87333]/30"
+              onClick={() => handleAction(item.id, "claim")}>CLAIM</Button>
+          )}
+          {item.type === "reward" && item.data?.claimedAt && !item.data?.redeemedAt && (
+            <span className="text-[9px] font-bold text-[#d4a24e]/60 uppercase tracking-wider px-2">In Chest</span>
           )}
           {item.type === "dare" && !item.data?.completed && (
             <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-red-800 hover:bg-red-700 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-900/30"

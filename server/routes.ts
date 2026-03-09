@@ -401,6 +401,44 @@ export async function registerRoutes(
     res.json({ message: "Reward deleted" });
   });
 
+  app.get("/api/rewards/chest", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getRewardChest(user.id);
+    res.json(list);
+  });
+
+  app.patch("/api/rewards/:id/claim", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allRewards = await storage.getRewardsForPair(userIds, user.role);
+    const owned = allRewards.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Reward not found" });
+    const reward = await storage.claimReward(req.params.id);
+    if (!reward) return res.status(404).json({ message: "Reward not found" });
+    await storage.logActivity(user.id, "reward_claimed", reward.name, user.role);
+    if (partner) {
+      await notifyUser(partner.id, `${user.username} claimed reward "${reward.name}" into their chest`, "info", user.role);
+    }
+    res.json(reward);
+  });
+
+  app.patch("/api/rewards/:id/redeem", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allRewards = await storage.getRewardsForPair(userIds, user.role);
+    const owned = allRewards.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Reward not found" });
+    const reward = await storage.redeemReward(req.params.id);
+    if (!reward) return res.status(404).json({ message: "Reward not found" });
+    await storage.logActivity(user.id, "reward_redeemed", reward.name, user.role);
+    if (partner) {
+      await notifyUser(partner.id, `${user.username} is redeeming reward: "${reward.name}"`, "alert", user.role);
+    }
+    res.json(reward);
+  });
+
   // --- PUNISHMENTS ---
   app.get("/api/punishments", requireAuth, async (req, res) => {
     const user = req.user as User;
@@ -460,6 +498,60 @@ export async function registerRoutes(
     if (!owned) return res.status(404).json({ message: "Punishment not found" });
     await storage.deletePunishment(req.params.id);
     res.json({ message: "Punishment deleted" });
+  });
+
+  app.get("/api/punishments/chest", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getPunishmentChest(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/punishments/stockpile", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const { name, category, duration } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Punishment name required" });
+    }
+    const punishment = await storage.createPunishment({
+      userId: partner ? partner.id : user.id,
+      assignedBy: user.id,
+      name: name.trim(),
+      category: category || null,
+      duration: duration || null,
+      status: "stockpiled",
+      createdAsRole: user.role,
+    });
+    await storage.stockpilePunishment(punishment.id);
+    await storage.logActivity(user.id, "punishment_stockpiled", name.trim(), user.role);
+    res.status(201).json(punishment);
+  });
+
+  app.patch("/api/punishments/:id/deploy", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const chest = await storage.getPunishmentChest(user.id);
+    const owned = chest.find(p => p.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Punishment not found in your chest" });
+    const punishment = await storage.deployPunishment(req.params.id);
+    if (!punishment) return res.status(404).json({ message: "Punishment not found" });
+    await storage.logActivity(user.id, "punishment_deployed", punishment.name, user.role);
+    if (partner) {
+      await notifyUser(partner.id, `${user.username} deployed punishment: "${punishment.name}"`, "alert", user.role);
+    }
+    res.json(punishment);
+  });
+
+  app.get("/api/sticker-board/:userId", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const targetId = req.params.userId;
+    if (targetId !== user.id && (!partner || targetId !== partner.id)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    const stickers = await storage.getStickers(targetId);
+    const withMessages = stickers.filter(s => s.message && s.message.trim());
+    res.json(withMessages);
   });
 
   // --- JOURNAL ---

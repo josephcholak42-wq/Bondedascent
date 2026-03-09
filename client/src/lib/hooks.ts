@@ -312,6 +312,90 @@ export function useDeleteReward() {
   });
 }
 
+export function useRewardChest() {
+  return useQuery<Reward[]>({ queryKey: ["/api/rewards/chest"] });
+}
+
+export function useClaimReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rewardId: string) => {
+      const res = await apiRequest("PATCH", `/api/rewards/${rewardId}/claim`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/rewards/chest"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function useRedeemReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rewardId: string) => {
+      const res = await apiRequest("PATCH", `/api/rewards/${rewardId}/redeem`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/rewards/chest"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function usePunishmentChest() {
+  return useQuery<Punishment[]>({ queryKey: ["/api/punishments/chest"] });
+}
+
+export function useStockpilePunishment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; category?: string; duration?: string }) => {
+      const res = await apiRequest("POST", "/api/punishments/stockpile", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/punishments"] });
+      qc.invalidateQueries({ queryKey: ["/api/punishments/chest"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useDeployPunishment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (punishmentId: string) => {
+      const res = await apiRequest("PATCH", `/api/punishments/${punishmentId}/deploy`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/punishments"] });
+      qc.invalidateQueries({ queryKey: ["/api/punishments/chest"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function useStickerBoard(userId?: string) {
+  return useQuery<Sticker[]>({
+    queryKey: ["/api/sticker-board", userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      const res = await fetch(`/api/sticker-board/${userId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch sticker board");
+      return res.json();
+    },
+    enabled: !!userId,
+  });
+}
+
 export function useDeletePunishment() {
   const qc = useQueryClient();
   return useMutation({
@@ -1614,6 +1698,7 @@ export function useSendSticker() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/stickers"] });
+      qc.invalidateQueries({ queryKey: ["/api/sticker-board"] });
     },
   });
 }

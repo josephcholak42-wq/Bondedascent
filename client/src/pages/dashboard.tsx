@@ -85,6 +85,7 @@ import {
   ListChecks,
   Hourglass,
   ChevronDown,
+  StickyNote,
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -175,6 +176,7 @@ import {
   useRatings,
   useStickers,
   useSendSticker,
+  useStickerBoard,
   useFeatureSettings,
   useToggleFeature,
   useIsFeatureEnabled,
@@ -187,6 +189,8 @@ import {
   useUploadProfilePic,
   useTrends,
   useUpdateTask,
+  useClaimReward,
+  useRewardChest,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -238,6 +242,9 @@ import ConfessionBooth from "@/components/confession-booth";
 import { InterrogationSetup, InterrogationMode, InterrogationGrading, InterrogationResults, InterrogationWaiting } from "@/components/interrogation";
 import AftercareChecklist from "@/components/aftercare-checklist";
 import AutoDomSimulation from "@/components/auto-dom-simulation";
+import StickerBoard from "@/components/sticker-board";
+import RewardChest from "@/components/reward-chest";
+import PunishmentChest from "@/components/punishment-chest";
 import { useToast } from "@/hooks/use-toast";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
@@ -442,6 +449,7 @@ export default function BondedAscentApp() {
 
   const { data: stickersList = [] } = useStickers();
   const sendStickerMutation = useSendSticker();
+  const { data: stickerBoardData = [] } = useStickerBoard(user?.id);
   const { data: featureSettingsList = [] } = useFeatureSettings();
   const toggleFeatureMutation = useToggleFeature();
   const { data: bodyMapZonesRaw = [] } = useBodyMapZones();
@@ -469,6 +477,7 @@ export default function BondedAscentApp() {
   const updateTaskMutation = useUpdateTask();
   const updateRitualMutation = useUpdateRitual();
   const updateStandingOrderMutation = useUpdateStandingOrder();
+  const claimRewardMutation = useClaimReward();
   const { data: trendData } = useTrends();
   const profilePicInputRef = useRef<HTMLInputElement>(null);
   const [stickerMessage, setStickerMessage] = useState("");
@@ -620,7 +629,7 @@ export default function BondedAscentApp() {
         enforcementLevel={(partnerEnforcement as any)?.enforcementLevel}
         isAssigning={createPartnerTaskMutation.isPending}
         stickers={stickersList}
-        onSendSticker={(stickerType, message) => { sendStickerMutation.mutate({ stickerType, message }); }}
+        onSendSticker={(stickerType, message) => { if (partner) sendStickerMutation.mutate({ recipientId: partner.id, stickerType, message }); }}
         featureSettings={featureSettingsList}
         onToggleFeature={(key, enabled) => { toggleFeatureMutation.mutate({ featureKey: key, enabled }); }}
         userStats={{ xp: user?.xp ?? 0, level: user?.level ?? 1, badges: (stats as any)?.badges ?? 0, activeTimers: demandTimers?.length ?? 0 }}
@@ -853,6 +862,9 @@ export default function BondedAscentApp() {
           completeDareMutation.mutate(itemId);
         }
         break;
+      case "claim":
+        claimRewardMutation.mutate(itemId);
+        break;
       case "redeem":
         toggleRewardMutation.mutate(itemId);
         break;
@@ -866,7 +878,7 @@ export default function BondedAscentApp() {
         reviewPartnerCheckInMutation.mutate({ checkInId: itemId, status: "rejected", xpAwarded: 0 });
         break;
     }
-  }, [respondToAccusationMutation, respondDemandTimerMutation, acknowledgeCommandMutation, toggleTaskMutation, punishments, updatePunishmentStatusMutation, completeDareMutation, toggleRewardMutation, dismissNotificationMutation, reviewPartnerCheckInMutation]);
+  }, [respondToAccusationMutation, respondDemandTimerMutation, acknowledgeCommandMutation, toggleTaskMutation, punishments, updatePunishmentStatusMutation, completeDareMutation, claimRewardMutation, toggleRewardMutation, dismissNotificationMutation, reviewPartnerCheckInMutation]);
 
   const renderContent = () => {
     if (userRole === "dom" && activeView === "dashboard") {
@@ -926,12 +938,29 @@ export default function BondedAscentApp() {
       );
     }
 
+    if (activeView === "reward-chest") {
+      return <RewardChest />;
+    }
+
     if (activeView === "profile") {
       return (
         <div className="space-y-8 animate-in slide-in-from-right duration-500">
+          <input
+            ref={profilePicInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            data-testid="input-profile-pic-profile"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadProfilePicMutation.mutate(file);
+              e.target.value = "";
+            }}
+          />
           <div className="text-center pt-4">
             <div
-              className="w-24 h-24 mx-auto rounded-full p-1 border-2 mb-4 bg-black"
+              className="w-24 h-24 mx-auto rounded-full p-1 border-2 mb-4 bg-black relative group cursor-pointer"
+              data-testid="profile-pic-container"
               style={{
                 borderColor:
                   userRole === "dom"
@@ -939,15 +968,33 @@ export default function BondedAscentApp() {
                     : "rgba(180,30,30,0.6)",
                 boxShadow: `0 0 20px var(--role-glow)`,
               }}
+              onClick={() => profilePicInputRef.current?.click()}
             >
               <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
-                <User
-                  size={40}
-                  className={
-                    userRole === "dom" ? "text-red-500" : "text-red-400"
-                  }
-                />
+                {user?.profilePic ? (
+                  <img
+                    src={user.profilePic}
+                    alt={user.username}
+                    className="w-full h-full object-cover"
+                    data-testid="img-profile-pic"
+                  />
+                ) : (
+                  <User
+                    size={40}
+                    className={
+                      userRole === "dom" ? "text-red-500" : "text-red-400"
+                    }
+                  />
+                )}
               </div>
+              <div className="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                <Camera size={24} className="text-white" />
+              </div>
+              {uploadProfilePicMutation.isPending && (
+                <div className="absolute inset-0 rounded-full bg-black/70 flex items-center justify-center">
+                  <Loader2 size={24} className="text-red-400 animate-spin" />
+                </div>
+              )}
             </div>
             <h2
               data-testid="text-username"
@@ -1020,8 +1067,12 @@ export default function BondedAscentApp() {
             {partner ? (
               <div className="bg-gradient-to-r from-red-950/30 to-black border border-red-900/30 p-5 rounded-2xl">
                 <div className="flex items-center gap-4 mb-3">
-                  <div className="w-12 h-12 rounded-full bg-red-900/30 border border-red-500/30 flex items-center justify-center">
-                    <Heart size={20} className="text-red-400" />
+                  <div className="w-12 h-12 rounded-full bg-red-900/30 border border-red-500/30 flex items-center justify-center overflow-hidden shadow-[0_0_10px_rgba(180,30,30,0.3)]" data-testid="partner-profile-pic">
+                    {partner.profilePic ? (
+                      <img src={partner.profilePic} alt={partner.username} className="w-full h-full object-cover" />
+                    ) : (
+                      <Heart size={20} className="text-red-400" />
+                    )}
                   </div>
                   <div>
                     <div className="font-bold text-white uppercase tracking-wider text-sm">
@@ -1102,13 +1153,21 @@ export default function BondedAscentApp() {
                       { type: "sparkle", emoji: "✨", label: "sparkle" },
                     ].map((s) => (
                       <button key={s.type} data-testid={`settings-sticker-${s.type}`}
-                        onClick={() => sendStickerMutation.mutate({ stickerType: s.type })}
+                        onClick={() => { if (partner) sendStickerMutation.mutate({ recipientId: partner.id, stickerType: s.type, message: stickerMessage.trim() || undefined }); }}
                         className="p-2.5 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-red-900/40 active:bg-red-950/40 active:border-red-700/50 active:shadow-[0_0_10px_rgba(140,15,15,0.3)]">
                         <span className="text-xl">{s.emoji}</span>
                         <div className="text-[7px] text-slate-500 uppercase mt-0.5">{s.label}</div>
                       </button>
                     ))}
                   </div>
+                  <input
+                    data-testid="input-sticker-quick-message"
+                    type="text"
+                    value={stickerMessage}
+                    onChange={e => setStickerMessage(e.target.value)}
+                    placeholder="Add a message (optional)..."
+                    className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-700/50 transition-colors"
+                  />
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1127,6 +1186,15 @@ export default function BondedAscentApp() {
                   )}
                 </div>
               )}
+              <button
+                data-testid="button-view-sticker-board"
+                onClick={() => navigateView("sticker-board")}
+                className="w-full mt-2 py-2 bg-amber-900/20 hover:bg-amber-900/30 border border-amber-700/20 hover:border-amber-600/30 rounded-xl text-[10px] font-bold text-amber-400 uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <StickyNote size={12} />
+                View Sticker Board
+                <ChevronRight size={12} />
+              </button>
             </FeatureDrawer>
           </div>
 
@@ -1193,6 +1261,13 @@ export default function BondedAscentApp() {
               label="Punishments & Rewards"
               onClick={() => navigateView("punishments")}
             />
+            {userRole === "dom" && (
+              <ProfileItem
+                icon={<Siren size={20} />}
+                label="Punishment Arsenal"
+                onClick={() => navigateView("punishment-chest")}
+              />
+            )}
           </div>
 
           <div className="space-y-3 pb-8">
@@ -1339,6 +1414,35 @@ export default function BondedAscentApp() {
               </div>
             )}
           </div>
+        </div>
+      );
+    }
+
+    if (activeView === "punishment-chest") {
+      return (
+        <PunishmentChest onBack={() => navigateView("profile")} />
+      );
+    }
+
+    if (activeView === "sticker-board") {
+      return (
+        <div className="animate-in slide-in-from-right duration-500 space-y-6">
+          <button
+            onClick={() => navigateView("profile")}
+            className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 uppercase text-xs font-bold tracking-widest cursor-pointer"
+          >
+            <ChevronRight className="rotate-180" size={14} /> Back to Profile
+          </button>
+          <StickerBoard
+            stickers={stickersList}
+            isDom={userRole === "dom"}
+            partnerName={partner?.username}
+            userId={userRole === "dom" ? partner?.id : user?.id}
+            onSendSticker={(stickerType, message) => {
+              if (partner) sendStickerMutation.mutate({ recipientId: partner.id, stickerType, message });
+            }}
+            isSending={sendStickerMutation.isPending}
+          />
         </div>
       );
     }
@@ -1645,6 +1749,13 @@ export default function BondedAscentApp() {
             active={activeView === "stats"}
             onClick={() => navigateView("stats")}
           />
+          {userRole === "sub" && (
+            <SidebarIcon
+              icon={<Gift />}
+              active={activeView === "reward-chest"}
+              onClick={() => navigateView("reward-chest")}
+            />
+          )}
           <div className="mt-auto pt-8 border-t border-white/10 w-full flex justify-center">
             <SidebarIcon
               icon={<Settings />}
@@ -1664,6 +1775,17 @@ export default function BondedAscentApp() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <div
+                className="w-8 h-8 rounded-full border border-white/20 overflow-hidden flex items-center justify-center bg-slate-900 shadow-[0_0_8px_rgba(180,30,30,0.3)] cursor-pointer"
+                data-testid="header-profile-pic"
+                onClick={() => navigateView("profile")}
+              >
+                {user?.profilePic ? (
+                  <img src={user.profilePic} alt={user?.username || ""} className="w-full h-full object-cover" />
+                ) : (
+                  <User size={16} className="text-slate-400" />
+                )}
+              </div>
               <span className="text-sm font-bold text-white uppercase tracking-wider hidden sm:inline">
                 {user?.username}
               </span>
@@ -1718,9 +1840,14 @@ export default function BondedAscentApp() {
           />
           <div
             onClick={() => navigateView("profile")}
-            className={`mb-2 w-14 h-14 rounded-full border-2 border-slate-800 flex items-center justify-center shadow-lg transition-transform active:scale-95 cursor-pointer ${activeView === "profile" ? "bg-red-600 border-red-400 text-white shadow-[0_0_15px_red]" : "bg-slate-900 text-slate-400"}`}
+            className={`mb-2 w-14 h-14 rounded-full border-2 border-slate-800 flex items-center justify-center shadow-lg transition-transform active:scale-95 cursor-pointer overflow-hidden ${activeView === "profile" ? "bg-red-600 border-red-400 text-white shadow-[0_0_15px_red]" : "bg-slate-900 text-slate-400"}`}
+            data-testid="mobile-profile-pic"
           >
-            <Menu size={26} />
+            {user?.profilePic ? (
+              <img src={user.profilePic} alt={user?.username || ""} className="w-full h-full object-cover" />
+            ) : (
+              <Menu size={26} />
+            )}
           </div>
           <MobileNavIcon
             icon={<Activity />}
