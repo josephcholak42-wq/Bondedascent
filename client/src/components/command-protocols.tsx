@@ -891,17 +891,34 @@ export function CommandProtocols({
             )}
           </div>
 
-          {isSelecting && selectedIds.size > 0 && (
+          {isSelecting && (
             <div className="sticky bottom-0 px-5 pb-4 pt-2 bg-gradient-to-t from-black via-black/95 to-transparent" data-testid="cp-bulk-actions">
               <div className="flex items-center gap-2 p-3 bg-slate-900/90 border border-red-500/30 rounded-xl backdrop-blur-sm">
                 <span className="text-[10px] font-black text-white uppercase tracking-wider">{selectedIds.size} selected</span>
+                <button
+                  onClick={() => {
+                    if (selectedIds.size === sorted.length) {
+                      setSelectedIds(new Set());
+                    } else {
+                      setSelectedIds(new Set(sorted.map(item => item.id)));
+                    }
+                  }}
+                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 text-slate-400 hover:text-red-300 transition-colors cursor-pointer"
+                  data-testid="cp-select-all"
+                >
+                  {selectedIds.size === sorted.length && sorted.length > 0 ? "Deselect All" : "Select All"}
+                </button>
                 <div className="flex-1" />
-                <Button size="sm" className="h-7 px-3 text-[10px] bg-red-800 hover:bg-red-700 font-bold" onClick={handleBulkComplete} data-testid="cp-bulk-complete">
-                  Complete
-                </Button>
-                <Button size="sm" className="h-7 px-3 text-[10px] bg-red-700 hover:bg-red-600 font-bold" onClick={handleBulkDelete} data-testid="cp-bulk-delete">
-                  Remove
-                </Button>
+                {selectedIds.size > 0 && (
+                  <>
+                    <Button size="sm" className="h-7 px-3 text-[10px] bg-red-800 hover:bg-red-700 font-bold" onClick={handleBulkComplete} data-testid="cp-bulk-complete">
+                      Complete
+                    </Button>
+                    <Button size="sm" className="h-7 px-3 text-[10px] bg-red-700 hover:bg-red-600 font-bold" onClick={handleBulkDelete} data-testid="cp-bulk-delete">
+                      Remove
+                    </Button>
+                  </>
+                )}
                 <button onClick={() => { setSelectedIds(new Set()); setIsSelecting(false); }}
                   className="p-1 text-slate-500 hover:text-white cursor-pointer"><X size={14} /></button>
               </div>
