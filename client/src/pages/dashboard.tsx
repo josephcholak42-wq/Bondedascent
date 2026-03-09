@@ -232,6 +232,8 @@ import {
   useActiveSimulation,
   useActivateSimulation,
   useDeactivateSimulation,
+  useAchievements,
+  useContracts,
 } from "@/lib/hooks";
 import { AmbientPresence } from "@/components/ambient-presence";
 import { useSSE } from "@/lib/useSSE";
@@ -479,6 +481,8 @@ export default function BondedAscentApp() {
   const updateStandingOrderMutation = useUpdateStandingOrder();
   const claimRewardMutation = useClaimReward();
   const { data: trendData } = useTrends();
+  const { data: achievementsList = [] } = useAchievements();
+  const { data: contractsList = [] } = useContracts();
   const profilePicInputRef = useRef<HTMLInputElement>(null);
   const [stickerMessage, setStickerMessage] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -496,8 +500,12 @@ export default function BondedAscentApp() {
     return () => document.documentElement.removeAttribute("data-role");
   }, [userRole]);
 
-  const handleToggleTask = (taskId: string) => {
-    toggleTaskMutation.mutate(taskId);
+  const handleToggleTask = (taskId: string, completionNotes?: string) => {
+    if (completionNotes !== undefined) {
+      toggleTaskMutation.mutate({ taskId, completionNotes });
+    } else {
+      toggleTaskMutation.mutate(taskId);
+    }
   };
 
   const handleCreateTask = () => {
@@ -852,14 +860,18 @@ export default function BondedAscentApp() {
         acknowledgeCommandMutation.mutate(itemId);
         break;
       case "toggle":
-        handleToggleTask(itemId);
+        handleToggleTask(itemId, payload?.completionNotes);
         break;
       case "complete":
         const punishItem = (punishments || []).find((p: any) => p.id === itemId);
         if (punishItem) {
-          updatePunishmentStatusMutation.mutate({ id: itemId, status: "completed" });
+          updatePunishmentStatusMutation.mutate({ punishmentId: itemId, status: "completed", completionNotes: payload?.completionNotes });
         } else {
-          completeDareMutation.mutate(itemId);
+          if (payload?.completionNotes) {
+            completeDareMutation.mutate({ dareId: itemId, completionNotes: payload.completionNotes });
+          } else {
+            completeDareMutation.mutate(itemId);
+          }
         }
         break;
       case "claim":
@@ -1138,64 +1150,22 @@ export default function BondedAscentApp() {
               </div>
             </FeatureDrawer>
 
-            <FeatureDrawer title="Sticker Rewards" icon={<Sparkles size={14} className="text-red-400" />} count={stickersList?.filter((s: any) => s.recipientId === user?.id).length}>
-              {userRole === "dom" ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { type: "gold-star", emoji: "⭐", label: "gold star" },
-                      { type: "heart", emoji: "❤️", label: "heart" },
-                      { type: "fire", emoji: "🔥", label: "fire" },
-                      { type: "crown", emoji: "👑", label: "crown" },
-                      { type: "diamond", emoji: "💎", label: "diamond" },
-                      { type: "ribbon", emoji: "🎀", label: "ribbon" },
-                      { type: "trophy", emoji: "🏆", label: "trophy" },
-                      { type: "sparkle", emoji: "✨", label: "sparkle" },
-                    ].map((s) => (
-                      <button key={s.type} data-testid={`settings-sticker-${s.type}`}
-                        onClick={() => { if (partner) sendStickerMutation.mutate({ recipientId: partner.id, stickerType: s.type, message: stickerMessage.trim() || undefined }); }}
-                        className="p-2.5 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-red-900/40 active:bg-red-950/40 active:border-red-700/50 active:shadow-[0_0_10px_rgba(140,15,15,0.3)]">
-                        <span className="text-xl">{s.emoji}</span>
-                        <div className="text-[7px] text-slate-500 uppercase mt-0.5">{s.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                  <input
-                    data-testid="input-sticker-quick-message"
-                    type="text"
-                    value={stickerMessage}
-                    onChange={e => setStickerMessage(e.target.value)}
-                    placeholder="Add a message (optional)..."
-                    className="w-full bg-black/60 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-amber-700/50 transition-colors"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {stickersList?.filter((s: any) => s.recipientId === user?.id).length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {stickersList.filter((s: any) => s.recipientId === user?.id).slice(0, 12).map((s: any) => (
-                        <div key={s.id} data-testid={`settings-sticker-received-${s.id}`}
-                          className="bg-slate-900/60 border border-white/5 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
-                          <span className="text-base">{["gold-star","heart","fire","crown","diamond","ribbon","trophy","sparkle"].includes(s.stickerType) ? {"gold-star":"⭐","heart":"❤️","fire":"🔥","crown":"👑","diamond":"💎","ribbon":"🎀","trophy":"🏆","sparkle":"✨"}[s.stickerType as string] : "✨"}</span>
-                          {s.message && <span className="text-[9px] text-slate-400 max-w-[80px] truncate">{s.message}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-slate-600 text-center py-2">No stickers received</p>
-                  )}
-                </div>
-              )}
-              <button
-                data-testid="button-view-sticker-board"
-                onClick={() => navigateView("sticker-board")}
-                className="w-full mt-2 py-2 bg-amber-900/20 hover:bg-amber-900/30 border border-amber-700/20 hover:border-amber-600/30 rounded-xl text-[10px] font-bold text-amber-400 uppercase tracking-widest transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                <StickyNote size={12} />
-                View Sticker Board
-                <ChevronRight size={12} />
-              </button>
-            </FeatureDrawer>
+            <StickerBoard
+              stickers={stickersList}
+              isDom={userRole === "dom"}
+              partnerName={partner?.username}
+              userId={userRole === "dom" ? partner?.id : user?.id}
+              onSendSticker={(stickerType, message) => {
+                if (partner) sendStickerMutation.mutate({ recipientId: partner.id, stickerType, message });
+              }}
+              isSending={sendStickerMutation.isPending}
+              achievements={achievementsList}
+              ratings={ratingsList as any}
+              limits={limitsList}
+              contracts={contractsList}
+              desiredChanges={desiredChanges}
+              permissionRequests={permissionRequests}
+            />
           </div>
 
           {userRole === "dom" && (
@@ -1442,6 +1412,12 @@ export default function BondedAscentApp() {
               if (partner) sendStickerMutation.mutate({ recipientId: partner.id, stickerType, message });
             }}
             isSending={sendStickerMutation.isPending}
+            achievements={achievementsList}
+            ratings={ratingsList as any}
+            limits={limitsList}
+            contracts={contractsList}
+            desiredChanges={desiredChanges}
+            permissionRequests={permissionRequests}
           />
         </div>
       );

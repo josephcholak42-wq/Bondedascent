@@ -202,9 +202,10 @@ export async function registerRoutes(
     const allTasks = await storage.getTasksForPair(userIds);
     const owned = allTasks.find(t => t.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Task not found" });
-    const { text } = req.body;
+    const { text, completionNotes } = req.body;
     const data: any = {};
     if (text !== undefined) data.text = text;
+    if (completionNotes !== undefined) data.completionNotes = completionNotes;
     const task = await storage.updateTask(req.params.id, data);
     if (!task) return res.status(404).json({ message: "Task not found" });
     res.json(task);
@@ -218,7 +219,8 @@ export async function registerRoutes(
     const owned = allTasks.find(t => t.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Task not found" });
 
-    const task = await storage.toggleTask(req.params.id);
+    const { completionNotes } = req.body || {};
+    const task = await storage.toggleTask(req.params.id, completionNotes);
     if (!task) return res.status(404).json({ message: "Task not found" });
 
     if (task.done) {
@@ -340,7 +342,8 @@ export async function registerRoutes(
     const owned = dares.find(d => d.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Dare not found" });
 
-    const dare = await storage.completeDare(req.params.id);
+    const { completionNotes } = req.body || {};
+    const dare = await storage.completeDare(req.params.id, completionNotes);
     if (!dare) return res.status(404).json({ message: "Dare not found" });
 
     const freshUser = await storage.getUser(user.id);
@@ -370,6 +373,23 @@ export async function registerRoutes(
     const lvl = typeof unlockLevel === "number" && unlockLevel > 0 ? unlockLevel : 1;
     const reward = await storage.createReward({ userId: user.id, name: name.trim(), unlockLevel: lvl, category: category || null, duration: duration || null, createdAsRole: user.role });
     res.status(201).json(reward);
+  });
+
+  app.patch("/api/rewards/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const userIds = partner ? [user.id, partner.id] : [user.id];
+    const allRewards = await storage.getRewardsForPair(userIds);
+    const owned = allRewards.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Reward not found" });
+    if (owned.userId !== user.id) return res.status(403).json({ message: "Only the reward owner can edit" });
+    const { name, description } = req.body;
+    const data: any = {};
+    if (name !== undefined) data.name = name;
+    if (description !== undefined) data.description = description;
+    const reward = await storage.updateReward(req.params.id, data);
+    if (!reward) return res.status(404).json({ message: "Reward not found" });
+    res.json(reward);
   });
 
   app.patch("/api/rewards/:id/toggle", requireAuth, async (req, res) => {
@@ -469,7 +489,7 @@ export async function registerRoutes(
 
   app.patch("/api/punishments/:id/status", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { status } = req.body;
+    const { status, completionNotes } = req.body;
     if (!status || !["active", "completed", "cancelled"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
@@ -480,7 +500,7 @@ export async function registerRoutes(
     const owned = allPunishments.find(p => p.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Punishment not found" });
 
-    const punishment = await storage.updatePunishmentStatus(req.params.id, status);
+    const punishment = await storage.updatePunishmentStatus(req.params.id, status, completionNotes);
     if (!punishment) return res.status(404).json({ message: "Punishment not found" });
     await storage.logActivity(user.id, `punishment_${status}`, punishment.name, user.role);
     if (partner) {
@@ -1070,11 +1090,31 @@ export async function registerRoutes(
 
   app.patch("/api/wagers/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
+    if (user.role !== "dom") return res.status(403).json({ message: "Only Dom can resolve wagers" });
     const existing = await storage.getWagerById(req.params.id);
     if (!existing) return res.status(404).json({ message: "Not found" });
     if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     const wager = await storage.updateWager(req.params.id, req.body);
     if (!wager) return res.status(404).json({ message: "Not found" });
+
+    if (wager.status === "won" && wager.winnerId && existing.status !== "won") {
+      const existingVoucher = await storage.getRewardByWagerSourceId(wager.id);
+      if (!existingVoucher) {
+        await storage.createReward({
+          userId: wager.winnerId,
+          name: `Wager Voucher: ${wager.title}`,
+          description: "Won wager — fill in your prize",
+          category: "Wager Prize",
+          unlockLevel: 1,
+          wagerSourceId: wager.id,
+          isVoucher: true,
+          createdAsRole: user.role,
+        });
+        await storage.logActivity(wager.winnerId, "reward_voucher_created", `Wager Voucher: ${wager.title}`, user.role);
+        await notifyUser(wager.winnerId, `You won the wager "${wager.title}"! A reward voucher has been added — fill in your prize.`, "info", user.role);
+      }
+    }
+
     res.json(wager);
   });
 

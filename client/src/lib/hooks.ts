@@ -155,8 +155,10 @@ export function useCreateTask() {
 export function useToggleTask() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (taskId: string) => {
-      const res = await apiRequest("PATCH", `/api/tasks/${taskId}/toggle`);
+    mutationFn: async (data: string | { taskId: string; completionNotes?: string }) => {
+      const taskId = typeof data === "string" ? data : data.taskId;
+      const completionNotes = typeof data === "string" ? undefined : data.completionNotes;
+      const res = await apiRequest("PATCH", `/api/tasks/${taskId}/toggle`, completionNotes !== undefined ? { completionNotes } : undefined);
       return res.json();
     },
     onSuccess: () => {
@@ -254,8 +256,10 @@ export function useSpinDare() {
 export function useCompleteDare() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (dareId: string) => {
-      const res = await apiRequest("PATCH", `/api/dares/${dareId}/complete`);
+    mutationFn: async (data: string | { dareId: string; completionNotes?: string }) => {
+      const dareId = typeof data === "string" ? data : data.dareId;
+      const completionNotes = typeof data === "string" ? undefined : data.completionNotes;
+      const res = await apiRequest("PATCH", `/api/dares/${dareId}/complete`, completionNotes !== undefined ? { completionNotes } : undefined);
       return res.json();
     },
     onSuccess: () => {
@@ -412,8 +416,8 @@ export function useDeletePunishment() {
 export function useUpdatePunishmentStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ punishmentId, status }: { punishmentId: string; status: string }) => {
-      const res = await apiRequest("PATCH", `/api/punishments/${punishmentId}/status`, { status });
+    mutationFn: async ({ punishmentId, status, completionNotes }: { punishmentId: string; status: string; completionNotes?: string }) => {
+      const res = await apiRequest("PATCH", `/api/punishments/${punishmentId}/status`, { status, ...(completionNotes !== undefined ? { completionNotes } : {}) });
       return res.json();
     },
     onSuccess: () => {
@@ -816,6 +820,24 @@ export function useUpdateWager() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/wagers"] });
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/rewards/chest"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function useUpdateReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; description?: string }) => {
+      const res = await apiRequest("PATCH", `/api/rewards/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/rewards/chest"] });
       qc.invalidateQueries({ queryKey: ["/api/activity"] });
     },
   });

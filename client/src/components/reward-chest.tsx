@@ -1,6 +1,7 @@
-import { Gift, Sparkles, Crown, Star, Package } from "lucide-react";
+import { useState } from "react";
+import { Gift, Sparkles, Crown, Star, Package, Pencil, Check, Dices } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRewardChest, useRedeemReward } from "@/lib/hooks";
+import { useRewardChest, useRedeemReward, useUpdateReward, useRewards } from "@/lib/hooks";
 import type { Reward } from "@shared/schema";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -12,11 +13,119 @@ const CATEGORY_COLORS: Record<string, string> = {
   "Power Exchange": "bg-red-950/40 text-red-400 border-red-800/40",
   Sensory: "bg-[#9a3412]/30 text-[#e87640] border-[#c2410c]/40",
   Intimacy: "bg-red-900/40 text-red-300 border-red-700/40",
+  "Wager Prize": "bg-[#451a03]/60 text-[#d4a24e] border-[#92400e]/40",
 };
+
+function VoucherCard({ reward }: { reward: Reward }) {
+  const redeemMutation = useRedeemReward();
+  const updateMutation = useUpdateReward();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editDescription, setEditDescription] = useState(reward.description || "");
+
+  const handleSave = () => {
+    updateMutation.mutate(
+      { id: reward.id, description: editDescription.trim() },
+      { onSuccess: () => setIsEditing(false) }
+    );
+  };
+
+  return (
+    <div
+      data-testid={`card-voucher-${reward.id}`}
+      className="relative group bg-gradient-to-br from-[#1a1207] via-[#1c1409] to-[#0f0b04] border-2 border-dashed border-[#d4a24e]/40 rounded-2xl p-4 shadow-lg shadow-[#d4a24e]/15 hover:shadow-[#d4a24e]/30 hover:border-[#d4a24e]/60 transition-all duration-300"
+    >
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#d4a24e]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#d4a24e]/30 to-[#b87333]/20 border border-[#d4a24e]/40 flex items-center justify-center">
+            <Dices size={18} className="text-[#d4a24e]" />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-[#d4a24e]/15 text-[#d4a24e] border-[#d4a24e]/30 flex items-center gap-1">
+            <Sparkles size={8} />
+            VOUCHER
+          </span>
+        </div>
+        <h3 className="text-sm font-bold text-[#e8d5b0] leading-snug mb-2">{reward.name}</h3>
+
+        {isEditing ? (
+          <div className="space-y-2 mb-3">
+            <textarea
+              data-testid={`input-voucher-description-${reward.id}`}
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Write your prize here..."
+              className="w-full bg-black/50 border border-[#d4a24e]/30 rounded-lg px-3 py-2 text-xs text-[#e8d5b0] placeholder:text-[#b87333]/40 focus:outline-none focus:border-[#d4a24e]/60 resize-none"
+              rows={3}
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <Button
+                data-testid={`button-save-voucher-${reward.id}`}
+                size="sm"
+                disabled={updateMutation.isPending}
+                onClick={handleSave}
+                className="flex-1 bg-[#d4a24e] hover:bg-[#e8b85e] text-black font-black text-[10px] uppercase tracking-widest h-7 rounded-lg"
+              >
+                <Check size={12} className="mr-1" />
+                {updateMutation.isPending ? "Saving..." : "Save Prize"}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => { setIsEditing(false); setEditDescription(reward.description || ""); }}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] h-7 rounded-lg"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-3">
+            {reward.description && reward.description !== "Won wager — fill in your prize" ? (
+              <div className="flex items-start gap-2">
+                <p className="text-xs text-[#d4a24e]/80 flex-1 italic">"{reward.description}"</p>
+                <button
+                  data-testid={`button-edit-voucher-${reward.id}`}
+                  onClick={() => setIsEditing(true)}
+                  className="text-[#b87333]/50 hover:text-[#d4a24e] transition-colors cursor-pointer shrink-0"
+                >
+                  <Pencil size={12} />
+                </button>
+              </div>
+            ) : (
+              <button
+                data-testid={`button-fill-voucher-${reward.id}`}
+                onClick={() => setIsEditing(true)}
+                className="w-full text-left px-3 py-2 bg-[#d4a24e]/10 border border-dashed border-[#d4a24e]/30 rounded-lg text-xs text-[#d4a24e]/60 hover:text-[#d4a24e] hover:border-[#d4a24e]/50 transition-all cursor-pointer"
+              >
+                <Pencil size={10} className="inline mr-1.5" />
+                Fill in your prize...
+              </button>
+            )}
+          </div>
+        )}
+
+        <Button
+          data-testid={`button-redeem-voucher-${reward.id}`}
+          size="sm"
+          disabled={redeemMutation.isPending}
+          onClick={() => redeemMutation.mutate(reward.id)}
+          className="w-full bg-gradient-to-r from-[#d4a24e] to-[#b87333] hover:from-[#e8b85e] hover:to-[#c98343] text-black font-black text-[10px] uppercase tracking-widest h-8 rounded-xl shadow-lg shadow-[#d4a24e]/30 hover:shadow-[#d4a24e]/50 transition-all duration-300"
+        >
+          <Sparkles size={12} className="mr-1" />
+          {redeemMutation.isPending ? "Redeeming..." : "Redeem Voucher"}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function RewardCard({ reward }: { reward: Reward }) {
   const redeemMutation = useRedeemReward();
   const categoryStyle = CATEGORY_COLORS[reward.category || ""] || "bg-[#b87333]/20 text-[#d4a24e] border-[#b87333]/40";
+
+  if (reward.isVoucher) {
+    return <VoucherCard reward={reward} />;
+  }
 
   return (
     <div
@@ -56,6 +165,10 @@ function RewardCard({ reward }: { reward: Reward }) {
 
 export default function RewardChest() {
   const { data: chestRewards = [], isLoading } = useRewardChest();
+  const { data: allRewards = [] } = useRewards();
+
+  const vouchers = allRewards.filter((r: Reward) => r.isVoucher && !r.redeemedAt);
+  const nonChestVouchers = vouchers.filter((v: Reward) => !chestRewards.find((cr: Reward) => cr.id === v.id));
 
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-20" data-testid="view-reward-chest">
@@ -80,11 +193,25 @@ export default function RewardChest() {
         )}
       </div>
 
+      {nonChestVouchers.length > 0 && (
+        <div className="space-y-3" data-testid="section-vouchers">
+          <h3 className="text-xs font-black text-[#d4a24e] uppercase tracking-widest flex items-center gap-2">
+            <Dices size={14} />
+            Wager Vouchers
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {nonChestVouchers.map((reward: Reward) => (
+              <VoucherCard key={reward.id} reward={reward} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="w-8 h-8 border-2 border-[#d4a24e]/30 border-t-[#d4a24e] rounded-full animate-spin" />
         </div>
-      ) : chestRewards.length === 0 ? (
+      ) : chestRewards.length === 0 && nonChestVouchers.length === 0 ? (
         <div className="text-center py-16" data-testid="empty-reward-chest">
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-[#1a1207] to-[#0f0b04] border border-[#b87333]/20 mb-6 shadow-inner">
             <Package size={40} className="text-[#b87333]/40" />
@@ -98,7 +225,7 @@ export default function RewardChest() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {chestRewards.map((reward) => (
+          {chestRewards.map((reward: Reward) => (
             <RewardCard key={reward.id} reward={reward} />
           ))}
         </div>

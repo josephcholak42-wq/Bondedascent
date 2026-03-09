@@ -148,6 +148,18 @@ const FILTER_OPTIONS = [
   { key: "simulation", label: "Simulation", icon: Flame, types: [] },
 ];
 
+const WINDOW_CONFIG = [
+  { key: "urgent", label: "URGENT", icon: Flame, types: ["demand", "command", "accusation"], colSpan: "col-span-2", rowSpan: "row-span-2", maxH: "max-h-[320px]", borderColor: "#dc2626", glowColor: "rgba(220,38,38,0.25)", bgFrom: "rgba(127,29,29,0.35)", headerBg: "rgba(220,38,38,0.12)" },
+  { key: "directives", label: "DIRECTIVES", icon: Target, types: ["task", "standing_order", "ritual"], colSpan: "col-span-1", rowSpan: "row-span-3", maxH: "max-h-[420px]", borderColor: "#991b1b", glowColor: "rgba(153,27,27,0.2)", bgFrom: "rgba(127,29,29,0.25)", headerBg: "rgba(153,27,27,0.12)" },
+  { key: "punishments", label: "PUNISHMENTS", icon: Gavel, types: ["punishment", "dare"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[280px]", borderColor: "#b91c1c", glowColor: "rgba(185,28,28,0.2)", bgFrom: "rgba(127,29,29,0.3)", headerBg: "rgba(185,28,28,0.1)" },
+  { key: "rewards", label: "REWARDS", icon: Gift, types: ["reward", "achievement", "sticker_received"], colSpan: "col-span-1", rowSpan: "row-span-1", maxH: "max-h-[200px]", borderColor: "#d4a24e", glowColor: "rgba(212,162,78,0.2)", bgFrom: "rgba(69,26,3,0.35)", headerBg: "rgba(212,162,78,0.1)" },
+  { key: "scenes", label: "SCENES", icon: Play, types: ["play_session", "wager", "countdown_event"], colSpan: "col-span-2", rowSpan: "row-span-1", maxH: "max-h-[220px]", borderColor: "#e87640", glowColor: "rgba(232,118,64,0.2)", bgFrom: "rgba(67,20,7,0.35)", headerBg: "rgba(232,118,64,0.08)" },
+  { key: "reviews", label: "REVIEWS", icon: MessageSquare, types: ["checkin_review", "notification"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[280px]", borderColor: "#64748b", glowColor: "rgba(100,116,139,0.15)", bgFrom: "rgba(30,41,59,0.4)", headerBg: "rgba(100,116,139,0.08)" },
+  { key: "connection", label: "CONNECTION", icon: Heart, types: ["devotion", "secret", "conflict", "rating"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[280px]", borderColor: "#b87333", glowColor: "rgba(184,115,51,0.2)", bgFrom: "rgba(69,26,3,0.3)", headerBg: "rgba(184,115,51,0.08)" },
+  { key: "structure", label: "STRUCTURE", icon: Shield, types: ["permission_request", "desired_change", "limit"], colSpan: "col-span-1", rowSpan: "row-span-1", maxH: "max-h-[200px]", borderColor: "#475569", glowColor: "rgba(71,85,105,0.15)", bgFrom: "rgba(30,41,59,0.35)", headerBg: "rgba(71,85,105,0.08)" },
+  { key: "journal", label: "JOURNAL", icon: BookOpen, types: ["journal"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[300px]", borderColor: "#92622a", glowColor: "rgba(146,98,42,0.2)", bgFrom: "rgba(69,26,3,0.25)", headerBg: "rgba(146,98,42,0.08)" },
+];
+
 function formatCountdown(seconds: number) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -244,9 +256,36 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const [editTitle, setEditTitle] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCompletionNotes, setShowCompletionNotes] = useState(false);
+  const [completionNotesText, setCompletionNotesText] = useState("");
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
   const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.notification;
   const Icon = config.icon;
   const isUrgent = ["demand", "command", "accusation"].includes(item.type);
+  const isCompletable = ["task", "punishment", "dare"].includes(item.type);
+  const isCompleted = item.data?.done || item.data?.completed || item.data?.status === "completed";
+
+  const initiateCompletion = (action: string) => {
+    setPendingAction(action);
+    setCompletionNotesText("");
+    setShowCompletionNotes(true);
+  };
+
+  const confirmCompletion = () => {
+    if (!pendingAction) return;
+    const notes = completionNotesText.trim() || undefined;
+    feedbackComplete();
+    onAction(item.id, pendingAction, notes ? { completionNotes: notes } : undefined);
+    setShowCompletionNotes(false);
+    setCompletionNotesText("");
+    setPendingAction(null);
+  };
+
+  const cancelCompletion = () => {
+    setShowCompletionNotes(false);
+    setCompletionNotesText("");
+    setPendingAction(null);
+  };
 
   const handleAction = (id: string, action: string, payload?: any) => {
     if (action === "toggle" || action === "complete" || action === "approve" || action === "redeem") {
@@ -356,13 +395,13 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
             <button data-testid={`task-toggle-${item.id}`}
               className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
                 item.data?.done ? "border-red-700 bg-red-900/30" : "border-slate-600/40 hover:border-red-700 hover:bg-red-950/30"
-              }`} onClick={() => handleAction(item.id, "toggle")}>
+              }`} onClick={() => item.data?.done ? handleAction(item.id, "toggle") : initiateCompletion("toggle")}>
               {item.data?.done && <CheckCircle size={14} className="text-red-400" />}
             </button>
           )}
-          {item.type === "punishment" && (
+          {item.type === "punishment" && item.data?.status !== "completed" && (
             <Button data-testid={`punishment-complete-${item.id}`} size="sm" className="bg-red-800/80 hover:bg-red-700 h-8 px-3 text-[10px] font-bold"
-              onClick={() => handleAction(item.id, "complete")}>DONE</Button>
+              onClick={() => initiateCompletion("complete")}>DONE</Button>
           )}
           {item.type === "reward" && !item.data?.unlocked && !item.data?.claimedAt && (
             <Button data-testid={`reward-claim-${item.id}`} size="sm" className="bg-[#b87333] hover:bg-[#d4a24e] text-black h-8 px-3 text-[10px] font-black shadow-lg shadow-[#b87333]/30"
@@ -373,7 +412,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
           )}
           {item.type === "dare" && !item.data?.completed && (
             <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-red-800 hover:bg-red-700 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-900/30"
-              onClick={() => handleAction(item.id, "complete")}>DONE</Button>
+              onClick={() => initiateCompletion("complete")}>DONE</Button>
           )}
           {item.type === "notification" && (
             <button data-testid={`notification-dismiss-${item.id}`} className="text-slate-600 hover:text-white transition-colors p-1 cursor-pointer"
@@ -382,12 +421,39 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         </div>
       </div>
 
+      {showCompletionNotes && (
+        <div className="px-3.5 pb-3 pt-1 border-t border-red-800/30 bg-gradient-to-r from-red-950/40 to-black/40" data-testid={`completion-notes-prompt-${item.id}`}>
+          <p className="text-[10px] font-bold text-red-300/80 uppercase tracking-wider mb-1.5">Completion Notes <span className="text-slate-500 font-normal normal-case tracking-normal">(optional)</span></p>
+          <textarea
+            data-testid={`completion-notes-input-${item.id}`}
+            value={completionNotesText}
+            onChange={(e) => setCompletionNotesText(e.target.value)}
+            placeholder="Add notes about how this was completed..."
+            className="w-full bg-black/50 border border-red-900/40 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/50 resize-none"
+            rows={2}
+            autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) confirmCompletion(); }}
+          />
+          <div className="flex justify-end gap-2 mt-1.5">
+            <Button size="sm" className="h-7 px-3 text-[10px] bg-slate-700 hover:bg-slate-600" onClick={cancelCompletion} data-testid={`completion-notes-cancel-${item.id}`}>Cancel</Button>
+            <Button size="sm" className="h-7 px-3 text-[10px] bg-red-700 hover:bg-red-600 font-bold" onClick={confirmCompletion} data-testid={`completion-notes-confirm-${item.id}`}>Confirm</Button>
+          </div>
+        </div>
+      )}
+
       <div className="grid transition-all duration-400" style={{ gridTemplateRows: expanded ? "1fr" : "0fr", transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" }}>
         <div className="overflow-hidden">
           <div className={`px-3.5 pb-3.5 pt-0 border-t border-white/5 mt-0 transition-opacity duration-300 ${expanded ? "opacity-100" : "opacity-0"}`}>
             <div className="pt-3 space-y-2.5">
               {item.description && (
                 <p className="text-xs text-slate-300/80 leading-relaxed">{item.description}</p>
+              )}
+
+              {item.data?.completionNotes && (
+                <div className="bg-red-950/30 border border-red-800/25 rounded-lg px-3 py-2" data-testid={`completion-notes-display-${item.id}`}>
+                  <p className="text-[9px] font-bold text-red-400/70 uppercase tracking-wider mb-1">Completion Notes</p>
+                  <p className="text-xs text-slate-300/90 leading-relaxed whitespace-pre-wrap">{item.data.completionNotes}</p>
+                </div>
               )}
 
               <div className="flex flex-wrap gap-1.5 text-[9px]">
@@ -908,94 +974,86 @@ export function CommandProtocols({
 
           <div className="px-5 pt-1 pb-1">
             <div className="flex items-center gap-1.5">
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1 cp-filter-scroll">
-                {FILTER_OPTIONS.map((opt) => {
-                  const FilterIcon = opt.icon;
-                  const count = opt.key === "simulation" ? allItems.filter(i => i.data?.simulationId).length : opt.types && opt.types.length > 0 ? allItems.filter(i => opt.types!.includes(i.type)).length : allItems.length;
-                  const isActive = filter === opt.key;
-                  const isUrgentFilter = opt.key === "urgent" && urgentCount > 0;
-                  return (
-                    <button key={opt.key} data-testid={`cp-filter-${opt.key}`} onClick={() => setFilter(opt.key)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 cursor-pointer press-feedback transition-all duration-300 ${
-                        isActive
-                          ? isUrgentFilter
-                            ? "bg-red-500/20 text-red-400 border border-red-500/40 shadow-lg shadow-red-500/10"
-                            : "bg-white/10 text-white border border-white/20 shadow-lg shadow-white/5"
-                          : isUrgentFilter
-                            ? "bg-red-950/30 text-red-400/70 border border-red-900/30 hover:bg-red-500/15"
-                            : "bg-white/[0.03] text-slate-500 border border-white/5 hover:text-slate-300 hover:bg-white/[0.06]"
-                      }`}>
-                      <FilterIcon size={10} />
-                      {opt.label}
-                      {count > 0 && (
-                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full transition-all duration-300 ${isUrgentFilter ? "bg-red-500/30 text-red-300" : "bg-white/10 text-white/50"}`}>
-                          {count}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
               <button onClick={() => { setIsSelecting(!isSelecting); if (isSelecting) setSelectedIds(new Set()); }}
                 className={`p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${isSelecting ? "bg-red-500/20 border-red-500/40 text-red-400" : "bg-white/[0.03] border-white/5 text-slate-600 hover:text-slate-300"}`}
                 data-testid="cp-select-toggle">
                 <CheckSquare size={12} />
               </button>
+              <span className="text-[8px] font-bold text-slate-600 uppercase tracking-widest ml-1">
+                {allItems.length} active
+              </span>
             </div>
           </div>
 
           <div className="px-5 pb-4">
-            {sorted.length === 0 ? (
-              <div className="text-center py-12" data-testid="cp-feed-empty">
-                <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mx-auto mb-3 border border-white/5">
-                  {debouncedSearch ? <Search size={28} className="text-slate-600" /> : <CheckCircle size={28} className="text-red-800/50" />}
-                </div>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em]">
-                  {debouncedSearch ? "No results" : "STANDING BY"}
-                </p>
-                <p className="text-[10px] text-slate-600 mt-1">
-                  {debouncedSearch ? `Nothing matches "${debouncedSearch}"` : "No active directives"}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto cp-feed-scroll fluid-fade-mask pr-1">
-                {visibleSorted.map((item, i) => (
-                  <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${Math.min(i * 40, 600)}ms` }}>
-                    <FeedCard item={item} onAction={onAction} role={role}
-                      searchQuery={debouncedSearch || undefined}
-                      isPinned={pinnedIds.has(item.id)}
-                      onTogglePin={togglePin}
-                      isSelecting={isSelecting}
-                      isSelected={selectedIds.has(item.id)}
-                      onToggleSelect={toggleSelect}
-                      onDelete={onDelete}
-                      onEdit={onEdit}
-                      isLive={isLiveItem(item)}
-                    />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 auto-rows-min" data-testid="cp-window-grid">
+              {WINDOW_CONFIG.map((win) => {
+                const WinIcon = win.icon;
+                const windowItems = sorted.filter(i => win.types.includes(i.type));
+                const hasUrgent = win.key === "urgent" && windowItems.length > 0;
+
+                return (
+                  <div
+                    key={win.key}
+                    data-testid={`cp-window-${win.key}`}
+                    className={`${win.colSpan} ${win.rowSpan} rounded-xl border overflow-hidden relative transition-all duration-300`}
+                    style={{
+                      borderColor: windowItems.length > 0 ? win.borderColor + "60" : "rgba(255,255,255,0.05)",
+                      background: `linear-gradient(180deg, ${win.bgFrom} 0%, rgba(3,3,3,0.95) 100%)`,
+                      boxShadow: windowItems.length > 0 ? `0 0 20px ${win.glowColor}, inset 0 1px 0 rgba(255,255,255,0.03)` : "inset 0 1px 0 rgba(255,255,255,0.02)",
+                    }}
+                  >
+                    {hasUrgent && (
+                      <div className="absolute inset-0 pointer-events-none opacity-30" style={{ animation: "cp-pulse-dot 2s ease-in-out infinite", background: `radial-gradient(ellipse at center, ${win.glowColor}, transparent 70%)` }} />
+                    )}
+                    <div
+                      className="px-3 py-2 flex items-center justify-between border-b relative z-10"
+                      style={{ borderColor: win.borderColor + "25", backgroundColor: win.headerBg }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <WinIcon size={12} style={{ color: win.borderColor }} />
+                        <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: win.borderColor }}>{win.label}</span>
+                      </div>
+                      <span
+                        className="text-[8px] font-black px-1.5 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: windowItems.length > 0 ? win.borderColor + "25" : "rgba(255,255,255,0.05)",
+                          color: windowItems.length > 0 ? win.borderColor : "rgba(100,116,139,0.5)",
+                        }}
+                      >
+                        {windowItems.length}
+                      </span>
+                    </div>
+                    <div className={`${win.maxH} overflow-y-auto cp-feed-scroll relative z-10`}>
+                      {windowItems.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-6 px-3">
+                          <WinIcon size={18} className="text-slate-700/50 mb-1.5" />
+                          <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">Clear</span>
+                        </div>
+                      ) : (
+                        <div className="p-1.5 space-y-1.5">
+                          {windowItems.map((item, i) => (
+                            <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}>
+                              <FeedCard item={item} onAction={onAction} role={role}
+                                searchQuery={debouncedSearch || undefined}
+                                isPinned={pinnedIds.has(item.id)}
+                                onTogglePin={togglePin}
+                                isSelecting={isSelecting}
+                                isSelected={selectedIds.has(item.id)}
+                                onToggleSelect={toggleSelect}
+                                onDelete={onDelete}
+                                onEdit={onEdit}
+                                isLive={isLiveItem(item)}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ))}
-                {hiddenCount > 0 && (
-                  <button
-                    data-testid="cp-show-more"
-                    onClick={() => setFeedExpanded(true)}
-                    className="w-full py-2.5 mt-1 flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors cursor-pointer"
-                  >
-                    <ChevronDown size={14} className="text-slate-500" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Show {hiddenCount} more</span>
-                  </button>
-                )}
-                {feedExpanded && sorted.length > FEED_COLLAPSE_LIMIT && (
-                  <button
-                    data-testid="cp-show-less"
-                    onClick={() => setFeedExpanded(false)}
-                    className="w-full py-2 mt-1 flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors cursor-pointer"
-                  >
-                    <ChevronUp size={14} className="text-slate-500" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Show less</span>
-                  </button>
-                )}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
 
           {isSelecting && (

@@ -27,7 +27,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **Styling**: Tailwind CSS, CSS variables for theming, custom fonts (Montserrat, Playfair Display, Inter)
 - **Build Tool**: Vite
 - **Key Components**:
-    - **Command Center**: Central hub (`CommandProtocols` component) integrating ALL app functionality — expandable feed cards, pinning, global search, live activity timeline, sparkline trend charts, bulk actions across 24+ feed types, feature drawers.
+    - **Command Center**: Central hub (`CommandProtocols` component) integrating ALL app functionality — **multi-window layout** with 9 category panels (Urgent, Directives, Punishments, Rewards, Scenes, Reviews, Connection, Structure, Journal) each with distinct sizes/shapes, color-coded borders/glow, scrollable content areas. Expandable feed cards with **completion notes prompt** (optional notes when marking items done), pinning, global search, live activity timeline, sparkline trend charts, bulk actions across 24+ feed types, feature drawers.
     - **Live Session Engine** (`live-session.tsx`): Full-screen immersive session mode with Dom control panel and Sub receiver view, intensity-based visual effects, phase management, safe word support. **Partner-synced via SSE**: Dom starts session via API (`POST /api/play-sessions/start-live`), Sub detects instantly via Server-Sent Events (polling kept as fallback). Instructions/intensity/phase sync in real-time via `PUT /api/play-sessions/:id/live`. Push notification sent to partner on start/end.
     - **Interrogation Mode** (`interrogation.tsx`): Three components — InterrogationSetup (Dom), InterrogationMode (Sub full-screen Q&A with timer), InterrogationResults. Partner-synced via SSE events.
     - **Confession Booth** (`confession-booth.tsx`): Full-screen overlay with Sub typing mode and Dom review/response mode.
@@ -39,7 +39,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
     - **Feature Drawers**: Collapsible sections for quick access, sticker rewards, access control, crisis override, protocol/structure, scenes/trials, bond/reflection, and records/surveillance.
     - **Reward Chest** (`reward-chest.tsx`): Sub-side treasure chest UI. Sub claims rewards from feed into chest, then redeems them to partner when ready. Dark gold/bronze aesthetic.
     - **Punishment Chest** (`punishment-chest.tsx`): Dom-side punishment arsenal. Dom stockpiles punishments, deploys them onto Sub at chosen time. Blood red/black aesthetic with prebuilt punishment grid.
-    - **Sticker Board** (`sticker-board.tsx`): Post-It note board where Dom pins sticker+comment notes on Sub's profile. Random rotations, color-coded by sticker type, serif italic text.
+    - **Sticker Board** (`sticker-board.tsx`): Enhanced three-tab board embedded directly in profile. Tab 1: Dom sticker notes (Post-It sticky notes with random rotations, color-coded). Tab 2: Achievement Wall (trophy/badge cards for earned achievements, high-rated performances). Tab 3: Documents Wall (paper-stapled-to-wall aesthetic showing hard limits, contracts, filed decisions, permission grants — clickable to expand full content).
     - **Profile Picture Upload**: Circular avatar with camera overlay, uploads via existing `POST /api/user/profile-pic`. Visible in header, profile, partner display, and mobile nav.
     - **Media Upload**: Polymorphic file attachment system with `<MediaUpload>` component.
 
@@ -85,11 +85,16 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - Reward Chest: `GET /api/rewards/chest`, `PATCH /api/rewards/:id/claim`, `PATCH /api/rewards/:id/redeem`
 - Punishment Chest: `GET /api/punishments/chest`, `POST /api/punishments/stockpile`, `PATCH /api/punishments/:id/deploy`
 - Sticker Board: `GET /api/sticker-board/:userId`
+- Wager Voucher: `PATCH /api/wagers/:id` auto-creates reward voucher on win; `PATCH /api/rewards/:id` for editing voucher text (owner-only)
+- Completion Notes: `completionNotes` field on tasks/dares/punishments/rewards, sent via PATCH on completion
 
 ### Core Architectural Decisions
 - **Command Center First**: Everything usable through Command Center. Dashboard shows only CommandProtocols.
+- **Multi-Window Layout**: Command Center uses a CSS grid of 9 category windows with varied sizes (WINDOW_CONFIG), replacing the old flat feed.
+- **Completion Notes**: Optional notes prompt on any task/punishment/dare completion, stored as `completionNotes` column.
+- **Wager Vouchers**: Winning a wager auto-creates a reward voucher (isVoucher=true, wagerSourceId links back). Idempotent (checks existing voucher before creating).
 - **Done Removes Item**: Completed tasks/dares/punishments/rewards filtered from active feed.
-- **Role-Based Access Control**: `created_as_role` column on content tables ensures data separation.
+- **Role-Based Access Control**: `created_as_role` column on content tables tracks who created what; pair-based queries return all pair content (no role filtering on read).
 - **Pair-Aware Data Sharing**: Most data endpoints fetch data relevant to both paired users.
 - **Gamification Mechanics**: XP, leveling, dares, rewards, punishments, check-ins, streaks.
 - **Dark Aesthetic**: All UI uses crimson/charcoal/black palette. Sub role = deep wine/burgundy.

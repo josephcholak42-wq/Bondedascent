@@ -67,7 +67,7 @@ export interface IStorage {
 
   getTasks(userId: string): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
-  toggleTask(taskId: string): Promise<Task | undefined>;
+  toggleTask(taskId: string, completionNotes?: string): Promise<Task | undefined>;
   updateTask(taskId: string, data: Partial<Task>): Promise<Task | undefined>;
   deleteTask(taskId: string): Promise<void>;
 
@@ -78,10 +78,11 @@ export interface IStorage {
 
   getDares(userId: string): Promise<Dare[]>;
   createDare(userId: string, text: string, createdAsRole?: string): Promise<Dare>;
-  completeDare(dareId: string): Promise<Dare | undefined>;
+  completeDare(dareId: string, completionNotes?: string): Promise<Dare | undefined>;
 
   getRewards(userId: string): Promise<Reward[]>;
   createReward(reward: InsertReward): Promise<Reward>;
+  updateReward(rewardId: string, data: Partial<Reward>): Promise<Reward | undefined>;
   toggleReward(rewardId: string): Promise<Reward | undefined>;
   deleteReward(rewardId: string): Promise<void>;
   claimReward(rewardId: string): Promise<Reward | undefined>;
@@ -90,7 +91,7 @@ export interface IStorage {
 
   getPunishments(userId: string): Promise<Punishment[]>;
   createPunishment(punishment: InsertPunishment): Promise<Punishment>;
-  updatePunishmentStatus(punishmentId: string, status: string): Promise<Punishment | undefined>;
+  updatePunishmentStatus(punishmentId: string, status: string, completionNotes?: string): Promise<Punishment | undefined>;
   deletePunishment(punishmentId: string): Promise<void>;
   stockpilePunishment(punishmentId: string): Promise<Punishment | undefined>;
   deployPunishment(punishmentId: string): Promise<Punishment | undefined>;
@@ -257,6 +258,7 @@ export interface IStorage {
 
   getDaresForPair(userIds: string[], role?: string): Promise<Dare[]>;
   getRewardsForPair(userIds: string[], role?: string): Promise<Reward[]>;
+  getRewardByWagerSourceId(wagerSourceId: string): Promise<Reward | undefined>;
   getPunishmentsForPair(userIds: string[], role?: string): Promise<Punishment[]>;
   getAchievementsForPair(userIds: string[], role?: string): Promise<Achievement[]>;
   getActivityLogForPair(userIds: string[], role?: string): Promise<ActivityLogEntry[]>;
@@ -399,10 +401,12 @@ export class DatabaseStorage implements IStorage {
     return newTask;
   }
 
-  async toggleTask(taskId: string): Promise<Task | undefined> {
+  async toggleTask(taskId: string, completionNotes?: string): Promise<Task | undefined> {
     const [existing] = await db.select().from(tasks).where(eq(tasks.id, taskId));
     if (!existing) return undefined;
-    const [updated] = await db.update(tasks).set({ done: !existing.done }).where(eq(tasks.id, taskId)).returning();
+    const setData: any = { done: !existing.done };
+    if (!existing.done && completionNotes !== undefined) setData.completionNotes = completionNotes;
+    const [updated] = await db.update(tasks).set(setData).where(eq(tasks.id, taskId)).returning();
     return updated;
   }
 
@@ -442,8 +446,10 @@ export class DatabaseStorage implements IStorage {
     return dare;
   }
 
-  async completeDare(dareId: string): Promise<Dare | undefined> {
-    const [updated] = await db.update(dares).set({ completed: true }).where(eq(dares.id, dareId)).returning();
+  async completeDare(dareId: string, completionNotes?: string): Promise<Dare | undefined> {
+    const setData: any = { completed: true };
+    if (completionNotes !== undefined) setData.completionNotes = completionNotes;
+    const [updated] = await db.update(dares).set(setData).where(eq(dares.id, dareId)).returning();
     return updated;
   }
 
@@ -454,6 +460,11 @@ export class DatabaseStorage implements IStorage {
   async createReward(reward: InsertReward): Promise<Reward> {
     const [newReward] = await db.insert(rewards).values(reward).returning();
     return newReward;
+  }
+
+  async updateReward(rewardId: string, data: Partial<Reward>): Promise<Reward | undefined> {
+    const [updated] = await db.update(rewards).set(data).where(eq(rewards.id, rewardId)).returning();
+    return updated;
   }
 
   async toggleReward(rewardId: string): Promise<Reward | undefined> {
@@ -490,8 +501,10 @@ export class DatabaseStorage implements IStorage {
     return newPunishment;
   }
 
-  async updatePunishmentStatus(punishmentId: string, status: string): Promise<Punishment | undefined> {
-    const [updated] = await db.update(punishments).set({ status }).where(eq(punishments.id, punishmentId)).returning();
+  async updatePunishmentStatus(punishmentId: string, status: string, completionNotes?: string): Promise<Punishment | undefined> {
+    const setData: any = { status };
+    if (status === "completed" && completionNotes !== undefined) setData.completionNotes = completionNotes;
+    const [updated] = await db.update(punishments).set(setData).where(eq(punishments.id, punishmentId)).returning();
     return updated;
   }
 
@@ -1101,6 +1114,10 @@ export class DatabaseStorage implements IStorage {
     const conditions = [inArray(rewards.userId, userIds)];
     if (role) conditions.push(eq(rewards.createdAsRole, role));
     return db.select().from(rewards).where(and(...conditions)).orderBy(desc(rewards.createdAt));
+  }
+  async getRewardByWagerSourceId(wagerSourceId: string): Promise<Reward | undefined> {
+    const [reward] = await db.select().from(rewards).where(eq(rewards.wagerSourceId, wagerSourceId)).limit(1);
+    return reward;
   }
   async getPunishmentsForPair(userIds: string[], role?: string): Promise<Punishment[]> {
     const conditions = [inArray(punishments.userId, userIds)];
