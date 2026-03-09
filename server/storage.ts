@@ -1024,10 +1024,8 @@ export class DatabaseStorage implements IStorage {
     if (role) conditions.push(eq(devotions.createdAsRole, role));
     return db.select().from(devotions).where(and(...conditions)).orderBy(desc(devotions.createdAt));
   }
-  async getConflictsForPair(userIds: string[], role?: string): Promise<Conflict[]> {
-    const conditions = [inArray(conflicts.userId, userIds)];
-    if (role) conditions.push(eq(conflicts.createdAsRole, role));
-    return db.select().from(conflicts).where(and(...conditions)).orderBy(desc(conflicts.createdAt));
+  async getConflictsForPair(userIds: string[], _role?: string): Promise<Conflict[]> {
+    return db.select().from(conflicts).where(inArray(conflicts.userId, userIds)).orderBy(desc(conflicts.createdAt));
   }
   async getDesiredChangesForPair(userIds: string[], role?: string): Promise<DesiredChange[]> {
     const conditions = [inArray(desiredChanges.userId, userIds)];

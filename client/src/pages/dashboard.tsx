@@ -238,10 +238,12 @@ import ConfessionBooth from "@/components/confession-booth";
 import { InterrogationSetup, InterrogationMode, InterrogationGrading, InterrogationResults, InterrogationWaiting } from "@/components/interrogation";
 import AftercareChecklist from "@/components/aftercare-checklist";
 import AutoDomSimulation from "@/components/auto-dom-simulation";
+import { useToast } from "@/hooks/use-toast";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 export default function BondedAscentApp() {
   useSSE(true);
+  const { toast } = useToast();
   const {
     activeView, setActiveView,
     modal, setModal,
@@ -1342,11 +1344,46 @@ export default function BondedAscentApp() {
     }
 
     if (activeView === "resume") {
+      const handleShareActivity = async () => {
+        const lines = activityLog.slice(0, 20).map((log) => {
+          const date = new Date(log.createdAt).toLocaleString();
+          const action = log.action.replace(/_/g, " ").toUpperCase();
+          return `[${date}] ${action}${log.detail ? ` — ${log.detail}` : ""}`;
+        });
+        const text = `BondedAscent Activity Log\n${"—".repeat(30)}\n${lines.join("\n")}`;
+
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: "BondedAscent Activity Log", text });
+            return;
+          } catch {}
+        }
+        try {
+          await navigator.clipboard.writeText(text);
+          toast({ title: "Copied", description: "Activity log copied to clipboard" });
+        } catch {
+          toast({ title: "Error", description: "Could not copy to clipboard", variant: "destructive" });
+        }
+      };
+
       return (
         <div className="animate-in slide-in-from-right duration-500 space-y-6">
-          <h2 className="text-2xl font-black text-white uppercase mb-6 flex items-center gap-3">
-            <Terminal size={24} className="text-red-600" /> Activity Log
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-black text-white uppercase flex items-center gap-3">
+              <Terminal size={24} className="text-red-600" /> Activity Log
+            </h2>
+            {activityLog.length > 0 && (
+              <Button
+                data-testid="button-share-activity"
+                variant="outline"
+                size="sm"
+                className="border-red-900/50 text-red-400 hover:bg-red-950/50 uppercase text-[10px] tracking-wider font-bold"
+                onClick={handleShareActivity}
+              >
+                <Send size={12} className="mr-1.5" /> Share
+              </Button>
+            )}
+          </div>
           <div className="space-y-3">
             {activityLog.slice(0, 20).map((log) => (
               <div
