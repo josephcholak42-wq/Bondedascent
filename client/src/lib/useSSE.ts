@@ -68,6 +68,20 @@ export function useSSE(enabled: boolean = true) {
         qc.invalidateQueries({ queryKey: ["/api/rituals"] });
         qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
         qc.invalidateQueries({ queryKey: ["/api/dares"] });
+        qc.invalidateQueries({ queryKey: ["/api/punishments"] });
+        qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+        qc.invalidateQueries({ queryKey: ["/api/wagers"] });
+        qc.invalidateQueries({ queryKey: ["/api/devotions"] });
+        qc.invalidateQueries({ queryKey: ["/api/sealed-orders"] });
+        qc.invalidateQueries({ queryKey: ["/api/countdown-events"] });
+        qc.invalidateQueries({ queryKey: ["/api/endurance-challenges"] });
+        qc.invalidateQueries({ queryKey: ["/api/obedience-trials"] });
+        qc.invalidateQueries({ queryKey: ["/api/sensation-cards"] });
+        qc.invalidateQueries({ queryKey: ["/api/accusations"] });
+        qc.invalidateQueries({ queryKey: ["/api/desired-changes"] });
+        qc.invalidateQueries({ queryKey: ["/api/confessions"] });
+        qc.invalidateQueries({ queryKey: ["/api/aftercare-items"] });
+        qc.invalidateQueries({ queryKey: ["/api/permission-requests"] });
         qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
       });
 
@@ -78,6 +92,20 @@ export function useSSE(enabled: boolean = true) {
         qc.invalidateQueries({ queryKey: ["/api/rituals"] });
         qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
         qc.invalidateQueries({ queryKey: ["/api/dares"] });
+        qc.invalidateQueries({ queryKey: ["/api/punishments"] });
+        qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+        qc.invalidateQueries({ queryKey: ["/api/wagers"] });
+        qc.invalidateQueries({ queryKey: ["/api/devotions"] });
+        qc.invalidateQueries({ queryKey: ["/api/sealed-orders"] });
+        qc.invalidateQueries({ queryKey: ["/api/countdown-events"] });
+        qc.invalidateQueries({ queryKey: ["/api/endurance-challenges"] });
+        qc.invalidateQueries({ queryKey: ["/api/obedience-trials"] });
+        qc.invalidateQueries({ queryKey: ["/api/sensation-cards"] });
+        qc.invalidateQueries({ queryKey: ["/api/accusations"] });
+        qc.invalidateQueries({ queryKey: ["/api/desired-changes"] });
+        qc.invalidateQueries({ queryKey: ["/api/confessions"] });
+        qc.invalidateQueries({ queryKey: ["/api/aftercare-items"] });
+        qc.invalidateQueries({ queryKey: ["/api/permission-requests"] });
         qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
       });
 

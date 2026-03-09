@@ -46,26 +46,77 @@ const MODE_OPTIONS: { value: SimulationMode; label: string; description: string;
   { value: "sub-dom", label: "Sub & Dom", description: "You receive Sub duties, partner receives Dom duties", icon: Users },
 ];
 
-function getEstimatedCounts(level: number): { tasks: number; rituals: number; standingOrders: number; dares: number } {
-  if (level <= 2) return { tasks: 2, rituals: 1, standingOrders: 1, dares: 0 };
-  if (level <= 4) return { tasks: 4, rituals: 2, standingOrders: 2, dares: 1 };
-  if (level <= 6) return { tasks: 6, rituals: 3, standingOrders: 3, dares: 2 };
-  if (level <= 8) return { tasks: 9, rituals: 5, standingOrders: 4, dares: 3 };
-  return { tasks: 12, rituals: 7, standingOrders: 6, dares: 5 };
+interface EstimatedCounts {
+  tasks: number; rituals: number; standingOrders: number; dares: number;
+  punishments: number; rewards: number; wagers: number; devotions: number;
+  sealedOrders: number; countdownEvents: number; enduranceChallenges: number;
+  obedienceTrials: number; sensationCards: number; accusations: number;
+  desiredChanges: number; confessions: number; aftercareItems: number; permissionRequests: number;
+}
+
+function getEstimatedCounts(level: number): EstimatedCounts {
+  if (level <= 2) return {
+    tasks: 2, rituals: 1, standingOrders: 1, dares: 0,
+    punishments: 0, rewards: 1, wagers: 0, devotions: 1, sealedOrders: 0,
+    countdownEvents: 0, enduranceChallenges: 0, obedienceTrials: 0, sensationCards: 0,
+    accusations: 0, desiredChanges: 1, confessions: 0, aftercareItems: 2, permissionRequests: 1,
+  };
+  if (level <= 4) return {
+    tasks: 4, rituals: 2, standingOrders: 2, dares: 1,
+    punishments: 1, rewards: 2, wagers: 1, devotions: 2, sealedOrders: 1,
+    countdownEvents: 1, enduranceChallenges: 0, obedienceTrials: 0, sensationCards: 2,
+    accusations: 0, desiredChanges: 2, confessions: 1, aftercareItems: 3, permissionRequests: 2,
+  };
+  if (level <= 6) return {
+    tasks: 6, rituals: 3, standingOrders: 3, dares: 2,
+    punishments: 2, rewards: 3, wagers: 2, devotions: 3, sealedOrders: 2,
+    countdownEvents: 2, enduranceChallenges: 1, obedienceTrials: 1, sensationCards: 3,
+    accusations: 1, desiredChanges: 3, confessions: 2, aftercareItems: 4, permissionRequests: 3,
+  };
+  if (level <= 8) return {
+    tasks: 9, rituals: 5, standingOrders: 4, dares: 3,
+    punishments: 3, rewards: 4, wagers: 3, devotions: 4, sealedOrders: 3,
+    countdownEvents: 3, enduranceChallenges: 2, obedienceTrials: 2, sensationCards: 4,
+    accusations: 2, desiredChanges: 4, confessions: 3, aftercareItems: 5, permissionRequests: 3,
+  };
+  return {
+    tasks: 12, rituals: 7, standingOrders: 6, dares: 5,
+    punishments: 5, rewards: 5, wagers: 4, devotions: 5, sealedOrders: 4,
+    countdownEvents: 4, enduranceChallenges: 3, obedienceTrials: 3, sensationCards: 5,
+    accusations: 3, desiredChanges: 5, confessions: 4, aftercareItems: 6, permissionRequests: 4,
+  };
+}
+
+function CountBadge({ count, label, testId }: { count: number; label: string; testId?: string }) {
+  if (count === 0) return null;
+  return (
+    <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300" data-testid={testId}>
+      {count} {label}
+    </span>
+  );
+}
+
+function getRoleCounts(base: EstimatedCounts, role: "dom" | "sub"): EstimatedCounts {
+  if (role === "dom") {
+    return { ...base, confessions: 0, permissionRequests: 0 };
+  }
+  return { ...base, punishments: 0, rewards: 0, sealedOrders: 0, accusations: 0 };
 }
 
 function PreviewSection({ level, mode }: { level: number; mode: SimulationMode }) {
-  const counts = getEstimatedCounts(level);
-  const total = counts.tasks + counts.rituals + counts.standingOrders + counts.dares;
+  const base = getEstimatedCounts(level);
+  const domCounts = getRoleCounts(base, "dom");
+  const subCounts = getRoleCounts(base, "sub");
+  const domTotal = Object.values(domCounts).reduce((a, b) => a + b, 0);
+  const subTotal = Object.values(subCounts).reduce((a, b) => a + b, 0);
 
-  const renderCounts = (label: string, c: typeof counts) => (
+  const renderCounts = (label: string, c: EstimatedCounts) => (
     <div className="space-y-1">
       <span className="text-[9px] font-black uppercase tracking-[0.15em] text-red-400/80">{label}</span>
       <div className="flex flex-wrap gap-1.5">
-        <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300" data-testid={`preview-tasks-${label.toLowerCase()}`}>{c.tasks} tasks</span>
-        <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300" data-testid={`preview-rituals-${label.toLowerCase()}`}>{c.rituals} rituals</span>
-        <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300" data-testid={`preview-orders-${label.toLowerCase()}`}>{c.standingOrders} orders</span>
-        {c.dares > 0 && <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300" data-testid={`preview-dares-${label.toLowerCase()}`}>{c.dares} dares</span>}
+        {Object.entries(c).filter(([, v]) => v > 0).map(([key, count]) => (
+          <CountBadge key={key} count={count} label={key.replace(/([A-Z])/g, " $1").trim().toLowerCase()} />
+        ))}
       </div>
     </div>
   );
@@ -79,34 +130,34 @@ function PreviewSection({ level, mode }: { level: number; mode: SimulationMode }
 
       {mode === "dom-sub" && (
         <div className="grid grid-cols-2 gap-4">
-          {renderCounts("You (Dom)", counts)}
-          {renderCounts("Partner (Sub)", counts)}
+          {renderCounts("You (Dom)", domCounts)}
+          {renderCounts("Partner (Sub)", subCounts)}
         </div>
       )}
 
       {mode === "sub-dom" && (
         <div className="grid grid-cols-2 gap-4">
-          {renderCounts("You (Sub)", counts)}
-          {renderCounts("Partner (Dom)", counts)}
+          {renderCounts("You (Sub)", subCounts)}
+          {renderCounts("Partner (Dom)", domCounts)}
         </div>
       )}
 
       {mode === "switch" && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-4">
-            {renderCounts("You (Dom side)", counts)}
-            {renderCounts("You (Sub side)", counts)}
+            {renderCounts("You (Dom side)", domCounts)}
+            {renderCounts("You (Sub side)", subCounts)}
           </div>
           <div className="border-t border-white/5 pt-3 grid grid-cols-2 gap-4">
-            {renderCounts("Partner (Dom side)", counts)}
-            {renderCounts("Partner (Sub side)", counts)}
+            {renderCounts("Partner (Dom side)", domCounts)}
+            {renderCounts("Partner (Sub side)", subCounts)}
           </div>
         </div>
       )}
 
       <div className="pt-2 border-t border-white/5">
         <span className="text-[10px] text-slate-500">
-          {mode === "switch" ? `~${total * 4} total items across both users` : `~${total * 2} total items across both users`}
+          {mode === "switch" ? `~${(domTotal + subTotal) * 2} total items across both users` : `~${domTotal + subTotal} total items across both users`}
         </span>
       </div>
     </div>
@@ -187,10 +238,9 @@ export default function AutoDomSimulation({
                     {Object.entries(roles).map(([role, counts]: [string, any]) => (
                       <div key={role} className="flex flex-wrap gap-1.5 ml-2">
                         <span className="text-[9px] text-slate-500 uppercase">{role}:</span>
-                        {counts.tasks > 0 && <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300">{counts.tasks} tasks</span>}
-                        {counts.rituals > 0 && <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300">{counts.rituals} rituals</span>}
-                        {counts.standingOrders > 0 && <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300">{counts.standingOrders} orders</span>}
-                        {counts.dares > 0 && <span className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300">{counts.dares} dares</span>}
+                        {Object.entries(counts as Record<string, number>).filter(([, v]) => v > 0).map(([type, count]) => (
+                          <span key={type} className="px-2 py-0.5 rounded-full bg-red-950/40 border border-red-800/30 text-[10px] text-red-300">{count} {type}</span>
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -212,7 +262,7 @@ export default function AutoDomSimulation({
                   <AlertTriangle size={16} />
                   <span className="text-sm font-bold">Confirm Deactivation</span>
                 </div>
-                <p className="text-xs text-slate-400">All generated tasks, rituals, standing orders, and dares will be marked as completed/inactive.</p>
+                <p className="text-xs text-slate-400">All generated content (tasks, rituals, orders, dares, punishments, rewards, and all other simulation items) will be removed or marked inactive.</p>
                 <div className="flex gap-3">
                   <Button
                     onClick={() => setShowDeactivateConfirm(false)}

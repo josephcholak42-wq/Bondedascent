@@ -61,6 +61,7 @@ export const rewards = pgTable("rewards", {
   duration: text("duration"),
   unlocked: boolean("unlocked").notNull().default(false),
   unlockLevel: integer("unlock_level").notNull().default(1),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -73,6 +74,7 @@ export const punishments = pgTable("punishments", {
   category: text("category"),
   duration: text("duration"),
   status: text("status").notNull().default("active"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -166,6 +168,7 @@ export const wagers = pgTable("wagers", {
   stakes: text("stakes"),
   status: text("status").notNull().default("active"),
   winnerId: varchar("winner_id"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -190,6 +193,7 @@ export const countdownEvents = pgTable("countdown_events", {
   description: text("description"),
   targetDate: timestamp("target_date").notNull(),
   category: text("category").notNull().default("special"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -214,6 +218,7 @@ export const permissionRequests = pgTable("permission_requests", {
   description: text("description"),
   status: text("status").notNull().default("pending"),
   reviewedBy: varchar("reviewed_by"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -224,6 +229,7 @@ export const devotions = pgTable("devotions", {
   type: text("type").notNull().default("affirmation"),
   content: text("content").notNull(),
   completed: boolean("completed").notNull().default(false),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -248,6 +254,7 @@ export const desiredChanges = pgTable("desired_changes", {
   description: text("description"),
   category: text("category").notNull().default("behavior"),
   status: text("status").notNull().default("active"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -516,6 +523,7 @@ export const accusations = pgTable("accusations", {
   accusation: text("accusation").notNull(),
   response: text("response"),
   status: text("status").notNull().default("pending"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -606,6 +614,7 @@ export const obedienceTrials = pgTable("obedience_trials", {
   autoPunishment: text("auto_punishment"),
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -637,6 +646,7 @@ export const sensationCards = pgTable("sensation_cards", {
   cardType: text("card_type").notNull().default("normal"),
   durationMinutes: integer("duration_minutes"),
   active: boolean("active").notNull().default(true),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -674,6 +684,7 @@ export const sealedOrders = pgTable("sealed_orders", {
   completed: boolean("completed").notNull().default(false),
   emergencyUnsealed: boolean("emergency_unsealed").notNull().default(false),
   xpCost: integer("xp_cost").notNull().default(25),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("dom"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -699,6 +710,7 @@ export const enduranceChallenges = pgTable("endurance_challenges", {
   startedAt: timestamp("started_at").defaultNow(),
   endsAt: timestamp("ends_at").notNull(),
   completedAt: timestamp("completed_at"),
+  simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("dom"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -815,6 +827,7 @@ export const confessions = pgTable("confessions", {
   status: text("status").notNull().default("pending"),
   consequenceType: text("consequence_type"),
   consequenceId: varchar("consequence_id"),
+  simulationId: varchar("simulation_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -943,6 +956,7 @@ export const aftercareItems = pgTable("aftercare_items", {
   label: text("label").notNull(),
   completed: boolean("completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
+  simulationId: varchar("simulation_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

@@ -107,31 +107,31 @@ interface CommandProtocolsProps {
   activeSimulation?: any;
 }
 
-const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string; priority: number }> = {
-  demand: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "from-red-950/60 to-red-950/20", glowColor: "shadow-red-500/20", icon: Siren, label: "DEMAND", priority: 0 },
-  command: { color: "text-red-500", borderColor: "border-l-red-600", bgColor: "from-red-950/50 to-red-950/15", glowColor: "shadow-red-600/15", icon: Zap, label: "ORDER", priority: 1 },
-  accusation: { color: "text-rose-500", borderColor: "border-l-rose-600", bgColor: "from-rose-950/50 to-rose-950/15", glowColor: "shadow-rose-600/15", icon: AlertTriangle, label: "ACCUSATION", priority: 2 },
-  checkin_review: { color: "text-slate-400", borderColor: "border-l-slate-500", bgColor: "from-slate-900/40 to-slate-900/10", glowColor: "shadow-slate-500/15", icon: MessageSquare, label: "CHECK-IN", priority: 3 },
-  task: { color: "text-red-300", borderColor: "border-l-red-700", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-700/10", icon: Target, label: "DIRECTIVE", priority: 4 },
-  standing_order: { color: "text-red-400", borderColor: "border-l-red-800", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-800/10", icon: FileSignature, label: "STANDING ORDER", priority: 5 },
-  ritual: { color: "text-[#c9956a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#78350f]/15", icon: RotateCcw, label: "RITUAL", priority: 6 },
-  punishment: { color: "text-red-500", borderColor: "border-l-red-700", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT", priority: 7 },
-  reward: { color: "text-[#d4a24e]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#92400e]/20", icon: Gift, label: "REWARD", priority: 8 },
-  dare: { color: "text-[#e87640]", borderColor: "border-l-[#9a3412]", bgColor: "from-[#431407]/45 to-[#431407]/10", glowColor: "shadow-[#9a3412]/15", icon: Sparkles, label: "DARE", priority: 9 },
-  notification: { color: "text-slate-500", borderColor: "border-l-slate-700", bgColor: "from-slate-900/50 to-slate-900/20", glowColor: "shadow-slate-700/5", icon: Bell, label: "INFO", priority: 10 },
-  journal: { color: "text-[#b8845a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: BookOpen, label: "JOURNAL", priority: 11 },
-  play_session: { color: "text-[#ea7e4a]", borderColor: "border-l-[#c2410c]", bgColor: "from-[#431407]/40 to-[#431407]/10", glowColor: "shadow-[#9a3412]/15", icon: Play, label: "SESSION", priority: 12 },
-  countdown_event: { color: "text-[#e06830]", borderColor: "border-l-[#9a3412]", bgColor: "from-[#431407]/30 to-[#431407]/10", glowColor: "shadow-[#9a3412]/10", icon: Timer, label: "COUNTDOWN", priority: 13 },
-  wager: { color: "text-[#c9956a]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Dices, label: "WAGER", priority: 14 },
-  devotion: { color: "text-[#c9845a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: Heart, label: "DEVOTION", priority: 15 },
-  secret: { color: "text-slate-300", borderColor: "border-l-slate-600", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-600/10", icon: Eye, label: "SECRET", priority: 16 },
-  conflict: { color: "text-red-400", borderColor: "border-l-red-600", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-600/10", icon: AlertTriangle, label: "CONFLICT", priority: 17 },
-  rating: { color: "text-[#d4a24e]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Star, label: "RATING", priority: 18 },
-  permission_request: { color: "text-slate-400", borderColor: "border-l-slate-600", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-600/10", icon: Hand, label: "PERMISSION", priority: 19 },
-  desired_change: { color: "text-[#b8845a]", borderColor: "border-l-[#78350f]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: Target, label: "CHANGE", priority: 20 },
-  limit: { color: "text-slate-400", borderColor: "border-l-slate-500", bgColor: "from-slate-900/40 to-slate-900/15", glowColor: "shadow-slate-500/10", icon: Shield, label: "LIMIT", priority: 21 },
-  achievement: { color: "text-[#d4a24e]", borderColor: "border-l-[#92400e]", bgColor: "from-[#451a03]/35 to-[#451a03]/10", glowColor: "shadow-[#92400e]/15", icon: Award, label: "ACHIEVEMENT", priority: 22 },
-  sticker_received: { color: "text-[#d4a24e]", borderColor: "border-l-[#b45309]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Sparkles, label: "STICKER", priority: 23 },
+const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string; priority: number; iconBg: string; pillBg: string }> = {
+  demand: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "from-red-950/60 to-red-950/20", glowColor: "shadow-red-500/20", icon: Siren, label: "DEMAND", priority: 0, iconBg: "bg-red-900/40", pillBg: "bg-red-500/20 text-red-400" },
+  command: { color: "text-red-500", borderColor: "border-l-red-500", bgColor: "from-red-950/50 to-red-950/15", glowColor: "shadow-red-600/15", icon: Zap, label: "ORDER", priority: 1, iconBg: "bg-red-900/35", pillBg: "bg-red-500/20 text-red-400" },
+  accusation: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "from-red-950/50 to-red-950/15", glowColor: "shadow-red-600/15", icon: AlertTriangle, label: "ACCUSATION", priority: 2, iconBg: "bg-red-900/35", pillBg: "bg-red-500/20 text-red-400" },
+  checkin_review: { color: "text-slate-400", borderColor: "border-l-slate-400", bgColor: "from-slate-900/40 to-slate-900/10", glowColor: "shadow-slate-500/15", icon: MessageSquare, label: "CHECK-IN", priority: 3, iconBg: "bg-slate-800/40", pillBg: "bg-slate-500/15 text-slate-400" },
+  task: { color: "text-red-300", borderColor: "border-l-red-600", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-700/10", icon: Target, label: "DIRECTIVE", priority: 4, iconBg: "bg-red-900/30", pillBg: "bg-red-500/15 text-red-300" },
+  standing_order: { color: "text-red-400", borderColor: "border-l-red-600", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-800/10", icon: FileSignature, label: "STANDING ORDER", priority: 5, iconBg: "bg-red-900/30", pillBg: "bg-red-500/15 text-red-400" },
+  ritual: { color: "text-[#c9956a]", borderColor: "border-l-[#92622a]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#78350f]/15", icon: RotateCcw, label: "RITUAL", priority: 6, iconBg: "bg-[#451a03]/40", pillBg: "bg-[#78350f]/25 text-[#c9956a]" },
+  punishment: { color: "text-red-500", borderColor: "border-l-red-600", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT", priority: 7, iconBg: "bg-red-900/40", pillBg: "bg-red-500/20 text-red-500" },
+  reward: { color: "text-[#d4a24e]", borderColor: "border-l-[#b8860b]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#92400e]/20", icon: Gift, label: "REWARD", priority: 8, iconBg: "bg-[#451a03]/40", pillBg: "bg-[#92400e]/25 text-[#d4a24e]" },
+  dare: { color: "text-[#e87640]", borderColor: "border-l-[#c2410c]", bgColor: "from-[#431407]/45 to-[#431407]/10", glowColor: "shadow-[#9a3412]/15", icon: Sparkles, label: "DARE", priority: 9, iconBg: "bg-[#431407]/40", pillBg: "bg-[#9a3412]/25 text-[#e87640]" },
+  notification: { color: "text-slate-500", borderColor: "border-l-slate-500", bgColor: "from-slate-900/50 to-slate-900/20", glowColor: "shadow-slate-700/5", icon: Bell, label: "INFO", priority: 10, iconBg: "bg-slate-800/30", pillBg: "bg-slate-500/10 text-slate-500" },
+  journal: { color: "text-[#b8845a]", borderColor: "border-l-[#92622a]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: BookOpen, label: "JOURNAL", priority: 11, iconBg: "bg-[#451a03]/35", pillBg: "bg-[#78350f]/25 text-[#b8845a]" },
+  play_session: { color: "text-[#ea7e4a]", borderColor: "border-l-[#ea580c]", bgColor: "from-[#431407]/40 to-[#431407]/10", glowColor: "shadow-[#9a3412]/15", icon: Play, label: "SESSION", priority: 12, iconBg: "bg-[#431407]/40", pillBg: "bg-[#9a3412]/25 text-[#ea7e4a]" },
+  countdown_event: { color: "text-[#e06830]", borderColor: "border-l-[#ea580c]", bgColor: "from-[#431407]/30 to-[#431407]/10", glowColor: "shadow-[#9a3412]/10", icon: Timer, label: "COUNTDOWN", priority: 13, iconBg: "bg-[#431407]/35", pillBg: "bg-[#9a3412]/20 text-[#e06830]" },
+  wager: { color: "text-[#c9956a]", borderColor: "border-l-[#b8860b]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Dices, label: "WAGER", priority: 14, iconBg: "bg-[#451a03]/30", pillBg: "bg-[#92400e]/20 text-[#c9956a]" },
+  devotion: { color: "text-[#c9845a]", borderColor: "border-l-[#92622a]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: Heart, label: "DEVOTION", priority: 15, iconBg: "bg-[#451a03]/35", pillBg: "bg-[#78350f]/25 text-[#c9845a]" },
+  secret: { color: "text-slate-300", borderColor: "border-l-slate-400", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-600/10", icon: Eye, label: "SECRET", priority: 16, iconBg: "bg-slate-800/35", pillBg: "bg-slate-500/15 text-slate-300" },
+  conflict: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-600/10", icon: AlertTriangle, label: "CONFLICT", priority: 17, iconBg: "bg-red-900/30", pillBg: "bg-red-500/15 text-red-400" },
+  rating: { color: "text-[#d4a24e]", borderColor: "border-l-[#b8860b]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Star, label: "RATING", priority: 18, iconBg: "bg-[#451a03]/35", pillBg: "bg-[#92400e]/25 text-[#d4a24e]" },
+  permission_request: { color: "text-slate-400", borderColor: "border-l-slate-400", bgColor: "from-slate-900/30 to-slate-900/10", glowColor: "shadow-slate-600/10", icon: Hand, label: "PERMISSION", priority: 19, iconBg: "bg-slate-800/30", pillBg: "bg-slate-500/15 text-slate-400" },
+  desired_change: { color: "text-[#b8845a]", borderColor: "border-l-[#92622a]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#78350f]/10", icon: Target, label: "CHANGE", priority: 20, iconBg: "bg-[#451a03]/30", pillBg: "bg-[#78350f]/20 text-[#b8845a]" },
+  limit: { color: "text-slate-400", borderColor: "border-l-slate-400", bgColor: "from-slate-900/40 to-slate-900/15", glowColor: "shadow-slate-500/10", icon: Shield, label: "LIMIT", priority: 21, iconBg: "bg-slate-800/35", pillBg: "bg-slate-500/15 text-slate-400" },
+  achievement: { color: "text-[#d4a24e]", borderColor: "border-l-[#b8860b]", bgColor: "from-[#451a03]/35 to-[#451a03]/10", glowColor: "shadow-[#92400e]/15", icon: Award, label: "ACHIEVEMENT", priority: 22, iconBg: "bg-[#451a03]/35", pillBg: "bg-[#92400e]/25 text-[#d4a24e]" },
+  sticker_received: { color: "text-[#d4a24e]", borderColor: "border-l-[#b8860b]", bgColor: "from-[#451a03]/30 to-[#451a03]/10", glowColor: "shadow-[#92400e]/10", icon: Sparkles, label: "STICKER", priority: 23, iconBg: "bg-[#451a03]/30", pillBg: "bg-[#92400e]/20 text-[#d4a24e]" },
 };
 
 const FILTER_OPTIONS = [
@@ -145,6 +145,7 @@ const FILTER_OPTIONS = [
   { key: "connection", label: "Connection", icon: Heart, types: ["devotion", "secret", "conflict", "rating"] },
   { key: "structure", label: "Structure", icon: Shield, types: ["permission_request", "desired_change", "limit"] },
   { key: "journal", label: "Journal", icon: BookOpen, types: ["journal"] },
+  { key: "simulation", label: "Simulation", icon: Flame, types: [] },
 ];
 
 function formatCountdown(seconds: number) {
@@ -267,7 +268,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`cp-feed-3d group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""} ${isLive ? "ring-1 ring-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]" : ""}`}
+      className={`cp-feed-3d group relative border-l-[4px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""} ${isLive ? "ring-1 ring-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]" : ""}`}
       style={{ animation: isLive ? "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, cp-live-pulse 2s ease-in-out infinite" : "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
     >
       <div className="p-3.5 flex items-start gap-3">
@@ -277,13 +278,19 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
           </button>
         )}
         <div className={`mt-0.5 ${config.color} shrink-0 cursor-pointer`} onClick={() => setExpanded(!expanded)}>
-          <div className={`w-8 h-8 rounded-lg ${isUrgent ? "bg-white/10" : "bg-white/5"} flex items-center justify-center`}>
+          <div className={`w-8 h-8 rounded-lg ${config.iconBg} flex items-center justify-center`}>
             <Icon size={16} />
           </div>
         </div>
         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isSelecting && setExpanded(!expanded)}>
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${config.color} opacity-80`}>{config.label}</span>
+            <span className={`text-[10px] font-black uppercase tracking-[0.12em] px-1.5 py-0.5 rounded-md ${config.pillBg}`}>{config.label}</span>
+            {item.data?.simulationId && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#e87640]/20 border border-[#e87640]/40" data-testid={`sim-badge-${item.id}`}>
+                <Flame size={8} className="text-[#e87640]" />
+                <span className="text-[8px] font-black text-[#e87640] uppercase tracking-wider">SIM</span>
+              </span>
+            )}
             {isLive && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40" data-testid={`live-badge-${item.id}`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -293,7 +300,10 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
             {isPinned && <Pin size={9} className="text-red-400" />}
             {item.countdown !== undefined && item.countdown > 0 && <CountdownTimer seconds={item.countdown} />}
           </div>
-          <p className="text-sm font-bold text-white/90 leading-snug">{searchQuery ? highlightText(item.title, searchQuery) : item.title}</p>
+          <p className="text-sm font-bold text-white/90 leading-snug">
+            {searchQuery ? highlightText(item.title, searchQuery) : item.title}
+            {item.data?.simulationId && <span className="text-[9px] text-[#e87640]/60 ml-1.5 font-normal">Generated by Auto-Dom</span>}
+          </p>
           {item.description && !expanded && <p className="text-[11px] text-slate-400/80 mt-1 line-clamp-1">{searchQuery ? highlightText(item.description, searchQuery) : item.description}</p>}
 
           {item.type === "accusation" && (
@@ -537,6 +547,7 @@ export function CommandProtocols({
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(getPinnedIds);
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bannerExpanded, setBannerExpanded] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -595,8 +606,12 @@ export function CommandProtocols({
       items = items.filter(i => i.title.toLowerCase().includes(q) || (i.description && i.description.toLowerCase().includes(q)));
     }
     if (filter !== "all") {
-      const opt = FILTER_OPTIONS.find(o => o.key === filter);
-      if (opt?.types) items = items.filter(i => opt.types!.includes(i.type));
+      if (filter === "simulation") {
+        items = items.filter(i => i.data?.simulationId);
+      } else {
+        const opt = FILTER_OPTIONS.find(o => o.key === filter);
+        if (opt?.types) items = items.filter(i => opt.types!.includes(i.type));
+      }
     }
     return items;
   }, [allItems, filter, debouncedSearch]);
@@ -806,16 +821,55 @@ export function CommandProtocols({
 
           {activeSimulation && activeSimulation.active && (
             <div className="mx-5 mt-3">
-              <button data-testid="simulation-banner" onClick={() => onLaunchOverlay?.("autodom")} className="w-full flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-[#7f1d1d]/60 via-[#431407]/40 to-[#7f1d1d]/60 border border-[#e87640]/40 rounded-xl cursor-pointer hover:border-[#e87640]/60 transition-all group" style={{ animation: "pulse 3s ease-in-out infinite" }}>
-                <Flame size={16} className="text-[#e87640] shrink-0" />
-                <div className="flex-1 text-left">
-                  <span className="text-[10px] font-bold text-[#e87640] uppercase tracking-wider">Auto-Dom Level {activeSimulation.level} Active</span>
-                  <span className="text-[9px] text-slate-500 ml-2">
-                    {activeSimulation.mode === "switch" ? "Switch Mode" : activeSimulation.mode === "sub-dom" ? "Sub & Dom" : "Dom & Sub"}
-                  </span>
+              <div className="bg-gradient-to-r from-[#7f1d1d]/60 via-[#431407]/40 to-[#7f1d1d]/60 border border-[#e87640]/40 rounded-xl overflow-hidden transition-all" style={{ animation: "pulse 3s ease-in-out infinite" }}>
+                <div data-testid="simulation-banner" onClick={() => setBannerExpanded(!bannerExpanded)} className="w-full flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:border-[#e87640]/60 transition-all group" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setBannerExpanded(!bannerExpanded); }}>
+                  <Flame size={16} className="text-[#e87640] shrink-0" />
+                  <div className="flex-1 text-left">
+                    <span className="text-[10px] font-bold text-[#e87640] uppercase tracking-wider">Auto-Dom Level {activeSimulation.level} Active</span>
+                    <span className="text-[9px] text-slate-500 ml-2">
+                      {activeSimulation.mode === "switch" ? "Switch Mode" : activeSimulation.mode === "sub-dom" ? "Sub & Dom" : "Dom & Sub"}
+                    </span>
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); onLaunchOverlay?.("autodom"); }} className="text-[9px] text-slate-600 hover:text-[#e87640] transition-colors px-2 py-1 rounded-lg border border-white/5 hover:border-[#e87640]/30 cursor-pointer" data-testid="simulation-manage-btn">Manage</button>
+                  {bannerExpanded ? <ChevronUp size={14} className="text-slate-500 shrink-0" /> : <ChevronDown size={14} className="text-slate-500 shrink-0" />}
                 </div>
-                <span className="text-[9px] text-slate-600 group-hover:text-slate-400">Manage</span>
-              </button>
+                {bannerExpanded && (
+                  <div className="px-4 pb-3 pt-1 border-t border-[#e87640]/20 space-y-2.5 animate-in slide-in-from-top-2 duration-200">
+                    {activeSimulation.generatedItems && (() => {
+                      const gi = activeSimulation.generatedItems as any;
+                      const formatLane = (lane: Record<string, number> | undefined) => {
+                        if (!lane) return { total: 0, breakdown: "None" };
+                        const total = Object.values(lane).reduce((a: number, b: number) => a + b, 0);
+                        const breakdown = Object.entries(lane).filter(([, c]) => c > 0).map(([t, c]) => `${c} ${t}`).join(", ");
+                        return { total, breakdown: breakdown || "None" };
+                      };
+                      const domA = formatLane(gi.userA?.dom);
+                      const subA = formatLane(gi.userA?.sub);
+                      const domB = formatLane(gi.userB?.dom);
+                      const subB = formatLane(gi.userB?.sub);
+                      const domTotal = domA.total + domB.total;
+                      const subTotal = subA.total + subB.total;
+                      const domBreakdown = [domA.breakdown !== "None" ? domA.breakdown : "", domB.breakdown !== "None" ? domB.breakdown : ""].filter(Boolean).join(", ") || "None";
+                      const subBreakdown = [subA.breakdown !== "None" ? subA.breakdown : "", subB.breakdown !== "None" ? subB.breakdown : ""].filter(Boolean).join(", ") || "None";
+                      return (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                            <div className="text-[8px] font-black text-red-400/70 uppercase tracking-widest mb-1">Dom Side</div>
+                            <div className="text-sm font-black text-white tabular-nums">{domTotal}</div>
+                            <div className="text-[8px] text-slate-500 mt-0.5 line-clamp-3">{domBreakdown}</div>
+                          </div>
+                          <div className="bg-black/30 rounded-lg p-2 border border-white/5">
+                            <div className="text-[8px] font-black text-[#e87640]/70 uppercase tracking-widest mb-1">Sub Side</div>
+                            <div className="text-sm font-black text-white tabular-nums">{subTotal}</div>
+                            <div className="text-[8px] text-slate-500 mt-0.5 line-clamp-3">{subBreakdown}</div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    <button onClick={() => setFilter("simulation")} className="w-full text-center py-1.5 rounded-lg bg-[#e87640]/10 border border-[#e87640]/25 text-[9px] font-bold text-[#e87640] uppercase tracking-wider hover:bg-[#e87640]/20 transition-colors cursor-pointer" data-testid="simulation-view-feed">View in feed</button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -882,7 +936,7 @@ export function CommandProtocols({
               <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1 cp-filter-scroll">
                 {FILTER_OPTIONS.map((opt) => {
                   const FilterIcon = opt.icon;
-                  const count = opt.types ? allItems.filter(i => opt.types!.includes(i.type)).length : allItems.length;
+                  const count = opt.key === "simulation" ? allItems.filter(i => i.data?.simulationId).length : opt.types && opt.types.length > 0 ? allItems.filter(i => opt.types!.includes(i.type)).length : allItems.length;
                   const isActive = filter === opt.key;
                   const isUrgentFilter = opt.key === "urgent" && urgentCount > 0;
                   return (

@@ -2157,13 +2157,13 @@ export function useActivateSimulation() {
       return res.json();
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["/api/simulation/active"] });
-      qc.invalidateQueries({ queryKey: ["/api/tasks"] });
-      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
-      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
-      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
-      qc.invalidateQueries({ queryKey: ["/api/dares"] });
-      qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
+      ["/api/simulation/active", "/api/tasks", "/api/partner/tasks", "/api/rituals",
+       "/api/standing-orders", "/api/dares", "/api/punishments", "/api/rewards",
+       "/api/wagers", "/api/devotions", "/api/sealed-orders", "/api/countdown-events",
+       "/api/endurance-challenges", "/api/obedience-trials", "/api/sensation-cards",
+       "/api/accusations", "/api/desired-changes", "/api/confessions",
+       "/api/aftercare-items", "/api/permission-requests", "/api/dashboard-init",
+      ].forEach(key => qc.invalidateQueries({ queryKey: [key] }));
       toast({ title: "Auto-Dom Activated", description: "Simulation protocols have been generated" });
     },
     onError: (error: Error) => {
@@ -2181,13 +2181,13 @@ export function useDeactivateSimulation() {
       return res.json();
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["/api/simulation/active"] });
-      qc.invalidateQueries({ queryKey: ["/api/tasks"] });
-      qc.invalidateQueries({ queryKey: ["/api/partner/tasks"] });
-      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
-      qc.invalidateQueries({ queryKey: ["/api/standing-orders"] });
-      qc.invalidateQueries({ queryKey: ["/api/dares"] });
-      qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });
+      ["/api/simulation/active", "/api/tasks", "/api/partner/tasks", "/api/rituals",
+       "/api/standing-orders", "/api/dares", "/api/punishments", "/api/rewards",
+       "/api/wagers", "/api/devotions", "/api/sealed-orders", "/api/countdown-events",
+       "/api/endurance-challenges", "/api/obedience-trials", "/api/sensation-cards",
+       "/api/accusations", "/api/desired-changes", "/api/confessions",
+       "/api/aftercare-items", "/api/permission-requests", "/api/dashboard-init",
+      ].forEach(key => qc.invalidateQueries({ queryKey: [key] }));
       toast({ title: "Auto-Dom Deactivated", description: "All simulation protocols have been removed" });
     },
     onError: (error: Error) => {

@@ -1508,6 +1508,47 @@ export class DatabaseStorage implements IStorage {
     await db.update(dares)
       .set({ completed: true })
       .where(eq(dares.simulationId, simulationId));
+    await db.update(punishments)
+      .set({ status: "completed" })
+      .where(eq(punishments.simulationId, simulationId));
+    await db.update(rewards)
+      .set({ unlocked: true })
+      .where(eq(rewards.simulationId, simulationId));
+    await db.update(wagers)
+      .set({ status: "cancelled" })
+      .where(eq(wagers.simulationId, simulationId));
+    await db.update(devotions)
+      .set({ completed: true })
+      .where(eq(devotions.simulationId, simulationId));
+    await db.update(sealedOrders)
+      .set({ completed: true })
+      .where(eq(sealedOrders.simulationId, simulationId));
+    await db.delete(countdownEvents)
+      .where(eq(countdownEvents.simulationId, simulationId));
+    await db.update(enduranceChallenges)
+      .set({ status: "cancelled" })
+      .where(eq(enduranceChallenges.simulationId, simulationId));
+    await db.update(obedienceTrials)
+      .set({ status: "cancelled" })
+      .where(eq(obedienceTrials.simulationId, simulationId));
+    await db.update(sensationCards)
+      .set({ active: false })
+      .where(eq(sensationCards.simulationId, simulationId));
+    await db.update(accusations)
+      .set({ status: "dismissed" })
+      .where(eq(accusations.simulationId, simulationId));
+    await db.update(desiredChanges)
+      .set({ status: "completed" })
+      .where(eq(desiredChanges.simulationId, simulationId));
+    await db.update(confessions)
+      .set({ status: "dismissed" })
+      .where(eq(confessions.simulationId, simulationId));
+    await db.update(aftercareItems)
+      .set({ completed: true })
+      .where(eq(aftercareItems.simulationId, simulationId));
+    await db.update(permissionRequests)
+      .set({ status: "dismissed" })
+      .where(eq(permissionRequests.simulationId, simulationId));
   }
 }
 
