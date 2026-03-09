@@ -23,11 +23,21 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   return timingSafeEqual(Buffer.from(hashed, "hex"), buf);
 }
 
+const resetAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const RESET_MAX_ATTEMPTS = 5;
+const RESET_WINDOW_MS = 15 * 60 * 1000;
+
 export function setupAuth(app: Express) {
   const PgStore = connectPgSimple(session);
 
+  let sessionSecret = process.env.SESSION_SECRET;
+  if (!sessionSecret) {
+    sessionSecret = randomBytes(64).toString("hex");
+    console.warn("WARNING: SESSION_SECRET environment variable is not set. Using a randomly generated secret. Sessions will not persist across server restarts. Set SESSION_SECRET for production use.");
+  }
+
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "bonded-ascent-session-secret-change-in-prod",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     store: new PgStore({
@@ -136,20 +146,20 @@ export function setupAuth(app: Express) {
       }
 
       const user = await storage.getUserByUsername(username);
-      if (!user) {
-        return res.status(404).json({ message: "No account found with that username" });
+      if (user) {
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        const { pool: dbPool } = await import("./db");
+        await dbPool.query(
+          "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
+          [user.id, code, expiresAt]
+        );
+
+        console.log(`[RESET CODE] User "${username}" reset code generated (expires in 15 min)`);
       }
 
-      const token = randomBytes(32).toString("hex");
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-
-      const { pool: dbPool } = await import("./db");
-      await dbPool.query(
-        "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)",
-        [user.id, token, expiresAt]
-      );
-
-      res.json({ token, message: "Reset token generated" });
+      res.json({ message: "If an account exists with that username, a reset code has been generated. Check with your partner for the code." });
     } catch (err) {
       next(err);
     }
@@ -157,23 +167,41 @@ export function setupAuth(app: Express) {
 
   app.post("/api/auth/reset-password", async (req, res, next) => {
     try {
-      const { token, newPassword } = req.body;
-      if (!token || !newPassword) {
-        return res.status(400).json({ message: "Token and new password are required" });
+      const { token, code, newPassword } = req.body;
+      const resetCode = code || token;
+      if (!resetCode || !newPassword) {
+        return res.status(400).json({ message: "Reset code and new password are required" });
       }
 
       if (newPassword.length < 4) {
         return res.status(400).json({ message: "Password must be at least 4 characters" });
       }
 
+      const clientIp = req.ip || "unknown";
+      const now = Date.now();
+      const attempts = resetAttempts.get(clientIp);
+      if (attempts) {
+        if (now - attempts.lastAttempt < RESET_WINDOW_MS && attempts.count >= RESET_MAX_ATTEMPTS) {
+          return res.status(429).json({ message: "Too many reset attempts. Please try again later." });
+        }
+        if (now - attempts.lastAttempt >= RESET_WINDOW_MS) {
+          resetAttempts.set(clientIp, { count: 1, lastAttempt: now });
+        } else {
+          attempts.count++;
+          attempts.lastAttempt = now;
+        }
+      } else {
+        resetAttempts.set(clientIp, { count: 1, lastAttempt: now });
+      }
+
       const { pool: dbPool } = await import("./db");
       const result = await dbPool.query(
         "SELECT * FROM password_reset_tokens WHERE token = $1 AND used = false AND expires_at > NOW()",
-        [token]
+        [resetCode]
       );
 
       if (result.rows.length === 0) {
-        return res.status(400).json({ message: "Invalid or expired reset token" });
+        return res.status(400).json({ message: "Invalid or expired reset code" });
       }
 
       const resetToken = result.rows[0];

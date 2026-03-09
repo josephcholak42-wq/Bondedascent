@@ -226,6 +226,9 @@ import {
   useUpdateStandingOrder,
 } from "@/lib/hooks";
 import { AmbientPresence } from "@/components/ambient-presence";
+import { useSSE } from "@/lib/useSSE";
+import { useDashboardNavigation } from "@/lib/useDashboardNavigation";
+import { useTrainingTimer } from "@/lib/useTrainingTimer";
 import LiveSession from "@/components/live-session";
 import ConfessionBooth from "@/components/confession-booth";
 import { InterrogationSetup, InterrogationMode, InterrogationGrading, InterrogationResults, InterrogationWaiting } from "@/components/interrogation";
@@ -233,9 +236,16 @@ import AftercareChecklist from "@/components/aftercare-checklist";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 export default function BondedAscentApp() {
-  const [activeView, setActiveView] = useState("dashboard");
+  useSSE(true);
+  const {
+    activeView, setActiveView,
+    modal, setModal,
+    activeOverlay, setActiveOverlay,
+    interrogationPhase, setInterrogationPhase,
+    activeOverlayRef, modalRef, activeViewRef,
+    navigateView, openModal, openOverlay, closeOverlay, closeModal,
+  } = useDashboardNavigation();
   const [isCrisisMode, setIsCrisisMode] = useState(false);
-  const [modal, setModal] = useState<string | null>(null);
   const [, setLocation] = useLocation();
 
   const [isSpinning, setIsSpinning] = useState(false);
@@ -263,22 +273,12 @@ export default function BondedAscentApp() {
   const [pairError, setPairError] = useState<string | null>(null);
   const [pairSuccess, setPairSuccess] = useState<string | null>(null);
 
-
-  const [activeOverlay, setActiveOverlay] = useState<"live-session" | "interrogation" | "confession-booth" | "aftercare" | null>(null);
-  const [interrogationPhase, setInterrogationPhase] = useState<"setup" | "active" | "waiting" | "grading" | "results">("setup");
   const [interrogationConfig, setInterrogationConfig] = useState<any>(null);
   const [interrogationAnswers, setInterrogationAnswers] = useState<any[]>([]);
   const [interrogationSessionId, setInterrogationSessionId] = useState<string | null>(null);
   const [interrogationDbQuestions, setInterrogationDbQuestions] = useState<any[]>([]);
 
-  const [trainingActive, setTrainingActive] = useState<string | null>(null);
-  const [trainingTimer, setTrainingTimer] = useState(0);
-  const [trainingCompleted, setTrainingCompleted] = useState<string[]>([]);
-  const trainingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const [scenePhase, setScenePhase] = useState<number>(-1);
   const [sceneTimer, setSceneTimer] = useState(0);
-  const sceneIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [ladderLevel, setLadderLevel] = useState(1);
 
@@ -288,67 +288,6 @@ export default function BondedAscentApp() {
 
   const [worshipDone, setWorshipDone] = useState(false);
   const [aftercareActions, setAftercareActions] = useState<string[]>([]);
-
-  const activeOverlayRef = useRef(activeOverlay);
-  const modalRef = useRef(modal);
-  const activeViewRef = useRef(activeView);
-  useEffect(() => { activeOverlayRef.current = activeOverlay; }, [activeOverlay]);
-  useEffect(() => { modalRef.current = modal; }, [modal]);
-  useEffect(() => { activeViewRef.current = activeView; }, [activeView]);
-
-  useEffect(() => {
-    const handlePopState = (e: PopStateEvent) => {
-      const state = e.state;
-      if (state?.dashboardNav) {
-        setActiveOverlay(state.activeOverlay || null);
-        setModal(state.modal || null);
-        setActiveView(state.activeView || "dashboard");
-        if (state.interrogationPhase) setInterrogationPhase(state.interrogationPhase);
-      } else {
-        setActiveOverlay(null);
-        setModal(null);
-        setActiveView("dashboard");
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  const navigateView = useCallback((view: string) => {
-    window.history.pushState({ dashboardNav: true, activeView: view, modal: null, activeOverlay: null }, "");
-    setActiveView(view);
-  }, []);
-
-  const openModal = useCallback((m: string | null) => {
-    if (m) {
-      window.history.pushState({ dashboardNav: true, activeView: activeViewRef.current, modal: m, activeOverlay: null }, "");
-    }
-    setModal(m);
-  }, []);
-
-  const openOverlay = useCallback((overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare" | null) => {
-    if (overlay) {
-      window.history.pushState({ dashboardNav: true, activeView: activeViewRef.current, modal: null, activeOverlay: overlay }, "");
-    }
-    setActiveOverlay(overlay);
-  }, []);
-
-  const closeOverlay = useCallback(() => {
-    if (window.history.state?.dashboardNav && window.history.state?.activeOverlay) {
-      window.history.back();
-    } else {
-      setActiveOverlay(null);
-    }
-  }, []);
-
-  const closeModal = useCallback(() => {
-    if (window.history.state?.dashboardNav && window.history.state?.modal) {
-      window.history.back();
-    } else {
-      setModal(null);
-    }
-  }, []);
 
   const { data: user } = useAuth();
   useDashboardInit();
@@ -391,6 +330,13 @@ export default function BondedAscentApp() {
   const createPartnerRewardMutation = useCreatePartnerReward();
   const { data: partnerActivity = [] } = usePartnerActivity();
   const logActivityMutation = useLogActivity();
+  const {
+    trainingActive, setTrainingActive,
+    trainingTimer, trainingCompleted, setTrainingCompleted,
+    startTraining, stopTraining, formatTimerDisplay,
+    scenePhase, setScenePhase, scenePhases, startScene,
+    sceneIntervalRef,
+  } = useTrainingTimer(logActivityMutation);
 
   const { data: demandTimers = [] } = useDemandTimers();
   const createDemandTimerMutation = useCreateDemandTimer();
@@ -593,64 +539,13 @@ export default function BondedAscentApp() {
     setJournalContent("");
   };
 
-  const startTraining = useCallback(
-    (exercise: string) => {
-      if (trainingIntervalRef.current)
-        clearInterval(trainingIntervalRef.current);
-      setTrainingActive(exercise);
-      setTrainingTimer(0);
-      trainingIntervalRef.current = setInterval(() => {
-        setTrainingTimer((prev) => prev + 1);
-      }, 1000);
-      logActivityMutation.mutate({
-        action: "training_started",
-        detail: exercise,
-      });
-    },
-    [logActivityMutation],
-  );
-
-  const stopTraining = useCallback(() => {
-    if (trainingIntervalRef.current) clearInterval(trainingIntervalRef.current);
-    trainingIntervalRef.current = null;
-    if (trainingActive && !trainingCompleted.includes(trainingActive)) {
-      setTrainingCompleted((prev) => [...prev, trainingActive]);
-      logActivityMutation.mutate({
-        action: "training_completed",
-        detail: `${trainingActive} — ${formatTimerDisplay(trainingTimer)}`,
-      });
-    }
-    setTrainingActive(null);
-    setTrainingTimer(0);
-  }, [trainingActive, trainingCompleted, trainingTimer, logActivityMutation]);
-
-  useEffect(() => {
-    return () => {
-      if (trainingIntervalRef.current)
-        clearInterval(trainingIntervalRef.current);
-      if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
-    };
-  }, []);
-
   useEffect(() => {
     presenceHeartbeatMutation.mutate();
+    const heartbeatInterval = setInterval(() => {
+      presenceHeartbeatMutation.mutate();
+    }, 30000);
+    return () => clearInterval(heartbeatInterval);
   }, []);
-
-
-  const scenePhases = ["Warm-Up", "Main Scene", "Cooldown"];
-
-  const startScene = useCallback(() => {
-    if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
-    setScenePhase(0);
-    setSceneTimer(0);
-    sceneIntervalRef.current = setInterval(() => {
-      setSceneTimer((prev) => prev + 1);
-    }, 1000);
-    logActivityMutation.mutate({
-      action: "scene_started",
-      detail: "Warm-Up phase",
-    });
-  }, [logActivityMutation]);
 
   const advanceScene = useCallback(() => {
     const nextPhase = scenePhase + 1;
@@ -670,7 +565,7 @@ export default function BondedAscentApp() {
         detail: `Entered ${scenePhases[nextPhase]} phase`,
       });
     }
-  }, [scenePhase, sceneTimer, logActivityMutation]);
+  }, [scenePhase, sceneTimer, logActivityMutation, formatTimerDisplay, scenePhases, setScenePhase, sceneIntervalRef]);
 
   const endScene = useCallback(() => {
     if (sceneIntervalRef.current) clearInterval(sceneIntervalRef.current);
@@ -681,13 +576,7 @@ export default function BondedAscentApp() {
     });
     setScenePhase(-1);
     setSceneTimer(0);
-  }, [scenePhase, sceneTimer, logActivityMutation]);
-
-  const formatTimerDisplay = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
+  }, [scenePhase, sceneTimer, logActivityMutation, formatTimerDisplay, scenePhases, setScenePhase, sceneIntervalRef]);
 
   const formatTime = (date: Date | string | null) => {
     if (!date) return "";
@@ -4565,10 +4454,16 @@ export default function BondedAscentApp() {
           }}
           onComplete={async () => {
             if (interrogationSessionId) {
-              await fetch(`/api/interrogation-sessions/${interrogationSessionId}/submit-answers`, {
-                method: "PUT",
-                credentials: "include",
-              }).catch(() => {});
+              try {
+                const res = await fetch(`/api/interrogation-sessions/${interrogationSessionId}/submit-answers`, {
+                  method: "PUT",
+                  credentials: "include",
+                });
+                if (!res.ok) throw new Error("Submit failed");
+              } catch {
+                alert("Failed to submit answers. Please try again.");
+                return;
+              }
             }
             closeOverlay();
           }}

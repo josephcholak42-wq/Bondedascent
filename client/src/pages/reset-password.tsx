@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { useLocation } from "wouter";
-import { Lock, User, ArrowLeft, ArrowRight, CheckCircle, Loader2, KeyRound } from 'lucide-react';
+import { Lock, User, ArrowLeft, ArrowRight, CheckCircle, Loader2, KeyRound, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { apiRequest } from '@/lib/queryClient';
 
 export default function ResetPasswordPage() {
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<'username' | 'token' | 'done'>('username');
+  const [step, setStep] = useState<'username' | 'code' | 'reset' | 'done'>('username');
   const [username, setUsername] = useState('');
-  const [token, setToken] = useState('');
+  const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,10 +26,8 @@ export default function ResetPasswordPage() {
 
     setIsLoading(true);
     try {
-      const res = await apiRequest('POST', '/api/auth/forgot-password', { username });
-      const data = await res.json();
-      setToken(data.token);
-      setStep('token');
+      await apiRequest('POST', '/api/auth/forgot-password', { username });
+      setStep('code');
     } catch (err: any) {
       const msg = err?.message || 'Something went wrong';
       const cleaned = msg.replace(/^\d+:\s*/, '').replace(/^"(.*)"$/, '$1');
@@ -42,6 +40,18 @@ export default function ResetPasswordPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!code || code.length !== 6) {
+      setError('Please enter a valid 6-digit reset code');
+      return;
+    }
+
+    setStep('reset');
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -65,7 +75,7 @@ export default function ResetPasswordPage() {
 
     setIsLoading(true);
     try {
-      await apiRequest('POST', '/api/auth/reset-password', { token, newPassword });
+      await apiRequest('POST', '/api/auth/reset-password', { code, newPassword });
       setStep('done');
     } catch (err: any) {
       const msg = err?.message || 'Something went wrong';
@@ -148,11 +158,49 @@ export default function ResetPasswordPage() {
             </form>
           )}
 
-          {step === 'token' && (
+          {step === 'code' && (
+            <form onSubmit={handleVerifyCode} className="space-y-6 animate-in slide-in-from-right duration-300">
+              <div className="text-center mb-4">
+                <div className="inline-block px-4 py-2 bg-red-950/40 border border-red-500/30 rounded-xl mb-3">
+                  <p className="text-xs text-red-400 font-bold uppercase tracking-wider">Code Sent</p>
+                </div>
+                <p className="text-sm text-slate-400">A 6-digit reset code has been generated. Ask your partner or administrator for the code.</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Reset Code</Label>
+                <div className="relative group">
+                  <ShieldCheck size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" />
+                  <input
+                    data-testid="input-reset-code"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    className="w-full bg-black/40 border border-slate-700 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-red-500/50 transition-colors placeholder:text-slate-600 tracking-[0.5em] text-center font-mono text-lg"
+                  />
+                </div>
+              </div>
+
+              <Button
+                data-testid="button-verify-code"
+                type="submit"
+                disabled={isLoading || code.length !== 6}
+                className="w-full py-6 bg-gradient-to-r from-red-800 to-red-950 hover:from-red-700 hover:to-red-900 border-t border-red-500/30 text-white font-black uppercase tracking-widest rounded-xl shadow-lg group"
+              >
+                Verify Code
+                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={16} />
+              </Button>
+            </form>
+          )}
+
+          {step === 'reset' && (
             <form onSubmit={handleResetPassword} className="space-y-6 animate-in slide-in-from-right duration-300">
               <div className="text-center mb-4">
                 <div className="inline-block px-4 py-2 bg-red-950/40 border border-red-500/30 rounded-xl mb-3">
-                  <p className="text-xs text-red-400 font-bold uppercase tracking-wider">Reset code verified</p>
+                  <p className="text-xs text-red-400 font-bold uppercase tracking-wider">Code entered</p>
                 </div>
                 <p className="text-sm text-slate-400">Now enter your new password.</p>
               </div>

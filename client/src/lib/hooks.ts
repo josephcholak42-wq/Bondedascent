@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { apiRequest, getQueryFn, queryClient } from "./queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { User, Task, CheckIn, Dare, Reward, Punishment, JournalEntry, Notification, ActivityLogEntry, Ritual, Limit, Secret, Wager, Rating, CountdownEvent, StandingOrder, PermissionRequest, Devotion, Conflict, DesiredChange, Achievement, PlaySession, Accusation, IntensitySession, ObedienceTrial, TrialStep, SensationCard, SensationSpin, SealedOrder, EnduranceChallenge, EnduranceCheckin, Media, Sticker, FeatureSetting, Contract, Confession, TrainingProgram, TrainingDay, TrainingEnrollment, SceneScript, ScriptStep, InterrogationSession, InterrogationQuestion, AftercareItem, Streak } from "@shared/schema";
 
 type SafeUser = Omit<User, "password">;
@@ -1983,6 +1984,7 @@ export function useInterrogationSessions() {
 
 export function useCreateInterrogation() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   return useMutation({
     mutationFn: async (data: any) => {
       const res = await apiRequest("POST", "/api/interrogation-sessions", data);
@@ -1990,6 +1992,9 @@ export function useCreateInterrogation() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/interrogation-sessions"] });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Interrogation failed", description: error.message || "Could not create interrogation", variant: "destructive" });
     },
   });
 }
@@ -2034,6 +2039,7 @@ export function useCreateInterrogationQuestion() {
 
 export function useAnswerQuestion() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const res = await apiRequest("PUT", `/api/interrogation-questions/${id}`, data);
@@ -2042,6 +2048,11 @@ export function useAnswerQuestion() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["/api/interrogation-sessions"] });
     },
+    onError: (error: Error) => {
+      toast({ title: "Answer sync failed", description: error.message || "Could not submit answer", variant: "destructive" });
+    },
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * Math.pow(2, attempt), 5000),
   });
 }
 
@@ -2085,6 +2096,7 @@ export function useToggleAftercareItem() {
 
 export function useUpdateLiveSession() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
       const res = await apiRequest("PUT", `/api/play-sessions/${id}/live`, data);
@@ -2094,6 +2106,11 @@ export function useUpdateLiveSession() {
       qc.invalidateQueries({ queryKey: ["/api/play-sessions"] });
       qc.invalidateQueries({ queryKey: ["/api/play-sessions/active-live"] });
     },
+    onError: (error: Error) => {
+      toast({ title: "Sync failed", description: error.message || "Could not update live session", variant: "destructive" });
+    },
+    retry: 2,
+    retryDelay: (attempt) => Math.min(1000 * Math.pow(2, attempt), 5000),
   });
 }
 
@@ -2107,6 +2124,7 @@ export function useActiveLiveSession(enabled: boolean = true) {
 
 export function useStartLiveSession() {
   const qc = useQueryClient();
+  const { toast } = useToast();
   return useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/play-sessions/start-live", {});
@@ -2116,5 +2134,9 @@ export function useStartLiveSession() {
       qc.invalidateQueries({ queryKey: ["/api/play-sessions"] });
       qc.invalidateQueries({ queryKey: ["/api/play-sessions/active-live"] });
     },
+    onError: (error: Error) => {
+      toast({ title: "Failed to start session", description: error.message || "Could not start live session", variant: "destructive" });
+    },
+    retry: 1,
   });
 }

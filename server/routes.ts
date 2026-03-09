@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { sendPushToUser, getVapidPublicKey } from "./push";
+import { addSSEClient, sendToUser, sendToUsers } from "./sse";
 import { type User, type InterrogationSession } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -45,6 +46,7 @@ async function notifyUser(userId: string, text: string, type: string = "info", c
   await storage.createNotification({ userId, text, type, ...(createdAsRole ? { createdAsRole } : {}) });
   const title = type === "alert" ? "BondedAscent Alert" : "BondedAscent";
   sendPushToUser(userId, title, text, type).catch(() => {});
+  sendToUser(userId, "notification", { text, type });
 }
 
 const checkInBodySchema = z.object({
@@ -64,6 +66,11 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   setupAuth(app);
+
+  app.get("/api/sse", requireAuth, (req, res) => {
+    const user = req.user as User;
+    addSSEClient(user.id, res);
+  });
 
   app.get("/api/dashboard-init", requireAuth, async (req, res) => {
     const user = req.user as User;
@@ -1364,6 +1371,9 @@ export async function registerRoutes(
   app.post("/api/presence/heartbeat", requireAuth, async (req, res) => {
     const user = req.user as User;
     await storage.updatePresence(user.id);
+    if (user.partnerId) {
+      sendToUser(user.partnerId, "presence", { userId: user.id, online: true });
+    }
     res.json({ ok: true });
   });
 
@@ -2512,6 +2522,7 @@ export async function registerRoutes(
     await storage.logActivity(user.id, "interrogation_created", title.trim(), user.role);
     await notifyUser(subjectId, `You are being interrogated: "${title.trim()}"`, "alert", user.role);
     const updated = await storage.updateInterrogationSession(session.id, { status: "active" });
+    sendToUser(subjectId, "interrogation-started", { sessionId: session.id, title: title.trim() });
     res.status(201).json(updated || session);
   });
 
@@ -2534,6 +2545,7 @@ export async function registerRoutes(
     const session = await storage.updateInterrogationSession(req.params.id, { status: "answered" });
     if (!session) return res.status(404).json({ message: "Not found" });
     await notifyUser(session.inquisitorId, `Interrogation "${session.title}" answers submitted — ready for grading`, "alert", user.role);
+    sendToUser(session.inquisitorId, "interrogation-answered", { sessionId: session.id });
     res.json(session);
   });
 
@@ -2562,6 +2574,7 @@ export async function registerRoutes(
     });
     if (!session) return res.status(404).json({ message: "Not found" });
     await notifyUser(session.subjectId, `Interrogation "${session.title}" graded — Score: ${score}%`, "alert", "dom");
+    sendToUser(session.subjectId, "interrogation-graded", { sessionId: session.id, score });
     res.json({ session, questions });
   });
 
@@ -2614,6 +2627,12 @@ export async function registerRoutes(
 
   // --- AFTERCARE ITEMS ---
   app.get("/api/aftercare/:sessionId", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const session = await storage.getPlaySessionById(req.params.sessionId);
+    if (!session) return res.status(404).json({ message: "Play session not found" });
+    if (session.userId !== user.id && session.partnerId !== user.id) {
+      return res.status(403).json({ message: "Not authorized to view aftercare for this session" });
+    }
     const items = await storage.getAftercareItems(req.params.sessionId);
     res.json(items);
   });
@@ -2622,6 +2641,11 @@ export async function registerRoutes(
     const user = req.user as User;
     const { sessionId, type, label } = req.body;
     if (!sessionId || !label?.trim()) return res.status(400).json({ message: "sessionId and label required" });
+    const session = await storage.getPlaySessionById(sessionId);
+    if (!session) return res.status(404).json({ message: "Play session not found" });
+    if (session.userId !== user.id && session.partnerId !== user.id) {
+      return res.status(403).json({ message: "Not authorized to add aftercare for this session" });
+    }
     const item = await storage.createAftercareItem({
       sessionId,
       userId: user.id,
@@ -2670,6 +2694,7 @@ export async function registerRoutes(
     await storage.logActivity(user.id, "live_session_started", "Live Session started", user.role);
     if (partner) {
       await notifyUser(partner.id, "Your partner has started a Live Session. Join now!", "live_session");
+      sendToUser(partner.id, "live-session-started", { sessionId: session.id });
     }
     res.status(201).json(session);
   });
@@ -2690,9 +2715,12 @@ export async function registerRoutes(
     if (status !== undefined) data.status = status;
     const session = await storage.updatePlaySession(req.params.id, data);
     if (!session) return res.status(404).json({ message: "Not found" });
-    if (status === "completed" || isLive === false) {
-      if (partner) {
+    if (partner) {
+      if (status === "completed" || isLive === false) {
         await notifyUser(partner.id, "The Live Session has ended.", "live_session_ended");
+        sendToUser(partner.id, "live-session-ended", { sessionId: req.params.id });
+      } else {
+        sendToUser(partner.id, "live-session-updated", { sessionId: req.params.id, ...data });
       }
     }
     res.json(session);

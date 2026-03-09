@@ -222,7 +222,7 @@ function savePinnedIds(ids: Set<string>) {
   localStorage.setItem(PINNED_KEY, JSON.stringify([...ids]));
 }
 
-function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, isSelecting, isSelected, onToggleSelect, onDelete, onEdit }: {
+function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, isSelecting, isSelected, onToggleSelect, onDelete, onEdit, isLive }: {
   item: FeedItem;
   onAction: (id: string, action: string, payload?: any) => void;
   role: string;
@@ -234,6 +234,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   onToggleSelect?: (id: string) => void;
   onDelete?: (type: string, id: string) => void;
   onEdit?: (type: string, id: string, data: Record<string, any>) => void;
+  isLive?: boolean;
 }) {
   const [responseText, setResponseText] = useState("");
   const [xpAmount, setXpAmount] = useState(10);
@@ -265,8 +266,8 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`cp-feed-3d group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""}`}
-      style={{ animation: "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
+      className={`cp-feed-3d group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""} ${isLive ? "ring-1 ring-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]" : ""}`}
+      style={{ animation: isLive ? "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, cp-live-pulse 2s ease-in-out infinite" : "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
     >
       <div className="p-3.5 flex items-start gap-3">
         {isSelecting && (
@@ -282,6 +283,12 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isSelecting && setExpanded(!expanded)}>
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-[9px] font-black uppercase tracking-[0.15em] ${config.color} opacity-80`}>{config.label}</span>
+            {isLive && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 border border-red-500/40" data-testid={`live-badge-${item.id}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                <span className="text-[8px] font-black text-red-400 uppercase tracking-wider">LIVE</span>
+              </span>
+            )}
             {isPinned && <Pin size={9} className="text-red-400" />}
             {item.countdown !== undefined && item.countdown > 0 && <CountdownTimer seconds={item.countdown} />}
           </div>
@@ -593,16 +600,46 @@ export function CommandProtocols({
     return items;
   }, [allItems, filter, debouncedSearch]);
 
+  const isLiveItem = useCallback((item: FeedItem) => {
+    if (item.type === "play_session" && item.data?.status === "active") return true;
+    if (item.type === "demand" && item.countdown !== undefined && item.countdown > 0) return true;
+    if (item.data?.isLive || item.data?.isActive) return true;
+    return false;
+  }, []);
+
+  const [feedExpanded, setFeedExpanded] = useState(false);
+  const FEED_COLLAPSE_LIMIT = 10;
+
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
       const aPinned = pinnedIds.has(a.id) ? 0 : 1;
       const bPinned = pinnedIds.has(b.id) ? 0 : 1;
       if (aPinned !== bPinned) return aPinned - bPinned;
+
+      const aLive = isLiveItem(a) ? 0 : 1;
+      const bLive = isLiveItem(b) ? 0 : 1;
+      if (aLive !== bLive) return aLive - bLive;
+
+      const aUrgent = a.urgent || ["demand", "command", "accusation"].includes(a.type) ? 0 : 1;
+      const bUrgent = b.urgent || ["demand", "command", "accusation"].includes(b.type) ? 0 : 1;
+      if (aUrgent !== bUrgent) return aUrgent - bUrgent;
+
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (aTime !== bTime) return bTime - aTime;
+
       const pa = TYPE_CONFIG[a.type]?.priority ?? 10;
       const pb = TYPE_CONFIG[b.type]?.priority ?? 10;
       return pa - pb;
     });
-  }, [filtered, pinnedIds]);
+  }, [filtered, pinnedIds, isLiveItem]);
+
+  const visibleSorted = useMemo(() => {
+    if (feedExpanded || sorted.length <= FEED_COLLAPSE_LIMIT) return sorted;
+    return sorted.slice(0, FEED_COLLAPSE_LIMIT);
+  }, [sorted, feedExpanded]);
+
+  const hiddenCount = sorted.length - visibleSorted.length;
 
   const urgentCount = allItems.filter(i => ["demand", "command", "accusation"].includes(i.type)).length;
   const totalProtocols = tasks.length + standingOrders.filter((o: any) => o.status === "active").length + rituals.filter((r: any) => r.active).length;
@@ -660,6 +697,10 @@ export function CommandProtocols({
         @keyframes cp-pulse-dot {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.5; transform: scale(1.5); }
+        }
+        @keyframes cp-live-pulse {
+          0%, 100% { box-shadow: 0 0 8px rgba(239,68,68,0.15), inset 0 0 0 1px rgba(239,68,68,0.2); }
+          50% { box-shadow: 0 0 18px rgba(239,68,68,0.3), inset 0 0 0 1px rgba(239,68,68,0.4); }
         }
         @keyframes cp-action-flash {
           0% { opacity: 0; }
@@ -873,7 +914,7 @@ export function CommandProtocols({
               </div>
             ) : (
               <div className="space-y-2 max-h-[60vh] overflow-y-auto cp-feed-scroll fluid-fade-mask pr-1">
-                {sorted.map((item, i) => (
+                {visibleSorted.map((item, i) => (
                   <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${Math.min(i * 40, 600)}ms` }}>
                     <FeedCard item={item} onAction={onAction} role={role}
                       searchQuery={debouncedSearch || undefined}
@@ -884,9 +925,30 @@ export function CommandProtocols({
                       onToggleSelect={toggleSelect}
                       onDelete={onDelete}
                       onEdit={onEdit}
+                      isLive={isLiveItem(item)}
                     />
                   </div>
                 ))}
+                {hiddenCount > 0 && (
+                  <button
+                    data-testid="cp-show-more"
+                    onClick={() => setFeedExpanded(true)}
+                    className="w-full py-2.5 mt-1 flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors cursor-pointer"
+                  >
+                    <ChevronDown size={14} className="text-slate-500" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Show {hiddenCount} more</span>
+                  </button>
+                )}
+                {feedExpanded && sorted.length > FEED_COLLAPSE_LIMIT && (
+                  <button
+                    data-testid="cp-show-less"
+                    onClick={() => setFeedExpanded(false)}
+                    className="w-full py-2 mt-1 flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors cursor-pointer"
+                  >
+                    <ChevronUp size={14} className="text-slate-500" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Show less</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

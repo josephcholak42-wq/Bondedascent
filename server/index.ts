@@ -48,8 +48,29 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+
+      const sensitivePatterns = [
+        "/api/auth/forgot-password",
+        "/api/auth/reset-password",
+        "/api/auth/register",
+        "/api/auth/login",
+        "/api/journal",
+        "/api/secrets",
+        "/api/dashboard-init",
+      ];
+      const isSensitive = sensitivePatterns.some((p) => path.startsWith(p));
+
+      if (capturedJsonResponse && !isSensitive) {
+        const responseStr = JSON.stringify(capturedJsonResponse);
+        if (responseStr.length <= 500) {
+          logLine += ` :: ${responseStr}`;
+        } else if (Array.isArray(capturedJsonResponse)) {
+          logLine += ` :: [...${capturedJsonResponse.length} items]`;
+        } else {
+          logLine += ` :: ${responseStr.substring(0, 200)}...[truncated]`;
+        }
+      } else if (capturedJsonResponse && isSensitive) {
+        logLine += ` :: [redacted]`;
       }
 
       log(logLine);

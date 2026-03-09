@@ -28,8 +28,8 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **Build Tool**: Vite
 - **Key Components**:
     - **Command Center**: Central hub (`CommandProtocols` component) integrating ALL app functionality — expandable feed cards, pinning, global search, live activity timeline, sparkline trend charts, bulk actions across 24+ feed types, feature drawers.
-    - **Live Session Engine** (`live-session.tsx`): Full-screen immersive session mode with Dom control panel and Sub receiver view, intensity-based visual effects, phase management, safe word support. **Partner-synced**: Dom starts session via API (`POST /api/play-sessions/start-live`), Sub auto-detects via polling (`GET /api/play-sessions/active-live` every 3s) and sees join banner. Instructions/intensity/phase sync in real-time via `PUT /api/play-sessions/:id/live`. Push notification sent to partner on start/end.
-    - **Interrogation Mode** (`interrogation.tsx`): Three components — InterrogationSetup (Dom), InterrogationMode (Sub full-screen Q&A with timer), InterrogationResults.
+    - **Live Session Engine** (`live-session.tsx`): Full-screen immersive session mode with Dom control panel and Sub receiver view, intensity-based visual effects, phase management, safe word support. **Partner-synced via SSE**: Dom starts session via API (`POST /api/play-sessions/start-live`), Sub detects instantly via Server-Sent Events (polling kept as fallback). Instructions/intensity/phase sync in real-time via `PUT /api/play-sessions/:id/live`. Push notification sent to partner on start/end.
+    - **Interrogation Mode** (`interrogation.tsx`): Three components — InterrogationSetup (Dom), InterrogationMode (Sub full-screen Q&A with timer), InterrogationResults. Partner-synced via SSE events.
     - **Confession Booth** (`confession-booth.tsx`): Full-screen overlay with Sub typing mode and Dom review/response mode.
     - **Aftercare Checklist** (`aftercare-checklist.tsx`): Post-session checklist with calming dark aesthetic, mood rating, notes.
     - **Mood Chart** (`mood-chart.tsx`): SVG line chart for mood/obedience history over 30 days.
@@ -50,8 +50,12 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **API Pattern**: RESTful JSON API (`/api/` prefix)
 - **Authentication**: Passport.js with Local Strategy, session-based using `express-session` and `connect-pg-simple`.
 - **Password Hashing**: Node.js `crypto.scrypt`.
+- **Password Reset**: 6-digit code flow (no token exposure in API responses).
 - **Request Validation**: Zod schemas.
 - **Push Notifications**: web-push with VAPID keys (`server/push.ts`).
+- **Server-Sent Events**: `server/sse.ts` — real-time partner sync for live sessions, interrogations, notifications, presence. Client hook: `client/src/lib/useSSE.ts`.
+- **API Logging**: Sensitive endpoints redacted, large responses truncated (`server/index.ts`).
+- **Session Secret**: Auto-generated random secret if `SESSION_SECRET` env var not set (with warning).
 - **Development**: Vite dev server as middleware with HMR.
 
 ### Data Storage
@@ -62,6 +66,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **Tables** (43 total): users, tasks, check_ins, dares, rewards, punishments, journal_entries, notifications, activity_log, rituals, limits, secrets, wagers, ratings, countdown_events, standing_orders, permission_requests, devotions, conflicts, desired_changes, achievements, play_sessions, accusations, intensity_sessions, obedience_trials, trial_steps, sensation_cards, sensation_spins, sealed_orders, endurance_challenges, endurance_checkins, media, stickers, feature_settings, body_map_zones, push_subscriptions, contracts, confessions, training_programs, training_days, training_enrollments, scene_scripts, script_steps, interrogation_sessions, interrogation_questions, aftercare_items, streaks.
 
 ### API Endpoints (key new ones)
+- `GET /api/sse` — Server-Sent Events endpoint for real-time partner sync (auto-reconnect)
 - `GET /api/trends` — 7-day rolling trend data for sparklines
 - `GET /api/streaks` — Current/longest streaks per type
 - `GET /api/analytics` — 30-day mood, task completion, active hours
