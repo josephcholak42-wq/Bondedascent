@@ -88,34 +88,34 @@ export async function registerRoutes(
       playSessions, stickers, featureSettings, bodyMapZones,
       accusations,
     ] = await Promise.all([
-      storage.getTasksForPair(userIds, user.role),
-      storage.getCheckInsForPair(userIds, user.role),
-      storage.getDaresForPair(userIds, user.role),
-      storage.getRewardsForPair(userIds, user.role),
-      storage.getPunishmentsForPair(userIds, user.role),
-      storage.getJournalEntries(user.id, user.role),
-      storage.getNotifications(user.id, user.role),
-      storage.getActivityLog(user.id, user.role),
-      storage.getStandingOrdersForPair(userIds, user.role),
-      storage.getRitualsForPair(userIds, user.role),
-      storage.getWagersForPair(userIds, user.role),
-      storage.getDesiredChangesForPair(userIds, user.role),
-      storage.getObedienceTrialsForPair(userIds, user.role),
+      storage.getTasksForPair(userIds),
+      storage.getCheckInsForPair(userIds),
+      storage.getDaresForPair(userIds),
+      storage.getRewardsForPair(userIds),
+      storage.getPunishmentsForPair(userIds),
+      storage.getJournalEntries(user.id),
+      storage.getNotifications(user.id),
+      storage.getActivityLog(user.id),
+      storage.getStandingOrdersForPair(userIds),
+      storage.getRitualsForPair(userIds),
+      storage.getWagersForPair(userIds),
+      storage.getDesiredChangesForPair(userIds),
+      storage.getObedienceTrialsForPair(userIds),
       storage.getEnduranceChallenges(user.id),
       storage.getSealedOrders(user.id),
-      storage.getSecretsForPair(userIds, user.role),
-      storage.getLimitsForPair(userIds, user.role),
-      storage.getPermissionRequestsForPair(userIds, user.role),
-      storage.getDevotionsForPair(userIds, user.role),
-      storage.getConflictsForPair(userIds, user.role),
-      storage.getRatingsForPair(userIds, user.role),
-      storage.getIntensitySessionsForPair(userIds, user.role),
-      storage.getCountdownEventsForPair(userIds, user.role),
-      storage.getPlaySessionsForPair(userIds, user.role),
-      storage.getStickersForPair(userIds, user.role),
+      storage.getSecretsForPair(userIds),
+      storage.getLimitsForPair(userIds),
+      storage.getPermissionRequestsForPair(userIds),
+      storage.getDevotionsForPair(userIds),
+      storage.getConflictsForPair(userIds),
+      storage.getRatingsForPair(userIds),
+      storage.getIntensitySessionsForPair(userIds),
+      storage.getCountdownEventsForPair(userIds),
+      storage.getPlaySessionsForPair(userIds),
+      storage.getStickersForPair(userIds),
       storage.getFeatureSettings(user.id),
       storage.getBodyMapZones(user.id),
-      storage.getAccusations(user.id, user.role),
+      storage.getAccusations(user.id),
     ]);
 
     let partnerData = null;
@@ -173,7 +173,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const taskList = await storage.getTasksForPair(userIds, user.role);
+    const taskList = await storage.getTasksForPair(userIds);
     res.json(taskList);
   });
 
@@ -251,7 +251,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getCheckInsForPair(userIds, user.role);
+    const list = await storage.getCheckInsForPair(userIds);
     res.json(list);
   });
 
@@ -309,7 +309,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getDaresForPair(userIds, user.role);
+    const list = await storage.getDaresForPair(userIds);
     res.json(list);
   });
 
@@ -357,7 +357,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getRewardsForPair(userIds, user.role);
+    const list = await storage.getRewardsForPair(userIds);
     res.json(list);
   });
 
@@ -376,7 +376,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allRewards = await storage.getRewardsForPair(userIds, user.role);
+    const allRewards = await storage.getRewardsForPair(userIds);
     const owned = allRewards.find(r => r.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Reward not found" });
 
@@ -394,7 +394,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allRewards = await storage.getRewardsForPair(userIds, user.role);
+    const allRewards = await storage.getRewardsForPair(userIds);
     const owned = allRewards.find(r => r.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Reward not found" });
     await storage.deleteReward(req.params.id);
@@ -411,7 +411,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allRewards = await storage.getRewardsForPair(userIds, user.role);
+    const allRewards = await storage.getRewardsForPair(userIds);
     const owned = allRewards.find(r => r.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Reward not found" });
     const reward = await storage.claimReward(req.params.id);
@@ -427,7 +427,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allRewards = await storage.getRewardsForPair(userIds, user.role);
+    const allRewards = await storage.getRewardsForPair(userIds);
     const owned = allRewards.find(r => r.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Reward not found" });
     const reward = await storage.redeemReward(req.params.id);
@@ -444,7 +444,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getPunishmentsForPair(userIds, user.role);
+    const list = await storage.getPunishmentsForPair(userIds);
     res.json(list);
   });
 
@@ -476,7 +476,7 @@ export async function registerRoutes(
 
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allPunishments = await storage.getPunishmentsForPair(userIds, user.role);
+    const allPunishments = await storage.getPunishmentsForPair(userIds);
     const owned = allPunishments.find(p => p.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Punishment not found" });
 
@@ -493,7 +493,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const allPunishments = await storage.getPunishmentsForPair(userIds, user.role);
+    const allPunishments = await storage.getPunishmentsForPair(userIds);
     const owned = allPunishments.find(p => p.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Punishment not found" });
     await storage.deletePunishment(req.params.id);
@@ -557,7 +557,7 @@ export async function registerRoutes(
   // --- JOURNAL ---
   app.get("/api/journal", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getJournalEntries(user.id, user.role);
+    const list = await storage.getJournalEntries(user.id);
     res.json(list);
   });
 
@@ -620,13 +620,13 @@ export async function registerRoutes(
   // --- NOTIFICATIONS ---
   app.get("/api/notifications", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getNotifications(user.id, user.role);
+    const list = await storage.getNotifications(user.id);
     res.json(list);
   });
 
   app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const notifications = await storage.getNotifications(user.id, user.role);
+    const notifications = await storage.getNotifications(user.id);
     const owned = notifications.find(n => n.id === req.params.id);
     if (!owned) return res.status(404).json({ message: "Notification not found" });
 
@@ -639,7 +639,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getActivityLogForPair(userIds, user.role);
+    const list = await storage.getActivityLogForPair(userIds);
     res.json(list);
   });
 
@@ -659,7 +659,7 @@ export async function registerRoutes(
     const completedTasks = taskList.filter(t => t.done).length;
     const totalTasks = taskList.length;
     const checkInList = await storage.getCheckIns(user.id);
-    const journalList = await storage.getJournalEntries(user.id, user.role);
+    const journalList = await storage.getJournalEntries(user.id);
     const dareList = await storage.getDares(user.id);
     const completedDares = dareList.filter(d => d.completed).length;
 
@@ -905,7 +905,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getRitualsForPair(userIds, user.role));
+    res.json(await storage.getRitualsForPair(userIds));
   });
 
   app.post("/api/rituals", requireAuth, async (req, res) => {
@@ -960,7 +960,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getLimitsForPair(userIds, user.role));
+    res.json(await storage.getLimitsForPair(userIds));
   });
 
   app.post("/api/limits", requireAuth, async (req, res) => {
@@ -1003,7 +1003,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getSecretsForPair(userIds, user.role));
+    res.json(await storage.getSecretsForPair(userIds));
   });
 
   app.get("/api/secrets/for-me", requireAuth, async (req, res) => {
@@ -1053,7 +1053,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getWagersForPair(userIds, user.role));
+    res.json(await storage.getWagersForPair(userIds));
   });
 
   app.post("/api/wagers", requireAuth, async (req, res) => {
@@ -1083,7 +1083,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getRatingsForPair(userIds, user.role));
+    res.json(await storage.getRatingsForPair(userIds));
   });
 
   app.get("/api/ratings/received", requireAuth, async (req, res) => {
@@ -1106,7 +1106,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getCountdownEventsForPair(userIds, user.role));
+    res.json(await storage.getCountdownEventsForPair(userIds));
   });
 
   app.post("/api/countdown-events", requireAuth, async (req, res) => {
@@ -1132,7 +1132,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getStandingOrdersForPair(userIds, user.role));
+    res.json(await storage.getStandingOrdersForPair(userIds));
   });
 
   app.post("/api/standing-orders", requireAuth, async (req, res) => {
@@ -1186,7 +1186,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getPermissionRequestsForPair(userIds, user.role));
+    res.json(await storage.getPermissionRequestsForPair(userIds));
   });
 
   app.post("/api/permission-requests", requireAuth, async (req, res) => {
@@ -1227,7 +1227,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getDevotionsForPair(userIds, user.role));
+    res.json(await storage.getDevotionsForPair(userIds));
   });
 
   app.post("/api/devotions", requireAuth, async (req, res) => {
@@ -1256,7 +1256,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getConflictsForPair(userIds, user.role));
+    res.json(await storage.getConflictsForPair(userIds));
   });
 
   app.post("/api/conflicts", requireAuth, async (req, res) => {
@@ -1286,7 +1286,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getDesiredChangesForPair(userIds, user.role));
+    res.json(await storage.getDesiredChangesForPair(userIds));
   });
 
   app.post("/api/desired-changes", requireAuth, async (req, res) => {
@@ -1316,7 +1316,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getAchievementsForPair(userIds, user.role));
+    res.json(await storage.getAchievementsForPair(userIds));
   });
 
   app.post("/api/achievements", requireAuth, async (req, res) => {
@@ -1333,7 +1333,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    res.json(await storage.getPlaySessionsForPair(userIds, user.role));
+    res.json(await storage.getPlaySessionsForPair(userIds));
   });
 
   app.post("/api/play-sessions", requireAuth, async (req, res) => {
@@ -1577,7 +1577,7 @@ export async function registerRoutes(
   // --- ACCUSATIONS ---
   app.get("/api/accusations", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const list = await storage.getAccusations(user.id, user.role);
+    const list = await storage.getAccusations(user.id);
     res.json(list);
   });
 
@@ -1656,7 +1656,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const sessions = await storage.getIntensitySessionsForPair(userIds, user.role);
+    const sessions = await storage.getIntensitySessionsForPair(userIds);
     res.json(sessions);
   });
 
@@ -1704,7 +1704,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const trials = await storage.getObedienceTrialsForPair(userIds, user.role);
+    const trials = await storage.getObedienceTrialsForPair(userIds);
     res.json(trials);
   });
 
@@ -1794,7 +1794,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const cards = await storage.getSensationCardsForPair(userIds, user.role);
+    const cards = await storage.getSensationCardsForPair(userIds);
     res.json(cards);
   });
 
@@ -1828,7 +1828,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const spins = await storage.getSensationSpinsForPair(userIds, user.role);
+    const spins = await storage.getSensationSpinsForPair(userIds);
     res.json(spins);
   });
 
@@ -2090,7 +2090,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const list = await storage.getStickersForPair(userIds, user.role);
+    const list = await storage.getStickersForPair(userIds);
     res.json(list);
   });
 
@@ -2188,7 +2188,7 @@ export async function registerRoutes(
     const user = req.user as User;
     const partner = await storage.getPartner(user.id);
     const userIds = partner ? [user.id, partner.id] : [user.id];
-    const items = await storage.getLockedMediaForPair(userIds, user.role);
+    const items = await storage.getLockedMediaForPair(userIds);
     res.json(items.map(m => ({
       ...m,
       url: m.isLocked && m.userId !== user.id && m.unlockedBy !== user.id ? null : m.url,
@@ -2226,7 +2226,7 @@ export async function registerRoutes(
     const partner = await storage.getPartner(user.id);
     if (!partner) return res.status(400).json({ message: "No partner linked" });
     const userIds = [user.id, partner.id];
-    const items = await storage.getLockedMediaForPair(userIds, user.role);
+    const items = await storage.getLockedMediaForPair(userIds);
     const item = items.find(m => m.id === req.params.id);
     if (!item) return res.status(404).json({ message: "Not found" });
     if (item.userId === user.id) return res.status(400).json({ message: "You own this media" });
