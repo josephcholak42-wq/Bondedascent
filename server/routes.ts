@@ -1412,6 +1412,78 @@ export async function registerRoutes(
     res.json(session);
   });
 
+  app.delete("/api/secrets/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allSecrets = await storage.getSecrets(user.id);
+    const owned = allSecrets.find(s => s.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    await storage.deleteSecret(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.delete("/api/wagers/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getWagerById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id) return res.status(403).json({ message: "Forbidden" });
+    await storage.deleteWager(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.delete("/api/ratings/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allRatings = await storage.getRatings(user.id);
+    const owned = allRatings.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    await storage.deleteRating(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.delete("/api/permission-requests/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allReqs = await storage.getPermissionRequests(user.id);
+    const owned = allReqs.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    await storage.deletePermissionRequest(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.delete("/api/devotions/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allDevotions = await storage.getDevotions(user.id);
+    const owned = allDevotions.find(d => d.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    await storage.deleteDevotion(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.delete("/api/conflicts/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allConflicts = await storage.getConflicts(user.id);
+    const owned = allConflicts.find(c => c.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    await storage.deleteConflict(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.delete("/api/desired-changes/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allChanges = await storage.getDesiredChanges(user.id);
+    const owned = allChanges.find(c => c.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    await storage.deleteDesiredChange(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.delete("/api/play-sessions/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getPlaySessionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.partnerId !== user.id) return res.status(403).json({ message: "Forbidden" });
+    await storage.deletePlaySession(req.params.id);
+    res.json({ message: "Deleted" });
+  });
+
   app.get("/api/push/vapid-public-key", (_req, res) => {
     res.json({ publicKey: getVapidPublicKey() });
   });

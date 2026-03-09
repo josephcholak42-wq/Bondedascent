@@ -192,6 +192,14 @@ import {
   useUpdateTask,
   useClaimReward,
   useRewardChest,
+  useDeleteSecret,
+  useDeleteWager,
+  useDeleteRating,
+  useDeletePermissionRequest,
+  useDeleteDevotion,
+  useDeleteConflict,
+  useDeleteDesiredChange,
+  useDeletePlaySession,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -334,6 +342,14 @@ export default function BondedAscentApp() {
   const dismissNotificationMutation = useDismissNotification();
   const markNotificationReadMutation = useMarkNotificationRead();
   const { data: activityLog = [] } = useActivityLog();
+  const deleteSecretMutation = useDeleteSecret();
+  const deleteWagerMutation = useDeleteWager();
+  const deleteRatingMutation = useDeleteRating();
+  const deletePermissionRequestMutation = useDeletePermissionRequest();
+  const deleteDevotionMutation = useDeleteDevotion();
+  const deleteConflictMutation = useDeleteConflict();
+  const deleteDesiredChangeMutation = useDeleteDesiredChange();
+  const deletePlaySessionMutation = useDeletePlaySession();
 
   const { data: partner } = usePartner();
   const { data: partnerStats } = usePartnerStats();
@@ -710,19 +726,19 @@ export default function BondedAscentApp() {
     journalEntries.slice(0, 20).forEach((j: any) => {
       items.push({ id: j.id, type: "journal", title: j.content?.slice(0, 80) || "Journal entry", description: j.mood ? `Mood: ${j.mood}` : undefined, data: j, createdAt: j.createdAt });
     });
-    devotionsList.forEach((d: any) => {
+    devotionsList.filter((d: any) => !d.completed).forEach((d: any) => {
       items.push({ id: d.id, type: "devotion", title: d.title || d.text, description: d.description, data: d, createdAt: d.createdAt });
     });
     secrets.forEach((s: any) => {
       items.push({ id: s.id, type: "secret", title: s.content?.slice(0, 60) || "Secret", data: s, createdAt: s.createdAt });
     });
-    permissionRequests.forEach((p: any) => {
+    permissionRequests.filter((p: any) => p.status === "pending").forEach((p: any) => {
       items.push({ id: p.id, type: "permission_request", title: p.title || p.request, description: p.reason, data: p, createdAt: p.createdAt });
     });
     limitsList.forEach((l: any) => {
       items.push({ id: l.id, type: "limit", title: l.title || l.description, description: l.type === "hard" ? "Hard limit" : "Soft limit", data: l, createdAt: l.createdAt });
     });
-    conflictsList.forEach((c: any) => {
+    conflictsList.filter((c: any) => c.status !== "resolved").forEach((c: any) => {
       items.push({ id: c.id, type: "conflict", title: c.title || c.description, description: c.status, data: c, createdAt: c.createdAt });
     });
     stickersList.filter((s: any) => s.recipientId === user?.id).slice(0, 10).forEach((s: any) => {
@@ -751,34 +767,34 @@ export default function BondedAscentApp() {
     dares.filter((d: any) => !d.completed).forEach((d: any) => {
       items.push({ id: d.id, type: "dare", title: d.text, description: d.completed ? "Completed" : "Active", data: d, createdAt: d.createdAt });
     });
-    playSessions.forEach((s: any) => {
+    playSessions.filter((s: any) => s.status !== "completed" && !s.completedAt).forEach((s: any) => {
       items.push({ id: s.id, type: "play_session", title: s.title || s.name || "Play Session", description: s.status, data: s, createdAt: s.createdAt });
     });
-    countdownEvents.forEach((e: any) => {
+    countdownEvents.filter((e: any) => !e.eventDate || new Date(e.eventDate) >= new Date(new Date().toDateString())).forEach((e: any) => {
       items.push({ id: e.id, type: "countdown_event", title: e.title || e.name, description: e.eventDate ? `Date: ${new Date(e.eventDate).toLocaleDateString()}` : undefined, data: e, createdAt: e.createdAt });
     });
-    wagers.forEach((w: any) => {
+    wagers.filter((w: any) => w.status === "active").forEach((w: any) => {
       items.push({ id: w.id, type: "wager", title: w.title || w.description, description: w.stakes, data: w, createdAt: w.createdAt });
     });
-    ratingsList.slice(0, 10).forEach((r: any) => {
+    ratingsList.slice(0, 5).forEach((r: any) => {
       items.push({ id: r.id, type: "rating", title: `Rating: ${r.score || r.rating}/10`, description: r.notes || r.comment, data: { ...r, score: r.score || r.rating }, createdAt: r.createdAt });
     });
-    desiredChanges.forEach((d: any) => {
+    desiredChanges.filter((d: any) => d.status !== "completed" && d.status !== "resolved").forEach((d: any) => {
       items.push({ id: d.id, type: "desired_change", title: d.title || d.description, description: d.priority ? `Priority: ${d.priority}` : undefined, data: d, createdAt: d.createdAt });
     });
     secrets.forEach((s: any) => {
       items.push({ id: s.id, type: "secret", title: s.content?.slice(0, 60) || "Secret", data: s, createdAt: s.createdAt });
     });
-    devotionsList.forEach((d: any) => {
+    devotionsList.filter((d: any) => !d.completed).forEach((d: any) => {
       items.push({ id: d.id, type: "devotion", title: d.title || d.text, description: d.description, data: d, createdAt: d.createdAt });
     });
-    conflictsList.forEach((c: any) => {
+    conflictsList.filter((c: any) => c.status !== "resolved").forEach((c: any) => {
       items.push({ id: c.id, type: "conflict", title: c.title || c.description, description: c.status, data: c, createdAt: c.createdAt });
     });
     limitsList.forEach((l: any) => {
       items.push({ id: l.id, type: "limit", title: l.title || l.description, description: l.type === "hard" ? "Hard limit" : "Soft limit", data: l, createdAt: l.createdAt });
     });
-    permissionRequests.forEach((p: any) => {
+    permissionRequests.filter((p: any) => p.status === "pending").forEach((p: any) => {
       items.push({ id: p.id, type: "permission_request", title: p.title || p.request, description: `${p.status || "pending"} · ${p.reason || ""}`, data: p, createdAt: p.createdAt });
     });
     return items;
@@ -838,8 +854,16 @@ export default function BondedAscentApp() {
       case "punishment": deletePunishmentMutation.mutate(id); break;
       case "reward": deleteRewardMutation.mutate(id); break;
       case "dare": completeDareMutation.mutate(id); break;
+      case "secret": deleteSecretMutation.mutate(id); break;
+      case "wager": deleteWagerMutation.mutate(id); break;
+      case "rating": deleteRatingMutation.mutate(id); break;
+      case "permission_request": deletePermissionRequestMutation.mutate(id); break;
+      case "devotion": deleteDevotionMutation.mutate(id); break;
+      case "conflict": deleteConflictMutation.mutate(id); break;
+      case "desired_change": deleteDesiredChangeMutation.mutate(id); break;
+      case "play_session": deletePlaySessionMutation.mutate(id); break;
     }
-  }, [deleteTaskMutation, deleteRitualMutation, deleteLimitMutation, deleteCountdownEventMutation, deleteStandingOrderMutation, dismissNotificationMutation, deletePunishmentMutation, deleteRewardMutation, completeDareMutation]);
+  }, [deleteTaskMutation, deleteRitualMutation, deleteLimitMutation, deleteCountdownEventMutation, deleteStandingOrderMutation, dismissNotificationMutation, deletePunishmentMutation, deleteRewardMutation, completeDareMutation, deleteSecretMutation, deleteWagerMutation, deleteRatingMutation, deletePermissionRequestMutation, deleteDevotionMutation, deleteConflictMutation, deleteDesiredChangeMutation, deletePlaySessionMutation]);
 
   const handleOnEdit = useCallback((type: string, id: string, data: Record<string, any>) => {
     switch (type) {

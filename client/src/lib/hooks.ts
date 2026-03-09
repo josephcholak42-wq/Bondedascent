@@ -2314,3 +2314,67 @@ export function useDeactivateSimulation() {
     },
   });
 }
+
+export function useDeleteSecret() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/secrets/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/secrets"] }); },
+  });
+}
+
+export function useDeleteWager() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/wagers/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/wagers"] }); },
+  });
+}
+
+export function useDeleteRating() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/ratings/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/ratings"] }); },
+  });
+}
+
+export function useDeletePermissionRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/permission-requests/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/permission-requests"] }); },
+  });
+}
+
+export function useDeleteDevotion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/devotions/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/devotions"] }); },
+  });
+}
+
+export function useDeleteConflict() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/conflicts/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/conflicts"] }); },
+  });
+}
+
+export function useDeleteDesiredChange() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/desired-changes/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/desired-changes"] }); },
+  });
+}
+
+export function useDeletePlaySession() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/play-sessions/${id}`); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/play-sessions"] }); },
+  });
+}

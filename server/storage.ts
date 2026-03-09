@@ -131,15 +131,18 @@ export interface IStorage {
   getSecretsForUser(forUserId: string): Promise<Secret[]>;
   createSecret(secret: InsertSecret): Promise<Secret>;
   revealSecret(id: string): Promise<Secret | undefined>;
+  deleteSecret(id: string): Promise<void>;
 
   getWagers(userId: string): Promise<Wager[]>;
   getWagerById(id: string): Promise<Wager | undefined>;
   createWager(wager: InsertWager): Promise<Wager>;
   updateWager(id: string, data: Partial<Wager>): Promise<Wager | undefined>;
+  deleteWager(id: string): Promise<void>;
 
   getRatings(userId: string): Promise<Rating[]>;
   getRatingsForUser(ratedUserId: string): Promise<Rating[]>;
   createRating(rating: InsertRating): Promise<Rating>;
+  deleteRating(id: string): Promise<void>;
 
   getCountdownEvents(userId: string): Promise<CountdownEvent[]>;
   getCountdownEventById(id: string): Promise<CountdownEvent | undefined>;
@@ -154,18 +157,22 @@ export interface IStorage {
   getPermissionRequests(userId: string): Promise<PermissionRequest[]>;
   createPermissionRequest(request: InsertPermissionRequest): Promise<PermissionRequest>;
   updatePermissionRequest(id: string, data: Partial<PermissionRequest>): Promise<PermissionRequest | undefined>;
+  deletePermissionRequest(id: string): Promise<void>;
 
   getDevotions(userId: string): Promise<Devotion[]>;
   createDevotion(devotion: InsertDevotion): Promise<Devotion>;
   updateDevotion(id: string, data: Partial<Devotion>): Promise<Devotion | undefined>;
+  deleteDevotion(id: string): Promise<void>;
 
   getConflicts(userId: string): Promise<Conflict[]>;
   createConflict(conflict: InsertConflict): Promise<Conflict>;
   updateConflict(id: string, data: Partial<Conflict>): Promise<Conflict | undefined>;
+  deleteConflict(id: string): Promise<void>;
 
   getDesiredChanges(userId: string): Promise<DesiredChange[]>;
   createDesiredChange(change: InsertDesiredChange): Promise<DesiredChange>;
   updateDesiredChange(id: string, data: Partial<DesiredChange>): Promise<DesiredChange | undefined>;
+  deleteDesiredChange(id: string): Promise<void>;
 
   getAchievements(userId: string): Promise<Achievement[]>;
   createAchievement(achievement: InsertAchievement): Promise<Achievement>;
@@ -173,6 +180,7 @@ export interface IStorage {
   getPlaySessions(userId: string): Promise<PlaySession[]>;
   createPlaySession(session: InsertPlaySession): Promise<PlaySession>;
   updatePlaySession(id: string, data: Partial<PlaySession>): Promise<PlaySession | undefined>;
+  deletePlaySession(id: string): Promise<void>;
 
   getPushSubscriptions(userId: string): Promise<PushSubscription[]>;
   createPushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
@@ -664,6 +672,9 @@ export class DatabaseStorage implements IStorage {
     const [s] = await db.update(secrets).set({ revealed: true }).where(eq(secrets.id, id)).returning();
     return s;
   }
+  async deleteSecret(id: string): Promise<void> {
+    await db.delete(secrets).where(eq(secrets.id, id));
+  }
 
   async getWagers(userId: string): Promise<Wager[]> {
     return db.select().from(wagers).where(eq(wagers.userId, userId)).orderBy(desc(wagers.createdAt));
@@ -682,6 +693,9 @@ export class DatabaseStorage implements IStorage {
     const [w] = await db.update(wagers).set(data).where(eq(wagers.id, id)).returning();
     return w;
   }
+  async deleteWager(id: string): Promise<void> {
+    await db.delete(wagers).where(eq(wagers.id, id));
+  }
 
   async getRatings(userId: string): Promise<Rating[]> {
     return db.select().from(ratings).where(eq(ratings.userId, userId)).orderBy(desc(ratings.createdAt));
@@ -694,6 +708,9 @@ export class DatabaseStorage implements IStorage {
   async createRating(rating: InsertRating): Promise<Rating> {
     const [r] = await db.insert(ratings).values(rating).returning();
     return r;
+  }
+  async deleteRating(id: string): Promise<void> {
+    await db.delete(ratings).where(eq(ratings.id, id));
   }
 
   async getCountdownEvents(userId: string): Promise<CountdownEvent[]> {
@@ -744,6 +761,9 @@ export class DatabaseStorage implements IStorage {
     const [r] = await db.update(permissionRequests).set(data).where(eq(permissionRequests.id, id)).returning();
     return r;
   }
+  async deletePermissionRequest(id: string): Promise<void> {
+    await db.delete(permissionRequests).where(eq(permissionRequests.id, id));
+  }
 
   async getDevotions(userId: string): Promise<Devotion[]> {
     return db.select().from(devotions).where(eq(devotions.userId, userId)).orderBy(desc(devotions.createdAt));
@@ -757,6 +777,9 @@ export class DatabaseStorage implements IStorage {
   async updateDevotion(id: string, data: Partial<Devotion>): Promise<Devotion | undefined> {
     const [d] = await db.update(devotions).set(data).where(eq(devotions.id, id)).returning();
     return d;
+  }
+  async deleteDevotion(id: string): Promise<void> {
+    await db.delete(devotions).where(eq(devotions.id, id));
   }
 
   async getConflicts(userId: string): Promise<Conflict[]> {
@@ -772,6 +795,9 @@ export class DatabaseStorage implements IStorage {
     const [c] = await db.update(conflicts).set(data).where(eq(conflicts.id, id)).returning();
     return c;
   }
+  async deleteConflict(id: string): Promise<void> {
+    await db.delete(conflicts).where(eq(conflicts.id, id));
+  }
 
   async getDesiredChanges(userId: string): Promise<DesiredChange[]> {
     return db.select().from(desiredChanges).where(eq(desiredChanges.userId, userId)).orderBy(desc(desiredChanges.createdAt));
@@ -785,6 +811,9 @@ export class DatabaseStorage implements IStorage {
   async updateDesiredChange(id: string, data: Partial<DesiredChange>): Promise<DesiredChange | undefined> {
     const [c] = await db.update(desiredChanges).set(data).where(eq(desiredChanges.id, id)).returning();
     return c;
+  }
+  async deleteDesiredChange(id: string): Promise<void> {
+    await db.delete(desiredChanges).where(eq(desiredChanges.id, id));
   }
 
   async getAchievements(userId: string): Promise<Achievement[]> {
@@ -808,6 +837,9 @@ export class DatabaseStorage implements IStorage {
   async updatePlaySession(id: string, data: Partial<PlaySession>): Promise<PlaySession | undefined> {
     const [s] = await db.update(playSessions).set(data).where(eq(playSessions.id, id)).returning();
     return s;
+  }
+  async deletePlaySession(id: string): Promise<void> {
+    await db.delete(playSessions).where(eq(playSessions.id, id));
   }
   async getPushSubscriptions(userId: string): Promise<PushSubscription[]> {
     return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));

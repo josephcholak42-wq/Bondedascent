@@ -302,7 +302,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
 
   const rawId = item.id.replace(/^(so-|rit-)/, "");
   const canEdit = ["task", "standing_order", "ritual"].includes(item.type);
-  const canDelete = ["task", "ritual", "limit", "countdown_event", "standing_order", "notification", "punishment", "reward", "dare"].includes(item.type);
+  const canDelete = ["task", "ritual", "limit", "countdown_event", "standing_order", "notification", "punishment", "reward", "dare", "secret", "wager", "rating", "permission_request", "devotion", "conflict", "desired_change", "play_session"].includes(item.type);
   const isNotification = item.type === "notification";
   const isUnread = isNotification && !item.data?.read;
   const isRead = isNotification && item.data?.read;
@@ -727,12 +727,14 @@ export function CommandProtocols({
     selectedIds.forEach(id => {
       const item = allItems.find(i => i.id === id);
       if (!item) return;
+      const rawId = id.replace(/^(so-|rit-)/, "");
       if (item.type === "task") onAction(id, "toggle");
       else if (item.type === "dare") onAction(id, "complete");
       else if (item.type === "punishment") onAction(id, "complete");
       else if (item.type === "reward" && !item.data?.claimedAt) onAction(id, "claim");
       else if (item.type === "notification") onAction(id, "dismiss");
       else if (item.type === "standing_order" || item.type === "ritual") onAction(id, "toggle");
+      else if (onDelete) onDelete(item.type, rawId);
     });
     setSelectedIds(new Set());
     setIsSelecting(false);
