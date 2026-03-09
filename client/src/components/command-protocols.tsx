@@ -728,7 +728,11 @@ export function CommandProtocols({
       const item = allItems.find(i => i.id === id);
       if (!item) return;
       if (item.type === "task") onAction(id, "toggle");
-      else if (item.type === "punishment" || item.type === "dare") onAction(id, "complete");
+      else if (item.type === "dare") onAction(id, "complete");
+      else if (item.type === "punishment") onAction(id, "complete");
+      else if (item.type === "reward" && !item.data?.claimedAt) onAction(id, "claim");
+      else if (item.type === "notification") onAction(id, "dismiss");
+      else if (item.type === "standing_order" || item.type === "ritual") onAction(id, "toggle");
     });
     setSelectedIds(new Set());
     setIsSelecting(false);

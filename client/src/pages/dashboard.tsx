@@ -692,7 +692,7 @@ export default function BondedAscentApp() {
     (accusations || []).filter((a: any) => a.status === "pending" && a.toUserId === user?.id).forEach((a: any) => {
       items.push({ id: a.id, type: "accusation", title: a.accusation, data: a, createdAt: a.createdAt });
     });
-    tasks.filter((t: any) => !t.completed).forEach((t) => {
+    tasks.filter((t: any) => !t.done).forEach((t) => {
       items.push({ id: t.id, type: "task", title: t.text, data: t, createdAt: (t as any).createdAt });
     });
     (punishments || []).filter((p: any) => p.userId === user?.id).filter((p: any) => p.status !== "completed").forEach((p: any) => {
@@ -701,7 +701,7 @@ export default function BondedAscentApp() {
     dares.filter((d: any) => !d.completed).forEach((d: any) => {
       items.push({ id: d.id, type: "dare", title: d.text, data: d, createdAt: d.createdAt });
     });
-    (rewards || []).filter((r: any) => r.userId === user?.id).filter((r: any) => !r.redeemed).forEach((r: any) => {
+    (rewards || []).filter((r: any) => r.userId === user?.id).filter((r: any) => !r.redeemed && !r.claimedAt).forEach((r: any) => {
       items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.slice(0, 10).forEach((n) => {
@@ -736,13 +736,13 @@ export default function BondedAscentApp() {
     (partnerCheckIns || []).filter((c: any) => c.status === "pending").forEach((c: any) => {
       items.push({ id: c.id, type: "checkin_review", title: `Check-In: Mood ${c.mood}/10, Obedience ${c.obedience}/10`, description: c.notes || undefined, data: c, createdAt: c.createdAt });
     });
-    (partnerTasks || []).filter((t: any) => !t.completed).forEach((t: any) => {
+    (partnerTasks || []).filter((t: any) => !t.done).forEach((t: any) => {
       items.push({ id: t.id, type: "task", title: t.text, description: t.done ? "Completed" : "Assigned", data: { ...t, isPartnerTask: true }, createdAt: t.createdAt });
     });
     (punishments || []).filter((p: any) => p.status !== "completed").forEach((p: any) => {
       items.push({ id: p.id, type: "punishment", title: p.name, description: `${p.status || "active"} · ${p.category || ""}`, data: p, createdAt: p.createdAt });
     });
-    (rewards || []).filter((r: any) => !r.redeemed).forEach((r: any) => {
+    (rewards || []).filter((r: any) => !r.redeemed && !r.claimedAt).forEach((r: any) => {
       items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.slice(0, 10).forEach((n) => {
