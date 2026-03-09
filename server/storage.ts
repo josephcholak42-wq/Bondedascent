@@ -103,6 +103,7 @@ export interface IStorage {
   getNotifications(userId: string, role?: string): Promise<Notification[]>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   dismissNotification(notificationId: string): Promise<void>;
+  markNotificationRead(notificationId: string): Promise<Notification | undefined>;
 
   getActivityLog(userId: string, role?: string): Promise<ActivityLogEntry[]>;
   logActivity(userId: string, action: string, detail?: string, createdAsRole?: string): Promise<ActivityLogEntry>;
@@ -550,6 +551,11 @@ export class DatabaseStorage implements IStorage {
 
   async dismissNotification(notificationId: string): Promise<void> {
     await db.delete(notifications).where(eq(notifications.id, notificationId));
+  }
+
+  async markNotificationRead(notificationId: string): Promise<Notification | undefined> {
+    const [updated] = await db.update(notifications).set({ read: true }).where(eq(notifications.id, notificationId)).returning();
+    return updated;
   }
 
   async getActivityLog(userId: string, role?: string): Promise<ActivityLogEntry[]> {

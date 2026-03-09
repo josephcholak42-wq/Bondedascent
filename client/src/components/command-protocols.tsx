@@ -303,11 +303,14 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const rawId = item.id.replace(/^(so-|rit-)/, "");
   const canEdit = ["task", "standing_order", "ritual"].includes(item.type);
   const canDelete = ["task", "ritual", "limit", "countdown_event", "standing_order", "notification", "punishment", "reward", "dare"].includes(item.type);
+  const isNotification = item.type === "notification";
+  const isUnread = isNotification && !item.data?.read;
+  const isRead = isNotification && item.data?.read;
 
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`cp-feed-3d group relative border-l-[4px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""} ${isLive ? "ring-1 ring-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]" : ""}`}
+      className={`cp-feed-3d group relative border-l-[4px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""} ${isLive ? "ring-1 ring-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]" : ""} ${isUnread ? "shadow-[0_0_12px_rgba(100,116,139,0.4)] border-l-slate-300 brightness-110" : ""} ${isRead ? "opacity-50 brightness-75" : ""}`}
       style={{ animation: isLive ? "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, cp-live-pulse 2s ease-in-out infinite" : "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
     >
       <div className="p-3.5 flex items-start gap-3">
@@ -324,6 +327,15 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isSelecting && setExpanded(!expanded)}>
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-[10px] font-black uppercase tracking-[0.12em] px-1.5 py-0.5 rounded-md ${config.pillBg}`}>{config.label}</span>
+            {isUnread && (
+              <span className="relative flex h-2.5 w-2.5" data-testid={`unread-dot-${item.id}`}>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-300 opacity-60" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-200" />
+              </span>
+            )}
+            {isRead && (
+              <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider">viewed</span>
+            )}
             {item.data?.simulationId && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#e87640]/20 border border-[#e87640]/40" data-testid={`sim-badge-${item.id}`}>
                 <Flame size={8} className="text-[#e87640]" />
@@ -414,7 +426,13 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
             <Button data-testid={`dare-complete-${item.id}`} size="sm" className="bg-red-800 hover:bg-red-700 h-8 px-3 text-[10px] font-bold shadow-lg shadow-red-900/30"
               onClick={() => initiateCompletion("complete")}>DONE</Button>
           )}
-          {item.type === "notification" && (
+          {isUnread && (
+            <button data-testid={`notification-viewed-${item.id}`} className="text-slate-400 hover:text-white transition-colors p-1 cursor-pointer flex items-center gap-1 bg-slate-700/50 hover:bg-slate-600/60 rounded-md px-2 py-1"
+              onClick={() => handleAction(item.id, "mark_read")} title="Mark as viewed">
+              <Eye size={12} /><span className="text-[9px] font-bold uppercase tracking-wider">Viewed</span>
+            </button>
+          )}
+          {isNotification && (
             <button data-testid={`notification-dismiss-${item.id}`} className="text-slate-600 hover:text-white transition-colors p-1 cursor-pointer"
               onClick={() => handleAction(item.id, "dismiss")}><X size={14} /></button>
           )}

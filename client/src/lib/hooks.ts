@@ -481,6 +481,18 @@ export function useDismissNotification() {
   });
 }
 
+export function useMarkNotificationRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      await apiRequest("PATCH", `/api/notifications/${notificationId}/read`);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
 export function useActivityLog() {
   return useQuery<ActivityLogEntry[]>({ queryKey: ["/api/activity"] });
 }

@@ -644,6 +644,15 @@ export async function registerRoutes(
     res.json(list);
   });
 
+  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allNotifications = await storage.getNotifications(user.id);
+    const owned = allNotifications.find(n => n.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Notification not found" });
+    const updated = await storage.markNotificationRead(req.params.id);
+    res.json(updated);
+  });
+
   app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
     const notifications = await storage.getNotifications(user.id);

@@ -119,6 +119,7 @@ import {
   useCreateJournal,
   useNotifications,
   useDismissNotification,
+  useMarkNotificationRead,
   useActivityLog,
   useLogActivity,
   usePartner,
@@ -331,6 +332,7 @@ export default function BondedAscentApp() {
   const createJournalMutation = useCreateJournal();
   const { data: notifications = [] } = useNotifications();
   const dismissNotificationMutation = useDismissNotification();
+  const markNotificationReadMutation = useMarkNotificationRead();
   const { data: activityLog = [] } = useActivityLog();
 
   const { data: partner } = usePartner();
@@ -883,6 +885,9 @@ export default function BondedAscentApp() {
       case "dismiss":
         dismissNotificationMutation.mutate(itemId);
         break;
+      case "mark_read":
+        markNotificationReadMutation.mutate(itemId);
+        break;
       case "approve":
         reviewPartnerCheckInMutation.mutate({ checkInId: itemId, status: "approved", xpAwarded: payload || 10 });
         break;
@@ -890,7 +895,7 @@ export default function BondedAscentApp() {
         reviewPartnerCheckInMutation.mutate({ checkInId: itemId, status: "rejected", xpAwarded: 0 });
         break;
     }
-  }, [respondToAccusationMutation, respondDemandTimerMutation, acknowledgeCommandMutation, toggleTaskMutation, punishments, updatePunishmentStatusMutation, completeDareMutation, claimRewardMutation, toggleRewardMutation, dismissNotificationMutation, reviewPartnerCheckInMutation]);
+  }, [respondToAccusationMutation, respondDemandTimerMutation, acknowledgeCommandMutation, toggleTaskMutation, punishments, updatePunishmentStatusMutation, completeDareMutation, claimRewardMutation, toggleRewardMutation, dismissNotificationMutation, markNotificationReadMutation, reviewPartnerCheckInMutation]);
 
   const renderContent = () => {
     if (userRole === "dom" && activeView === "dashboard") {

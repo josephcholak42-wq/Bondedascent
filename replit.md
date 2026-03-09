@@ -87,6 +87,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - Sticker Board: `GET /api/sticker-board/:userId`
 - Wager Voucher: `PATCH /api/wagers/:id` auto-creates reward voucher on win; `PATCH /api/rewards/:id` for editing voucher text (owner-only)
 - Completion Notes: `completionNotes` field on tasks/dares/punishments/rewards, sent via PATCH on completion
+- Notification Read: `PATCH /api/notifications/:id/read` marks notification as viewed; unread notifications glow/pulse, read ones dimmed
 
 ### Core Architectural Decisions
 - **Command Center First**: Everything usable through Command Center. Dashboard shows only CommandProtocols.
