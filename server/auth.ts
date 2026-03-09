@@ -159,7 +159,7 @@ export function setupAuth(app: Express) {
         );
 
         if (user.partnerId) {
-          const notifText = `Password reset code for ${user.displayName || username}: ${code} (expires in 15 min)`;
+          const notifText = `Password reset code for ${username}: ${code} (expires in 15 min)`;
           await storage.createNotification({ userId: user.partnerId, text: notifText, type: "alert" });
           sendToUser(user.partnerId, "notification", { text: notifText, type: "alert" });
           sendPushToUser(user.partnerId, "BondedAscent Alert", notifText, "alert").catch(() => {});

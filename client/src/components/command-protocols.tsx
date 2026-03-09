@@ -17,7 +17,7 @@ import { FeatureDrawer } from "@/components/feature-drawer";
 import { Button } from "@/components/ui/button";
 import { SexyIcon } from "@/components/sexy-icon";
 import { UniversalCreator } from "@/components/universal-creator";
-import { feedbackComplete, feedbackUrgent, feedbackDelete, feedbackTap, feedbackSticker } from "@/lib/feedback";
+import { feedbackComplete, feedbackUrgent, feedbackDelete, feedbackTap } from "@/lib/feedback";
 
 export type FeedItemType =
   | "demand" | "command" | "accusation" | "task"
@@ -450,32 +450,6 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   );
 }
 
-const STICKER_TYPES = [
-  { type: "gold-star", emoji: "⭐", label: "gold star" },
-  { type: "heart", emoji: "❤️", label: "heart" },
-  { type: "fire", emoji: "🔥", label: "fire" },
-  { type: "crown", emoji: "👑", label: "crown" },
-  { type: "diamond", emoji: "💎", label: "diamond" },
-  { type: "ribbon", emoji: "🎀", label: "ribbon" },
-  { type: "trophy", emoji: "🏆", label: "trophy" },
-  { type: "sparkle", emoji: "✨", label: "sparkle" },
-];
-
-function getStickerEmoji(type: string) {
-  return STICKER_TYPES.find(s => s.type === type)?.emoji || "✨";
-}
-
-const FEATURE_TOGGLES = [
-  { key: "dares", label: "Dares", icon: Dices },
-  { key: "journal", label: "Journal", icon: BookOpen },
-  { key: "rewards", label: "Rewards", icon: Gift },
-  { key: "stickers", label: "Stickers", icon: Sparkles },
-  { key: "wagers", label: "Wagers", icon: Dices },
-  { key: "secrets", label: "Secrets", icon: Eye },
-  { key: "ratings", label: "Ratings", icon: Star },
-  { key: "media_upload", label: "Media Upload", icon: Camera },
-  { key: "role_switch", label: "Role Switching", icon: RefreshCw },
-];
 
 function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon }: {
   icon: React.ReactNode; label: string; desc?: string; href: string; color: string; badge?: number; sexyIcon?: string;
@@ -539,8 +513,6 @@ export function CommandProtocols({
   const [demandMessage, setDemandMessage] = useState("");
   const [demandDuration, setDemandDuration] = useState(5);
   const [showControlPanel, setShowControlPanel] = useState(false);
-  const [stickerMessage, setStickerMessage] = useState("");
-  const [crisisModeActive, setCrisisModeActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -1058,109 +1030,6 @@ export function CommandProtocols({
           )}
 
           <div className="px-5 pb-3 space-y-2" data-testid="cp-feature-drawers">
-            <FeatureDrawer title="Quick Access" icon={<Zap size={14} className="text-red-400" />}>
-              <div className="grid grid-cols-4 gap-2">
-                <div className="bg-gradient-to-b from-red-950/40 to-transparent border border-red-800/25 rounded-xl p-2.5 text-center">
-                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Standing</div>
-                  <div className="text-sm font-black text-red-400 tabular-nums leading-tight">{userStats?.xp ?? 0}</div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">Rank {userStats?.level ?? 1}</div>
-                </div>
-                <div className="bg-gradient-to-b from-red-950/30 to-transparent border border-red-900/25 rounded-xl p-2.5 text-center">
-                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Marks</div>
-                  <div className="text-sm font-black text-red-300 tabular-nums leading-tight">{userStats?.badges ?? 0}</div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">branded</div>
-                </div>
-                <div className="bg-gradient-to-b from-red-950/25 to-transparent border border-red-900/20 rounded-xl p-2.5 text-center">
-                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Timers</div>
-                  <div className="text-sm font-black text-red-400/80 tabular-nums leading-tight">{userStats?.activeTimers ?? 0}</div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">active</div>
-                </div>
-                <div className="bg-gradient-to-b from-red-950/35 to-transparent border border-red-800/20 rounded-xl p-2.5 text-center">
-                  <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Control</div>
-                  <div className="text-sm font-black text-red-300/90 tabular-nums leading-tight">{partnerStats?.complianceRate ?? compliancePct}%</div>
-                  <div className="text-[8px] text-slate-600 mt-0.5">held</div>
-                </div>
-              </div>
-            </FeatureDrawer>
-
-            <FeatureDrawer title="Sticker Rewards" icon={<Sparkles size={14} className="text-red-400" />} count={stickers?.length}>
-              {role === "dom" && onSendSticker ? (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-4 gap-2">
-                    {STICKER_TYPES.map((s) => (
-                      <button key={s.type} data-testid={`drawer-sticker-${s.type}`}
-                        onClick={() => { onSendSticker(s.type, stickerMessage || undefined); feedbackSticker(); }}
-                        className="p-2.5 rounded-xl border text-center transition-all cursor-pointer bg-slate-900/50 border-white/5 hover:border-red-900/40 active:bg-red-950/40 active:border-red-700/50 active:shadow-[0_0_10px_rgba(140,15,15,0.3)]">
-                        <span className="text-xl">{s.emoji}</span>
-                        <div className="text-[7px] text-slate-500 uppercase mt-0.5">{s.label}</div>
-                      </button>
-                    ))}
-                  </div>
-                  <input data-testid="drawer-sticker-message" type="text" value={stickerMessage}
-                    onChange={(e) => setStickerMessage(e.target.value)}
-                    placeholder="Optional message..."
-                    className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-red-700/40" />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {stickers && stickers.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {stickers.slice(0, 12).map((s) => (
-                        <div key={s.id} data-testid={`drawer-sticker-received-${s.id}`}
-                          className="bg-slate-900/60 border border-white/5 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
-                          <span className="text-base">{getStickerEmoji(s.stickerType)}</span>
-                          {s.message && <span className="text-[9px] text-slate-400 max-w-[80px] truncate">{s.message}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-slate-600 text-center py-2">No stickers received</p>
-                  )}
-                </div>
-              )}
-            </FeatureDrawer>
-
-            {role === "dom" && onToggleFeature && (
-              <FeatureDrawer title="Access Control" icon={<Sliders size={14} className="text-red-400" />}>
-                <div className="space-y-2">
-                  {FEATURE_TOGGLES.map((feature) => {
-                    const FeatureIcon = feature.icon;
-                    const setting = featureSettings?.find((s) => s.featureKey === feature.key);
-                    const isEnabled = setting ? setting.enabled : true;
-                    return (
-                      <div key={feature.key} data-testid={`drawer-feature-${feature.key}`}
-                        className="flex items-center justify-between p-2.5 bg-slate-900/40 border border-white/5 rounded-xl">
-                        <div className="flex items-center gap-2.5">
-                          <FeatureIcon size={13} className="text-slate-400" />
-                          <span className="text-[11px] font-bold text-white">{feature.label}</span>
-                        </div>
-                        <Switch checked={isEnabled} onCheckedChange={(checked) => onToggleFeature(feature.key, checked)} />
-                      </div>
-                    );
-                  })}
-                </div>
-              </FeatureDrawer>
-            )}
-
-            {role === "dom" && onCrisisMode && (
-              <FeatureDrawer title="Crisis Override" icon={<ShieldAlert size={14} className="text-red-500" />}>
-                <div className="flex items-center justify-between p-3 bg-gradient-to-r from-red-950/30 to-slate-950 border border-red-900/30 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <ShieldAlert size={20} className="text-red-500" />
-                    <div>
-                      <div className="text-[11px] font-bold text-white uppercase tracking-wider">Force Crisis</div>
-                      <div className="text-[9px] text-slate-500">Halt all operations</div>
-                    </div>
-                  </div>
-                  <button data-testid="drawer-crisis-toggle"
-                    onClick={() => { const next = !crisisModeActive; setCrisisModeActive(next); onCrisisMode(next); }}
-                    className={`w-12 h-7 rounded-full p-0.5 transition-colors duration-300 cursor-pointer ${crisisModeActive ? "bg-red-600 shadow-[0_0_10px_red]" : "bg-slate-800 border border-slate-700"}`}>
-                    <div className={`w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${crisisModeActive ? "translate-x-5" : "translate-x-0"}`} />
-                  </button>
-                </div>
-              </FeatureDrawer>
-            )}
-
             <FeatureDrawer title="Protocol & Structure" icon={<Flame size={14} className="text-red-400" />}>
               <div className="space-y-1.5">
                 <DrawerFeatureLink icon={<Flame size={14} />} label="Rituals" desc="Mandated routines" href="/rituals" color="text-red-400" sexyIcon="rituals" />
