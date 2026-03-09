@@ -244,7 +244,6 @@ import {
   useAchievements,
   useContracts,
 } from "@/lib/hooks";
-import { AmbientPresence } from "@/components/ambient-presence";
 import { useSSE } from "@/lib/useSSE";
 import { useDashboardNavigation } from "@/lib/useDashboardNavigation";
 import { useTrainingTimer } from "@/lib/useTrainingTimer";
@@ -1706,7 +1705,6 @@ export default function BondedAscentApp() {
     <div className="flex h-[100dvh] bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
 
-      <AmbientPresence />
 
       {isCrisisMode && (
         <div className="fixed inset-0 z-[100] bg-red-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
