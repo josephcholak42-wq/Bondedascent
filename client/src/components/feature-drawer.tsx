@@ -13,7 +13,8 @@ export function FeatureDrawer({ title, icon, count, defaultOpen = false, childre
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]" data-testid={`drawer-${title.toLowerCase().replace(/\s+/g, "-")}`}>
+    <div className="border border-white/5 rounded-xl overflow-hidden bg-white/[0.01]" data-testid={`drawer-${title.toLowerCase().replace(/\s+/g, "-")}`}
+      style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.02), 0 1px 2px rgba(0,0,0,0.2)" }}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full flex items-center justify-between px-4 py-3 cursor-pointer transition-all duration-300 ${isOpen ? "bg-white/[0.04]" : "hover:bg-white/[0.03]"}`}

@@ -265,7 +265,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   return (
     <div
       data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 hover:brightness-110 hover:-translate-y-[1px] hover:shadow-lg hover:shadow-black/30 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""}`}
+      className={`cp-feed-3d group relative border-l-[3px] ${config.borderColor} bg-gradient-to-r ${config.bgColor} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""}`}
       style={{ animation: "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
     >
       <div className="p-3.5 flex items-start gap-3">
@@ -646,8 +646,8 @@ export function CommandProtocols({
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
         @keyframes cp-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(140,15,15,0.1), 0 0 60px rgba(140,15,15,0.03), inset 0 1px 0 rgba(255,255,255,0.03); }
-          50% { box-shadow: 0 0 40px rgba(140,15,15,0.18), 0 0 80px rgba(140,15,15,0.06), inset 0 1px 0 rgba(255,255,255,0.06); }
+          0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 20px rgba(140,15,15,0.08), 0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.3); }
+          50% { box-shadow: 0 6px 30px rgba(0,0,0,0.7), 0 0 40px rgba(140,15,15,0.14), 0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.4); }
         }
         @keyframes cp-border-pulse {
           0%, 100% { border-color: rgba(140,15,15,0.15); }
@@ -666,28 +666,74 @@ export function CommandProtocols({
           30% { opacity: 0.15; }
           100% { opacity: 0; }
         }
+        @keyframes cp-ambient-light {
+          0%, 100% { opacity: 0.03; }
+          50% { opacity: 0.06; }
+        }
+        .cp-3d-container {
+          perspective: 1200px;
+          transform-style: preserve-3d;
+        }
+        .cp-3d-panel {
+          transform: translateZ(0);
+          transform-style: preserve-3d;
+          backface-visibility: hidden;
+        }
+        .cp-metric-3d {
+          transform: translateZ(2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -1px 0 rgba(0,0,0,0.2);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cp-metric-3d:hover {
+          transform: translateZ(6px) translateY(-2px);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.2);
+        }
+        .cp-feed-3d {
+          transform: translateZ(1px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.03);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .cp-feed-3d:hover {
+          transform: translateZ(4px) translateY(-2px) scale(1.005);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 3px 8px rgba(0,0,0,0.35), 0 0 12px rgba(140,15,15,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        .cp-drawer-3d {
+          box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.02), 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .cp-header-3d {
+          box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 6px rgba(0,0,0,0.15);
+        }
+        .cp-inset-well {
+          box-shadow: inset 0 2px 6px rgba(0,0,0,0.4), inset 0 1px 2px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.02);
+        }
       `}</style>
 
-      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-b from-slate-900/95 via-slate-950 to-black"
+      <div className="cp-3d-container relative overflow-hidden rounded-2xl border bg-gradient-to-b from-slate-900/95 via-slate-950 to-black"
         style={{ animation: "cp-glow 4s ease-in-out infinite, cp-border-pulse 4s ease-in-out infinite" }}>
 
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.15) 100%)" }} />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(140,15,15,0.1),transparent_60%)] pointer-events-none" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-900/15 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(0,0,0,0.3),transparent_50%)] pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-red-500/25 to-transparent" style={{ boxShadow: "0 0 10px rgba(140,15,15,0.15), 0 0 30px rgba(140,15,15,0.05)" }} />
+        <div className="absolute top-[2px] left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-black/60 to-transparent" />
+        <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-white/[0.04] via-transparent to-black/20" />
+        <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-white/[0.04] via-transparent to-black/20" />
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.015]">
           <div className="absolute inset-0 w-full h-[200%]" style={{ animation: "cp-scan 16s linear infinite", background: "linear-gradient(180deg, transparent 0%, rgba(140,15,15,0.08) 50%, transparent 100%)" }} />
         </div>
-        <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none" style={{ animation: "heatShimmer 8s ease-in-out infinite", background: "radial-gradient(ellipse at center top, rgba(140,15,15,0.04), transparent 70%)" }} />
+        <div className="absolute top-0 left-0 right-0 h-24 pointer-events-none" style={{ animation: "cp-ambient-light 6s ease-in-out infinite", background: "radial-gradient(ellipse at center top, rgba(140,15,15,0.06), transparent 70%)" }} />
 
         <div className="relative">
           <div className="p-5 pb-0">
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600/30 to-red-900/30 border border-red-500/20 flex items-center justify-center shadow-lg shadow-red-500/10">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600/30 to-red-900/30 border border-red-500/20 flex items-center justify-center relative"
+                  style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4), 0 0 8px rgba(140,15,15,0.15), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 2px rgba(0,0,0,0.3)" }}>
                   <SexyIcon name={role === "dom" ? "command-center" : "assign-tasks"} size={28} fallbackIcon={<Zap size={20} className="text-red-400" />} />
                 </div>
                 <div>
-                  <h2 className="text-base font-black text-white uppercase tracking-[0.12em]" style={{ textShadow: "0 0 20px rgba(140,15,15,0.3), 0 2px 4px rgba(0,0,0,0.5)" }}>
+                  <h2 className="text-base font-black text-white uppercase tracking-[0.12em]" style={{ textShadow: "0 0 20px rgba(140,15,15,0.3), 0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4)" }}>
                     Command Center
                   </h2>
                   <p className="text-[10px] text-red-400/50 font-mono uppercase tracking-[0.2em]">
@@ -725,6 +771,7 @@ export function CommandProtocols({
                   onKeyDown={(e) => { if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); setDebouncedSearch(""); } }}
                   placeholder="Search all protocols, orders, entries..."
                   className="w-full bg-black/60 border border-red-900/30 rounded-xl pl-9 pr-8 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-red-500/40"
+                  style={{ boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.02)" }}
                 />
                 {searchQuery && (
                   <button onClick={() => { setSearchQuery(""); setDebouncedSearch(""); }}
@@ -737,7 +784,7 @@ export function CommandProtocols({
           )}
 
           <div className="px-5 pt-3 pb-2">
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-2 cp-3d-panel">
               <MetricCard label="Compliance" value={`${compliancePct}%`}
                 sub={`${completedProtocols}/${totalProtocols}`}
                 color="red"
@@ -750,16 +797,17 @@ export function CommandProtocols({
 
           {role === "dom" && (
             <div className="px-5 py-2">
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3">
+              <div className="cp-inset-well bg-white/[0.02] border border-white/5 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">Obedience</span>
                   <span className="text-sm font-black text-white tabular-nums">{partnerStats?.complianceRate ?? 0}%</span>
                 </div>
-                <div className="relative h-2 bg-black/40 rounded-full overflow-hidden">
+                <div className="relative h-2 bg-black/40 rounded-full overflow-hidden" style={{ boxShadow: "inset 0 2px 3px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03)" }}>
                   <div className="h-full rounded-full transition-all duration-1000"
                     style={{
                       width: `${partnerStats?.complianceRate ?? 0}%`,
-                      background: `linear-gradient(90deg, #7f1d1d, ${(partnerStats?.complianceRate ?? 0) >= 50 ? "#92400e" : "#7f1d1d"}, ${(partnerStats?.complianceRate ?? 0) >= 80 ? "#d4a24e" : "#92400e"})`,
+                      background: `linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 40%), linear-gradient(90deg, #7f1d1d, ${(partnerStats?.complianceRate ?? 0) >= 50 ? "#92400e" : "#7f1d1d"}, ${(partnerStats?.complianceRate ?? 0) >= 80 ? "#d4a24e" : "#92400e"})`,
+                      boxShadow: "0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",
                     }} />
                 </div>
               </div>
@@ -1156,7 +1204,7 @@ function MetricCard({ label, value, sub, color, trend }: { label: string; value:
   const c = colorMap[color] || colorMap.red;
 
   return (
-    <div className={`bg-gradient-to-b ${c.bg} to-transparent border ${c.border} rounded-xl p-2.5 text-center`}>
+    <div className={`cp-metric-3d bg-gradient-to-b ${c.bg} to-transparent border ${c.border} rounded-xl p-2.5 text-center relative overflow-hidden`}>
       <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">{label}</div>
       <div className="flex items-center justify-center gap-1">
         <span className={`text-lg font-black ${c.text} tabular-nums leading-tight`}>{value}</span>
