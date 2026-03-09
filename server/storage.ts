@@ -106,11 +106,13 @@ export interface IStorage {
   getPartner(userId: string): Promise<User | undefined>;
 
   getRituals(userId: string): Promise<Ritual[]>;
+  getRitualById(id: string): Promise<Ritual | undefined>;
   createRitual(ritual: InsertRitual): Promise<Ritual>;
   updateRitual(id: string, data: Partial<Ritual>): Promise<Ritual | undefined>;
   deleteRitual(id: string): Promise<void>;
 
   getLimits(userId: string): Promise<Limit[]>;
+  getLimitById(id: string): Promise<Limit | undefined>;
   createLimit(limit: InsertLimit): Promise<Limit>;
   updateLimit(id: string, data: Partial<Limit>): Promise<Limit | undefined>;
   deleteLimit(id: string): Promise<void>;
@@ -121,6 +123,7 @@ export interface IStorage {
   revealSecret(id: string): Promise<Secret | undefined>;
 
   getWagers(userId: string): Promise<Wager[]>;
+  getWagerById(id: string): Promise<Wager | undefined>;
   createWager(wager: InsertWager): Promise<Wager>;
   updateWager(id: string, data: Partial<Wager>): Promise<Wager | undefined>;
 
@@ -129,6 +132,7 @@ export interface IStorage {
   createRating(rating: InsertRating): Promise<Rating>;
 
   getCountdownEvents(userId: string): Promise<CountdownEvent[]>;
+  getCountdownEventById(id: string): Promise<CountdownEvent | undefined>;
   createCountdownEvent(event: InsertCountdownEvent): Promise<CountdownEvent>;
   deleteCountdownEvent(id: string): Promise<void>;
 
@@ -188,6 +192,7 @@ export interface IStorage {
 
   // Intensity Ladder
   getIntensitySessions(userId: string): Promise<IntensitySession[]>;
+  getIntensitySessionById(id: string): Promise<IntensitySession | undefined>;
   createIntensitySession(session: InsertIntensitySession): Promise<IntensitySession>;
   updateIntensitySession(id: string, data: Partial<IntensitySession>): Promise<IntensitySession | undefined>;
 
@@ -196,6 +201,7 @@ export interface IStorage {
   createObedienceTrial(trial: InsertObedienceTrial): Promise<ObedienceTrial>;
   updateObedienceTrial(id: string, data: Partial<ObedienceTrial>): Promise<ObedienceTrial | undefined>;
   getTrialSteps(trialId: string): Promise<TrialStep[]>;
+  getTrialStepById(id: string): Promise<TrialStep | undefined>;
   createTrialStep(step: InsertTrialStep): Promise<TrialStep>;
   updateTrialStep(id: string, data: Partial<TrialStep>): Promise<TrialStep | undefined>;
 
@@ -249,6 +255,7 @@ export interface IStorage {
 
   getMedia(entityType: string, entityId: string): Promise<Media[]>;
   getMediaByUser(userId: string): Promise<Media[]>;
+  getMediaById(id: string): Promise<Media | undefined>;
   createMedia(m: InsertMedia): Promise<Media>;
   deleteMedia(id: string): Promise<void>;
 
@@ -311,6 +318,26 @@ export interface IStorage {
 
   getStreaks(userId: string): Promise<Streak[]>;
   upsertStreak(userId: string, streakType: string, date: string): Promise<Streak>;
+
+  getStandingOrderById(id: string): Promise<StandingOrder | undefined>;
+  getPermissionRequestById(id: string): Promise<PermissionRequest | undefined>;
+  getDevotionById(id: string): Promise<Devotion | undefined>;
+  getConflictById(id: string): Promise<Conflict | undefined>;
+  getDesiredChangeById(id: string): Promise<DesiredChange | undefined>;
+  getPlaySessionById(id: string): Promise<PlaySession | undefined>;
+  getContractById(id: string): Promise<Contract | undefined>;
+  getConfessionById(id: string): Promise<Confession | undefined>;
+  getTrainingProgramById(id: string): Promise<TrainingProgram | undefined>;
+  getTrainingEnrollmentById(id: string): Promise<TrainingEnrollment | undefined>;
+  getSceneScriptById(id: string): Promise<SceneScript | undefined>;
+  getScriptStepById(id: string): Promise<ScriptStep | undefined>;
+  getAftercareItemById(id: string): Promise<AftercareItem | undefined>;
+  getSealedOrderById(id: string): Promise<SealedOrder | undefined>;
+  getEnduranceChallengeById(id: string): Promise<EnduranceChallenge | undefined>;
+  getObedienceTrialById(id: string): Promise<ObedienceTrial | undefined>;
+  getSensationCardById(id: string): Promise<SensationCard | undefined>;
+  getSensationSpinById(id: string): Promise<SensationSpin | undefined>;
+  getAccusationById(id: string): Promise<Accusation | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -518,6 +545,10 @@ export class DatabaseStorage implements IStorage {
   async getRituals(userId: string): Promise<Ritual[]> {
     return db.select().from(rituals).where(eq(rituals.userId, userId)).orderBy(desc(rituals.createdAt));
   }
+  async getRitualById(id: string): Promise<Ritual | undefined> {
+    const [r] = await db.select().from(rituals).where(eq(rituals.id, id)).limit(1);
+    return r;
+  }
 
   async createRitual(ritual: InsertRitual): Promise<Ritual> {
     const [r] = await db.insert(rituals).values(ritual).returning();
@@ -535,6 +566,10 @@ export class DatabaseStorage implements IStorage {
 
   async getLimits(userId: string): Promise<Limit[]> {
     return db.select().from(limits).where(eq(limits.userId, userId)).orderBy(desc(limits.createdAt));
+  }
+  async getLimitById(id: string): Promise<Limit | undefined> {
+    const [r] = await db.select().from(limits).where(eq(limits.id, id)).limit(1);
+    return r;
   }
 
   async createLimit(limit: InsertLimit): Promise<Limit> {
@@ -572,6 +607,10 @@ export class DatabaseStorage implements IStorage {
   async getWagers(userId: string): Promise<Wager[]> {
     return db.select().from(wagers).where(eq(wagers.userId, userId)).orderBy(desc(wagers.createdAt));
   }
+  async getWagerById(id: string): Promise<Wager | undefined> {
+    const [r] = await db.select().from(wagers).where(eq(wagers.id, id)).limit(1);
+    return r;
+  }
 
   async createWager(wager: InsertWager): Promise<Wager> {
     const [w] = await db.insert(wagers).values(wager).returning();
@@ -598,6 +637,10 @@ export class DatabaseStorage implements IStorage {
 
   async getCountdownEvents(userId: string): Promise<CountdownEvent[]> {
     return db.select().from(countdownEvents).where(eq(countdownEvents.userId, userId)).orderBy(desc(countdownEvents.createdAt));
+  }
+  async getCountdownEventById(id: string): Promise<CountdownEvent | undefined> {
+    const [r] = await db.select().from(countdownEvents).where(eq(countdownEvents.id, id)).limit(1);
+    return r;
   }
 
   async createCountdownEvent(event: InsertCountdownEvent): Promise<CountdownEvent> {
@@ -811,6 +854,10 @@ export class DatabaseStorage implements IStorage {
   async getIntensitySessions(userId: string): Promise<IntensitySession[]> {
     return db.select().from(intensitySessions).where(eq(intensitySessions.userId, userId)).orderBy(desc(intensitySessions.createdAt));
   }
+  async getIntensitySessionById(id: string): Promise<IntensitySession | undefined> {
+    const [r] = await db.select().from(intensitySessions).where(eq(intensitySessions.id, id)).limit(1);
+    return r;
+  }
   async createIntensitySession(session: InsertIntensitySession): Promise<IntensitySession> {
     const [s] = await db.insert(intensitySessions).values(session).returning();
     return s;
@@ -834,6 +881,10 @@ export class DatabaseStorage implements IStorage {
   }
   async getTrialSteps(trialId: string): Promise<TrialStep[]> {
     return db.select().from(trialSteps).where(eq(trialSteps.trialId, trialId)).orderBy(trialSteps.stepOrder);
+  }
+  async getTrialStepById(id: string): Promise<TrialStep | undefined> {
+    const [r] = await db.select().from(trialSteps).where(eq(trialSteps.id, id)).limit(1);
+    return r;
   }
   async createTrialStep(step: InsertTrialStep): Promise<TrialStep> {
     const [s] = await db.insert(trialSteps).values(step).returning();
@@ -1029,6 +1080,10 @@ export class DatabaseStorage implements IStorage {
 
   async getMedia(entityType: string, entityId: string): Promise<Media[]> {
     return db.select().from(media).where(and(eq(media.entityType, entityType), eq(media.entityId, entityId))).orderBy(desc(media.createdAt));
+  }
+  async getMediaById(id: string): Promise<Media | undefined> {
+    const [r] = await db.select().from(media).where(eq(media.id, id)).limit(1);
+    return r;
   }
   async getMediaByUser(userId: string): Promise<Media[]> {
     return db.select().from(media).where(eq(media.userId, userId)).orderBy(desc(media.createdAt));
@@ -1304,6 +1359,101 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(streaks).values({ userId, streakType, currentCount: 1, longestCount: 1, lastCompletedDate: date }).returning();
     return created;
+  }
+
+  async getStandingOrderById(id: string): Promise<StandingOrder | undefined> {
+    const [row] = await db.select().from(standingOrders).where(eq(standingOrders.id, id)).limit(1);
+    return row;
+  }
+
+  async getPermissionRequestById(id: string): Promise<PermissionRequest | undefined> {
+    const [row] = await db.select().from(permissionRequests).where(eq(permissionRequests.id, id)).limit(1);
+    return row;
+  }
+
+  async getDevotionById(id: string): Promise<Devotion | undefined> {
+    const [row] = await db.select().from(devotions).where(eq(devotions.id, id)).limit(1);
+    return row;
+  }
+
+  async getConflictById(id: string): Promise<Conflict | undefined> {
+    const [row] = await db.select().from(conflicts).where(eq(conflicts.id, id)).limit(1);
+    return row;
+  }
+
+  async getDesiredChangeById(id: string): Promise<DesiredChange | undefined> {
+    const [row] = await db.select().from(desiredChanges).where(eq(desiredChanges.id, id)).limit(1);
+    return row;
+  }
+
+  async getPlaySessionById(id: string): Promise<PlaySession | undefined> {
+    const [row] = await db.select().from(playSessions).where(eq(playSessions.id, id)).limit(1);
+    return row;
+  }
+
+  async getContractById(id: string): Promise<Contract | undefined> {
+    const [row] = await db.select().from(contracts).where(eq(contracts.id, id)).limit(1);
+    return row;
+  }
+
+  async getConfessionById(id: string): Promise<Confession | undefined> {
+    const [row] = await db.select().from(confessions).where(eq(confessions.id, id)).limit(1);
+    return row;
+  }
+
+  async getTrainingProgramById(id: string): Promise<TrainingProgram | undefined> {
+    const [row] = await db.select().from(trainingPrograms).where(eq(trainingPrograms.id, id)).limit(1);
+    return row;
+  }
+
+  async getTrainingEnrollmentById(id: string): Promise<TrainingEnrollment | undefined> {
+    const [row] = await db.select().from(trainingEnrollments).where(eq(trainingEnrollments.id, id)).limit(1);
+    return row;
+  }
+
+  async getSceneScriptById(id: string): Promise<SceneScript | undefined> {
+    const [row] = await db.select().from(sceneScripts).where(eq(sceneScripts.id, id)).limit(1);
+    return row;
+  }
+
+  async getScriptStepById(id: string): Promise<ScriptStep | undefined> {
+    const [row] = await db.select().from(scriptSteps).where(eq(scriptSteps.id, id)).limit(1);
+    return row;
+  }
+
+  async getAftercareItemById(id: string): Promise<AftercareItem | undefined> {
+    const [row] = await db.select().from(aftercareItems).where(eq(aftercareItems.id, id)).limit(1);
+    return row;
+  }
+
+  async getSealedOrderById(id: string): Promise<SealedOrder | undefined> {
+    const [row] = await db.select().from(sealedOrders).where(eq(sealedOrders.id, id)).limit(1);
+    return row;
+  }
+
+  async getEnduranceChallengeById(id: string): Promise<EnduranceChallenge | undefined> {
+    const [row] = await db.select().from(enduranceChallenges).where(eq(enduranceChallenges.id, id)).limit(1);
+    return row;
+  }
+
+  async getObedienceTrialById(id: string): Promise<ObedienceTrial | undefined> {
+    const [row] = await db.select().from(obedienceTrials).where(eq(obedienceTrials.id, id)).limit(1);
+    return row;
+  }
+
+  async getSensationCardById(id: string): Promise<SensationCard | undefined> {
+    const [row] = await db.select().from(sensationCards).where(eq(sensationCards.id, id)).limit(1);
+    return row;
+  }
+
+  async getSensationSpinById(id: string): Promise<SensationSpin | undefined> {
+    const [row] = await db.select().from(sensationSpins).where(eq(sensationSpins.id, id)).limit(1);
+    return row;
+  }
+
+  async getAccusationById(id: string): Promise<Accusation | undefined> {
+    const [row] = await db.select().from(accusations).where(eq(accusations.id, id)).limit(1);
+    return row;
   }
 }
 

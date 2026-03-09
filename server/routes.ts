@@ -818,12 +818,20 @@ export async function registerRoutes(
   });
 
   app.patch("/api/rituals/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getRitualById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     const ritual = await storage.updateRitual(req.params.id, req.body);
     if (!ritual) return res.status(404).json({ message: "Not found" });
     res.json(ritual);
   });
 
   app.delete("/api/rituals/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getRitualById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     await storage.deleteRitual(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -865,12 +873,20 @@ export async function registerRoutes(
   });
 
   app.patch("/api/limits/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getLimitById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     const limit = await storage.updateLimit(req.params.id, req.body);
     if (!limit) return res.status(404).json({ message: "Not found" });
     res.json(limit);
   });
 
   app.delete("/api/limits/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getLimitById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     await storage.deleteLimit(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -953,6 +969,10 @@ export async function registerRoutes(
   });
 
   app.patch("/api/wagers/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getWagerById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     const wager = await storage.updateWager(req.params.id, req.body);
     if (!wager) return res.status(404).json({ message: "Not found" });
     res.json(wager);
@@ -999,6 +1019,10 @@ export async function registerRoutes(
   });
 
   app.delete("/api/countdown-events/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getCountdownEventById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     await storage.deleteCountdownEvent(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -1021,12 +1045,26 @@ export async function registerRoutes(
   });
 
   app.patch("/api/standing-orders/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getStandingOrderById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    const partner = user.partnerId ? await storage.getUser(user.partnerId) : null;
+    if (existing.userId !== user.id && (!partner || existing.userId !== partner.id)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const order = await storage.updateStandingOrder(req.params.id, req.body);
     if (!order) return res.status(404).json({ message: "Not found" });
     res.json(order);
   });
 
   app.delete("/api/standing-orders/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getStandingOrderById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    const partner = user.partnerId ? await storage.getUser(user.partnerId) : null;
+    if (existing.userId !== user.id && (!partner || existing.userId !== partner.id)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     await storage.deleteStandingOrder(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -1065,6 +1103,13 @@ export async function registerRoutes(
   });
 
   app.patch("/api/permission-requests/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getPermissionRequestById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    const partner = user.partnerId ? await storage.getUser(user.partnerId) : null;
+    if (existing.userId !== user.id && (!partner || existing.userId !== partner.id)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const request = await storage.updatePermissionRequest(req.params.id, req.body);
     if (!request) return res.status(404).json({ message: "Not found" });
     res.json(request);
@@ -1095,6 +1140,12 @@ export async function registerRoutes(
   });
 
   app.patch("/api/devotions/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getDevotionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const devotion = await storage.updateDevotion(req.params.id, req.body);
     if (!devotion) return res.status(404).json({ message: "Not found" });
     res.json(devotion);
@@ -1118,6 +1169,13 @@ export async function registerRoutes(
   });
 
   app.patch("/api/conflicts/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getConflictById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    const partner = user.partnerId ? await storage.getUser(user.partnerId) : null;
+    if (existing.userId !== user.id && (!partner || existing.userId !== partner.id)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const conflict = await storage.updateConflict(req.params.id, req.body);
     if (!conflict) return res.status(404).json({ message: "Not found" });
     res.json(conflict);
@@ -1141,6 +1199,13 @@ export async function registerRoutes(
   });
 
   app.patch("/api/desired-changes/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getDesiredChangeById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    const partner = user.partnerId ? await storage.getUser(user.partnerId) : null;
+    if (existing.userId !== user.id && (!partner || existing.userId !== partner.id)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const change = await storage.updateDesiredChange(req.params.id, req.body);
     if (!change) return res.status(404).json({ message: "Not found" });
     res.json(change);
@@ -1184,6 +1249,12 @@ export async function registerRoutes(
   });
 
   app.patch("/api/play-sessions/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getPlaySessionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.partnerId !== user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const data = { ...req.body };
     if (data.completedAt) data.completedAt = new Date(data.completedAt);
     if (data.scheduledFor) data.scheduledFor = new Date(data.scheduledFor);
@@ -1437,6 +1508,9 @@ export async function registerRoutes(
 
   app.post("/api/accusations/:id/respond", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const existingAcc = await storage.getAccusationById(req.params.id);
+    if (!existingAcc) return res.status(404).json({ message: "Accusation not found" });
+    if (existingAcc.toUserId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const { response } = req.body;
     if (!response || typeof response !== "string" || !response.trim()) {
       return res.status(400).json({ message: "Response required" });
@@ -1502,6 +1576,9 @@ export async function registerRoutes(
 
   app.patch("/api/intensity-sessions/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const existing = await storage.getIntensitySessionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Session not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     const { currentTier, maxTierReached, status, durationSeconds, notes, completedAt } = req.body;
     const data: any = {};
     if (currentTier !== undefined) data.currentTier = currentTier;
@@ -1566,6 +1643,9 @@ export async function registerRoutes(
 
   app.patch("/api/obedience-trials/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const existing = await storage.getObedienceTrialById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Trial not found" });
+    if (existing.userId !== user.id && existing.partnerId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const { status, score, completedSteps, startedAt, completedAt } = req.body;
     const data: any = {};
     if (status !== undefined) data.status = status;
@@ -1592,6 +1672,12 @@ export async function registerRoutes(
   });
 
   app.patch("/api/trial-steps/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existingStep = await storage.getTrialStepById(req.params.id);
+    if (!existingStep) return res.status(404).json({ message: "Step not found" });
+    const parentTrial = await storage.getObedienceTrialById(existingStep.trialId);
+    if (!parentTrial) return res.status(404).json({ message: "Trial not found" });
+    if (parentTrial.userId !== user.id && parentTrial.partnerId !== user.id) return res.status(403).json({ message: "Forbidden" });
     const { status } = req.body;
     const data: any = { status };
     if (status === "completed") data.completedAt = new Date();
@@ -1627,6 +1713,10 @@ export async function registerRoutes(
   });
 
   app.delete("/api/sensation-cards/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getSensationCardById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Card not found" });
+    if (existing.userId !== user.id) return res.status(403).json({ message: "Not authorized" });
     await storage.deleteSensationCard(req.params.id);
     res.json({ success: true });
   });
@@ -1665,6 +1755,9 @@ export async function registerRoutes(
 
   app.patch("/api/sensation-spins/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const existingSpin = await storage.getSensationSpinById(req.params.id);
+    if (!existingSpin) return res.status(404).json({ message: "Spin not found" });
+    if (existingSpin.userId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const { completed } = req.body;
     const spin = await storage.updateSensationSpin(req.params.id, { completed: !!completed });
     if (!spin) return res.status(404).json({ message: "Spin not found" });
@@ -1714,6 +1807,9 @@ export async function registerRoutes(
 
   app.patch("/api/sealed-orders/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const existing = await storage.getSealedOrderById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Order not found" });
+    if (existing.userId !== user.id && existing.targetUserId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const { revealed, completed, emergencyUnsealed } = req.body;
     const data: any = {};
     if (revealed !== undefined) data.revealed = revealed;
@@ -1781,6 +1877,9 @@ export async function registerRoutes(
 
   app.patch("/api/endurance-challenges/:id", requireAuth, async (req, res) => {
     const user = req.user as User;
+    const existing = await storage.getEnduranceChallengeById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Challenge not found" });
+    if (existing.userId !== user.id && existing.targetUserId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const { status, completedAt, completedCheckins, missedCheckins } = req.body;
     const data: any = {};
     if (status !== undefined) data.status = status;
@@ -1875,6 +1974,10 @@ export async function registerRoutes(
   });
 
   app.delete("/api/media/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getMediaById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.userId !== user.partnerId) return res.status(403).json({ message: "Forbidden" });
     await storage.deleteMedia(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -2150,6 +2253,12 @@ export async function registerRoutes(
   });
 
   app.put("/api/contracts/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getContractById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.creatorId !== user.id && existing.partnerId !== user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const contract = await storage.updateContract(req.params.id, req.body);
     if (!contract) return res.status(404).json({ message: "Not found" });
     res.json(contract);
@@ -2179,6 +2288,12 @@ export async function registerRoutes(
   });
 
   app.put("/api/confessions/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getConfessionById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id && existing.partnerId !== user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const confession = await storage.updateConfession(req.params.id, req.body);
     if (!confession) return res.status(404).json({ message: "Not found" });
     res.json(confession);
@@ -2207,6 +2322,12 @@ export async function registerRoutes(
   });
 
   app.put("/api/training-programs/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getTrainingProgramById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.creatorId !== user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const program = await storage.updateTrainingProgram(req.params.id, req.body);
     if (!program) return res.status(404).json({ message: "Not found" });
     res.json(program);
@@ -2253,6 +2374,12 @@ export async function registerRoutes(
   });
 
   app.put("/api/training-enrollments/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getTrainingEnrollmentById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
     const enrollment = await storage.updateTrainingEnrollment(req.params.id, req.body);
     if (!enrollment) return res.status(404).json({ message: "Not found" });
     res.json(enrollment);
@@ -2281,12 +2408,20 @@ export async function registerRoutes(
   });
 
   app.put("/api/scene-scripts/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getSceneScriptById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.creatorId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const script = await storage.updateSceneScript(req.params.id, req.body);
     if (!script) return res.status(404).json({ message: "Not found" });
     res.json(script);
   });
 
   app.delete("/api/scene-scripts/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getSceneScriptById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.creatorId !== user.id) return res.status(403).json({ message: "Not authorized" });
     await storage.deleteSceneScript(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -2314,12 +2449,22 @@ export async function registerRoutes(
   });
 
   app.put("/api/script-steps/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existingStep = await storage.getScriptStepById(req.params.id);
+    if (!existingStep) return res.status(404).json({ message: "Not found" });
+    const parentScript = await storage.getSceneScriptById(existingStep.scriptId);
+    if (!parentScript || parentScript.creatorId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const step = await storage.updateScriptStep(req.params.id, req.body);
     if (!step) return res.status(404).json({ message: "Not found" });
     res.json(step);
   });
 
   app.delete("/api/script-steps/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existingStep = await storage.getScriptStepById(req.params.id);
+    if (!existingStep) return res.status(404).json({ message: "Not found" });
+    const parentScript = await storage.getSceneScriptById(existingStep.scriptId);
+    if (!parentScript || parentScript.creatorId !== user.id) return res.status(403).json({ message: "Not authorized" });
     await storage.deleteScriptStep(req.params.id);
     res.json({ message: "Deleted" });
   });
@@ -2487,6 +2632,10 @@ export async function registerRoutes(
   });
 
   app.put("/api/aftercare/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const existing = await storage.getAftercareItemById(req.params.id);
+    if (!existing) return res.status(404).json({ message: "Not found" });
+    if (existing.userId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const item = await storage.updateAftercareItem(req.params.id, req.body);
     if (!item) return res.status(404).json({ message: "Not found" });
     res.json(item);
