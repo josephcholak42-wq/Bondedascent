@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, type TouchEvent as ReactTouchEvent } from "react";
 import {
   AlertTriangle, Bell, CheckCircle, Clock, Gift, Gavel,
   MessageSquare, Siren, Target, Zap, X, Send, Sparkles,
@@ -259,11 +259,86 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const [showCompletionNotes, setShowCompletionNotes] = useState(false);
   const [completionNotesText, setCompletionNotesText] = useState("");
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const [swipeX, setSwipeX] = useState(0);
+  const [swiped, setSwiped] = useState<"left" | "right" | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const swipeThreshold = 80;
+
   const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.notification;
   const Icon = config.icon;
   const isUrgent = ["demand", "command", "accusation"].includes(item.type);
   const isCompletable = ["task", "punishment", "dare"].includes(item.type);
   const isCompleted = item.data?.done || item.data?.completed || item.data?.status === "completed";
+  const rawId = item.id.replace(/^(so-|rit-)/, "");
+  const canEdit = ["task", "standing_order", "ritual"].includes(item.type);
+  const canDelete = ["task", "ritual", "limit", "countdown_event", "standing_order", "notification", "punishment", "reward", "dare", "secret", "wager", "rating", "permission_request", "devotion", "conflict", "desired_change", "play_session"].includes(item.type);
+  const isNotification = item.type === "notification";
+  const isUnread = isNotification && !item.data?.read;
+  const isRead = isNotification && item.data?.read;
+
+  const getSwipeAction = (): string | null => {
+    if (item.type === "task") return "toggle";
+    if (item.type === "punishment" || item.type === "dare") return "complete";
+    if (item.type === "reward" && !item.data?.claimedAt) return "claim";
+    if (item.type === "notification") return "dismiss";
+    return null;
+  };
+
+  const swipeAction = getSwipeAction();
+  const canSwipeLeft = swipeAction !== null;
+
+  const resetSwipe = () => {
+    touchStartRef.current = null;
+    setSwipeX(0);
+  };
+
+  const onTouchStart = (e: ReactTouchEvent) => {
+    if (isEditing || showCompletionNotes || expanded) return;
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+    setSwipeX(0);
+  };
+
+  const onTouchMove = (e: ReactTouchEvent) => {
+    if (!touchStartRef.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dx) < 15) {
+      resetSwipe();
+      return;
+    }
+    if (dx < 0 && !canSwipeLeft) { resetSwipe(); return; }
+    if (dx > 0 && (!canDelete || !onDelete)) { resetSwipe(); return; }
+    setSwipeX(dx);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartRef.current) { resetSwipe(); return; }
+    const absX = Math.abs(swipeX);
+    if (absX >= swipeThreshold) {
+      if (swipeX < 0 && canSwipeLeft && swipeAction) {
+        feedbackComplete();
+        setSwiped("left");
+        setTimeout(() => {
+          onAction(item.id, swipeAction);
+        }, 300);
+      } else if (swipeX > 0 && canDelete && onDelete) {
+        feedbackDelete();
+        setSwiped("right");
+        setTimeout(() => {
+          onDelete(item.type, rawId);
+        }, 300);
+      } else {
+        resetSwipe();
+        return;
+      }
+    }
+    touchStartRef.current = null;
+    if (absX < swipeThreshold) setSwipeX(0);
+  };
+
+  const onTouchCancel = () => { resetSwipe(); };
 
   const initiateCompletion = (action: string) => {
     setPendingAction(action);
@@ -300,18 +375,39 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
     onAction(id, action, payload);
   };
 
-  const rawId = item.id.replace(/^(so-|rit-)/, "");
-  const canEdit = ["task", "standing_order", "ritual"].includes(item.type);
-  const canDelete = ["task", "ritual", "limit", "countdown_event", "standing_order", "notification", "punishment", "reward", "dare", "secret", "wager", "rating", "permission_request", "devotion", "conflict", "desired_change", "play_session"].includes(item.type);
-  const isNotification = item.type === "notification";
-  const isUnread = isNotification && !item.data?.read;
-  const isRead = isNotification && item.data?.read;
+  const swipeActionLabel = swipeX < -30 && canSwipeLeft ? (swipeAction === "toggle" ? "DONE" : swipeAction === "complete" ? "DONE" : swipeAction === "claim" ? "CLAIM" : "DISMISS") : "";
+  const swipeDeleteLabel = swipeX > 30 ? "DELETE" : "";
 
   return (
+    <div className="relative overflow-hidden rounded-r-xl" data-testid={`feed-item-${item.type}-${item.id}`}>
+      {swipeX < -10 && canSwipeLeft && (
+        <div className="absolute inset-0 flex items-center justify-end pr-5 bg-gradient-to-l from-red-900/90 to-red-950/70 rounded-r-xl z-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black text-red-200 uppercase tracking-widest">{swipeActionLabel}</span>
+            <CheckCircle size={18} className="text-red-300" />
+          </div>
+        </div>
+      )}
+      {swipeX > 10 && (
+        <div className="absolute inset-0 flex items-center pl-5 bg-gradient-to-r from-red-700/90 to-red-900/70 rounded-r-xl z-0">
+          <div className="flex items-center gap-2">
+            <Trash2 size={18} className="text-red-200" />
+            <span className="text-[10px] font-black text-red-200 uppercase tracking-widest">{swipeDeleteLabel}</span>
+          </div>
+        </div>
+      )}
     <div
-      data-testid={`feed-item-${item.type}-${item.id}`}
-      className={`cp-feed-3d group relative border-l-[4px] ${isRead ? "border-l-neutral-800" : config.borderColor} ${isRead ? "bg-neutral-900/40" : `bg-gradient-to-r ${config.bgColor}`} rounded-r-xl transition-all duration-300 ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""} ${isLive ? "ring-1 ring-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]" : ""} ${isUnread ? "shadow-[0_0_12px_rgba(100,116,139,0.4)] border-l-slate-300 brightness-110" : ""} ${isRead ? "opacity-45" : ""}`}
-      style={{ animation: isLive ? "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, cp-live-pulse 2s ease-in-out infinite" : "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both" }}
+      className={`cp-feed-3d group relative border-l-[4px] ${isRead ? "border-l-neutral-800" : config.borderColor} ${isRead ? "bg-neutral-900/40" : `bg-gradient-to-r ${config.bgColor}`} rounded-r-xl transition-all ${swipeX === 0 && !swiped ? "duration-300" : swiped ? "duration-300" : "duration-0"} ${isUrgent ? `shadow-lg ${config.glowColor}` : ""} ${isSelected ? "ring-1 ring-red-500/60 brightness-110" : ""} ${isPinned ? "ring-1 ring-red-800/40" : ""} ${isLive ? "ring-1 ring-red-500/50 shadow-[0_0_12px_rgba(239,68,68,0.25)]" : ""} ${isUnread ? "shadow-[0_0_12px_rgba(100,116,139,0.4)] border-l-slate-300 brightness-110" : ""} ${isRead ? "opacity-45" : ""} ${swiped === "left" ? "opacity-40 grayscale" : ""} ${swiped === "right" ? "opacity-0 -translate-x-full" : ""}`}
+      style={{
+        transform: swiped ? undefined : `translateX(${swipeX}px)`,
+        animation: isLive ? "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, cp-live-pulse 2s ease-in-out infinite" : "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
+        position: "relative",
+        zIndex: 1,
+      }}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
     >
       <div className="p-3.5 flex items-start gap-3">
         {isSelecting && (
@@ -533,6 +629,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
