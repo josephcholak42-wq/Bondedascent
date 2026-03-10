@@ -32,6 +32,11 @@ export default function AdminPanel() {
   const [stickerCatFilter, setStickerCatFilter] = useState("all");
   const [stickerRarityFilter, setStickerRarityFilter] = useState("all");
   const [trinketRarityFilter, setTrinketRarityFilter] = useState("all");
+  const [awardMode, setAwardMode] = useState<"stickers" | "trinkets">("stickers");
+  const [awardCatFilter, setAwardCatFilter] = useState("all");
+  const [awardRarityFilter, setAwardRarityFilter] = useState("all");
+  const [awardSearch, setAwardSearch] = useState("");
+  const [awardMessage, setAwardMessage] = useState("");
 
   const { data: settings } = useQuery<{ restrictionsEnabled?: boolean; maintenanceMode?: boolean; globalMessage?: string | null }>({ queryKey: ["/api/admin/settings"], enabled: !!user?.isAdmin });
   const { data: allUsers } = useQuery({ queryKey: ["/api/admin/users"], enabled: !!user?.isAdmin });
@@ -256,33 +261,139 @@ export default function AdminPanel() {
                           </button>
                         </div>
                         {awardTarget === u.id && (
-                          <div className="mt-2 p-3 rounded-lg bg-[#451a03]/20 border border-[#d4a24e]/20 space-y-2">
-                            <p className="text-[10px] font-bold text-[#d4a24e] uppercase tracking-wider">Award to {u.username}</p>
-                            <div className="flex flex-wrap gap-1">
-                              {(adminStickers as any[])?.slice(0, 12).map((s: any) => (
+                          <div className="mt-2 p-4 rounded-xl bg-[#0a0a0a] border border-[#d4a24e]/30 space-y-3" style={{ boxShadow: "0 0 20px rgba(212,162,78,0.08)" }}>
+                            <div className="flex items-center justify-between">
+                              <p className="text-[11px] font-black text-[#d4a24e] uppercase tracking-wider">Award to {u.username}</p>
+                              <div className="flex gap-1">
                                 <button
-                                  key={s.id}
-                                  onClick={() => awardSticker.mutate({ userId: u.id, stickerType: s.name.toLowerCase().replace(/\s/g, "-"), message: `Admin awarded: ${s.name}` })}
-                                  className="px-2 py-1 bg-black/40 rounded text-xs hover:bg-black/60 cursor-pointer"
-                                  title={s.name}
+                                  data-testid="award-mode-stickers"
+                                  onClick={() => setAwardMode("stickers")}
+                                  className={`px-3 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${awardMode === "stickers" ? "bg-[#d4a24e]/20 text-[#d4a24e] border border-[#d4a24e]/40" : "bg-black/40 text-slate-500 border border-white/5 hover:text-slate-300"}`}
                                 >
-                                  {s.emoji}
+                                  Stickers ({(adminStickers as any[])?.length || 0})
                                 </button>
-                              ))}
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                              {(adminTrinkets as any[])?.slice(0, 8).map((t: any) => (
                                 <button
-                                  key={t.id}
-                                  onClick={() => awardTrinket.mutate({ userId: u.id, trinketId: t.id })}
-                                  className="px-2 py-1 rounded text-xs hover:opacity-80 cursor-pointer"
-                                  style={{ backgroundColor: RARITY_COLORS[t.rarity] + "20", color: RARITY_COLORS[t.rarity], border: `1px solid ${RARITY_COLORS[t.rarity]}30` }}
-                                  title={t.name}
+                                  data-testid="award-mode-trinkets"
+                                  onClick={() => setAwardMode("trinkets")}
+                                  className={`px-3 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all ${awardMode === "trinkets" ? "bg-[#b87333]/20 text-[#b87333] border border-[#b87333]/40" : "bg-black/40 text-slate-500 border border-white/5 hover:text-slate-300"}`}
                                 >
-                                  {t.imageEmoji} {t.name}
+                                  Trinkets ({(adminTrinkets as any[])?.length || 0})
                                 </button>
-                              ))}
+                              </div>
                             </div>
+                            <div className="flex flex-wrap gap-2 items-center">
+                              <input
+                                data-testid="award-search"
+                                value={awardSearch}
+                                onChange={e => setAwardSearch(e.target.value)}
+                                placeholder={`Search ${awardMode}...`}
+                                className="flex-1 min-w-[120px] bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-[11px] text-white placeholder:text-slate-700 outline-none"
+                              />
+                              <select
+                                data-testid="award-rarity-filter"
+                                value={awardRarityFilter}
+                                onChange={e => setAwardRarityFilter(e.target.value)}
+                                className="bg-black/60 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-slate-400 outline-none cursor-pointer"
+                              >
+                                <option value="all">All Rarities</option>
+                                {["common", "uncommon", "rare", "epic", "legendary"].map(r => <option key={r} value={r}>{r}</option>)}
+                              </select>
+                              {awardMode === "stickers" && (
+                                <select
+                                  data-testid="award-cat-filter"
+                                  value={awardCatFilter}
+                                  onChange={e => setAwardCatFilter(e.target.value)}
+                                  className="bg-black/60 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-slate-400 outline-none cursor-pointer"
+                                >
+                                  <option value="all">All Categories</option>
+                                  {["obedience", "discipline", "praise", "tasks", "intimacy", "endurance", "rituals", "attitude", "scenes", "communication", "special"].map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                              )}
+                            </div>
+                            {awardMode === "stickers" && (
+                              <>
+                                <input
+                                  data-testid="award-sticker-message"
+                                  value={awardMessage}
+                                  onChange={e => setAwardMessage(e.target.value)}
+                                  placeholder="Optional message with sticker..."
+                                  className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-[11px] text-white placeholder:text-slate-700 outline-none"
+                                />
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1.5 max-h-[300px] overflow-y-auto pr-1">
+                                  {(adminStickers as any[])
+                                    ?.filter((s: any) =>
+                                      (awardCatFilter === "all" || s.category === awardCatFilter) &&
+                                      (awardRarityFilter === "all" || s.rarity === awardRarityFilter) &&
+                                      (!awardSearch || s.name.toLowerCase().includes(awardSearch.toLowerCase()) || s.category.toLowerCase().includes(awardSearch.toLowerCase()))
+                                    )
+                                    .map((s: any) => (
+                                      <button
+                                        key={s.id}
+                                        data-testid={`award-sticker-${s.id}`}
+                                        onClick={() => {
+                                          awardSticker.mutate({ userId: u.id, stickerType: s.name.toLowerCase().replace(/\s/g, "-"), message: awardMessage || `Awarded: ${s.name}` });
+                                          setAwardMessage("");
+                                        }}
+                                        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-left hover:scale-[1.02] transition-all cursor-pointer"
+                                        style={{
+                                          backgroundColor: (RARITY_COLORS[s.rarity] || "#94a3b8") + "10",
+                                          border: `1px solid ${(RARITY_COLORS[s.rarity] || "#94a3b8")}20`,
+                                        }}
+                                        title={`${s.name} — ${s.rarity} · ${s.category}\n${s.description || ""}`}
+                                      >
+                                        <span className="text-lg">{s.emoji}</span>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="text-[9px] font-bold text-white truncate">{s.name}</p>
+                                          <p className="text-[8px] truncate" style={{ color: RARITY_COLORS[s.rarity] || "#94a3b8" }}>{s.rarity}</p>
+                                        </div>
+                                      </button>
+                                    ))}
+                                </div>
+                              </>
+                            )}
+                            {awardMode === "trinkets" && (
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[300px] overflow-y-auto pr-1">
+                                {(adminTrinkets as any[])
+                                  ?.filter((t: any) =>
+                                    (awardRarityFilter === "all" || t.rarity === awardRarityFilter) &&
+                                    (!awardSearch || t.name.toLowerCase().includes(awardSearch.toLowerCase()) || (t.description || "").toLowerCase().includes(awardSearch.toLowerCase()))
+                                  )
+                                  .map((t: any) => {
+                                    const rc = RARITY_COLORS[t.rarity] || "#94a3b8";
+                                    return (
+                                      <button
+                                        key={t.id}
+                                        data-testid={`award-trinket-${t.id}`}
+                                        onClick={() => awardTrinket.mutate({ userId: u.id, trinketId: t.id })}
+                                        className="flex items-center gap-2 p-2.5 rounded-xl text-left hover:scale-[1.02] transition-all cursor-pointer"
+                                        style={{
+                                          background: `linear-gradient(145deg, ${rc}15 0%, #0a0a0a 100%)`,
+                                          border: `1px solid ${rc}30`,
+                                          boxShadow: `0 4px 12px rgba(0,0,0,0.3), 0 0 8px ${rc}08`,
+                                        }}
+                                        title={`${t.name} — ${t.rarity}\n${t.description || ""}\nEffect: ${t.profileRewardType} → ${t.profileReward}`}
+                                      >
+                                        <div
+                                          className="w-10 h-10 flex items-center justify-center rounded-lg shrink-0"
+                                          style={{
+                                            background: `linear-gradient(180deg, ${rc}20 0%, ${rc}05 100%)`,
+                                            border: `1.5px solid ${rc}40`,
+                                            boxShadow: `inset 0 1px 3px rgba(255,255,255,0.08), inset 0 -1px 3px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.3)`,
+                                            transform: "perspective(150px) rotateX(4deg)",
+                                          }}
+                                        >
+                                          <span className="text-xl" style={{ filter: `drop-shadow(0 1px 3px ${rc}40)` }}>{t.imageEmoji}</span>
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="text-[10px] font-bold text-white truncate">{t.name}</p>
+                                          <p className="text-[8px] font-bold uppercase" style={{ color: rc }}>{t.rarity}</p>
+                                          <p className="text-[8px] text-slate-600 truncate">{t.profileRewardType}: {t.profileReward}</p>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
