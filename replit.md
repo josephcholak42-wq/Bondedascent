@@ -66,7 +66,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **Unlock Registry**: Feature unlock map linked to user levels.
 - **Data Storage**: PostgreSQL with Drizzle ORM.
 - **Media Handling**: Local file storage and metadata management.
-- **Admin System**: Master admin panel at `/admin` for FuckKingMasterCock (isAdmin=true). Global restriction toggles, maintenance mode, user surveillance, per-user level overrides. Admin sticker library (25+ BDSM themed) and trinket library (15+ across rarity tiers). Tables: `adminSettings`, `adminStickers`, `trinkets`, `userTrinkets`. Routes under `/api/admin/*` with `requireAdmin` middleware. Frontend restrictions toggle via `GET /api/restrictions-status` + `useRestrictionsStatus` hook.
+- **Admin System**: Master admin panel at `/admin` for FuckKingMasterCock (isAdmin=true). Global restriction toggles, maintenance mode, user surveillance, per-user level overrides. Admin sticker library (175 BDSM themed across 11 categories: obedience, discipline, praise, tasks, intimacy, endurance, rituals, attitude, scenes, communication, special) and trinket library (52 across 5 rarity tiers with 3D trophy display, each with unique profile customization effect: border/badge/nameColor/glow). Tables: `adminSettings`, `adminStickers`, `trinkets`, `userTrinkets`. Routes under `/api/admin/*` with `requireAdmin` middleware. Frontend restrictions toggle via `GET /api/restrictions-status` + `useRestrictionsStatus` hook.
 
 ## External Dependencies
 

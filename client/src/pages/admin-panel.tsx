@@ -29,6 +29,9 @@ export default function AdminPanel() {
   const [awardTarget, setAwardTarget] = useState("");
   const [showNewSticker, setShowNewSticker] = useState(false);
   const [showNewTrinket, setShowNewTrinket] = useState(false);
+  const [stickerCatFilter, setStickerCatFilter] = useState("all");
+  const [stickerRarityFilter, setStickerRarityFilter] = useState("all");
+  const [trinketRarityFilter, setTrinketRarityFilter] = useState("all");
 
   const { data: settings } = useQuery<{ restrictionsEnabled?: boolean; maintenanceMode?: boolean; globalMessage?: string | null }>({ queryKey: ["/api/admin/settings"], enabled: !!user?.isAdmin });
   const { data: allUsers } = useQuery({ queryKey: ["/api/admin/users"], enabled: !!user?.isAdmin });
@@ -344,13 +347,23 @@ export default function AdminPanel() {
                 <Plus size={12} /> Add Sticker
               </button>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <select value={stickerCatFilter} onChange={e => setStickerCatFilter(e.target.value)} className="bg-black/60 border border-[#d4a24e]/20 rounded-lg px-2 py-1 text-[10px] text-[#d4a24e] outline-none cursor-pointer">
+                <option value="all">All Categories</option>
+                {["obedience", "discipline", "praise", "tasks", "intimacy", "endurance", "rituals", "attitude", "scenes", "communication", "special"].map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select value={stickerRarityFilter} onChange={e => setStickerRarityFilter(e.target.value)} className="bg-black/60 border border-[#d4a24e]/20 rounded-lg px-2 py-1 text-[10px] text-[#d4a24e] outline-none cursor-pointer">
+                <option value="all">All Rarities</option>
+                {["common", "uncommon", "rare", "epic", "legendary"].map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
             {showNewSticker && (
               <div className="rounded-xl border border-[#d4a24e]/20 bg-[#0a0a0a] p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <input value={newStickerForm.name} onChange={e => setNewStickerForm(f => ({ ...f, name: e.target.value }))} placeholder="Name" className="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-700 outline-none" />
                   <input value={newStickerForm.emoji} onChange={e => setNewStickerForm(f => ({ ...f, emoji: e.target.value }))} placeholder="Emoji" className="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-700 outline-none" />
                   <select value={newStickerForm.category} onChange={e => setNewStickerForm(f => ({ ...f, category: e.target.value }))} className="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none cursor-pointer">
-                    {["general", "bondage", "sensory", "impact", "achievement", "devotion", "ritual", "endurance"].map(c => <option key={c} value={c}>{c}</option>)}
+                    {["general", "obedience", "discipline", "praise", "tasks", "intimacy", "endurance", "rituals", "attitude", "scenes", "communication", "special"].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                   <select value={newStickerForm.rarity} onChange={e => setNewStickerForm(f => ({ ...f, rarity: e.target.value }))} className="bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none cursor-pointer">
                     {["common", "uncommon", "rare", "epic", "legendary"].map(r => <option key={r} value={r}>{r}</option>)}
@@ -363,7 +376,7 @@ export default function AdminPanel() {
               </div>
             )}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-              {(adminStickers as any[])?.map((s: any) => (
+              {(adminStickers as any[])?.filter((s: any) => (stickerCatFilter === "all" || s.category === stickerCatFilter) && (stickerRarityFilter === "all" || s.rarity === stickerRarityFilter)).map((s: any) => (
                 <div key={s.id} className="rounded-xl border bg-[#0a0a0a] p-3 relative group" style={{ borderColor: RARITY_COLORS[s.rarity] + "30" }}>
                   <button onClick={() => deleteSticker.mutate(s.id)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"><Trash2 size={12} className="text-red-500/50 hover:text-red-500" /></button>
                   <div className="text-2xl mb-1">{s.emoji}</div>
@@ -388,6 +401,12 @@ export default function AdminPanel() {
                 <Plus size={12} /> Add Trinket
               </button>
             </div>
+            <div className="flex flex-wrap gap-2">
+              <select value={trinketRarityFilter} onChange={e => setTrinketRarityFilter(e.target.value)} className="bg-black/60 border border-[#b87333]/20 rounded-lg px-2 py-1 text-[10px] text-[#b87333] outline-none cursor-pointer">
+                <option value="all">All Rarities</option>
+                {["common", "uncommon", "rare", "epic", "legendary"].map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
             {showNewTrinket && (
               <div className="rounded-xl border border-[#b87333]/20 bg-[#0a0a0a] p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
@@ -400,6 +419,7 @@ export default function AdminPanel() {
                     <option value="border">Border Effect</option>
                     <option value="badge">Profile Badge</option>
                     <option value="nameColor">Name Color</option>
+                    <option value="glow">Profile Glow</option>
                   </select>
                 </div>
                 <input value={newTrinketForm.description} onChange={e => setNewTrinketForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-700 outline-none" />
@@ -410,25 +430,64 @@ export default function AdminPanel() {
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {(adminTrinkets as any[])?.map((t: any) => (
-                <div key={t.id} className="rounded-xl border bg-[#0a0a0a] p-4 relative group" style={{ borderColor: RARITY_COLORS[t.rarity] + "40", boxShadow: `0 0 15px ${RARITY_COLORS[t.rarity]}15` }}>
-                  <button onClick={() => deleteTrinket.mutate(t.id)} className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"><Trash2 size={12} className="text-red-500/50 hover:text-red-500" /></button>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="text-3xl">{t.imageEmoji}</div>
-                    <div>
-                      <p className="text-sm font-bold text-white">{t.name}</p>
-                      <p className="text-[10px] font-bold uppercase" style={{ color: RARITY_COLORS[t.rarity] }}>{t.rarity}</p>
+              {(adminTrinkets as any[])?.filter((t: any) => trinketRarityFilter === "all" || t.rarity === trinketRarityFilter).map((t: any) => {
+                const rc = RARITY_COLORS[t.rarity] || "#94a3b8";
+                const isLeg = t.rarity === "legendary";
+                const isEpic = t.rarity === "epic";
+                const rewardLabel = t.profileRewardType === "border" ? "Border" : t.profileRewardType === "badge" ? "Badge" : t.profileRewardType === "glow" ? "Glow" : t.profileRewardType === "nameColor" ? "Name Color" : "Effect";
+                return (
+                  <div
+                    key={t.id}
+                    className="relative group rounded-xl overflow-hidden"
+                    style={{
+                      background: `linear-gradient(145deg, ${rc}12 0%, #0a0a0a 40%, #050505 100%)`,
+                      border: `1px solid ${rc}40`,
+                      boxShadow: `0 8px 24px rgba(0,0,0,0.5), 0 0 20px ${rc}10, inset 0 1px 0 rgba(255,255,255,0.05)`,
+                    }}
+                  >
+                    {isLeg && <div className="absolute inset-0 pointer-events-none" style={{ background: `conic-gradient(from 0deg, transparent, ${rc}08, transparent, ${rc}06, transparent)`, animation: "spin 8s linear infinite" }} />}
+                    <button onClick={() => deleteTrinket.mutate(t.id)} className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"><Trash2 size={12} className="text-red-500/50 hover:text-red-500" /></button>
+                    <div className="relative z-10 p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div
+                          className="relative w-14 h-14 flex items-center justify-center rounded-lg"
+                          style={{
+                            background: `linear-gradient(180deg, ${rc}25 0%, ${rc}08 100%)`,
+                            border: `2px solid ${rc}50`,
+                            boxShadow: `
+                              0 4px 12px rgba(0,0,0,0.4),
+                              0 2px 4px rgba(0,0,0,0.3),
+                              inset 0 2px 4px rgba(255,255,255,0.1),
+                              inset 0 -2px 4px rgba(0,0,0,0.3),
+                              0 0 16px ${rc}20
+                            `,
+                            transform: "perspective(200px) rotateX(5deg)",
+                          }}
+                        >
+                          <span className="text-3xl drop-shadow-lg" style={{ filter: `drop-shadow(0 2px 4px ${rc}40)` }}>{t.imageEmoji}</span>
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full" style={{ background: `radial-gradient(ellipse, ${rc}30, transparent)` }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black text-white truncate">{t.name}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full" style={{ color: rc, backgroundColor: rc + "15", border: `1px solid ${rc}25` }}>
+                              {t.rarity}
+                            </span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-600">{rewardLabel}</span>
+                          </div>
+                        </div>
+                      </div>
+                      {t.description && <p className="text-[10px] text-slate-500 leading-relaxed">{t.description}</p>}
+                      {t.profileReward && (
+                        <div className="mt-2.5 pt-2 border-t flex items-center gap-1.5" style={{ borderColor: rc + "15" }}>
+                          <Award size={10} style={{ color: rc }} />
+                          <span className="text-[9px] font-bold" style={{ color: rc + "cc" }}>{t.profileReward}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  {t.description && <p className="text-[10px] text-slate-500">{t.description}</p>}
-                  {t.profileReward && (
-                    <div className="mt-2 flex items-center gap-1 text-[9px] text-[#d4a24e]">
-                      <Award size={10} />
-                      {t.profileReward}
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
