@@ -264,23 +264,29 @@ const TRINKETS = [
   { name: "The Master Key", description: "Opens every lock — access to everything", rarity: "legendary", imageEmoji: "🗝️", profileReward: "border-master-key", profileRewardType: "border" },
 ];
 
-async function seed() {
-  console.log("Clearing existing stickers and trinkets...");
+export async function seedStickersAndTrinkets() {
+  const existingStickers = await db.select().from(adminStickers);
+  const existingTrinkets = await db.select().from(trinkets);
+
+  if (existingStickers.length >= STICKERS.length && existingTrinkets.length >= TRINKETS.length) {
+    return;
+  }
+
+  console.log(`Seeding sticker/trinket library (found ${existingStickers.length} stickers, ${existingTrinkets.length} trinkets)...`);
   await db.delete(adminStickers);
   await db.delete(trinkets);
 
-  console.log(`Seeding ${STICKERS.length} stickers...`);
   for (const s of STICKERS) {
     await db.insert(adminStickers).values(s);
   }
 
-  console.log(`Seeding ${TRINKETS.length} trinkets...`);
   for (const t of TRINKETS) {
     await db.insert(trinkets).values(t);
   }
 
-  console.log(`Done! ${STICKERS.length} stickers + ${TRINKETS.length} trinkets seeded.`);
-  process.exit(0);
+  console.log(`Seeded ${STICKERS.length} stickers + ${TRINKETS.length} trinkets.`);
 }
 
-seed().catch(e => { console.error(e); process.exit(1); });
+if (process.argv[1]?.includes("seed-stickers-trinkets")) {
+  seedStickersAndTrinkets().then(() => process.exit(0)).catch(e => { console.error(e); process.exit(1); });
+}

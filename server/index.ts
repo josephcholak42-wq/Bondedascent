@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startTetherEngine } from "./tether";
 import { storage } from "./storage";
+import { seedStickersAndTrinkets } from "./seed-stickers-trinkets";
 
 const app = express();
 const httpServer = createServer(app);
@@ -133,6 +134,7 @@ app.use((req, res, next) => {
     },
     () => {
       log(`serving on port ${port}`);
+      seedStickersAndTrinkets().catch(e => console.error("Seed error:", e));
       startTetherEngine();
     },
   );
