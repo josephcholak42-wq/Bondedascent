@@ -1118,6 +1118,14 @@ export function CommandProtocols({
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {authUser?.isAdmin && (
+                  <a href="/admin" data-testid="admin-panel-link"
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-900/40 border border-red-500/30 hover:bg-red-900/60 hover:border-red-500/50 transition-all cursor-pointer"
+                    style={{ boxShadow: "0 0 12px rgba(220,38,38,0.15)" }}>
+                    <Shield size={12} className="text-red-400" />
+                    <span className="text-[9px] font-black text-red-400 uppercase tracking-wider">Admin</span>
+                  </a>
+                )}
                 <button onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) { setSearchQuery(""); setDebouncedSearch(""); } }}
                   className="p-1.5 rounded-lg bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-colors cursor-pointer" data-testid="cp-search-toggle">
                   <Search size={14} className={searchOpen ? "text-red-400" : "text-slate-500"} />
@@ -1289,6 +1297,13 @@ export function CommandProtocols({
               )}
             </div>
 
+            {debouncedSearch && sorted.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 px-4">
+                <Search size={28} className="text-slate-700 mb-2" />
+                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">No results</p>
+                <p className="text-[10px] text-slate-600 mt-1">Nothing matches "{debouncedSearch}" in your feed items</p>
+              </div>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 auto-rows-min" data-testid="cp-window-grid">
               {orderedWindows.map((win) => {
                 const WinIcon = win.icon;
