@@ -518,7 +518,11 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         animation: isLive ? "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both, cp-live-pulse 2s ease-in-out infinite" : "cp-card-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both",
         position: "relative",
         zIndex: 1,
-      }}
+        WebkitUserSelect: "none",
+        userSelect: "none",
+        WebkitTouchCallout: "none",
+      } as React.CSSProperties}
+      onContextMenu={(e) => { if (canNavigate) e.preventDefault(); }}
       onTouchStart={(e) => { onTouchStart(e); startLongPress(); }}
       onTouchMove={(e) => { onTouchMove(e); cancelLongPress(); }}
       onTouchEnd={(e) => { onTouchEnd(e); cancelLongPress(); if (longPressTriggeredRef.current) { e.preventDefault(); } }}
@@ -859,6 +863,8 @@ function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate
     <div
       key={`timeline-${entry.id}`}
       className={`relative flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px] select-none overflow-hidden`}
+      style={{ WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" } as React.CSSProperties}
+      onContextMenu={(e) => { if (canNavigate) e.preventDefault(); }}
       onMouseDown={startLongPress}
       onMouseUp={cancelLongPress}
       onMouseLeave={cancelLongPress}
