@@ -333,17 +333,17 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const swipeThreshold = 80;
 
   const navTargetMap: Record<string, string> = {
-    task: "dashboard", standing_order: "dashboard", ritual: "dashboard",
-    demand: "dashboard", command: "dashboard", accusation: "dashboard",
+    task: "resume", standing_order: "resume", ritual: "resume",
+    demand: "resume", command: "resume", accusation: "resume",
     punishment: "punishment-chest", reward: "reward-chest",
-    dare: "dashboard", checkin_review: "dashboard",
+    dare: "punishment-chest", checkin_review: "resume",
     journal: "journal", play_session: "live-session",
-    wager: "dashboard", countdown_event: "dashboard",
-    devotion: "dashboard", secret: "dashboard",
-    conflict: "dashboard", rating: "dashboard",
-    permission_request: "dashboard", desired_change: "dashboard",
-    limit: "dashboard", achievement: "stats",
-    sticker_received: "sticker-board", notification: "dashboard",
+    wager: "resume", countdown_event: "resume",
+    devotion: "resume", secret: "resume",
+    conflict: "resume", rating: "resume",
+    permission_request: "resume", desired_change: "resume",
+    limit: "resume", achievement: "stats",
+    sticker_received: "sticker-board", notification: "resume",
   };
 
   const navTarget = navTargetMap[item.type];
@@ -819,13 +819,18 @@ function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate
     if (action.includes("session") || action.includes("live")) return "live-session";
     if (action.includes("reward")) return "reward-chest";
     if (action.includes("punishment") || action.includes("punish")) return "punishment-chest";
+    if (action.includes("dare")) return "punishment-chest";
     if (action.includes("sticker")) return "sticker-board";
     if (action.includes("confession")) return "confession-booth";
     if (action.includes("interrogation")) return "interrogation";
     if (action.includes("aftercare")) return "aftercare";
     if (action.includes("achievement") || action.includes("level") || action.includes("xp")) return "stats";
     if (action.includes("trinket")) return "profile";
-    return null;
+    if (action.includes("task") || action.includes("ritual") || action.includes("order") || action.includes("checkin") || action.includes("check")) return "resume";
+    if (action.includes("demand") || action.includes("command") || action.includes("accus")) return "resume";
+    if (action.includes("devotion") || action.includes("conflict") || action.includes("rating")) return "resume";
+    if (action.includes("wager") || action.includes("countdown") || action.includes("permission") || action.includes("limit")) return "resume";
+    return "resume";
   };
 
   const navTarget = getNavTarget(entry.action);

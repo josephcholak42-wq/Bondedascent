@@ -1813,7 +1813,7 @@ export default function BondedAscentApp() {
   };
 
   return (
-    <div className="flex h-[100dvh] bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
+    <div className="flex h-[100dvh] bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white" style={{ WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" } as React.CSSProperties}>
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
 
 
