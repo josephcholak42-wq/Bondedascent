@@ -330,7 +330,9 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
+  const longPressTouchRef = useRef<{ x: number; y: number } | null>(null);
   const swipeThreshold = 80;
+  const longPressMoveThreshold = 15;
 
   const navTargetMap: Record<string, string> = {
     task: "resume", standing_order: "resume", ritual: "resume",
@@ -349,7 +351,32 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const navTarget = navTargetMap[item.type];
   const canNavigate = onNavigate && navTarget && navTarget !== "dashboard";
 
-  const startLongPress = () => {
+  const startLongPressTouch = (e: React.TouchEvent) => {
+    if (!canNavigate) return;
+    const t = e.touches[0];
+    longPressTouchRef.current = { x: t.clientX, y: t.clientY };
+    longPressTriggeredRef.current = false;
+    setLongPressActive(true);
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setLongPressActive(false);
+      longPressTouchRef.current = null;
+      feedbackTap();
+      onNavigate!(navTarget!);
+    }, 2000);
+  };
+
+  const moveLongPressTouch = (e: React.TouchEvent) => {
+    if (!longPressTouchRef.current || !longPressTimerRef.current) return;
+    const t = e.touches[0];
+    const dx = Math.abs(t.clientX - longPressTouchRef.current.x);
+    const dy = Math.abs(t.clientY - longPressTouchRef.current.y);
+    if (dx > longPressMoveThreshold || dy > longPressMoveThreshold) {
+      cancelLongPress();
+    }
+  };
+
+  const startLongPressMouse = () => {
     if (!canNavigate) return;
     longPressTriggeredRef.current = false;
     setLongPressActive(true);
@@ -366,6 +393,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
+    longPressTouchRef.current = null;
     setLongPressActive(false);
   };
 
@@ -523,11 +551,11 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         WebkitTouchCallout: "none",
       } as React.CSSProperties}
       onContextMenu={(e) => { if (canNavigate) e.preventDefault(); }}
-      onTouchStart={(e) => { onTouchStart(e); startLongPress(); }}
-      onTouchMove={(e) => { onTouchMove(e); cancelLongPress(); }}
-      onTouchEnd={(e) => { onTouchEnd(e); cancelLongPress(); if (longPressTriggeredRef.current) { e.preventDefault(); } }}
+      onTouchStart={(e) => { onTouchStart(e); startLongPressTouch(e); }}
+      onTouchMove={(e) => { onTouchMove(e); moveLongPressTouch(e); }}
+      onTouchEnd={(e) => { if (longPressTriggeredRef.current) { e.preventDefault(); e.stopPropagation(); } else { onTouchEnd(e); } cancelLongPress(); }}
       onTouchCancel={(e) => { onTouchCancel(e); cancelLongPress(); }}
-      onMouseDown={startLongPress}
+      onMouseDown={startLongPressMouse}
       onMouseUp={cancelLongPress}
       onMouseLeave={cancelLongPress}
     >
@@ -812,6 +840,9 @@ function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon, lo
 function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate?: (target: string) => void }) {
   const [longPressActive, setLongPressActive] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchOriginRef = useRef<{ x: number; y: number } | null>(null);
+  const triggeredRef = useRef(false);
+  const moveThreshold = 15;
 
   const getNavTarget = (action: string): string | null => {
     if (action.includes("whisper") || action.includes("message")) return "whisper-chamber";
@@ -836,10 +867,37 @@ function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate
   const navTarget = getNavTarget(entry.action);
   const canNavigate = navTarget && onNavigate;
 
-  const startLongPress = () => {
+  const handleTouchStart = (e: React.TouchEvent) => {
     if (!canNavigate) return;
+    const t = e.touches[0];
+    touchOriginRef.current = { x: t.clientX, y: t.clientY };
+    triggeredRef.current = false;
     setLongPressActive(true);
     timerRef.current = setTimeout(() => {
+      triggeredRef.current = true;
+      setLongPressActive(false);
+      touchOriginRef.current = null;
+      feedbackTap();
+      onNavigate!(navTarget!);
+    }, 2000);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchOriginRef.current || !timerRef.current) return;
+    const t = e.touches[0];
+    const dx = Math.abs(t.clientX - touchOriginRef.current.x);
+    const dy = Math.abs(t.clientY - touchOriginRef.current.y);
+    if (dx > moveThreshold || dy > moveThreshold) {
+      cancelLongPress();
+    }
+  };
+
+  const startLongPressMouse = () => {
+    if (!canNavigate) return;
+    triggeredRef.current = false;
+    setLongPressActive(true);
+    timerRef.current = setTimeout(() => {
+      triggeredRef.current = true;
       setLongPressActive(false);
       feedbackTap();
       onNavigate!(navTarget!);
@@ -848,6 +906,7 @@ function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate
 
   const cancelLongPress = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    touchOriginRef.current = null;
     setLongPressActive(false);
   };
 
@@ -870,12 +929,12 @@ function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate
       className={`relative flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px] select-none overflow-hidden`}
       style={{ WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" } as React.CSSProperties}
       onContextMenu={(e) => { if (canNavigate) e.preventDefault(); }}
-      onMouseDown={startLongPress}
+      onMouseDown={startLongPressMouse}
       onMouseUp={cancelLongPress}
       onMouseLeave={cancelLongPress}
-      onTouchStart={startLongPress}
-      onTouchMove={cancelLongPress}
-      onTouchEnd={cancelLongPress}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={(e) => { if (triggeredRef.current) { e.preventDefault(); e.stopPropagation(); } cancelLongPress(); }}
       onTouchCancel={cancelLongPress}
     >
       {longPressActive && canNavigate && (
