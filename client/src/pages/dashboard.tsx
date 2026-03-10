@@ -729,6 +729,7 @@ export default function BondedAscentApp() {
         trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
         activeSimulation={activeSimulation}
         userLevel={user?.level ?? 1}
+        onNavigate={handleNavigate}
       />
       <input
         ref={profilePicInputRef}
@@ -864,6 +865,15 @@ export default function BondedAscentApp() {
     entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return entries.slice(0, 10);
   }, [activityLog, partnerActivity]);
+
+  const handleNavigate = useCallback((target: string) => {
+    const overlayTargets = ["live-session", "interrogation", "confession-booth", "aftercare", "autodom", "whisper-chamber"];
+    if (overlayTargets.includes(target)) {
+      openOverlay(target as any);
+    } else {
+      setActiveView(target);
+    }
+  }, [openOverlay, setActiveView]);
 
   const handleOnCreate = useCallback((type: string, data: Record<string, any>) => {
     switch (type) {
@@ -1024,6 +1034,7 @@ export default function BondedAscentApp() {
             trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
             activeSimulation={activeSimulation}
             userLevel={user?.level ?? 1}
+            onNavigate={handleNavigate}
           />
           <input
             ref={profilePicInputRef}

@@ -10,7 +10,7 @@ import {
   RefreshCw, Sliders, Play, Hand, Layers, Hourglass, GraduationCap, BarChart3,
   HeartPulse, ChevronRight, Search, Pin, Trash2, Pencil,
   ArrowUp, ArrowDown, Minus, Square, CheckSquare,
-  Maximize2, Minimize2, RectangleHorizontal, SquareIcon, GripVertical
+  Maximize2, Minimize2, RectangleHorizontal, SquareIcon, GripVertical, ExternalLink
 } from "lucide-react";
 import { Link as WouterLink } from "wouter";
 import { Switch } from "@/components/ui/switch";
@@ -108,6 +108,7 @@ interface CommandProtocolsProps {
   trendData?: TrendData;
   activeSimulation?: any;
   userLevel?: number;
+  onNavigate?: (target: string) => void;
 }
 
 const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string; priority: number; iconBg: string; pillBg: string }> = {
@@ -299,7 +300,7 @@ function savePinnedIds(ids: Set<string>) {
   localStorage.setItem(PINNED_KEY, JSON.stringify(Array.from(ids)));
 }
 
-function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, isSelecting, isSelected, onToggleSelect, onDelete, onEdit, isLive }: {
+function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, isSelecting, isSelected, onToggleSelect, onDelete, onEdit, isLive, onNavigate }: {
   item: FeedItem;
   onAction: (id: string, action: string, payload?: any) => void;
   role: string;
@@ -312,6 +313,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   onDelete?: (type: string, id: string) => void;
   onEdit?: (type: string, id: string, data: Record<string, any>) => void;
   isLive?: boolean;
+  onNavigate?: (target: string) => void;
 }) {
   const [responseText, setResponseText] = useState("");
   const [xpAmount, setXpAmount] = useState(10);
@@ -326,6 +328,20 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const [swiped, setSwiped] = useState<"left" | "right" | null>(null);
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
   const swipeThreshold = 80;
+
+  const navTargetMap: Record<string, string> = {
+    task: "dashboard", standing_order: "dashboard", ritual: "dashboard",
+    demand: "dashboard", command: "dashboard", accusation: "dashboard",
+    punishment: "punishment-chest", reward: "reward-chest",
+    dare: "dashboard", checkin_review: "dashboard",
+    journal: "journal", play_session: "live-session",
+    wager: "dashboard", countdown_event: "dashboard",
+    devotion: "dashboard", secret: "dashboard",
+    conflict: "dashboard", rating: "dashboard",
+    permission_request: "dashboard", desired_change: "dashboard",
+    limit: "dashboard", achievement: "stats",
+    sticker_received: "sticker-board", notification: "dashboard",
+  };
 
   const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.notification;
   const Icon = config.icon;
@@ -482,7 +498,15 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
             {isSelected ? <CheckSquare size={16} className="text-red-400" /> : <Square size={16} className="text-slate-600" />}
           </button>
         )}
-        <div className={`mt-0.5 ${isRead ? "text-neutral-600" : config.color} shrink-0 cursor-pointer`} onClick={() => setExpanded(!expanded)}>
+        <div className={`mt-0.5 ${isRead ? "text-neutral-600" : config.color} shrink-0 cursor-pointer`} onClick={() => {
+          const target = navTargetMap[item.type];
+          if (onNavigate && target && target !== "dashboard") {
+            feedbackTap();
+            onNavigate(target);
+          } else {
+            setExpanded(!expanded);
+          }
+        }}>
           <div className={`w-8 h-8 rounded-lg ${isRead ? "bg-neutral-800/50" : config.iconBg} flex items-center justify-center`}>
             <Icon size={16} />
           </div>
@@ -550,6 +574,16 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          {onNavigate && navTargetMap[item.type] && navTargetMap[item.type] !== "dashboard" && (
+            <button
+              onClick={(e) => { e.stopPropagation(); feedbackTap(); onNavigate(navTargetMap[item.type]); }}
+              className="p-1 text-slate-700 hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+              data-testid={`navigate-${item.id}`}
+              title="Go to feature"
+            >
+              <ExternalLink size={12} />
+            </button>
+          )}
           {onTogglePin && !isSelecting && (
             <button onClick={() => onTogglePin(item.id)} className={`p-1 transition-colors cursor-pointer ${isPinned ? "text-red-400" : "text-slate-700 hover:text-slate-400 opacity-0 group-hover:opacity-100"}`}
               data-testid={`pin-${item.id}`}>
@@ -746,8 +780,24 @@ function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon, lo
   );
 }
 
-function ActivityTimeline({ entries }: { entries: ActivityEntry[] }) {
+function ActivityTimeline({ entries, onNavigate }: { entries: ActivityEntry[]; onNavigate?: (target: string) => void }) {
   if (!entries || entries.length === 0) return null;
+
+  const getNavTarget = (action: string): string | null => {
+    if (action.includes("whisper") || action.includes("message")) return "whisper-chamber";
+    if (action.includes("journal")) return "journal";
+    if (action.includes("session") || action.includes("live")) return "live-session";
+    if (action.includes("reward")) return "reward-chest";
+    if (action.includes("punishment") || action.includes("punish")) return "punishment-chest";
+    if (action.includes("sticker")) return "sticker-board";
+    if (action.includes("confession")) return "confession-booth";
+    if (action.includes("interrogation")) return "interrogation";
+    if (action.includes("aftercare")) return "aftercare";
+    if (action.includes("achievement") || action.includes("level") || action.includes("xp")) return "stats";
+    if (action.includes("trinket")) return "profile";
+    return null;
+  };
+
   return (
     <div className="flex gap-2 overflow-x-auto scrollbar-none py-1 snap-x snap-mandatory" data-testid="activity-timeline">
       {entries.slice(0, 10).map((entry) => {
@@ -758,13 +808,23 @@ function ActivityTimeline({ entries }: { entries: ActivityEntry[] }) {
           entry.action.includes("dare") ? "border-l-rose-700" :
           entry.action.includes("session") ? "border-l-rose-800" :
           entry.action.includes("checkin") || entry.action.includes("check") ? "border-l-red-900" :
+          entry.action.includes("whisper") || entry.action.includes("message") ? "border-l-slate-500" :
+          entry.action.includes("journal") ? "border-l-[#b87333]" :
           "border-l-slate-700";
+        const navTarget = getNavTarget(entry.action);
         return (
-          <div key={`timeline-${entry.id}`} className={`flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px]`}>
+          <div
+            key={`timeline-${entry.id}`}
+            className={`flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px] ${navTarget && onNavigate ? "cursor-pointer hover:bg-white/[0.05] transition-colors" : ""}`}
+            onClick={() => navTarget && onNavigate?.(navTarget)}
+          >
             <div className="flex-1 min-w-0">
               <p className="text-[9px] text-slate-300 truncate leading-tight">{entry.detail || entry.action.replace(/_/g, " ")}</p>
             </div>
-            <span className="text-[8px] text-slate-600 font-mono tabular-nums shrink-0">{timeAgo(entry.createdAt)}</span>
+            <div className="flex items-center gap-1 shrink-0">
+              <span className="text-[8px] text-slate-600 font-mono tabular-nums">{timeAgo(entry.createdAt)}</span>
+              {navTarget && onNavigate && <ExternalLink size={8} className="text-slate-700" />}
+            </div>
           </div>
         );
       })}
@@ -777,7 +837,7 @@ export function CommandProtocols({
   onAction, onAssignTask, onQuickCommand, onDemandTimer, onToggleLockdown,
   partnerStats, partnerPresence, partnerName, lockdownStatus, enforcementLevel, isAssigning,
   stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onLaunchOverlay, onCreate,
-  onDelete, onEdit, recentActivity, trendData, activeSimulation, userLevel,
+  onDelete, onEdit, recentActivity, trendData, activeSimulation, userLevel, onNavigate,
 }: CommandProtocolsProps) {
   const { data: authUser } = useAuth();
   const [filter, setFilter] = useState("all");
@@ -1254,7 +1314,7 @@ export function CommandProtocols({
 
           {recentActivity && recentActivity.length > 0 && (
             <div className="px-5 py-1">
-              <ActivityTimeline entries={recentActivity} />
+              <ActivityTimeline entries={recentActivity} onNavigate={onNavigate} />
             </div>
           )}
 
@@ -1430,6 +1490,7 @@ export function CommandProtocols({
                                   onDelete={onDelete}
                                   onEdit={onEdit}
                                   isLive={isLiveItem(item)}
+                                  onNavigate={onNavigate}
                                 />
                               </div>
                             ))}
