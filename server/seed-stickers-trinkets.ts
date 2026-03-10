@@ -276,12 +276,20 @@ export async function seedStickersAndTrinkets() {
   await db.delete(adminStickers);
   await db.delete(trinkets);
 
-  for (const s of STICKERS) {
-    await db.insert(adminStickers).values(s);
+  const stickerBatches = [];
+  for (let i = 0; i < STICKERS.length; i += 25) {
+    stickerBatches.push(STICKERS.slice(i, i + 25));
+  }
+  for (const batch of stickerBatches) {
+    await db.insert(adminStickers).values(batch);
   }
 
-  for (const t of TRINKETS) {
-    await db.insert(trinkets).values(t);
+  const trinketBatches = [];
+  for (let i = 0; i < TRINKETS.length; i += 25) {
+    trinketBatches.push(TRINKETS.slice(i, i + 25));
+  }
+  for (const batch of trinketBatches) {
+    await db.insert(trinkets).values(batch);
   }
 
   console.log(`Seeded ${STICKERS.length} stickers + ${TRINKETS.length} trinkets.`);
