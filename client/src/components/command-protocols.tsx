@@ -9,7 +9,8 @@ import {
   Award, Star, Heart, Camera, Dices, BookOpen, Film,
   RefreshCw, Sliders, Play, Hand, Layers, Hourglass, GraduationCap, BarChart3,
   HeartPulse, ChevronRight, Search, Pin, Trash2, Pencil,
-  ArrowUp, ArrowDown, Minus, Square, CheckSquare
+  ArrowUp, ArrowDown, Minus, Square, CheckSquare,
+  Maximize2, Minimize2, RectangleHorizontal, SquareIcon, GripVertical
 } from "lucide-react";
 import { Link as WouterLink } from "wouter";
 import { Switch } from "@/components/ui/switch";
@@ -149,17 +150,77 @@ const FILTER_OPTIONS = [
   { key: "simulation", label: "Simulation", icon: Flame, types: [] },
 ];
 
-const WINDOW_CONFIG = [
-  { key: "urgent", label: "URGENT", icon: Flame, types: ["demand", "command", "accusation"], colSpan: "col-span-2", rowSpan: "row-span-2", maxH: "max-h-[320px]", borderColor: "#dc2626", glowColor: "rgba(220,38,38,0.25)", bgFrom: "rgba(127,29,29,0.35)", headerBg: "rgba(220,38,38,0.12)" },
-  { key: "directives", label: "DIRECTIVES", icon: Target, types: ["task", "standing_order", "ritual"], colSpan: "col-span-1", rowSpan: "row-span-3", maxH: "max-h-[420px]", borderColor: "#991b1b", glowColor: "rgba(153,27,27,0.2)", bgFrom: "rgba(127,29,29,0.25)", headerBg: "rgba(153,27,27,0.12)" },
-  { key: "punishments", label: "PUNISHMENTS", icon: Gavel, types: ["punishment", "dare"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[280px]", borderColor: "#b91c1c", glowColor: "rgba(185,28,28,0.2)", bgFrom: "rgba(127,29,29,0.3)", headerBg: "rgba(185,28,28,0.1)" },
-  { key: "rewards", label: "REWARDS", icon: Gift, types: ["reward", "achievement", "sticker_received"], colSpan: "col-span-1", rowSpan: "row-span-1", maxH: "max-h-[200px]", borderColor: "#d4a24e", glowColor: "rgba(212,162,78,0.2)", bgFrom: "rgba(69,26,3,0.35)", headerBg: "rgba(212,162,78,0.1)" },
-  { key: "scenes", label: "SCENES", icon: Play, types: ["play_session", "wager", "countdown_event"], colSpan: "col-span-2", rowSpan: "row-span-1", maxH: "max-h-[220px]", borderColor: "#e87640", glowColor: "rgba(232,118,64,0.2)", bgFrom: "rgba(67,20,7,0.35)", headerBg: "rgba(232,118,64,0.08)" },
-  { key: "reviews", label: "REVIEWS", icon: MessageSquare, types: ["checkin_review", "notification"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[280px]", borderColor: "#64748b", glowColor: "rgba(100,116,139,0.15)", bgFrom: "rgba(30,41,59,0.4)", headerBg: "rgba(100,116,139,0.08)" },
-  { key: "connection", label: "CONNECTION", icon: Heart, types: ["devotion", "secret", "conflict", "rating"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[280px]", borderColor: "#b87333", glowColor: "rgba(184,115,51,0.2)", bgFrom: "rgba(69,26,3,0.3)", headerBg: "rgba(184,115,51,0.08)" },
-  { key: "structure", label: "STRUCTURE", icon: Shield, types: ["permission_request", "desired_change", "limit"], colSpan: "col-span-1", rowSpan: "row-span-1", maxH: "max-h-[200px]", borderColor: "#475569", glowColor: "rgba(71,85,105,0.15)", bgFrom: "rgba(30,41,59,0.35)", headerBg: "rgba(71,85,105,0.08)" },
-  { key: "journal", label: "JOURNAL", icon: BookOpen, types: ["journal"], colSpan: "col-span-1", rowSpan: "row-span-2", maxH: "max-h-[300px]", borderColor: "#92622a", glowColor: "rgba(146,98,42,0.2)", bgFrom: "rgba(69,26,3,0.25)", headerBg: "rgba(146,98,42,0.08)" },
+type WindowSize = "compact" | "standard" | "tall" | "wide" | "large";
+
+const SIZE_PRESETS: Record<WindowSize, { colSpan: number; rowSpan: number; maxH: number; label: string }> = {
+  compact:  { colSpan: 1, rowSpan: 1, maxH: 200, label: "Compact" },
+  standard: { colSpan: 1, rowSpan: 2, maxH: 280, label: "Standard" },
+  tall:     { colSpan: 1, rowSpan: 3, maxH: 420, label: "Tall" },
+  wide:     { colSpan: 2, rowSpan: 1, maxH: 220, label: "Wide" },
+  large:    { colSpan: 2, rowSpan: 2, maxH: 360, label: "Large" },
+};
+
+const SIZE_CYCLE: WindowSize[] = ["compact", "standard", "tall", "wide", "large"];
+
+const WINDOW_CONFIG_BASE = [
+  { key: "urgent", label: "URGENT", icon: Flame, types: ["demand", "command", "accusation"], defaultSize: "large" as WindowSize, borderColor: "#dc2626", glowColor: "rgba(220,38,38,0.25)", bgFrom: "rgba(127,29,29,0.35)", headerBg: "rgba(220,38,38,0.12)" },
+  { key: "directives", label: "DIRECTIVES", icon: Target, types: ["task", "standing_order", "ritual"], defaultSize: "tall" as WindowSize, borderColor: "#991b1b", glowColor: "rgba(153,27,27,0.2)", bgFrom: "rgba(127,29,29,0.25)", headerBg: "rgba(153,27,27,0.12)" },
+  { key: "punishments", label: "PUNISHMENTS", icon: Gavel, types: ["punishment", "dare"], defaultSize: "standard" as WindowSize, borderColor: "#b91c1c", glowColor: "rgba(185,28,28,0.2)", bgFrom: "rgba(127,29,29,0.3)", headerBg: "rgba(185,28,28,0.1)" },
+  { key: "rewards", label: "REWARDS", icon: Gift, types: ["reward", "achievement", "sticker_received"], defaultSize: "compact" as WindowSize, borderColor: "#d4a24e", glowColor: "rgba(212,162,78,0.2)", bgFrom: "rgba(69,26,3,0.35)", headerBg: "rgba(212,162,78,0.1)" },
+  { key: "scenes", label: "SCENES", icon: Play, types: ["play_session", "wager", "countdown_event"], defaultSize: "wide" as WindowSize, borderColor: "#e87640", glowColor: "rgba(232,118,64,0.2)", bgFrom: "rgba(67,20,7,0.35)", headerBg: "rgba(232,118,64,0.08)" },
+  { key: "reviews", label: "REVIEWS", icon: MessageSquare, types: ["checkin_review", "notification"], defaultSize: "standard" as WindowSize, borderColor: "#64748b", glowColor: "rgba(100,116,139,0.15)", bgFrom: "rgba(30,41,59,0.4)", headerBg: "rgba(100,116,139,0.08)" },
+  { key: "connection", label: "CONNECTION", icon: Heart, types: ["devotion", "secret", "conflict", "rating"], defaultSize: "standard" as WindowSize, borderColor: "#b87333", glowColor: "rgba(184,115,51,0.2)", bgFrom: "rgba(69,26,3,0.3)", headerBg: "rgba(184,115,51,0.08)" },
+  { key: "structure", label: "STRUCTURE", icon: Shield, types: ["permission_request", "desired_change", "limit"], defaultSize: "compact" as WindowSize, borderColor: "#475569", glowColor: "rgba(71,85,105,0.15)", bgFrom: "rgba(30,41,59,0.35)", headerBg: "rgba(71,85,105,0.08)" },
+  { key: "journal", label: "JOURNAL", icon: BookOpen, types: ["journal"], defaultSize: "standard" as WindowSize, borderColor: "#92622a", glowColor: "rgba(146,98,42,0.2)", bgFrom: "rgba(69,26,3,0.25)", headerBg: "rgba(146,98,42,0.08)" },
 ];
+
+const VALID_WINDOW_KEYS = new Set(WINDOW_CONFIG_BASE.map(w => w.key));
+
+function loadWindowSizes(): Record<string, WindowSize> {
+  try {
+    const stored = localStorage.getItem("cc-window-sizes");
+    if (!stored) return {};
+    const parsed = JSON.parse(stored);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    const validated: Record<string, WindowSize> = {};
+    for (const [key, val] of Object.entries(parsed)) {
+      if (VALID_WINDOW_KEYS.has(key) && SIZE_CYCLE.includes(val as WindowSize)) {
+        validated[key] = val as WindowSize;
+      }
+    }
+    return validated;
+  } catch {
+    return {};
+  }
+}
+
+function saveWindowSizes(sizes: Record<string, WindowSize>) {
+  localStorage.setItem("cc-window-sizes", JSON.stringify(sizes));
+}
+
+function loadWindowOrder(): string[] | null {
+  try {
+    const stored = localStorage.getItem("cc-window-order");
+    if (!stored) return null;
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return null;
+    const validKeys = parsed.filter((k: unknown) => typeof k === "string" && VALID_WINDOW_KEYS.has(k));
+    const seen = new Set<string>();
+    const deduped = validKeys.filter((k: string) => { if (seen.has(k)) return false; seen.add(k); return true; });
+    for (const base of WINDOW_CONFIG_BASE) {
+      if (!seen.has(base.key)) deduped.push(base.key);
+    }
+    return deduped;
+  } catch {
+    return null;
+  }
+}
+
+function saveWindowOrder(order: string[]) {
+  localStorage.setItem("cc-window-order", JSON.stringify(order));
+}
+
+const WINDOW_CONFIG = WINDOW_CONFIG_BASE;
 
 function formatCountdown(seconds: number) {
   const mins = Math.floor(seconds / 60);
@@ -730,7 +791,56 @@ export function CommandProtocols({
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bannerExpanded, setBannerExpanded] = useState(false);
+  const [windowSizes, setWindowSizes] = useState<Record<string, WindowSize>>(loadWindowSizes);
+  const [windowOrder, setWindowOrder] = useState<string[]>(() => loadWindowOrder() || WINDOW_CONFIG_BASE.map(w => w.key));
+  const [editingLayout, setEditingLayout] = useState(false);
+  const [dragKey, setDragKey] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const getWindowSize = useCallback((key: string): WindowSize => {
+    const stored = windowSizes[key];
+    if (stored && SIZE_CYCLE.includes(stored)) return stored;
+    return WINDOW_CONFIG_BASE.find(w => w.key === key)?.defaultSize || "standard";
+  }, [windowSizes]);
+
+  const cycleWindowSize = useCallback((key: string) => {
+    const current = getWindowSize(key);
+    const idx = SIZE_CYCLE.indexOf(current);
+    const next = SIZE_CYCLE[(idx + 1) % SIZE_CYCLE.length];
+    const updated = { ...windowSizes, [key]: next };
+    setWindowSizes(updated);
+    saveWindowSizes(updated);
+  }, [windowSizes, getWindowSize]);
+
+  const setSpecificSize = useCallback((key: string, size: WindowSize) => {
+    const updated = { ...windowSizes, [key]: size };
+    setWindowSizes(updated);
+    saveWindowSizes(updated);
+  }, [windowSizes]);
+
+  const resetLayout = useCallback(() => {
+    setWindowSizes({});
+    setWindowOrder(WINDOW_CONFIG_BASE.map(w => w.key));
+    saveWindowSizes({});
+    localStorage.removeItem("cc-window-order");
+  }, []);
+
+  const moveWindow = useCallback((key: string, direction: "up" | "down") => {
+    const idx = windowOrder.indexOf(key);
+    if (idx < 0) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= windowOrder.length) return;
+    const newOrder = [...windowOrder];
+    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+    setWindowOrder(newOrder);
+    saveWindowOrder(newOrder);
+  }, [windowOrder]);
+
+  const orderedWindows = useMemo(() => {
+    return windowOrder
+      .map(key => WINDOW_CONFIG_BASE.find(w => w.key === key))
+      .filter(Boolean) as typeof WINDOW_CONFIG_BASE;
+  }, [windowOrder]);
 
   const FEATURE_LEVEL_MAP: Record<string, number> = {
     rituals: 1, standing_orders: 1, limits: 1, permissions: 1, desired_changes: 1,
@@ -1149,24 +1259,55 @@ export function CommandProtocols({
           </div>
 
           <div className="px-5 pb-4">
+            <div className="flex items-center justify-between mb-2">
+              <button
+                data-testid="cp-edit-layout"
+                onClick={() => setEditingLayout(!editingLayout)}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                  editingLayout 
+                    ? "bg-red-500/20 border-red-500/40 text-red-400" 
+                    : "bg-white/[0.03] border-white/5 text-slate-600 hover:text-slate-400"
+                }`}
+              >
+                <Sliders size={10} />
+                {editingLayout ? "Done" : "Layout"}
+              </button>
+              {editingLayout && (
+                <button
+                  data-testid="cp-reset-layout"
+                  onClick={resetLayout}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg border border-white/5 bg-white/[0.03] text-[9px] font-bold text-slate-500 hover:text-slate-300 uppercase tracking-wider transition-colors cursor-pointer"
+                >
+                  <RotateCcw size={9} />
+                  Reset
+                </button>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 auto-rows-min" data-testid="cp-window-grid">
-              {WINDOW_CONFIG.map((win) => {
+              {orderedWindows.map((win) => {
                 const WinIcon = win.icon;
                 const windowItems = sorted.filter(i => win.types.includes(i.type));
                 const hasUrgent = win.key === "urgent" && windowItems.length > 0;
+                const size = getWindowSize(win.key);
+                const preset = SIZE_PRESETS[size];
+                const colClass = preset.colSpan === 2 ? "col-span-2" : "col-span-1";
+                const rowClass = preset.rowSpan === 3 ? "row-span-3" : preset.rowSpan === 2 ? "row-span-2" : "row-span-1";
 
                 return (
                   <div
                     key={win.key}
                     data-testid={`cp-window-${win.key}`}
-                    className={`${win.colSpan} ${win.rowSpan} rounded-xl border overflow-hidden relative transition-all duration-300`}
+                    className={`${colClass} ${rowClass} rounded-xl border overflow-hidden relative transition-all duration-300`}
                     style={{
-                      borderColor: windowItems.length > 0 ? win.borderColor + "60" : "rgba(255,255,255,0.05)",
+                      borderColor: editingLayout ? win.borderColor + "80" : (windowItems.length > 0 ? win.borderColor + "60" : "rgba(255,255,255,0.05)"),
                       background: `linear-gradient(180deg, ${win.bgFrom} 0%, rgba(3,3,3,0.95) 100%)`,
-                      boxShadow: windowItems.length > 0 ? `0 0 20px ${win.glowColor}, inset 0 1px 0 rgba(255,255,255,0.03)` : "inset 0 1px 0 rgba(255,255,255,0.02)",
+                      boxShadow: editingLayout
+                        ? `0 0 12px ${win.glowColor}, 0 0 0 1px ${win.borderColor}30`
+                        : (windowItems.length > 0 ? `0 0 20px ${win.glowColor}, inset 0 1px 0 rgba(255,255,255,0.03)` : "inset 0 1px 0 rgba(255,255,255,0.02)"),
                     }}
                   >
-                    {hasUrgent && (
+                    {hasUrgent && !editingLayout && (
                       <div className="absolute inset-0 pointer-events-none opacity-30" style={{ animation: "cp-pulse-dot 2s ease-in-out infinite", background: `radial-gradient(ellipse at center, ${win.glowColor}, transparent 70%)` }} />
                     )}
                     <div
@@ -1177,42 +1318,105 @@ export function CommandProtocols({
                         <WinIcon size={12} style={{ color: win.borderColor }} />
                         <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: win.borderColor }}>{win.label}</span>
                       </div>
-                      <span
-                        className="text-[8px] font-black px-1.5 py-0.5 rounded-full"
-                        style={{
-                          backgroundColor: windowItems.length > 0 ? win.borderColor + "25" : "rgba(255,255,255,0.05)",
-                          color: windowItems.length > 0 ? win.borderColor : "rgba(100,116,139,0.5)",
-                        }}
-                      >
-                        {windowItems.length}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {editingLayout && (
+                          <>
+                            <button
+                              data-testid={`cp-window-move-up-${win.key}`}
+                              onClick={() => moveWindow(win.key, "up")}
+                              className="p-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer"
+                              title="Move up"
+                            >
+                              <ArrowUp size={10} style={{ color: win.borderColor }} />
+                            </button>
+                            <button
+                              data-testid={`cp-window-move-down-${win.key}`}
+                              onClick={() => moveWindow(win.key, "down")}
+                              className="p-0.5 rounded hover:bg-white/10 transition-colors cursor-pointer"
+                              title="Move down"
+                            >
+                              <ArrowDown size={10} style={{ color: win.borderColor }} />
+                            </button>
+                            <div className="w-px h-3 bg-white/10 mx-0.5" />
+                            {SIZE_CYCLE.map(s => {
+                              const isActive = size === s;
+                              const sizeIcons: Record<WindowSize, typeof Minimize2> = {
+                                compact: Minimize2,
+                                standard: SquareIcon,
+                                tall: RectangleHorizontal,
+                                wide: RectangleHorizontal,
+                                large: Maximize2,
+                              };
+                              const SizeIcon = sizeIcons[s];
+                              return (
+                                <button
+                                  key={s}
+                                  data-testid={`cp-window-size-${win.key}-${s}`}
+                                  onClick={() => setSpecificSize(win.key, s)}
+                                  className={`p-0.5 rounded transition-all cursor-pointer ${
+                                    isActive 
+                                      ? "bg-white/15 shadow-sm" 
+                                      : "hover:bg-white/5 opacity-40 hover:opacity-80"
+                                  }`}
+                                  title={SIZE_PRESETS[s].label}
+                                  style={s === "tall" ? { transform: "rotate(90deg)" } : undefined}
+                                >
+                                  <SizeIcon size={9} style={{ color: isActive ? win.borderColor : "#94a3b8" }} />
+                                </button>
+                              );
+                            })}
+                          </>
+                        )}
+                        {!editingLayout && (
+                          <span
+                            className="text-[8px] font-black px-1.5 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: windowItems.length > 0 ? win.borderColor + "25" : "rgba(255,255,255,0.05)",
+                              color: windowItems.length > 0 ? win.borderColor : "rgba(100,116,139,0.5)",
+                            }}
+                          >
+                            {windowItems.length}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className={`${win.maxH} overflow-y-auto cp-feed-scroll relative z-10`}>
-                      {windowItems.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-6 px-3">
-                          <WinIcon size={18} className="text-slate-700/50 mb-1.5" />
-                          <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">Clear</span>
-                        </div>
-                      ) : (
-                        <div className="p-1.5 space-y-1.5">
-                          {windowItems.map((item, i) => (
-                            <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}>
-                              <FeedCard item={item} onAction={onAction} role={role}
-                                searchQuery={debouncedSearch || undefined}
-                                isPinned={pinnedIds.has(item.id)}
-                                onTogglePin={togglePin}
-                                isSelecting={isSelecting}
-                                isSelected={selectedIds.has(item.id)}
-                                onToggleSelect={toggleSelect}
-                                onDelete={onDelete}
-                                onEdit={onEdit}
-                                isLive={isLiveItem(item)}
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    {editingLayout ? (
+                      <div className="flex flex-col items-center justify-center py-4 px-3 relative z-10">
+                        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: win.borderColor + "99" }}>
+                          {SIZE_PRESETS[size].label}
+                        </span>
+                        <span className="text-[8px] text-slate-600 mt-0.5">
+                          {preset.colSpan}x{preset.rowSpan}
+                        </span>
+                      </div>
+                    ) : (
+                      <div style={{ maxHeight: preset.maxH }} className="overflow-y-auto cp-feed-scroll relative z-10">
+                        {windowItems.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-6 px-3">
+                            <WinIcon size={18} className="text-slate-700/50 mb-1.5" />
+                            <span className="text-[8px] font-bold text-slate-700 uppercase tracking-widest">Clear</span>
+                          </div>
+                        ) : (
+                          <div className="p-1.5 space-y-1.5">
+                            {windowItems.map((item, i) => (
+                              <div key={`${item.type}-${item.id}-${i}`} style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}>
+                                <FeedCard item={item} onAction={onAction} role={role}
+                                  searchQuery={debouncedSearch || undefined}
+                                  isPinned={pinnedIds.has(item.id)}
+                                  onTogglePin={togglePin}
+                                  isSelecting={isSelecting}
+                                  isSelected={selectedIds.has(item.id)}
+                                  onToggleSelect={toggleSelect}
+                                  onDelete={onDelete}
+                                  onEdit={onEdit}
+                                  isLive={isLiveItem(item)}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
