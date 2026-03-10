@@ -52,6 +52,16 @@ export function useSSE(enabled: boolean = true) {
         qc.invalidateQueries({ queryKey: ["/api/interrogation-sessions/active"] });
       });
 
+      es.addEventListener("whisper-received", () => {
+        qc.invalidateQueries({ queryKey: ["/api/whispers"] });
+        qc.invalidateQueries({ queryKey: ["/api/whispers/unread"] });
+      });
+
+      es.addEventListener("summon-received", () => {
+        qc.invalidateQueries({ queryKey: ["/api/whispers"] });
+        qc.invalidateQueries({ queryKey: ["/api/whispers/unread"] });
+      });
+
       es.addEventListener("notification", () => {
         qc.invalidateQueries({ queryKey: ["/api/notifications"] });
         qc.invalidateQueries({ queryKey: ["/api/dashboard-init"] });

@@ -2378,3 +2378,206 @@ export function useDeletePlaySession() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["/api/play-sessions"] }); },
   });
 }
+
+export function useTribunals() {
+  return useQuery<any[]>({
+    queryKey: ["/api/tribunals"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+}
+
+export function useCurrentTribunal() {
+  return useQuery<any | null>({
+    queryKey: ["/api/tribunals/current"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+}
+
+export function useSubmitVerdict() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, verdict, grade, sentence }: { id: string; verdict: string; grade: string; sentence: string }) => {
+      const res = await apiRequest("PATCH", `/api/tribunals/${id}/verdict`, { verdict, grade, sentence });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tribunals"] });
+      qc.invalidateQueries({ queryKey: ["/api/tribunals/current"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function useSubmitPlea() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, plea }: { id: string; plea: string }) => {
+      const res = await apiRequest("PATCH", `/api/tribunals/${id}/plea`, { plea });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/tribunals"] });
+      qc.invalidateQueries({ queryKey: ["/api/tribunals/current"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
+export function useWhispers() {
+  return useQuery<any[]>({
+    queryKey: ["/api/whispers"],
+    refetchInterval: 5000,
+  });
+}
+
+export function useSendWhisper() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { content: string; type: "whisper" | "sealed"; sealedUntil?: string }) => {
+      const res = await apiRequest("POST", "/api/whispers", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/whispers"] });
+    },
+  });
+}
+
+export function useSummonWhisper() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/whispers/summon");
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/whispers"] });
+    },
+  });
+}
+
+export function useMarkWhisperRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("PATCH", `/api/whispers/${id}/read`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/whispers"] });
+      qc.invalidateQueries({ queryKey: ["/api/whispers/unread"] });
+    },
+  });
+}
+
+export function useEtchWhisper() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("PATCH", `/api/whispers/${id}/etch`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/whispers"] });
+    },
+  });
+}
+
+export function useUnreadWhisperCount() {
+  return useQuery<{ count: number }>({
+    queryKey: ["/api/whispers/unread"],
+    refetchInterval: 10000,
+  });
+}
+
+export function useAltarState() {
+  return useQuery<{
+    cycleDay: number;
+    claimedToday: boolean;
+    totalRelics: number;
+    rewardPreview: string;
+    streakBroken?: boolean;
+    currentDay?: number;
+  }>({
+    queryKey: ["/api/altar"],
+  });
+}
+
+export function useKneelAltar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/altar/kneel");
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/altar"] });
+      qc.invalidateQueries({ queryKey: ["/api/user/stats"] });
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      qc.invalidateQueries({ queryKey: ["/api/stickers"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useUnlocks() {
+  return useQuery<{
+    level: number;
+    all: { feature: string; label: string; requiredLevel: number; category: string }[];
+    unlocked: { feature: string; label: string; requiredLevel: number; category: string }[];
+    locked: { feature: string; label: string; requiredLevel: number; category: string }[];
+  }>({
+    queryKey: ["/api/unlocks"],
+  });
+}
+
+export function useNotificationPreferences() {
+  return useQuery<{
+    userId: string;
+    streakWarnings: boolean;
+    silenceAlerts: boolean;
+    ritualBells: boolean;
+    performanceAlerts: boolean;
+    missedRitualAlerts: boolean;
+  }>({
+    queryKey: ["/api/notification-preferences"],
+  });
+}
+
+export function useUpdateNotificationPreferences() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (prefs: Record<string, boolean>) => {
+      const res = await apiRequest("PATCH", "/api/notification-preferences", prefs);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/notification-preferences"] });
+    },
+  });
+}
+
+export function useCompleteRitual() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ritualId: string) => {
+      const res = await apiRequest("POST", `/api/rituals/${ritualId}/complete`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rituals"] });
+      qc.invalidateQueries({ queryKey: ["/api/rituals/heatmap"] });
+      qc.invalidateQueries({ queryKey: ["/api/streaks"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useRitualHeatmap() {
+  return useQuery<{
+    heatmap: Record<string, Record<string, string>>;
+    rituals: { id: string; title: string }[];
+  }>({
+    queryKey: ["/api/rituals/heatmap"],
+  });
+}

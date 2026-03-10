@@ -200,6 +200,18 @@ import {
   useDeleteConflict,
   useDeleteDesiredChange,
   useDeletePlaySession,
+  useWhispers,
+  useSendWhisper,
+  useSummonWhisper,
+  useMarkWhisperRead,
+  useEtchWhisper,
+  useUnreadWhisperCount,
+  useCurrentTribunal,
+  useTribunals,
+  useSubmitVerdict,
+  useSubmitPlea,
+  useNotificationPreferences,
+  useUpdateNotificationPreferences,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -255,7 +267,13 @@ import AutoDomSimulation from "@/components/auto-dom-simulation";
 import StickerBoard from "@/components/sticker-board";
 import RewardChest from "@/components/reward-chest";
 import PunishmentChest from "@/components/punishment-chest";
+import DailyAltar from "@/components/daily-altar";
+import { DevotionFlames, useDevotionFlames } from "@/components/devotion-flames";
+import WhisperChamber from "@/components/whisper-chamber";
+import { TribunalOverlay, TribunalNotificationCard } from "@/components/tribunal";
 import { useToast } from "@/hooks/use-toast";
+import { feedbackLevelUp } from "@/lib/feedback";
+import { AscensionPath, AscensionAnimation, useAscensionDetector } from "@/components/ascension-path";
 const BodyMap3D = React.lazy(() => import("@/components/body-map-3d"));
 
 export default function BondedAscentApp() {
@@ -271,6 +289,7 @@ export default function BondedAscentApp() {
   } = useDashboardNavigation();
   const [isCrisisMode, setIsCrisisMode] = useState(false);
   const [, setLocation] = useLocation();
+  const { currentFeatureName: ascensionFeature, dismissCurrent: dismissAscension } = useAscensionDetector();
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [wheelResult, setWheelResult] = useState<string | null>(null);
@@ -349,6 +368,17 @@ export default function BondedAscentApp() {
   const deleteConflictMutation = useDeleteConflict();
   const deleteDesiredChangeMutation = useDeleteDesiredChange();
   const deletePlaySessionMutation = useDeletePlaySession();
+
+  const { data: whispersList = [] } = useWhispers();
+  const sendWhisperMutation = useSendWhisper();
+  const summonWhisperMutation = useSummonWhisper();
+  const markWhisperReadMutation = useMarkWhisperRead();
+  const etchWhisperMutation = useEtchWhisper();
+  const { data: unreadWhisperData } = useUnreadWhisperCount();
+  const { data: currentTribunal } = useCurrentTribunal();
+  const { data: tribunalsList = [] } = useTribunals();
+  const submitVerdictMutation = useSubmitVerdict();
+  const submitPleaMutation = useSubmitPlea();
 
   const { data: partner } = usePartner();
   const { data: partnerStats } = usePartnerStats();
@@ -500,6 +530,7 @@ export default function BondedAscentApp() {
   const { data: trendData } = useTrends();
   const { data: achievementsList = [] } = useAchievements();
   const { data: contractsList = [] } = useContracts();
+  const { data: devotionFlames = [] } = useDevotionFlames();
   const profilePicInputRef = useRef<HTMLInputElement>(null);
   const [stickerMessage, setStickerMessage] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -516,6 +547,14 @@ export default function BondedAscentApp() {
     document.documentElement.setAttribute("data-role", userRole);
     return () => document.documentElement.removeAttribute("data-role");
   }, [userRole]);
+
+  const prevLevelRef = useRef(level);
+  useEffect(() => {
+    if (level > prevLevelRef.current && prevLevelRef.current > 0) {
+      feedbackLevelUp();
+    }
+    prevLevelRef.current = level;
+  }, [level]);
 
   const handleToggleTask = (taskId: string, completionNotes?: string) => {
     if (completionNotes !== undefined) {
@@ -636,6 +675,17 @@ export default function BondedAscentApp() {
 
   const DomDashboard = () => (
     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
+      <DailyAltar />
+      {currentTribunal && (
+        <TribunalNotificationCard
+          tribunal={currentTribunal}
+          userRole="dom"
+          onClick={() => {
+            setActiveOverlay("tribunal");
+            window.history.pushState({ overlay: "tribunal" }, "");
+          }}
+        />
+      )}
       <CommandProtocols
         role="dom"
         feedItems={buildDomFeedItems()}
@@ -678,6 +728,7 @@ export default function BondedAscentApp() {
         recentActivity={recentActivityEntries}
         trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
         activeSimulation={activeSimulation}
+        userLevel={user?.level ?? 1}
       />
       <input
         ref={profilePicInputRef}
@@ -928,6 +979,17 @@ export default function BondedAscentApp() {
     if (activeView === "dashboard") {
       return (
         <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500 pb-20">
+          <DailyAltar />
+          {currentTribunal && (
+            <TribunalNotificationCard
+              tribunal={currentTribunal}
+              userRole="sub"
+              onClick={() => {
+                setActiveOverlay("tribunal");
+                window.history.pushState({ overlay: "tribunal" }, "");
+              }}
+            />
+          )}
           <CommandProtocols
             role="sub"
             feedItems={buildSubFeedItems()}
@@ -961,6 +1023,7 @@ export default function BondedAscentApp() {
             recentActivity={recentActivityEntries}
             trendData={trendData || { completionTrend: [], taskTrend: [], orderTrend: [], ritualTrend: [] }}
             activeSimulation={activeSimulation}
+            userLevel={user?.level ?? 1}
           />
           <input
             ref={profilePicInputRef}
@@ -1178,6 +1241,10 @@ export default function BondedAscentApp() {
               </div>
             </FeatureDrawer>
 
+            <FeatureDrawer title="Devotion Flames" icon={<Flame size={14} className="text-orange-400" />} defaultOpen>
+              <DevotionFlames flames={devotionFlames} />
+            </FeatureDrawer>
+
             <StickerBoard
               stickers={stickersList}
               isDom={userRole === "dom"}
@@ -1252,6 +1319,17 @@ export default function BondedAscentApp() {
 
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">
+              Progression
+            </h3>
+            <ProfileItem
+              icon={<Crown size={20} />}
+              label="Ascension Path"
+              onClick={() => navigateView("ascension-path")}
+            />
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">
               Dynamic Management
             </h3>
             <ProfileItem
@@ -1266,6 +1344,13 @@ export default function BondedAscentApp() {
                 onClick={() => navigateView("punishment-chest")}
               />
             )}
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest pl-2">
+              Notification Preferences
+            </h3>
+            <NotificationPreferencesPanel />
           </div>
 
           <div className="space-y-3 pb-8">
@@ -1419,6 +1504,21 @@ export default function BondedAscentApp() {
     if (activeView === "punishment-chest") {
       return (
         <PunishmentChest onBack={() => navigateView("profile")} />
+      );
+    }
+
+    if (activeView === "ascension-path") {
+      return (
+        <div className="animate-in slide-in-from-right duration-500 space-y-6">
+          <button
+            onClick={() => navigateView("profile")}
+            className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 uppercase text-xs font-bold tracking-widest cursor-pointer"
+            data-testid="button-back-from-ascension"
+          >
+            <ChevronRight className="rotate-180" size={14} /> Back to Profile
+          </button>
+          <AscensionPath />
+        </div>
       );
     }
 
@@ -1705,6 +1805,10 @@ export default function BondedAscentApp() {
     <div className="flex h-[100dvh] bg-slate-950 text-slate-200 font-sans overflow-hidden relative selection:bg-red-900 selection:text-white">
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
 
+
+      {ascensionFeature && (
+        <AscensionAnimation featureName={ascensionFeature} onClose={dismissAscension} />
+      )}
 
       {isCrisisMode && (
         <div className="fixed inset-0 z-[100] bg-red-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 animate-in fade-in duration-300">
@@ -4879,6 +4983,57 @@ export default function BondedAscentApp() {
           />
         </div>
       )}
+
+      {activeOverlay === "whisper-chamber" && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
+          <WhisperChamber
+            isOpen={true}
+            onClose={() => closeOverlay()}
+            whispers={whispersList}
+            userRole={userRole}
+            userId={user?.id || ""}
+            partnerId={partner?.id}
+            partnerName={partner?.username}
+            onSend={(content, type, sealedUntil) => {
+              sendWhisperMutation.mutate({ content, type, sealedUntil });
+            }}
+            onSummon={() => {
+              summonWhisperMutation.mutate();
+            }}
+            onMarkRead={(id) => {
+              markWhisperReadMutation.mutate(id);
+            }}
+            onEtch={(id) => {
+              etchWhisperMutation.mutate(id);
+            }}
+            unreadCount={unreadWhisperData?.count ?? 0}
+          />
+        </div>
+      )}
+
+      {activeOverlay === "tribunal" && currentTribunal && (
+        <div className="overlay-enter fixed inset-0 z-[80]">
+          <TribunalOverlay
+            tribunal={currentTribunal}
+            userRole={userRole}
+            onClose={() => closeOverlay()}
+            onSubmitVerdict={(verdict, grade, sentence) => {
+              submitVerdictMutation.mutate({ id: currentTribunal.id, verdict, grade, sentence }, {
+                onSuccess: () => {
+                  toast({ title: "Verdict Delivered", description: `Grade ${grade} has been recorded` });
+                },
+              });
+            }}
+            onSubmitPlea={(plea) => {
+              submitPleaMutation.mutate({ id: currentTribunal.id, plea }, {
+                onSuccess: () => {
+                  toast({ title: "Plea Submitted", description: "Your plea has been recorded" });
+                },
+              });
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -5206,6 +5361,42 @@ function FeatureLink({
       )}
       <ChevronRight size={14} className="text-slate-700 group-hover:text-slate-400 transition-colors shrink-0" />
     </WouterLink>
+  );
+}
+
+function NotificationPreferencesPanel() {
+  const { data: prefs } = useNotificationPreferences();
+  const updatePrefs = useUpdateNotificationPreferences();
+  
+  const toggles = [
+    { key: "streakWarnings", label: "Streak Warnings" },
+    { key: "silenceAlerts", label: "Silence Alerts" },
+    { key: "ritualBells", label: "Ritual Bells" },
+    { key: "performanceAlerts", label: "Performance Alerts" },
+    { key: "missedRitualAlerts", label: "Missed Ritual Alerts" },
+  ];
+
+  return (
+    <div className="space-y-2 px-2" data-testid="notification-preferences-panel">
+      {toggles.map(({ key, label }) => (
+        <div key={key} className="flex items-center justify-between p-3 bg-gradient-to-r from-slate-900/80 to-black border border-white/5 rounded-lg">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">{label}</span>
+          <button
+            data-testid={`toggle-${key}`}
+            onClick={() => updatePrefs.mutate({ [key]: !(prefs as any)?.[key] ?? false })}
+            className={`w-10 h-5 rounded-full transition-all relative ${
+              (prefs as any)?.[key] !== false
+                ? "bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.5)]"
+                : "bg-slate-700"
+            }`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${
+              (prefs as any)?.[key] !== false ? "left-5.5" : "left-0.5"
+            }`} style={{ left: (prefs as any)?.[key] !== false ? "22px" : "2px" }} />
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }
 

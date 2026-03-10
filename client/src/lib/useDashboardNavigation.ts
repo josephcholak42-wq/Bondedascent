@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-type OverlayType = "live-session" | "interrogation" | "confession-booth" | "aftercare" | "autodom" | null;
+type OverlayType = "live-session" | "interrogation" | "confession-booth" | "aftercare" | "autodom" | "whisper-chamber" | "tribunal" | null;
 
 export function useDashboardNavigation() {
   const [activeView, setActiveView] = useState("dashboard");

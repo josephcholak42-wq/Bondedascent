@@ -17,7 +17,7 @@ import { FeatureDrawer } from "@/components/feature-drawer";
 import { Button } from "@/components/ui/button";
 import { SexyIcon } from "@/components/sexy-icon";
 import { UniversalCreator } from "@/components/universal-creator";
-import { feedbackComplete, feedbackUrgent, feedbackDelete, feedbackTap } from "@/lib/feedback";
+import { feedbackComplete, feedbackUrgent, feedbackDelete, feedbackTap, feedbackPunishment, feedbackReward } from "@/lib/feedback";
 
 export type FeedItemType =
   | "demand" | "command" | "accusation" | "task"
@@ -98,13 +98,14 @@ interface CommandProtocolsProps {
   onToggleFeature?: (featureKey: string, enabled: boolean) => void;
   userStats?: UserStatsData;
   onCrisisMode?: (active: boolean) => void;
-  onLaunchOverlay?: (overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare" | "autodom") => void;
+  onLaunchOverlay?: (overlay: "live-session" | "interrogation" | "confession-booth" | "aftercare" | "autodom" | "whisper-chamber") => void;
   onCreate?: (type: string, data: Record<string, any>) => void;
   onDelete?: (type: string, id: string) => void;
   onEdit?: (type: string, id: string, data: Record<string, any>) => void;
   recentActivity?: ActivityEntry[];
   trendData?: TrendData;
   activeSimulation?: any;
+  userLevel?: number;
 }
 
 const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor: string; glowColor: string; icon: any; label: string; priority: number; iconBg: string; pillBg: string }> = {
@@ -363,7 +364,12 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   };
 
   const handleAction = (id: string, action: string, payload?: any) => {
-    if (action === "toggle" || action === "complete" || action === "approve" || action === "redeem") {
+    const matchedItem = allItems.find(i => i.id === id);
+    if (matchedItem?.type === "punishment" && (action === "complete")) {
+      feedbackPunishment();
+    } else if (matchedItem?.type === "reward" && (action === "claim" || action === "redeem")) {
+      feedbackReward();
+    } else if (action === "toggle" || action === "complete" || action === "approve" || action === "redeem") {
       feedbackComplete();
     } else if (action === "respond" || action === "acknowledge") {
       feedbackUrgent();
@@ -635,9 +641,29 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
 }
 
 
-function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon }: {
-  icon: React.ReactNode; label: string; desc?: string; href: string; color: string; badge?: number; sexyIcon?: string;
+function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon, locked, requiredLevel }: {
+  icon: React.ReactNode; label: string; desc?: string; href: string; color: string; badge?: number; sexyIcon?: string; locked?: boolean; requiredLevel?: number;
 }) {
+  if (locked) {
+    return (
+      <div
+        data-testid={`drawer-link-${label.toLowerCase().replace(/\s+/g, "-")}-locked`}
+        className="relative flex items-center gap-3 p-2.5 bg-gradient-to-r from-slate-950/80 to-slate-950/60 border border-slate-800/20 rounded-xl opacity-50 cursor-not-allowed group no-underline"
+      >
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-slate-900/60 overflow-hidden">
+          <Lock size={14} className="text-slate-600" />
+        </div>
+        <div className="flex-1 text-left min-w-0">
+          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide truncate">{label}</div>
+          <div className="text-[9px] text-slate-600 mt-0.5 truncate">Unlocks at Level {requiredLevel}</div>
+        </div>
+        <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest bg-slate-800/50 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+          <Lock size={8} /> Lv.{requiredLevel}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <WouterLink
       href={href}
@@ -690,7 +716,7 @@ export function CommandProtocols({
   onAction, onAssignTask, onQuickCommand, onDemandTimer, onToggleLockdown,
   partnerStats, partnerPresence, partnerName, lockdownStatus, enforcementLevel, isAssigning,
   stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onLaunchOverlay, onCreate,
-  onDelete, onEdit, recentActivity, trendData, activeSimulation,
+  onDelete, onEdit, recentActivity, trendData, activeSimulation, userLevel,
 }: CommandProtocolsProps) {
   const [filter, setFilter] = useState("all");
   const [commandInput, setCommandInput] = useState("");
@@ -705,6 +731,22 @@ export function CommandProtocols({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bannerExpanded, setBannerExpanded] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const FEATURE_LEVEL_MAP: Record<string, number> = {
+    rituals: 1, standing_orders: 1, limits: 1, permissions: 1, desired_changes: 1,
+    live_sessions: 7, interrogation: 5, confessions: 5, aftercare: 1, autodom: 1,
+    play_sessions: 1, scene_scripts: 15, intensity: 1, obedience_trials: 10,
+    sensation_roulette: 10, wagers: 5, endurance: 10, training_programs: 15,
+    connection_pulse: 1, devotions: 1, secrets: 1, conflicts: 1, contracts: 7, journal: 1,
+    ratings: 3, achievements: 1, analytics: 1, countdown_events: 1, sealed_orders: 10, locked_media: 1,
+    body_map: 15, dares: 3, stickers: 3, rewards: 3, punishments: 3, punishment_chest: 7, reward_chest: 7,
+  };
+  const isLocked = (feature: string) => {
+    const required = FEATURE_LEVEL_MAP[feature];
+    if (!required || !userLevel) return false;
+    return userLevel < required;
+  };
+  const getReqLevel = (feature: string) => FEATURE_LEVEL_MAP[feature] || 1;
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery), 200);
@@ -1239,6 +1281,10 @@ export function CommandProtocols({
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="secrets" size={28} glow="bronze" /></div>
                     <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-[#c9956a] uppercase tracking-wide group-hover:text-[#d4a24e]">Confession Booth</div><div className="text-[9px] text-slate-500 mt-0.5">Private confessions & review</div></div>
                   </button>
+                  <button data-testid="launch-whisper-chamber" onClick={() => onLaunchOverlay("whisper-chamber")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-[#451a03]/40 to-slate-950/60 border border-[#78350f]/20 rounded-xl hover:border-[#b87333]/40 hover:from-[#451a03]/60 transition-all cursor-pointer group text-left">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="secrets" size={28} glow="bronze" /></div>
+                    <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-[#c9956a] uppercase tracking-wide group-hover:text-[#d4a24e]">Whisper Chamber</div><div className="text-[9px] text-slate-500 mt-0.5">Dark parchment messaging</div></div>
+                  </button>
                   <button data-testid="launch-aftercare" onClick={() => onLaunchOverlay("aftercare")} className="relative flex items-center gap-3 p-2.5 w-full bg-gradient-to-r from-[#451a03]/40 to-slate-950/60 border border-[#78350f]/20 rounded-xl hover:border-[#b87333]/40 hover:from-[#451a03]/60 transition-all cursor-pointer group text-left">
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 overflow-visible"><SexyIcon name="connection-pulse" size={28} glow="bronze" /></div>
                     <div className="flex-1 min-w-0"><div className="text-[10px] font-bold text-[#c9956a] uppercase tracking-wide group-hover:text-[#d4a24e]">Aftercare</div><div className="text-[9px] text-slate-500 mt-0.5">Post-session checklist</div></div>
@@ -1253,14 +1299,14 @@ export function CommandProtocols({
 
             <FeatureDrawer title="Scenes & Trials" icon={<Dices size={14} className="text-[#e87640]" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-[#ea7e4a]" sexyIcon="play-sessions" />
-                <DrawerFeatureLink icon={<Film size={14} />} label="Scene Scripts" desc="Step-by-step scripts" href="/scene-scripts" color="text-[#e87640]" sexyIcon="play-sessions" />
+                <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-[#ea7e4a]" sexyIcon="play-sessions" locked={isLocked("play_sessions")} requiredLevel={getReqLevel("play_sessions")} />
+                <DrawerFeatureLink icon={<Film size={14} />} label="Scene Scripts" desc="Step-by-step scripts" href="/scene-scripts" color="text-[#e87640]" sexyIcon="play-sessions" locked={isLocked("scene_scripts")} requiredLevel={getReqLevel("scene_scripts")} />
                 <DrawerFeatureLink icon={<Layers size={14} />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-[#e06830]" sexyIcon="endurance" />
-                <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-red-400" sexyIcon="enforce" />
-                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-[#ea7e4a]" sexyIcon="wheel-of-dares" />
-                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Stakes & bets" href="/wagers" color="text-[#c9956a]" sexyIcon="wagers" />
-                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed ordeals" href="/endurance-challenges" color="text-[#e06830]" sexyIcon="endurance" />
-                <DrawerFeatureLink icon={<GraduationCap size={14} />} label="Training Programs" desc="Multi-week curricula" href="/training-programs" color="text-[#b87333]" sexyIcon="endurance" />
+                <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-red-400" sexyIcon="enforce" locked={isLocked("obedience_trials")} requiredLevel={getReqLevel("obedience_trials")} />
+                <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-[#ea7e4a]" sexyIcon="wheel-of-dares" locked={isLocked("sensation_roulette")} requiredLevel={getReqLevel("sensation_roulette")} />
+                <DrawerFeatureLink icon={<Dices size={14} />} label="Wagers" desc="Stakes & bets" href="/wagers" color="text-[#c9956a]" sexyIcon="wagers" locked={isLocked("wagers")} requiredLevel={getReqLevel("wagers")} />
+                <DrawerFeatureLink icon={<Hourglass size={14} />} label="Endurance" desc="Timed ordeals" href="/endurance-challenges" color="text-[#e06830]" sexyIcon="endurance" locked={isLocked("endurance")} requiredLevel={getReqLevel("endurance")} />
+                <DrawerFeatureLink icon={<GraduationCap size={14} />} label="Training Programs" desc="Multi-week curricula" href="/training-programs" color="text-[#b87333]" sexyIcon="endurance" locked={isLocked("training_programs")} requiredLevel={getReqLevel("training_programs")} />
               </div>
             </FeatureDrawer>
 
@@ -1270,18 +1316,18 @@ export function CommandProtocols({
                 <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-[#b8845a]" sexyIcon="devotions" />
                 <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-slate-300" sexyIcon="secrets" />
                 <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-red-400" sexyIcon="conflicts" />
-                <DrawerFeatureLink icon={<FileSignature size={14} />} label="Contracts" desc="Binding agreements" href="/contracts" color="text-[#d4a24e]" sexyIcon="standing-orders" />
+                <DrawerFeatureLink icon={<FileSignature size={14} />} label="Contracts" desc="Binding agreements" href="/contracts" color="text-[#d4a24e]" sexyIcon="standing-orders" locked={isLocked("contracts")} requiredLevel={getReqLevel("contracts")} />
                 <DrawerFeatureLink icon={<BookOpen size={14} />} label="Journal" desc="Reflections & logs" href="/secrets" color="text-[#b8845a]" sexyIcon="secrets" />
               </div>
             </FeatureDrawer>
 
             <FeatureDrawer title="Records & Surveillance" icon={<Award size={14} className="text-[#d4a24e]" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-[#d4a24e]" sexyIcon="ratings" />
+                <DrawerFeatureLink icon={<Star size={14} />} label="Ratings" desc="Performance scores" href="/ratings" color="text-[#d4a24e]" sexyIcon="ratings" locked={isLocked("ratings")} requiredLevel={getReqLevel("ratings")} />
                 <DrawerFeatureLink icon={<Award size={14} />} label="Achievements" desc="Earned marks" href="/achievements" color="text-[#d4a24e]" sexyIcon="achievements" />
                 <DrawerFeatureLink icon={<BarChart3 size={14} />} label="Analytics" desc="Charts & insights" href="/analytics" color="text-[#e87640]" sexyIcon="ratings" />
                 <DrawerFeatureLink icon={<Timer size={14} />} label="Countdown" desc="Upcoming events" href="/countdown-events" color="text-[#e06830]" sexyIcon="countdown-events" />
-                <DrawerFeatureLink icon={<Lock size={14} />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-red-500/80" sexyIcon="config" />
+                <DrawerFeatureLink icon={<Lock size={14} />} label="Protocol Lockbox" desc="Sealed orders" href="/protocol-lockbox" color="text-red-500/80" sexyIcon="config" locked={isLocked("sealed_orders")} requiredLevel={getReqLevel("sealed_orders")} />
                 <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Restricted gallery" href="/locked-media" color="text-slate-400" sexyIcon="secrets" />
               </div>
             </FeatureDrawer>

@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "../lib/queryClient";
 import MoodChart from "../components/mood-chart";
+import { TribunalHistory, TribunalOverlay } from "../components/tribunal";
+import { useTribunals, useSubmitVerdict, useSubmitPlea, useAuth, useRitualHeatmap } from "../lib/hooks";
 
-type TabType = "analytics" | "calendar" | "relationship";
+type TabType = "analytics" | "calendar" | "relationship" | "rituals" | "tribunals";
 
 interface AnalyticsData {
   moodHistory: Array<{ date: string; mood: number; obedience: number }>;
@@ -350,8 +352,82 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <h3 style={{ color: "#94a3b8", fontSize: 12, textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 8, marginTop: 24 }}>{children}</h3>;
 }
 
+function RitualComplianceTab() {
+  const { data: heatmapData } = useRitualHeatmap();
+  
+  if (!heatmapData || !heatmapData.rituals.length) {
+    return (
+      <div data-testid="tab-rituals" style={{ textAlign: "center", padding: 40, color: "#94a3b8" }}>
+        <p style={{ fontSize: 14 }}>No ritual data available yet.</p>
+        <p style={{ fontSize: 12, color: "#64748b", marginTop: 8 }}>Complete rituals to see your compliance heatmap here.</p>
+      </div>
+    );
+  }
+
+  const dates = Object.keys(heatmapData.heatmap).sort();
+  const statusColors: Record<string, string> = {
+    on_time: "#16a34a",
+    late: "#ca8a04",
+    missed: "#dc2626",
+  };
+
+  return (
+    <div data-testid="tab-rituals">
+      <SectionLabel>Ritual Compliance Heatmap (30 Days)</SectionLabel>
+      <div style={{ overflowX: "auto", padding: "8px 0" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `120px repeat(${dates.length}, 20px)`, gap: 2, fontSize: 10 }}>
+          <div style={{ color: "#64748b", fontWeight: 600 }}>Ritual</div>
+          {dates.map(d => (
+            <div key={d} style={{ color: "#475569", textAlign: "center", writingMode: "vertical-lr", fontSize: 8, height: 40 }}>
+              {d.slice(5)}
+            </div>
+          ))}
+          {heatmapData.rituals.map(ritual => (
+            <>
+              <div key={`label-${ritual.id}`} style={{ color: "#cbd5e1", fontSize: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", lineHeight: "20px" }}>
+                {ritual.title}
+              </div>
+              {dates.map(date => {
+                const status = heatmapData.heatmap[date]?.[ritual.id] || "none";
+                return (
+                  <div
+                    key={`${ritual.id}-${date}`}
+                    data-testid={`heatmap-ritual-${ritual.id}-${date}`}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 3,
+                      backgroundColor: statusColors[status] || "#1e293b",
+                      border: "1px solid rgba(255,255,255,0.05)",
+                    }}
+                    title={`${ritual.title} - ${date}: ${status}`}
+                  />
+                );
+              })}
+            </>
+          ))}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 16, marginTop: 12, justifyContent: "center" }}>
+        {[
+          { label: "On Time", color: "#16a34a" },
+          { label: "Late", color: "#ca8a04" },
+          { label: "Missed", color: "#dc2626" },
+          { label: "No Data", color: "#1e293b" },
+        ].map(item => (
+          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: item.color }} />
+            <span style={{ fontSize: 10, color: "#94a3b8" }}>{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
   const [tab, setTab] = useState<TabType>("analytics");
+  const [selectedTribunal, setSelectedTribunal] = useState<any>(null);
 
   const { data: analytics } = useQuery<AnalyticsData>({
     queryKey: ["/api/analytics"],
@@ -363,10 +439,18 @@ export default function AnalyticsPage() {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
+  const { data: user } = useAuth();
+  const { data: tribunalsList = [] } = useTribunals();
+  const submitVerdictMutation = useSubmitVerdict();
+  const submitPleaMutation = useSubmitPlea();
+  const userRole = (user?.role || "sub") as "dom" | "sub";
+
   const tabs: { key: TabType; label: string }[] = [
     { key: "analytics", label: "Analytics" },
     { key: "calendar", label: "Calendar" },
     { key: "relationship", label: "Relationship" },
+    { key: "rituals", label: "Rituals" },
+    { key: "tribunals", label: "Tribunals" },
   ];
 
   return (
@@ -419,6 +503,36 @@ export default function AnalyticsPage() {
 
       {tab === "calendar" && <CalendarTab />}
       {tab === "relationship" && <RelationshipTab />}
+      {tab === "rituals" && <RitualComplianceTab />}
+
+      {tab === "tribunals" && (
+        <div data-testid="tab-tribunals">
+          <SectionLabel>Weekly Performance Reviews</SectionLabel>
+          <TribunalHistory
+            tribunals={tribunalsList}
+            userRole={userRole}
+            onSelectTribunal={(t) => setSelectedTribunal(t)}
+          />
+        </div>
+      )}
+
+      {selectedTribunal && (
+        <TribunalOverlay
+          tribunal={selectedTribunal}
+          userRole={userRole}
+          onClose={() => setSelectedTribunal(null)}
+          onSubmitVerdict={(verdict, grade, sentence) => {
+            submitVerdictMutation.mutate({ id: selectedTribunal.id, verdict, grade, sentence }, {
+              onSuccess: () => setSelectedTribunal(null),
+            });
+          }}
+          onSubmitPlea={(plea) => {
+            submitPleaMutation.mutate({ id: selectedTribunal.id, plea }, {
+              onSuccess: () => setSelectedTribunal(null),
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

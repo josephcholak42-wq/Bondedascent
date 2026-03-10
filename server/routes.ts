@@ -231,6 +231,22 @@ export async function registerRoutes(
       }
       await storage.logActivity(user.id, "task_completed", task.text, user.role);
       await notifyUser(user.id, `Completed: ${task.text} (+5 XP)`, "info", user.role);
+      const today = new Date().toISOString().split("T")[0];
+      await storage.upsertStreak(user.id, "task_completion", today);
+      if (task.assignedBy && task.assignedBy !== user.id) {
+        const assigner = await storage.getUser(task.assignedBy);
+        if (assigner) {
+          const prefs = await storage.getNotificationPreferences(assigner.id);
+          if (!prefs || prefs.performanceAlerts) {
+            const created = task.createdAt ? new Date(task.createdAt) : null;
+            if (created) {
+              const mins = Math.round((Date.now() - created.getTime()) / 60000);
+              const duration = mins < 60 ? `${mins} minutes` : `${Math.round(mins / 60)} hours`;
+              await notifyUser(assigner.id, `They completed "${task.text}" in ${duration}`, "performance", user.role);
+            }
+          }
+        }
+      }
     }
 
     res.json(task);
@@ -274,6 +290,9 @@ export async function registerRoutes(
       const newXp = Math.min((freshUser.xp || 0) + 15, 100 * (freshUser.level || 1));
       await storage.updateUserXp(user.id, newXp);
     }
+
+    const today = new Date().toISOString().split("T")[0];
+    await storage.upsertStreak(user.id, "check_in", today);
 
     res.status(201).json(checkIn);
   });
@@ -595,6 +614,8 @@ export async function registerRoutes(
       createdAsRole: user.role,
     });
     await storage.logActivity(user.id, "journal_entry", "New journal entry", user.role);
+    const today = new Date().toISOString().split("T")[0];
+    await storage.upsertStreak(user.id, "journal", today);
     if (isShared) {
       const partner = await storage.getPartner(user.id);
       if (partner) {
@@ -3016,6 +3037,371 @@ export async function registerRoutes(
     sendToUser(user.id, "simulation-deactivated", { simulationId: sim.id });
 
     res.json(deactivated);
+  });
+
+  // ============ STREAKS / DEVOTION FLAMES ============
+
+  app.post("/api/streaks/record", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { type } = req.body;
+    if (!type) return res.status(400).json({ message: "type required" });
+    const today = new Date().toISOString().split("T")[0];
+    const oldStreaks = await storage.getStreaks(user.id);
+    const oldStreak = oldStreaks.find(s => s.streakType === type);
+    const oldCount = oldStreak?.currentCount || 0;
+
+    const streak = await storage.upsertStreak(user.id, type, today);
+
+    if (oldCount > 1 && streak.currentCount === 1 && user.partnerId) {
+      const label = type.replace(/_/g, " ");
+      await notifyUser(user.partnerId, `Their ${label} flame has gone dark`, "streak_break");
+      sendToUser(user.partnerId, "streak-break", { type, userId: user.id });
+      await sendPushToUser(user.partnerId, "Flame Extinguished", `Their ${label} flame has gone dark`, "streak_break").catch(() => {});
+    }
+
+    res.json(streak);
+  });
+
+  app.get("/api/streaks/flames", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const userStreaks = await storage.getStreaks(user.id);
+    const flames = userStreaks.map(s => {
+      let flameLevel: number;
+      const count = s.currentCount || 0;
+      if (count === 0) flameLevel = 0;
+      else if (count <= 3) flameLevel = 1;
+      else if (count <= 7) flameLevel = 2;
+      else if (count <= 14) flameLevel = 3;
+      else if (count <= 29) flameLevel = 4;
+      else flameLevel = 5;
+
+      const labels = ["extinguished", "ember", "flicker", "blaze", "inferno", "white-hot"];
+      return {
+        ...s,
+        flameLevel,
+        flameName: labels[flameLevel],
+      };
+    });
+    res.json(flames);
+  });
+
+  // ============ WHISPER CHAMBER ============
+
+  app.post("/api/whispers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "No partner" });
+    const { content, type, sealedUntil } = req.body;
+    if (!content && type !== "summon") return res.status(400).json({ message: "content required" });
+
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const whisper = await storage.createWhisper({
+      senderId: user.id,
+      receiverId: user.partnerId,
+      content: content || "You have been summoned.",
+      type: type || "whisper",
+      sealedUntil: sealedUntil ? new Date(sealedUntil) : null,
+      etched: false,
+      expiresAt,
+    });
+
+    sendToUser(user.partnerId, "whisper-received", whisper);
+
+    if (type === "summon") {
+      await sendPushToUser(user.partnerId, "You Have Been Summoned", "Your presence is demanded.", "summon").catch(() => {});
+      await notifyUser(user.partnerId, "You have been summoned", "summon", user.role);
+    } else {
+      await sendPushToUser(user.partnerId, "New Whisper", "A whisper awaits in the chamber", "whisper").catch(() => {});
+    }
+
+    res.json(whisper);
+  });
+
+  app.get("/api/whispers", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.json([]);
+    const whisperList = await storage.getWhispers(user.id, user.partnerId);
+    res.json(whisperList);
+  });
+
+  app.patch("/api/whispers/:id/read", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "No partner" });
+    const allWhispers = await storage.getWhispers(user.id, user.partnerId);
+    const owned = allWhispers.find(w => w.id === req.params.id && w.receiverId === user.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    const w = await storage.markWhisperRead(req.params.id);
+    res.json(w);
+  });
+
+  app.patch("/api/whispers/:id/etch", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (user.role !== "dom") return res.status(403).json({ message: "Only Dom can etch whispers" });
+    if (!user.partnerId) return res.status(400).json({ message: "No partner" });
+    const allWhispers = await storage.getWhispers(user.id, user.partnerId);
+    const owned = allWhispers.find(w => w.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    const w = await storage.etchWhisper(req.params.id);
+    res.json(w);
+  });
+
+  app.post("/api/whispers/summon", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (!user.partnerId) return res.status(400).json({ message: "No partner" });
+
+    const whisper = await storage.createWhisper({
+      senderId: user.id,
+      receiverId: user.partnerId,
+      content: "You have been summoned. Come at once.",
+      type: "summon",
+      sealedUntil: null,
+      etched: false,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
+    sendToUser(user.partnerId, "summon-received", whisper);
+    await sendPushToUser(user.partnerId, "SUMMONED", "Your presence is demanded immediately.", "summon").catch(() => {});
+    await notifyUser(user.partnerId, "You have been summoned. Come at once.", "summon", user.role);
+
+    res.json(whisper);
+  });
+
+  app.get("/api/whispers/unread", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const count = await storage.getUnreadWhisperCount(user.id);
+    res.json({ count });
+  });
+
+  // ============ THE ALTAR ============
+
+  app.get("/api/altar", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const state = await storage.getAltarState(user.id);
+    if (!state) {
+      return res.json({ cycleDay: 0, claimedToday: false, totalRelics: 0, rewardPreview: "5 XP" });
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const claimedToday = state.lastClaimedDate === today;
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const streakBroken = state.lastClaimedDate !== today && state.lastClaimedDate !== yesterdayStr;
+
+    const nextDay = streakBroken ? 1 : (claimedToday ? state.cycleDay : (state.cycleDay >= 7 ? 1 : state.cycleDay + 1));
+    const rewards = ["5 XP", "10 XP", "Random Sticker", "20 XP", "Mystery Dare", "30 XP + Sticker", "Sacred Relic"];
+    const rewardPreview = rewards[(nextDay - 1) % 7];
+
+    res.json({
+      cycleDay: state.cycleDay,
+      claimedToday,
+      totalRelics: state.totalRelics,
+      rewardPreview,
+      streakBroken,
+      currentDay: claimedToday ? state.cycleDay : nextDay,
+    });
+  });
+
+  app.post("/api/altar/kneel", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const state = await storage.getAltarState(user.id);
+    const today = new Date().toISOString().split("T")[0];
+
+    if (state && state.lastClaimedDate === today) {
+      return res.status(400).json({ message: "Already claimed today", alreadyClaimed: true });
+    }
+
+    const offering = await storage.claimAltarOffering(user.id);
+    const day = offering.cycleDay;
+
+    let reward = "";
+    let xpGained = 0;
+
+    switch (day) {
+      case 1: xpGained = 5; reward = "5 XP"; break;
+      case 2: xpGained = 10; reward = "10 XP"; break;
+      case 3:
+        reward = "Random Sticker";
+        await storage.createSticker({ recipientId: user.id, senderId: user.id, stickerType: "altar_offering", message: "Altar Offering ✦", createdAsRole: user.role });
+        break;
+      case 4: xpGained = 20; reward = "20 XP"; break;
+      case 5: reward = "Mystery Dare Revealed"; break;
+      case 6:
+        xpGained = 30;
+        reward = "30 XP + Sticker";
+        await storage.createSticker({ recipientId: user.id, senderId: user.id, stickerType: "altar_devotee", message: "Altar Devotee ✦✦", createdAsRole: user.role });
+        break;
+      case 7:
+        reward = "Sacred Relic Earned!";
+        await storage.createAchievement({
+          userId: user.id,
+          name: `Sacred Relic #${offering.totalRelics}`,
+          description: "Completed a full 7-day altar cycle",
+          tier: "gold",
+          createdAsRole: user.role,
+        });
+        break;
+    }
+
+    if (xpGained > 0) {
+      await storage.updateUserXp(user.id, (user.xp || 0) + xpGained);
+    }
+
+    await storage.logActivity(user.id, "altar_claim", `Claimed altar offering: ${reward}`, user.role);
+    await storage.upsertStreak(user.id, "altar", today);
+
+    res.json({ reward, cycleDay: day, totalRelics: offering.totalRelics, xpGained });
+  });
+
+  // ============ NOTIFICATION PREFERENCES ============
+
+  app.get("/api/notification-preferences", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const prefs = await storage.getNotificationPreferences(user.id);
+    if (!prefs) {
+      return res.json({
+        userId: user.id,
+        streakWarnings: true,
+        silenceAlerts: true,
+        ritualBells: true,
+        performanceAlerts: true,
+        missedRitualAlerts: true,
+      });
+    }
+    res.json(prefs);
+  });
+
+  app.patch("/api/notification-preferences", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { streakWarnings, silenceAlerts, ritualBells, performanceAlerts, missedRitualAlerts } = req.body;
+    const prefs = await storage.upsertNotificationPreferences(user.id, {
+      streakWarnings, silenceAlerts, ritualBells, performanceAlerts, missedRitualAlerts,
+    });
+    res.json(prefs);
+  });
+
+  // ============ RITUAL COMPLETIONS (THE BELL) ============
+
+  app.post("/api/rituals/:id/complete", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const ritualId = req.params.id;
+    const pairIds = user.partnerId ? [user.id, user.partnerId] : [user.id];
+    const allRituals = await storage.getRitualsForPair(pairIds);
+    const owned = allRituals.find(r => r.id === ritualId && r.userId === user.id);
+    if (!owned) return res.status(404).json({ message: "Ritual not found or not yours" });
+    const today = new Date().toISOString().split("T")[0];
+
+    const completion = await storage.recordRitualCompletion({
+      ritualId,
+      userId: user.id,
+      withinGracePeriod: true,
+      date: today,
+    });
+
+    await storage.upsertStreak(user.id, "ritual_completion", today);
+    await storage.logActivity(user.id, "ritual_complete", `Completed ritual`, user.role);
+
+    if (user.partnerId) {
+      const prefs = await storage.getNotificationPreferences(user.partnerId);
+      if (!prefs || prefs.performanceAlerts) {
+        await notifyUser(user.partnerId, `${user.username} completed their ritual`, "ritual_complete", user.role);
+      }
+    }
+
+    res.json(completion);
+  });
+
+  app.get("/api/rituals/heatmap", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const completions = await storage.getRitualCompletions(user.id, 30);
+
+    const pairIds = user.partnerId ? [user.id, user.partnerId] : [user.id];
+    const allRituals = await storage.getRitualsForPair(pairIds);
+    const userRituals = allRituals.filter(r => r.userId === user.id);
+
+    const heatmap: Record<string, Record<string, string>> = {};
+    for (let i = 0; i < 30; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split("T")[0];
+      heatmap[dateStr] = {};
+      for (const ritual of userRituals) {
+        const comp = completions.find(c => c.date === dateStr && c.ritualId === ritual.id);
+        heatmap[dateStr][ritual.id] = comp ? (comp.withinGracePeriod ? "on_time" : "late") : "missed";
+      }
+    }
+
+    res.json({ heatmap, rituals: userRituals.map(r => ({ id: r.id, title: r.title })) });
+  });
+
+  // ============ TRIBUNALS ============
+
+  app.get("/api/tribunals", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getTribunals(user.id);
+    res.json(list);
+  });
+
+  app.get("/api/tribunals/current", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const current = await storage.getCurrentTribunal(user.id);
+    res.json(current || null);
+  });
+
+  app.patch("/api/tribunals/:id/verdict", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    if (user.role !== "dom") return res.status(403).json({ message: "Only Dom can deliver verdict" });
+    const allTribunals = await storage.getTribunals(user.id);
+    const owned = allTribunals.find(t => t.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    const { verdict, grade, sentence } = req.body;
+    const t = await storage.updateTribunalVerdict(req.params.id, verdict, grade, sentence);
+    if (!t) return res.status(404).json({ message: "Not found" });
+
+    if (user.partnerId) {
+      await notifyUser(user.partnerId, `The verdict has been delivered: Grade ${grade}`, "tribunal_verdict", "dom");
+      sendToUser(user.partnerId, "tribunal-verdict", { grade, verdict });
+    }
+
+    res.json(t);
+  });
+
+  app.patch("/api/tribunals/:id/plea", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const allTribunals = await storage.getTribunals(user.id);
+    const owned = allTribunals.find(t => t.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Not found" });
+    const { plea } = req.body;
+    const t = await storage.updateTribunalPlea(req.params.id, plea);
+    if (!t) return res.status(404).json({ message: "Not found" });
+
+    if (user.partnerId) {
+      await notifyUser(user.partnerId, `A plea has been submitted for this week's tribunal`, "tribunal_plea", user.role);
+      sendToUser(user.partnerId, "tribunal-plea", { plea });
+    }
+
+    res.json(t);
+  });
+
+  // ============ ASCENSION PATH / UNLOCKS ============
+
+  app.get("/api/unlocks", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { UNLOCK_MAP, getUnlockedFeatures, getLockedFeatures } = await import("./unlocks");
+    res.json({
+      level: user.level,
+      all: UNLOCK_MAP,
+      unlocked: getUnlockedFeatures(user.level || 1),
+      locked: getLockedFeatures(user.level || 1),
+    });
+  });
+
+  // ============ TUTORIAL ============
+
+  app.post("/api/tutorial/complete", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const updated = await storage.completeTutorial(user.id);
+    res.json(updated);
   });
 
   return httpServer;

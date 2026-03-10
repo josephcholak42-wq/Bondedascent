@@ -54,6 +54,12 @@ import {
   type Streak,
   simulations,
   type Simulation, type InsertSimulation,
+  whispers, altarOfferings, notificationPreferences, ritualCompletions, tribunals,
+  type Whisper, type InsertWhisper,
+  type AltarOffering, type InsertAltarOffering,
+  type NotificationPreference, type InsertNotificationPreference,
+  type RitualCompletion, type InsertRitualCompletion,
+  type Tribunal, type InsertTribunal,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -363,6 +369,39 @@ export interface IStorage {
   deactivateSimulation(id: string): Promise<Simulation | undefined>;
   updateSimulationGeneratedItems(id: string, generatedItems: any): Promise<Simulation | undefined>;
   deactivateSimulationItems(simulationId: string): Promise<void>;
+
+  // Whispers
+  createWhisper(data: InsertWhisper): Promise<Whisper>;
+  getWhispers(userId: string, partnerId: string): Promise<Whisper[]>;
+  markWhisperRead(id: string): Promise<Whisper | undefined>;
+  etchWhisper(id: string): Promise<Whisper | undefined>;
+  getUnreadWhisperCount(userId: string): Promise<number>;
+
+  // Altar
+  getAltarState(userId: string): Promise<AltarOffering | undefined>;
+  claimAltarOffering(userId: string): Promise<AltarOffering>;
+
+  // Notification Preferences
+  getNotificationPreferences(userId: string): Promise<NotificationPreference | undefined>;
+  upsertNotificationPreferences(userId: string, prefs: Partial<NotificationPreference>): Promise<NotificationPreference>;
+
+  // Ritual Completions
+  recordRitualCompletion(data: InsertRitualCompletion): Promise<RitualCompletion>;
+  getRitualCompletions(userId: string, days: number): Promise<RitualCompletion[]>;
+  incrementRitualMiss(ritualId: string): Promise<Ritual | undefined>;
+
+  // Tribunals
+  createTribunal(data: InsertTribunal): Promise<Tribunal>;
+  getTribunals(userId: string): Promise<Tribunal[]>;
+  getCurrentTribunal(userId: string): Promise<Tribunal | undefined>;
+  updateTribunalVerdict(id: string, verdict: string, grade: string, sentence?: string): Promise<Tribunal | undefined>;
+  updateTribunalPlea(id: string, plea: string): Promise<Tribunal | undefined>;
+
+  // Tutorial
+  completeTutorial(userId: string): Promise<User | undefined>;
+
+  // Unlocks
+  getAllUsers(): Promise<User[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1636,6 +1675,175 @@ export class DatabaseStorage implements IStorage {
     await db.update(permissionRequests)
       .set({ status: "dismissed" })
       .where(eq(permissionRequests.simulationId, simulationId));
+  }
+
+  // Whispers
+  async createWhisper(data: InsertWhisper): Promise<Whisper> {
+    const [w] = await db.insert(whispers).values(data).returning();
+    return w;
+  }
+
+  async getWhispers(userId: string, partnerId: string): Promise<Whisper[]> {
+    const now = new Date();
+    const results = await db.select().from(whispers).where(
+      or(
+        and(eq(whispers.senderId, userId), eq(whispers.receiverId, partnerId)),
+        and(eq(whispers.senderId, partnerId), eq(whispers.receiverId, userId))
+      )
+    ).orderBy(desc(whispers.createdAt));
+    return results.filter(w => w.etched || !w.expiresAt || new Date(w.expiresAt) > now);
+  }
+
+  async markWhisperRead(id: string): Promise<Whisper | undefined> {
+    const [w] = await db.update(whispers).set({ readAt: new Date() }).where(eq(whispers.id, id)).returning();
+    return w;
+  }
+
+  async etchWhisper(id: string): Promise<Whisper | undefined> {
+    const [w] = await db.update(whispers).set({ etched: true, expiresAt: null }).where(eq(whispers.id, id)).returning();
+    return w;
+  }
+
+  async getUnreadWhisperCount(userId: string): Promise<number> {
+    const results = await db.select().from(whispers).where(
+      and(eq(whispers.receiverId, userId), isNull(whispers.readAt))
+    );
+    const now = new Date();
+    return results.filter(w => !w.expiresAt || new Date(w.expiresAt) > now).length;
+  }
+
+  // Altar
+  async getAltarState(userId: string): Promise<AltarOffering | undefined> {
+    const [state] = await db.select().from(altarOfferings).where(eq(altarOfferings.userId, userId));
+    return state;
+  }
+
+  async claimAltarOffering(userId: string): Promise<AltarOffering> {
+    const today = new Date().toISOString().split("T")[0];
+    const existing = await this.getAltarState(userId);
+
+    if (!existing) {
+      const [created] = await db.insert(altarOfferings).values({
+        userId,
+        cycleDay: 1,
+        lastClaimedDate: today,
+        currentCycleStart: today,
+      }).returning();
+      return created;
+    }
+
+    if (existing.lastClaimedDate === today) {
+      return existing;
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    let newCycleDay: number;
+    let newCycleStart = existing.currentCycleStart;
+    let newRelics = existing.totalRelics;
+
+    if (existing.lastClaimedDate === yesterdayStr) {
+      if (existing.cycleDay >= 7) {
+        newRelics = existing.totalRelics + 1;
+        newCycleDay = 1;
+        newCycleStart = today;
+      } else {
+        newCycleDay = existing.cycleDay + 1;
+      }
+    } else {
+      newCycleDay = 1;
+      newCycleStart = today;
+    }
+
+    const [updated] = await db.update(altarOfferings).set({
+      cycleDay: newCycleDay,
+      lastClaimedDate: today,
+      currentCycleStart: newCycleStart,
+      totalRelics: newRelics,
+    }).where(eq(altarOfferings.id, existing.id)).returning();
+    return updated;
+  }
+
+  // Notification Preferences
+  async getNotificationPreferences(userId: string): Promise<NotificationPreference | undefined> {
+    const [prefs] = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, userId));
+    return prefs;
+  }
+
+  async upsertNotificationPreferences(userId: string, prefs: Partial<NotificationPreference>): Promise<NotificationPreference> {
+    const existing = await this.getNotificationPreferences(userId);
+    if (existing) {
+      const { id, userId: _, createdAt, ...rest } = prefs as any;
+      const [updated] = await db.update(notificationPreferences).set(rest).where(eq(notificationPreferences.userId, userId)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(notificationPreferences).values({ userId, ...prefs } as any).returning();
+    return created;
+  }
+
+  // Ritual Completions
+  async recordRitualCompletion(data: InsertRitualCompletion): Promise<RitualCompletion> {
+    const [rc] = await db.insert(ritualCompletions).values(data).returning();
+    await db.update(rituals).set({ consecutiveMisses: 0, lastCompleted: new Date() }).where(eq(rituals.id, data.ritualId));
+    return rc;
+  }
+
+  async getRitualCompletions(userId: string, days: number): Promise<RitualCompletion[]> {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().split("T")[0];
+    const results = await db.select().from(ritualCompletions).where(eq(ritualCompletions.userId, userId)).orderBy(desc(ritualCompletions.completedAt));
+    return results.filter(rc => rc.date >= cutoffStr);
+  }
+
+  async incrementRitualMiss(ritualId: string): Promise<Ritual | undefined> {
+    const [ritual] = await db.select().from(rituals).where(eq(rituals.id, ritualId));
+    if (!ritual) return undefined;
+    const [updated] = await db.update(rituals).set({
+      missedCount: ritual.missedCount + 1,
+      consecutiveMisses: ritual.consecutiveMisses + 1,
+    }).where(eq(rituals.id, ritualId)).returning();
+    return updated;
+  }
+
+  // Tribunals
+  async createTribunal(data: InsertTribunal): Promise<Tribunal> {
+    const [t] = await db.insert(tribunals).values(data).returning();
+    return t;
+  }
+
+  async getTribunals(userId: string): Promise<Tribunal[]> {
+    return db.select().from(tribunals).where(
+      or(eq(tribunals.pairDomId, userId), eq(tribunals.pairSubId, userId))
+    ).orderBy(desc(tribunals.createdAt));
+  }
+
+  async getCurrentTribunal(userId: string): Promise<Tribunal | undefined> {
+    const all = await this.getTribunals(userId);
+    return all[0];
+  }
+
+  async updateTribunalVerdict(id: string, verdict: string, grade: string, sentence?: string): Promise<Tribunal | undefined> {
+    const [t] = await db.update(tribunals).set({ verdict, grade, sentence }).where(eq(tribunals.id, id)).returning();
+    return t;
+  }
+
+  async updateTribunalPlea(id: string, plea: string): Promise<Tribunal | undefined> {
+    const [t] = await db.update(tribunals).set({ plea }).where(eq(tribunals.id, id)).returning();
+    return t;
+  }
+
+  // Tutorial
+  async completeTutorial(userId: string): Promise<User | undefined> {
+    const [u] = await db.update(users).set({ tutorialCompleted: true }).where(eq(users.id, userId)).returning();
+    return u;
+  }
+
+  // Unlocks
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users);
   }
 }
 

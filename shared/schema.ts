@@ -17,6 +17,7 @@ export const users = pgTable("users", {
   enforcementLevel: integer("enforcement_level").notNull().default(1),
   stickerBalance: integer("sticker_balance").notNull().default(0),
   profilePic: text("profile_pic"),
+  tutorialCompleted: boolean("tutorial_completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -141,6 +142,9 @@ export const rituals = pgTable("rituals", {
   active: boolean("active").notNull().default(true),
   lastCompleted: timestamp("last_completed"),
   reminderEnabled: boolean("reminder_enabled").notNull().default(true),
+  gracePeriodMinutes: integer("grace_period_minutes").notNull().default(30),
+  missedCount: integer("missed_count").notNull().default(0),
+  consecutiveMisses: integer("consecutive_misses").notNull().default(0),
   simulationId: varchar("simulation_id"),
   createdAsRole: text("created_as_role").notNull().default("sub"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -1009,3 +1013,80 @@ export const simulations = pgTable("simulations", {
 export const insertSimulationSchema = createInsertSchema(simulations).omit({ id: true, createdAt: true, deactivatedAt: true, active: true });
 export type Simulation = typeof simulations.$inferSelect;
 export type InsertSimulation = z.infer<typeof insertSimulationSchema>;
+
+export const whispers = pgTable("whispers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull(),
+  receiverId: varchar("receiver_id").notNull(),
+  content: text("content").notNull(),
+  type: text("type").notNull().default("whisper"),
+  sealedUntil: timestamp("sealed_until"),
+  etched: boolean("etched").notNull().default(false),
+  expiresAt: timestamp("expires_at"),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertWhisperSchema = createInsertSchema(whispers).omit({ id: true, createdAt: true, readAt: true });
+export type Whisper = typeof whispers.$inferSelect;
+export type InsertWhisper = z.infer<typeof insertWhisperSchema>;
+
+export const altarOfferings = pgTable("altar_offerings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  cycleDay: integer("cycle_day").notNull().default(1),
+  lastClaimedDate: text("last_claimed_date"),
+  currentCycleStart: text("current_cycle_start"),
+  totalRelics: integer("total_relics").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAltarOfferingSchema = createInsertSchema(altarOfferings).omit({ id: true, createdAt: true, totalRelics: true });
+export type AltarOffering = typeof altarOfferings.$inferSelect;
+export type InsertAltarOffering = z.infer<typeof insertAltarOfferingSchema>;
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique(),
+  streakWarnings: boolean("streak_warnings").notNull().default(true),
+  silenceAlerts: boolean("silence_alerts").notNull().default(true),
+  ritualBells: boolean("ritual_bells").notNull().default(true),
+  performanceAlerts: boolean("performance_alerts").notNull().default(true),
+  missedRitualAlerts: boolean("missed_ritual_alerts").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertNotificationPreferencesSchema = createInsertSchema(notificationPreferences).omit({ id: true, createdAt: true });
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = z.infer<typeof insertNotificationPreferencesSchema>;
+
+export const ritualCompletions = pgTable("ritual_completions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  ritualId: varchar("ritual_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  completedAt: timestamp("completed_at").defaultNow(),
+  withinGracePeriod: boolean("within_grace_period").notNull().default(true),
+  date: text("date").notNull(),
+});
+
+export const insertRitualCompletionSchema = createInsertSchema(ritualCompletions).omit({ id: true, completedAt: true });
+export type RitualCompletion = typeof ritualCompletions.$inferSelect;
+export type InsertRitualCompletion = z.infer<typeof insertRitualCompletionSchema>;
+
+export const tribunals = pgTable("tribunals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pairDomId: varchar("pair_dom_id").notNull(),
+  pairSubId: varchar("pair_sub_id").notNull(),
+  weekStartDate: text("week_start_date").notNull(),
+  weekEndDate: text("week_end_date").notNull(),
+  stats: jsonb("stats"),
+  verdict: text("verdict"),
+  grade: text("grade"),
+  sentence: text("sentence"),
+  plea: text("plea"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTribunalSchema = createInsertSchema(tribunals).omit({ id: true, createdAt: true, verdict: true, grade: true, sentence: true, plea: true });
+export type Tribunal = typeof tribunals.$inferSelect;
+export type InsertTribunal = z.infer<typeof insertTribunalSchema>;
