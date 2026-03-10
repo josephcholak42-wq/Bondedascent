@@ -10,7 +10,7 @@ import {
   RefreshCw, Sliders, Play, Hand, Layers, Hourglass, GraduationCap, BarChart3,
   HeartPulse, ChevronRight, Search, Pin, Trash2, Pencil,
   ArrowUp, ArrowDown, Minus, Square, CheckSquare,
-  Maximize2, Minimize2, RectangleHorizontal, SquareIcon, GripVertical, ExternalLink
+  Maximize2, Minimize2, RectangleHorizontal, SquareIcon, GripVertical
 } from "lucide-react";
 import { Link as WouterLink } from "wouter";
 import { Switch } from "@/components/ui/switch";
@@ -326,7 +326,10 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [swipeX, setSwipeX] = useState(0);
   const [swiped, setSwiped] = useState<"left" | "right" | null>(null);
+  const [longPressActive, setLongPressActive] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
   const swipeThreshold = 80;
 
   const navTargetMap: Record<string, string> = {
@@ -342,6 +345,35 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
     limit: "dashboard", achievement: "stats",
     sticker_received: "sticker-board", notification: "dashboard",
   };
+
+  const navTarget = navTargetMap[item.type];
+  const canNavigate = onNavigate && navTarget && navTarget !== "dashboard";
+
+  const startLongPress = () => {
+    if (!canNavigate) return;
+    longPressTriggeredRef.current = false;
+    setLongPressActive(true);
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setLongPressActive(false);
+      feedbackTap();
+      onNavigate!(navTarget!);
+    }, 2000);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setLongPressActive(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    };
+  }, []);
 
   const config = TYPE_CONFIG[item.type] || TYPE_CONFIG.notification;
   const Icon = config.icon;
@@ -487,11 +519,20 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         position: "relative",
         zIndex: 1,
       }}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
+      onTouchStart={(e) => { onTouchStart(e); startLongPress(); }}
+      onTouchMove={(e) => { onTouchMove(e); cancelLongPress(); }}
+      onTouchEnd={(e) => { onTouchEnd(e); cancelLongPress(); if (longPressTriggeredRef.current) { e.preventDefault(); } }}
+      onTouchCancel={(e) => { onTouchCancel(e); cancelLongPress(); }}
+      onMouseDown={startLongPress}
+      onMouseUp={cancelLongPress}
+      onMouseLeave={cancelLongPress}
     >
+      {longPressActive && canNavigate && (
+        <div className="absolute inset-0 z-10 pointer-events-none rounded-r-xl overflow-hidden">
+          <div className="absolute bottom-0 left-0 h-[3px] bg-red-500 animate-[longpress-fill_2s_linear_forwards]" />
+          <div className="absolute inset-0 bg-red-500/5 animate-pulse" />
+        </div>
+      )}
       <div className="p-3.5 flex items-start gap-3">
         {isSelecting && (
           <button onClick={() => onToggleSelect?.(item.id)} className="mt-1 shrink-0 cursor-pointer" data-testid={`select-${item.id}`}>
@@ -499,19 +540,13 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
           </button>
         )}
         <div className={`mt-0.5 ${isRead ? "text-neutral-600" : config.color} shrink-0 cursor-pointer`} onClick={() => {
-          const target = navTargetMap[item.type];
-          if (onNavigate && target && target !== "dashboard") {
-            feedbackTap();
-            onNavigate(target);
-          } else {
-            setExpanded(!expanded);
-          }
+          if (!longPressTriggeredRef.current) setExpanded(!expanded);
         }}>
           <div className={`w-8 h-8 rounded-lg ${isRead ? "bg-neutral-800/50" : config.iconBg} flex items-center justify-center`}>
             <Icon size={16} />
           </div>
         </div>
-        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isSelecting && setExpanded(!expanded)}>
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !isSelecting && !longPressTriggeredRef.current && setExpanded(!expanded)}>
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-[10px] font-black uppercase tracking-[0.12em] px-1.5 py-0.5 rounded-md ${isRead ? "bg-neutral-800/50 text-neutral-500" : config.pillBg}`}>{config.label}</span>
             {isUnread && (
@@ -574,16 +609,6 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          {onNavigate && navTargetMap[item.type] && navTargetMap[item.type] !== "dashboard" && (
-            <button
-              onClick={(e) => { e.stopPropagation(); feedbackTap(); onNavigate(navTargetMap[item.type]); }}
-              className="p-1 text-slate-700 hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-              data-testid={`navigate-${item.id}`}
-              title="Go to feature"
-            >
-              <ExternalLink size={12} />
-            </button>
-          )}
           {onTogglePin && !isSelecting && (
             <button onClick={() => onTogglePin(item.id)} className={`p-1 transition-colors cursor-pointer ${isPinned ? "text-red-400" : "text-slate-700 hover:text-slate-400 opacity-0 group-hover:opacity-100"}`}
               data-testid={`pin-${item.id}`}>
@@ -780,8 +805,9 @@ function DrawerFeatureLink({ icon, label, desc, href, color, badge, sexyIcon, lo
   );
 }
 
-function ActivityTimeline({ entries, onNavigate }: { entries: ActivityEntry[]; onNavigate?: (target: string) => void }) {
-  if (!entries || entries.length === 0) return null;
+function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate?: (target: string) => void }) {
+  const [longPressActive, setLongPressActive] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const getNavTarget = (action: string): string | null => {
     if (action.includes("whisper") || action.includes("message")) return "whisper-chamber";
@@ -798,36 +824,71 @@ function ActivityTimeline({ entries, onNavigate }: { entries: ActivityEntry[]; o
     return null;
   };
 
+  const navTarget = getNavTarget(entry.action);
+  const canNavigate = navTarget && onNavigate;
+
+  const startLongPress = () => {
+    if (!canNavigate) return;
+    setLongPressActive(true);
+    timerRef.current = setTimeout(() => {
+      setLongPressActive(false);
+      feedbackTap();
+      onNavigate!(navTarget!);
+    }, 2000);
+  };
+
+  const cancelLongPress = () => {
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    setLongPressActive(false);
+  };
+
+  useEffect(() => { return () => { if (timerRef.current) clearTimeout(timerRef.current); }; }, []);
+
+  const actionColor = entry.action.includes("task") ? "border-l-red-700" :
+    entry.action.includes("punishment") || entry.action.includes("punish") ? "border-l-red-500" :
+    entry.action.includes("reward") ? "border-l-red-800" :
+    entry.action.includes("ritual") ? "border-l-red-600" :
+    entry.action.includes("dare") ? "border-l-rose-700" :
+    entry.action.includes("session") ? "border-l-rose-800" :
+    entry.action.includes("checkin") || entry.action.includes("check") ? "border-l-red-900" :
+    entry.action.includes("whisper") || entry.action.includes("message") ? "border-l-slate-500" :
+    entry.action.includes("journal") ? "border-l-[#b87333]" :
+    "border-l-slate-700";
+
+  return (
+    <div
+      key={`timeline-${entry.id}`}
+      className={`relative flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px] select-none overflow-hidden`}
+      onMouseDown={startLongPress}
+      onMouseUp={cancelLongPress}
+      onMouseLeave={cancelLongPress}
+      onTouchStart={startLongPress}
+      onTouchMove={cancelLongPress}
+      onTouchEnd={cancelLongPress}
+      onTouchCancel={cancelLongPress}
+    >
+      {longPressActive && canNavigate && (
+        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+          <div className="absolute bottom-0 left-0 h-[2px] bg-red-500 animate-[longpress-fill_2s_linear_forwards]" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[9px] text-slate-300 truncate leading-tight">{entry.detail || entry.action.replace(/_/g, " ")}</p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <span className="text-[8px] text-slate-600 font-mono tabular-nums">{timeAgo(entry.createdAt)}</span>
+      </div>
+    </div>
+  );
+}
+
+function ActivityTimeline({ entries, onNavigate }: { entries: ActivityEntry[]; onNavigate?: (target: string) => void }) {
+  if (!entries || entries.length === 0) return null;
   return (
     <div className="flex gap-2 overflow-x-auto scrollbar-none py-1 snap-x snap-mandatory" data-testid="activity-timeline">
-      {entries.slice(0, 10).map((entry) => {
-        const actionColor = entry.action.includes("task") ? "border-l-red-700" :
-          entry.action.includes("punishment") || entry.action.includes("punish") ? "border-l-red-500" :
-          entry.action.includes("reward") ? "border-l-red-800" :
-          entry.action.includes("ritual") ? "border-l-red-600" :
-          entry.action.includes("dare") ? "border-l-rose-700" :
-          entry.action.includes("session") ? "border-l-rose-800" :
-          entry.action.includes("checkin") || entry.action.includes("check") ? "border-l-red-900" :
-          entry.action.includes("whisper") || entry.action.includes("message") ? "border-l-slate-500" :
-          entry.action.includes("journal") ? "border-l-[#b87333]" :
-          "border-l-slate-700";
-        const navTarget = getNavTarget(entry.action);
-        return (
-          <div
-            key={`timeline-${entry.id}`}
-            className={`flex items-center gap-2 px-2.5 py-1.5 bg-white/[0.02] border border-white/5 ${actionColor} border-l-2 rounded-r-lg shrink-0 snap-start min-w-[140px] max-w-[200px] ${navTarget && onNavigate ? "cursor-pointer hover:bg-white/[0.05] transition-colors" : ""}`}
-            onClick={() => navTarget && onNavigate?.(navTarget)}
-          >
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] text-slate-300 truncate leading-tight">{entry.detail || entry.action.replace(/_/g, " ")}</p>
-            </div>
-            <div className="flex items-center gap-1 shrink-0">
-              <span className="text-[8px] text-slate-600 font-mono tabular-nums">{timeAgo(entry.createdAt)}</span>
-              {navTarget && onNavigate && <ExternalLink size={8} className="text-slate-700" />}
-            </div>
-          </div>
-        );
-      })}
+      {entries.slice(0, 10).map((entry) => (
+        <TimelineEntry key={`timeline-${entry.id}`} entry={entry} onNavigate={onNavigate} />
+      ))}
     </div>
   );
 }
@@ -1076,6 +1137,10 @@ export function CommandProtocols({
         @keyframes cp-card-enter {
           from { opacity: 0; transform: translateY(10px) scale(0.98); }
           to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes longpress-fill {
+          from { width: 0%; }
+          to { width: 100%; }
         }
         @keyframes cp-glow {
           0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.6), 0 0 20px rgba(140,15,15,0.08), 0 20px 50px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06), inset 0 -1px 0 rgba(0,0,0,0.3); }
