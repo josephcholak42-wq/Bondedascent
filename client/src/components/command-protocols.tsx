@@ -167,7 +167,7 @@ const SIZE_CYCLE: WindowSize[] = ["compact", "standard", "tall", "wide", "large"
 
 const WINDOW_CONFIG_BASE = [
   { key: "urgent", label: "URGENT", icon: Flame, types: ["demand", "command", "accusation"], defaultSize: "large" as WindowSize, borderColor: "#dc2626", glowColor: "rgba(220,38,38,0.25)", bgFrom: "rgba(127,29,29,0.35)", headerBg: "rgba(220,38,38,0.12)" },
-  { key: "directives", label: "DIRECTIVES", icon: Target, types: ["task", "standing_order", "ritual"], defaultSize: "tall" as WindowSize, borderColor: "#991b1b", glowColor: "rgba(153,27,27,0.2)", bgFrom: "rgba(127,29,29,0.25)", headerBg: "rgba(153,27,27,0.12)" },
+  { key: "directives", label: "DIRECTIVES", icon: Target, types: ["task"], defaultSize: "standard" as WindowSize, borderColor: "#991b1b", glowColor: "rgba(153,27,27,0.2)", bgFrom: "rgba(127,29,29,0.25)", headerBg: "rgba(153,27,27,0.12)" },
   { key: "punishments", label: "PUNISHMENTS", icon: Gavel, types: ["punishment", "dare"], defaultSize: "standard" as WindowSize, borderColor: "#b91c1c", glowColor: "rgba(185,28,28,0.2)", bgFrom: "rgba(127,29,29,0.3)", headerBg: "rgba(185,28,28,0.1)" },
   { key: "rewards", label: "REWARDS", icon: Gift, types: ["reward", "achievement", "sticker_received"], defaultSize: "compact" as WindowSize, borderColor: "#d4a24e", glowColor: "rgba(212,162,78,0.2)", bgFrom: "rgba(69,26,3,0.35)", headerBg: "rgba(212,162,78,0.1)" },
   { key: "scenes", label: "SCENES", icon: Play, types: ["play_session", "wager", "countdown_event"], defaultSize: "wide" as WindowSize, borderColor: "#e87640", glowColor: "rgba(232,118,64,0.2)", bgFrom: "rgba(67,20,7,0.35)", headerBg: "rgba(232,118,64,0.08)" },
@@ -341,11 +341,11 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
     punishment: "punishment-chest", reward: "reward-chest",
     dare: "punishment-chest", checkin_review: "dashboard",
     journal: "journal", play_session: "live-session",
-    wager: "dashboard", countdown_event: "dashboard",
-    devotion: "dashboard", secret: "dashboard",
-    conflict: "dashboard", rating: "dashboard",
-    permission_request: "dashboard", desired_change: "dashboard",
-    limit: "dashboard", achievement: "stats",
+    wager: "/wagers", countdown_event: "/countdown-events",
+    devotion: "/devotions", secret: "/secrets",
+    conflict: "/conflicts", rating: "/ratings",
+    permission_request: "/permission-requests", desired_change: "/desired-changes",
+    limit: "/limits", achievement: "stats",
     sticker_received: "sticker-board", notification: "dashboard",
   };
 
@@ -858,6 +858,15 @@ function TimelineEntry({ entry, onNavigate }: { entry: ActivityEntry; onNavigate
     if (action.includes("aftercare")) return "aftercare";
     if (action.includes("achievement") || action.includes("level") || action.includes("xp")) return "stats";
     if (action.includes("trinket")) return "profile";
+    if (action.includes("conflict")) return "/conflicts";
+    if (action.includes("devotion")) return "/devotions";
+    if (action.includes("rating")) return "/ratings";
+    if (action.includes("secret")) return "/secrets";
+    if (action.includes("wager")) return "/wagers";
+    if (action.includes("limit")) return "/limits";
+    if (action.includes("permission")) return "/permission-requests";
+    if (action.includes("desired") || action.includes("change")) return "/desired-changes";
+    if (action.includes("countdown")) return "/countdown-events";
     return "dashboard";
   };
 
@@ -1077,28 +1086,7 @@ export function CommandProtocols({
     });
   }, []);
 
-  const protocolItems: FeedItem[] = useMemo(() => {
-    const items: FeedItem[] = [];
-    standingOrders.filter((o: any) => o.status === "active").forEach((o: any) => {
-      items.push({
-        id: `so-${o.id}`, type: "standing_order", title: o.title || o.text,
-        description: o.description || "Active directive", data: { ...o, isStandingOrder: true },
-        createdAt: o.createdAt,
-      });
-    });
-    rituals.filter((r: any) => r.active).forEach((r: any) => {
-      const completed = r.lastCompleted && new Date(r.lastCompleted).toDateString() === new Date().toDateString();
-      items.push({
-        id: `rit-${r.id}`, type: "ritual", title: r.title,
-        description: `${r.frequency || "Daily"}${r.timeOfDay ? ` · ${r.timeOfDay}` : ""}${completed ? " · Done today" : ""}`,
-        data: { ...r, isRitual: true, completed },
-        createdAt: r.createdAt,
-      });
-    });
-    return items;
-  }, [standingOrders, rituals]);
-
-  const allItems = useMemo(() => [...feedItems, ...protocolItems], [feedItems, protocolItems]);
+  const allItems = useMemo(() => [...feedItems], [feedItems]);
 
   const filtered = useMemo(() => {
     let items = allItems;

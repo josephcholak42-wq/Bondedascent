@@ -229,6 +229,7 @@ import {
   type PrebuiltScene,
 } from "@/lib/prebuilt-scenes";
 import { CommandProtocols, type FeedItem, type ActivityEntry } from "@/components/command-protocols";
+import { ProtocolScroll } from "@/components/protocol-scroll";
 import {
   useCreateRitual,
   useCreateStandingOrder,
@@ -245,6 +246,7 @@ import {
   useDeleteLimit,
   useDeleteCountdownEvent,
   useDeleteStandingOrder,
+  useCompleteRitual,
   useActiveLiveSession,
   useStartLiveSession,
   useUpdateLiveSession,
@@ -368,6 +370,7 @@ export default function BondedAscentApp() {
   const deleteConflictMutation = useDeleteConflict();
   const deleteDesiredChangeMutation = useDeleteDesiredChange();
   const deletePlaySessionMutation = useDeletePlaySession();
+  const completeRitualMutation = useCompleteRitual();
 
   const { data: whispersList = [] } = useWhispers();
   const sendWhisperMutation = useSendWhisper();
@@ -686,6 +689,13 @@ export default function BondedAscentApp() {
           }}
         />
       )}
+      <ProtocolScroll
+        rituals={rituals}
+        standingOrders={standingOrders}
+        tasks={partnerTasks || []}
+        role="dom"
+        onComplete={handleScrollComplete}
+      />
       <CommandProtocols
         role="dom"
         feedItems={buildDomFeedItems()}
@@ -870,10 +880,18 @@ export default function BondedAscentApp() {
     const overlayTargets = ["live-session", "interrogation", "confession-booth", "aftercare", "autodom", "whisper-chamber"];
     if (overlayTargets.includes(target)) {
       openOverlay(target as any);
+    } else if (target.startsWith("/")) {
+      setLocation(target);
     } else {
       setActiveView(target);
     }
-  }, [openOverlay, setActiveView]);
+  }, [openOverlay, setActiveView, setLocation]);
+
+  const handleScrollComplete = useCallback((type: string, id: string) => {
+    if (type === "ritual") {
+      completeRitualMutation.mutate(id);
+    }
+  }, [completeRitualMutation]);
 
   const handleOnCreate = useCallback((type: string, data: Record<string, any>) => {
     switch (type) {
@@ -1000,6 +1018,13 @@ export default function BondedAscentApp() {
               }}
             />
           )}
+          <ProtocolScroll
+            rituals={rituals}
+            standingOrders={standingOrders}
+            tasks={tasks}
+            role="sub"
+            onComplete={handleScrollComplete}
+          />
           <CommandProtocols
             role="sub"
             feedItems={buildSubFeedItems()}

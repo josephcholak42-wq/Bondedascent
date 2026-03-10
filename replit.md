@@ -40,7 +40,8 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **Styling**: Tailwind CSS, CSS variables for theming, custom fonts (Montserrat, Playfair Display, Inter)
 - **Real-time Interactions**: Server-Sent Events (SSE) for partner-synced features like Live Sessions, Interrogation Mode, Confession Booth, and Whisper Chamber.
 - **Key Features**:
-    - **Command Center**: Multi-window layout with 9 category panels, expandable feed cards, global search, live activity timeline, sparkline trend charts, bulk actions, level-gated feature locks, and adjustable window sizing/ordering (5 size presets: compact/standard/tall/wide/large, with reorder controls and localStorage persistence).
+    - **Command Center**: Multi-window layout with 9 category panels, expandable feed cards, global search, live activity timeline, sparkline trend charts, bulk actions, level-gated feature locks, and adjustable window sizing/ordering (5 size presets: compact/standard/tall/wide/large, with reorder controls and localStorage persistence). DIRECTIVES window shows only one-off tasks; rituals/standing orders moved to Protocol Scroll.
+    - **Protocol Scroll**: 3D scroll-styled section above the Command Center showing all daily/weekly/monthly rituals and standing orders organized by frequency, with completion tracking, streak indicators, and bronze/ember aesthetic. Component: `client/src/components/protocol-scroll.tsx`.
     - **Live Session Engine**: Full-screen immersive session mode with Dom control and Sub receiver views, intensity effects, phase management, and safe word support.
     - **Interrogation Mode**: Dom setup, Sub Q&A, and results.
     - **Confession Booth**: Sub typing and Dom review/response.
