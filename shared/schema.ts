@@ -18,6 +18,10 @@ export const users = pgTable("users", {
   stickerBalance: integer("sticker_balance").notNull().default(0),
   profilePic: text("profile_pic"),
   tutorialCompleted: boolean("tutorial_completed").notNull().default(false),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  levelOverride: integer("level_override"),
+  profileBorder: text("profile_border"),
+  profileBadge: text("profile_badge"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -1090,3 +1094,54 @@ export const tribunals = pgTable("tribunals", {
 export const insertTribunalSchema = createInsertSchema(tribunals).omit({ id: true, createdAt: true, verdict: true, grade: true, sentence: true, plea: true });
 export type Tribunal = typeof tribunals.$inferSelect;
 export type InsertTribunal = z.infer<typeof insertTribunalSchema>;
+
+export const adminSettings = pgTable("admin_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restrictionsEnabled: boolean("restrictions_enabled").notNull().default(true),
+  globalMessage: text("global_message"),
+  maintenanceMode: boolean("maintenance_mode").notNull().default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type AdminSettings = typeof adminSettings.$inferSelect;
+
+export const adminStickers = pgTable("admin_stickers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  emoji: text("emoji").notNull(),
+  category: text("category").notNull().default("general"),
+  rarity: text("rarity").notNull().default("common"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAdminStickerSchema = createInsertSchema(adminStickers).omit({ id: true, createdAt: true });
+export type AdminSticker = typeof adminStickers.$inferSelect;
+export type InsertAdminSticker = z.infer<typeof insertAdminStickerSchema>;
+
+export const trinkets = pgTable("trinkets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  description: text("description"),
+  rarity: text("rarity").notNull().default("common"),
+  imageEmoji: text("image_emoji").notNull(),
+  profileReward: text("profile_reward"),
+  profileRewardType: text("profile_reward_type"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertTrinketSchema = createInsertSchema(trinkets).omit({ id: true, createdAt: true });
+export type Trinket = typeof trinkets.$inferSelect;
+export type InsertTrinket = z.infer<typeof insertTrinketSchema>;
+
+export const userTrinkets = pgTable("user_trinkets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  trinketId: varchar("trinket_id").notNull(),
+  equipped: boolean("equipped").notNull().default(false),
+  earnedAt: timestamp("earned_at").defaultNow(),
+});
+
+export const insertUserTrinketSchema = createInsertSchema(userTrinkets).omit({ id: true, earnedAt: true });
+export type UserTrinket = typeof userTrinkets.$inferSelect;
+export type InsertUserTrinket = z.infer<typeof insertUserTrinketSchema>;

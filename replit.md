@@ -47,7 +47,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
     - **Aftercare Checklist**: Post-session checklist.
     - **Auto-Dom Simulation**: AI-driven task generation at varying intensities and roles.
     - **Reward/Punishment Chests**: UI for managing rewards and punishments.
-    - **Sticker Board**: Three-tab board for Dom notes, achievements, and documents.
+    - **Sticker Board**: Three-tab corkboard (realistic wood frame, cork texture, pushpin/tape graphics, paper shadows) for Dom notes, achievements, and documents. Doubled in visual size.
     - **Devotion Flames**: Visual streak system with animated flame levels.
     - **Whisper Chamber**: Dark, themed messaging overlay with real-time delivery and special message features.
     - **Daily Altar**: 7-day reward cycle with a "Kneel" button and escalating rewards.
@@ -66,6 +66,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **Unlock Registry**: Feature unlock map linked to user levels.
 - **Data Storage**: PostgreSQL with Drizzle ORM.
 - **Media Handling**: Local file storage and metadata management.
+- **Admin System**: Master admin panel at `/admin` for FuckKingMasterCock (isAdmin=true). Global restriction toggles, maintenance mode, user surveillance, per-user level overrides. Admin sticker library (25+ BDSM themed) and trinket library (15+ across rarity tiers). Tables: `adminSettings`, `adminStickers`, `trinkets`, `userTrinkets`. Routes under `/api/admin/*` with `requireAdmin` middleware. Frontend restrictions toggle via `GET /api/restrictions-status` + `useRestrictionsStatus` hook.
 
 ## External Dependencies
 

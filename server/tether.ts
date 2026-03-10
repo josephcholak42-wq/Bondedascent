@@ -92,7 +92,7 @@ async function checkRitualBells() {
               await storage.createPunishment({
                 userId: user.id,
                 assignedBy: partner.id,
-                text: `Missed ritual: ${ritual.title} — 3 consecutive failures`,
+                name: `Missed ritual: ${ritual.title} — 3 consecutive failures`,
                 createdAsRole: "dom",
               });
               await notifyUser(partner.id, `${user.username} missed ${ritual.title} 3 times — punishment auto-assigned`, "ritual_miss", "dom");

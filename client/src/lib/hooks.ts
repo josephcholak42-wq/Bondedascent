@@ -2581,3 +2581,10 @@ export function useRitualHeatmap() {
     queryKey: ["/api/rituals/heatmap"],
   });
 }
+
+export function useRestrictionsStatus() {
+  return useQuery<{ restrictionsEnabled: boolean }>({
+    queryKey: ["/api/restrictions-status"],
+    staleTime: 30000,
+  });
+}

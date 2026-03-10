@@ -65,6 +65,17 @@ interface StickerBoardProps {
   permissionRequests?: PermissionRequest[];
 }
 
+const NOTE_COLORS = [
+  { bg: "#fef3c7", shadow: "#d4a24e", text: "#78350f" },
+  { bg: "#fce7f3", shadow: "#991b1b", text: "#831843" },
+  { bg: "#dbeafe", shadow: "#475569", text: "#1e3a5f" },
+  { bg: "#d1fae5", shadow: "#065f46", text: "#064e3b" },
+  { bg: "#ede9fe", shadow: "#5b21b6", text: "#3b0764" },
+  { bg: "#fff7ed", shadow: "#c2410c", text: "#7c2d12" },
+  { bg: "#fef9c3", shadow: "#854d0e", text: "#713f12" },
+  { bg: "#ffe4e6", shadow: "#be123c", text: "#881337" },
+];
+
 function DomStickersSection({ stickers, isDom, partnerName, userId, onSendSticker, isSending }: {
   stickers: Sticker[];
   isDom: boolean;
@@ -107,7 +118,7 @@ function DomStickersSection({ stickers, isDom, partnerName, userId, onSendSticke
   return (
     <div className="space-y-4">
       {isDom && (
-        <div data-testid="sticker-compose" className="bg-gradient-to-b from-slate-900/80 to-black border border-white/10 rounded-2xl p-4 space-y-3">
+        <div data-testid="sticker-compose" className="bg-gradient-to-b from-slate-900/80 to-black border border-white/10 rounded-2xl p-5 space-y-3">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
             <MessageSquare size={12} />
             Post a Note
@@ -118,7 +129,7 @@ function DomStickersSection({ stickers, isDom, partnerName, userId, onSendSticke
                 key={s.type}
                 data-testid={`sticker-pick-${s.type}`}
                 onClick={() => setSelectedType(s.type)}
-                className={`p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
                   selectedType === s.type
                     ? "scale-110 shadow-lg"
                     : "bg-slate-900/50 border-white/5 hover:border-white/20"
@@ -129,7 +140,7 @@ function DomStickersSection({ stickers, isDom, partnerName, userId, onSendSticke
                   boxShadow: `0 0 12px ${s.border}`,
                 } : undefined}
               >
-                <span className="text-lg">{s.emoji}</span>
+                <span className="text-xl">{s.emoji}</span>
                 <div className="text-[7px] text-slate-500 uppercase mt-0.5">{s.label}</div>
               </button>
             ))}
@@ -155,72 +166,138 @@ function DomStickersSection({ stickers, isDom, partnerName, userId, onSendSticke
       )}
 
       {boardStickers.length === 0 ? (
-        <div data-testid="sticker-board-empty" className="text-center py-8">
-          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-amber-950/20 border border-amber-900/20 flex items-center justify-center">
-            <StickyNote size={24} className="text-amber-800/40" />
+        <div data-testid="sticker-board-empty" className="text-center py-12">
+          <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-amber-950/20 border border-amber-900/20 flex items-center justify-center">
+            <StickyNote size={28} className="text-amber-800/40" />
           </div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">No notes yet</p>
-          <p className="text-[10px] text-slate-600 mt-1">
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">No notes yet</p>
+          <p className="text-xs text-slate-600 mt-1">
             {isDom ? "Pin a sticker note to your Sub's board" : "Your Dom hasn't posted any notes yet"}
           </p>
         </div>
       ) : (
-        <div data-testid="sticker-board-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {boardStickers.map((sticker) => {
-            const style = getStickerStyle(sticker.stickerType);
-            const rotation = (seededRandom(sticker.id) * 6 - 3).toFixed(1);
-            const pinOffset = seededRandom(sticker.id + "pin") * 60 + 20;
+        <div
+          data-testid="sticker-board-grid"
+          className="relative rounded-2xl p-6 sm:p-8 min-h-[500px]"
+          style={{
+            background: `
+              linear-gradient(135deg, #c4956a 0%, #b8845a 20%, #a67548 50%, #c49a6c 80%, #b88c5c 100%)
+            `,
+            boxShadow: `
+              inset 0 2px 8px rgba(0,0,0,0.3),
+              inset 0 -2px 6px rgba(0,0,0,0.2),
+              0 8px 32px rgba(0,0,0,0.4),
+              0 0 0 6px #5c3a1e,
+              0 0 0 8px #3d2512,
+              0 0 0 10px #2a1a0e
+            `,
+            backgroundImage: `
+              url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E"),
+              linear-gradient(135deg, #c4956a 0%, #b8845a 20%, #a67548 50%, #c49a6c 80%, #b88c5c 100%)
+            `,
+          }}
+        >
+          <div
+            className="absolute inset-0 rounded-2xl pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.06), transparent 60%)",
+            }}
+          />
 
-            return (
-              <div
-                key={sticker.id}
-                data-testid={`sticker-note-${sticker.id}`}
-                className="relative group transition-transform hover:scale-105 hover:z-10"
-                style={{ transform: `rotate(${rotation}deg)` }}
-              >
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6 relative z-10">
+            {boardStickers.map((sticker, idx) => {
+              const style = getStickerStyle(sticker.stickerType);
+              const rotation = (seededRandom(sticker.id) * 8 - 4).toFixed(1);
+              const noteColor = NOTE_COLORS[idx % NOTE_COLORS.length];
+              const pinOffsetX = seededRandom(sticker.id + "px") * 40 + 30;
+              const tapeAngle = (seededRandom(sticker.id + "tape") * 30 - 15).toFixed(1);
+              const useTape = seededRandom(sticker.id + "method") > 0.4;
+
+              return (
                 <div
-                  className="absolute top-0 w-3 h-3 rounded-full z-10 shadow-md"
-                  style={{
-                    left: `${pinOffset}%`,
-                    backgroundColor: style.color,
-                    boxShadow: `0 0 6px ${style.color}`,
-                    transform: "translateY(-4px)",
-                  }}
-                />
-                <div
-                  className="rounded-xl p-3.5 pb-2.5 min-h-[100px] flex flex-col justify-between shadow-lg border"
-                  style={{
-                    backgroundColor: style.bg,
-                    borderColor: style.border,
-                    boxShadow: `0 4px 20px ${style.bg}, 0 0 1px ${style.border}`,
-                  }}
+                  key={sticker.id}
+                  data-testid={`sticker-note-${sticker.id}`}
+                  className="relative group transition-transform duration-200 hover:scale-110 hover:z-20"
+                  style={{ transform: `rotate(${rotation}deg)` }}
                 >
-                  <div>
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="text-2xl">{getStickerEmoji(sticker.stickerType)}</span>
+                  {useTape ? (
+                    <div
+                      className="absolute -top-2 left-1/2 -translate-x-1/2 z-20 w-12 h-4"
+                      style={{
+                        background: "linear-gradient(to bottom, rgba(255,255,255,0.35), rgba(255,255,255,0.15))",
+                        borderRadius: "1px",
+                        transform: `rotate(${tapeAngle}deg)`,
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <div
+                        className="absolute -top-1.5 z-20 w-4 h-4 rounded-full"
+                        style={{
+                          left: `${pinOffsetX}%`,
+                          background: `radial-gradient(circle at 35% 35%, ${style.color}, ${style.color}88)`,
+                          boxShadow: `0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.4), 0 0 8px ${style.color}40`,
+                        }}
+                      />
+                      <div
+                        className="absolute -top-0.5 z-10 w-0.5 h-3"
+                        style={{
+                          left: `calc(${pinOffsetX}% + 7px)`,
+                          background: "linear-gradient(to bottom, #666, #444)",
+                          transform: "rotate(-5deg)",
+                        }}
+                      />
+                    </>
+                  )}
+
+                  <div
+                    className="rounded-sm px-4 py-4 min-h-[130px] sm:min-h-[150px] flex flex-col justify-between relative"
+                    style={{
+                      backgroundColor: noteColor.bg,
+                      boxShadow: `3px 4px 12px rgba(0,0,0,0.25), -1px -1px 0 rgba(255,255,255,0.3) inset, 1px 1px 0 rgba(0,0,0,0.05) inset`,
+                      borderBottom: `3px solid rgba(0,0,0,0.08)`,
+                      borderRight: `2px solid rgba(0,0,0,0.05)`,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                      style={{
+                        backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.15) 23px, rgba(0,0,0,0.15) 24px)",
+                      }}
+                    />
+                    <div className="relative z-10">
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-3xl drop-shadow-sm">{getStickerEmoji(sticker.stickerType)}</span>
+                      </div>
+                      {sticker.message && (
+                        <p
+                          data-testid={`sticker-message-${sticker.id}`}
+                          className="text-sm leading-relaxed break-words"
+                          style={{
+                            fontFamily: "'Georgia', 'Palatino', serif",
+                            fontStyle: "italic",
+                            color: noteColor.text,
+                            textShadow: "0 0.5px 0 rgba(255,255,255,0.3)",
+                          }}
+                        >
+                          {sticker.message}
+                        </p>
+                      )}
                     </div>
-                    {sticker.message && (
-                      <p
-                        data-testid={`sticker-message-${sticker.id}`}
-                        className="text-xs text-white/90 leading-relaxed break-words"
-                        style={{ fontFamily: "'Georgia', serif", fontStyle: "italic" }}
-                      >
-                        {sticker.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-2 pt-2 border-t flex items-center justify-between" style={{ borderColor: `${style.color}20` }}>
-                    <span className="text-[8px] font-bold uppercase tracking-widest" style={{ color: `${style.color}80` }}>
-                      {formatDate(sticker.createdAt)}
-                    </span>
-                    <span className="text-[8px] font-bold uppercase tracking-widest" style={{ color: `${style.color}60` }}>
-                      {style.label}
-                    </span>
+                    <div className="relative z-10 mt-3 pt-2 border-t flex items-center justify-between" style={{ borderColor: "rgba(0,0,0,0.1)" }}>
+                      <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "rgba(0,0,0,0.35)" }}>
+                        {formatDate(sticker.createdAt)}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: style.color + "90" }}>
+                        {style.label}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -242,53 +319,67 @@ function AchievementWall({ achievements = [], ratings = [] }: { achievements?: A
 
   if (displayItems.length === 0 && highRatedCount === 0) {
     return (
-      <div data-testid="achievement-wall-empty" className="text-center py-8">
-        <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-amber-950/20 border border-amber-900/20 flex items-center justify-center">
-          <Trophy size={24} className="text-amber-800/40" />
+      <div data-testid="achievement-wall-empty" className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-amber-950/20 border border-amber-900/20 flex items-center justify-center">
+          <Trophy size={28} className="text-amber-800/40" />
         </div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">No achievements yet</p>
-        <p className="text-[10px] text-slate-600 mt-1">Complete feats to earn trophies</p>
+        <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">No achievements yet</p>
+        <p className="text-xs text-slate-600 mt-1">Complete feats to earn trophies</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {highRatedCount > 0 && (
-        <div data-testid="text-high-rated-count" className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-950/30 to-transparent border border-amber-900/20 rounded-xl">
-          <Star size={14} className="text-amber-400" />
-          <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">{highRatedCount} highly-rated performance{highRatedCount !== 1 ? "s" : ""}</span>
+        <div data-testid="text-high-rated-count" className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-950/30 to-transparent border border-amber-900/20 rounded-xl">
+          <Star size={16} className="text-amber-400" />
+          <span className="text-xs font-bold text-amber-400 uppercase tracking-widest">{highRatedCount} highly-rated performance{highRatedCount !== 1 ? "s" : ""}</span>
         </div>
       )}
-      <div data-testid="achievement-wall-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {displayItems.map((item) => {
-          const tierStyle = TIER_COLORS[item.tier] || TIER_COLORS.bronze;
-          return (
-            <div
-              key={item.id}
-              data-testid={`achievement-card-${item.id}`}
-              className="relative group rounded-xl p-3 border transition-all hover:scale-105 hover:z-10"
-              style={{
-                backgroundColor: tierStyle.bg,
-                borderColor: tierStyle.border,
-                boxShadow: `0 4px 16px ${tierStyle.bg}`,
-              }}
-            >
-              <div className="text-center">
-                <span className="text-2xl block mb-1.5">{tierStyle.icon}</span>
-                <div className="text-[11px] font-black text-white uppercase tracking-wider leading-tight">{item.name}</div>
-                {item.description && (
-                  <p className="text-[9px] text-white/50 mt-1 leading-relaxed">{item.description}</p>
-                )}
-                <div className="mt-2 pt-1.5 border-t" style={{ borderColor: `${tierStyle.color}25` }}>
-                  <span className="text-[7px] font-bold uppercase tracking-widest" style={{ color: tierStyle.color }}>
-                    {item.tier}
-                  </span>
+      <div
+        className="relative rounded-2xl p-6 sm:p-8 min-h-[400px]"
+        style={{
+          background: "linear-gradient(180deg, #1a0f05 0%, #0d0804 100%)",
+          boxShadow: "inset 0 2px 12px rgba(212,162,78,0.08), 0 0 0 1px rgba(212,162,78,0.15)",
+        }}
+      >
+        <div data-testid="achievement-wall-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+          {displayItems.map((item) => {
+            const tierStyle = TIER_COLORS[item.tier] || TIER_COLORS.bronze;
+            return (
+              <div
+                key={item.id}
+                data-testid={`achievement-card-${item.id}`}
+                className="relative group transition-all duration-300 hover:scale-105 hover:z-10"
+              >
+                <div
+                  className="rounded-xl p-5 border-2 relative overflow-hidden"
+                  style={{
+                    background: `linear-gradient(145deg, ${tierStyle.bg} 0%, rgba(0,0,0,0.6) 100%)`,
+                    borderColor: tierStyle.border,
+                    boxShadow: `0 4px 20px ${tierStyle.bg}, 0 0 30px ${tierStyle.color}15, inset 0 1px 0 rgba(255,255,255,0.08)`,
+                  }}
+                >
+                  <div className="absolute top-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${tierStyle.color}40, transparent)` }} />
+                  <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${tierStyle.color}20, transparent)` }} />
+                  <div className="text-center">
+                    <span className="text-4xl block mb-2 drop-shadow-lg">{tierStyle.icon}</span>
+                    <div className="text-sm font-black text-white uppercase tracking-wider leading-tight">{item.name}</div>
+                    {item.description && (
+                      <p className="text-[10px] text-white/50 mt-2 leading-relaxed">{item.description}</p>
+                    )}
+                    <div className="mt-3 pt-2 border-t" style={{ borderColor: `${tierStyle.color}25` }}>
+                      <span className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: tierStyle.color }}>
+                        {item.tier}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -362,11 +453,11 @@ function DocumentsWall({ limits = [], contracts = [], desiredChanges = [], permi
 
   const getDocIcon = (type: string) => {
     switch (type) {
-      case "limit": return <Shield size={12} className="text-red-400" />;
-      case "contract": return <ScrollText size={12} className="text-amber-400" />;
-      case "desired-change": return <Scale size={12} className="text-blue-400" />;
-      case "permission": return <FileText size={12} className="text-green-400" />;
-      default: return <FileText size={12} className="text-slate-400" />;
+      case "limit": return <Shield size={14} className="text-red-400" />;
+      case "contract": return <ScrollText size={14} className="text-amber-400" />;
+      case "desired-change": return <Scale size={14} className="text-[#b87333]" />;
+      case "permission": return <FileText size={14} className="text-slate-400" />;
+      default: return <FileText size={14} className="text-slate-400" />;
     }
   };
 
@@ -380,51 +471,68 @@ function DocumentsWall({ limits = [], contracts = [], desiredChanges = [], permi
     }
   };
 
+  const getDocStamp = (type: string) => {
+    switch (type) {
+      case "limit": return { text: "RESTRICTED", color: "#dc2626" };
+      case "contract": return { text: "BINDING", color: "#d4a24e" };
+      case "desired-change": return { text: "APPROVED", color: "#b87333" };
+      case "permission": return { text: "GRANTED", color: "#64748b" };
+      default: return { text: "FILED", color: "#64748b" };
+    }
+  };
+
   if (documents.length === 0) {
     return (
-      <div data-testid="documents-wall-empty" className="text-center py-8">
-        <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-slate-900/40 border border-slate-800/30 flex items-center justify-center">
-          <FileText size={24} className="text-slate-700" />
+      <div data-testid="documents-wall-empty" className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-slate-900/40 border border-slate-800/30 flex items-center justify-center">
+          <FileText size={28} className="text-slate-700" />
         </div>
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">No documents filed</p>
-        <p className="text-[10px] text-slate-600 mt-1">Limits, contracts, and decisions appear here</p>
+        <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">No documents filed</p>
+        <p className="text-xs text-slate-600 mt-1">Limits, contracts, and decisions appear here</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {expandedDoc && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setExpandedDoc(null)}>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setExpandedDoc(null)}>
           <div
             data-testid={`document-expanded-${expandedDoc}`}
-            className="max-w-md w-full max-h-[80vh] overflow-y-auto rounded-xl p-6 relative"
+            className="max-w-lg w-full max-h-[80vh] overflow-y-auto rounded-sm p-8 relative"
             style={{
               background: "linear-gradient(145deg, #f5f0e8 0%, #e8e0d0 30%, #f0ead8 70%, #e5dcc8 100%)",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3)",
+              boxShadow: "0 25px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.3), 4px 4px 0 rgba(0,0,0,0.1)",
               transform: "rotate(-0.5deg)",
             }}
             onClick={e => e.stopPropagation()}
           >
+            <div className="absolute top-0 left-0 right-0 h-8" style={{ background: "repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(0,0,0,0.03) 6px, rgba(0,0,0,0.03) 7px)" }} />
             <button
               data-testid="button-close-document"
               onClick={() => setExpandedDoc(null)}
-              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-colors cursor-pointer"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-colors cursor-pointer"
             >
-              <X size={14} className="text-slate-700" />
+              <X size={16} className="text-slate-700" />
             </button>
             {(() => {
               const doc = documents.find(d => d.id === expandedDoc);
               if (!doc) return null;
+              const stamp = getDocStamp(doc.type);
               return (
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     {getDocIcon(doc.type)}
-                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{getDocLabel(doc.type)}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{getDocLabel(doc.type)}</span>
                   </div>
-                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-wide mb-3" style={{ fontFamily: "'Georgia', serif" }}>{doc.title}</h3>
+                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-wide mb-4" style={{ fontFamily: "'Georgia', serif" }}>{doc.title}</h3>
+                  <div className="absolute top-16 right-8 opacity-20 pointer-events-none" style={{ transform: "rotate(15deg)" }}>
+                    <div className="px-4 py-2 border-4 rounded-sm text-xl font-black uppercase tracking-widest" style={{ borderColor: stamp.color, color: stamp.color }}>
+                      {stamp.text}
+                    </div>
+                  </div>
                   {doc.level && (
-                    <div className="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest mb-3" style={{
+                    <div className="inline-block px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest mb-3" style={{
                       backgroundColor: doc.level === "hard" ? "rgba(220,38,38,0.15)" : doc.level === "soft" ? "rgba(234,179,8,0.15)" : "rgba(148,163,184,0.15)",
                       color: doc.level === "hard" ? "#991b1b" : doc.level === "soft" ? "#92400e" : "#475569",
                     }}>
@@ -432,7 +540,7 @@ function DocumentsWall({ limits = [], contracts = [], desiredChanges = [], permi
                     </div>
                   )}
                   {doc.category && (
-                    <div className="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest mb-3 ml-1 bg-slate-200/60 text-slate-600">
+                    <div className="inline-block px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest mb-3 ml-1 bg-slate-200/60 text-slate-600">
                       {doc.category}
                     </div>
                   )}
@@ -440,9 +548,9 @@ function DocumentsWall({ limits = [], contracts = [], desiredChanges = [], permi
                     {doc.content}
                   </div>
                   {doc.status && (
-                    <div className="mt-4 pt-3 border-t border-slate-300/50 flex items-center justify-between">
-                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Status: {doc.status}</span>
-                      {doc.createdAt && <span className="text-[9px] text-slate-400">{formatDate(doc.createdAt)}</span>}
+                    <div className="mt-5 pt-3 border-t border-slate-300/50 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status: {doc.status}</span>
+                      {doc.createdAt && <span className="text-[10px] text-slate-400">{formatDate(doc.createdAt)}</span>}
                     </div>
                   )}
                 </div>
@@ -452,68 +560,82 @@ function DocumentsWall({ limits = [], contracts = [], desiredChanges = [], permi
         </div>
       )}
 
-      <div data-testid="documents-wall-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {documents.map((doc) => {
-          const rotation = (seededRandom(doc.id) * 4 - 2).toFixed(1);
-          const pinLeft = seededRandom(doc.id + "pin") * 40 + 30;
+      <div
+        className="relative rounded-2xl p-6 sm:p-8 min-h-[400px]"
+        style={{
+          background: `
+            linear-gradient(135deg, #c4956a 0%, #b8845a 20%, #a67548 50%, #c49a6c 80%, #b88c5c 100%)
+          `,
+          boxShadow: `
+            inset 0 2px 8px rgba(0,0,0,0.3),
+            0 8px 32px rgba(0,0,0,0.4),
+            0 0 0 6px #5c3a1e,
+            0 0 0 8px #3d2512
+          `,
+        }}
+      >
+        <div data-testid="documents-wall-grid" className="grid grid-cols-2 sm:grid-cols-3 gap-5 relative z-10">
+          {documents.map((doc) => {
+            const rotation = (seededRandom(doc.id) * 6 - 3).toFixed(1);
+            const pinLeft = seededRandom(doc.id + "pin") * 40 + 30;
+            const stamp = getDocStamp(doc.type);
 
-          return (
-            <button
-              key={doc.id}
-              data-testid={`document-paper-${doc.id}`}
-              onClick={() => setExpandedDoc(doc.id)}
-              className="relative group transition-all hover:scale-105 hover:z-10 text-left cursor-pointer"
-              style={{ transform: `rotate(${rotation}deg)` }}
-            >
-              <div
-                className="absolute -top-1.5 z-10 w-4 h-2 rounded-sm"
-                style={{
-                  left: `${pinLeft}%`,
-                  background: "linear-gradient(to bottom, #8B8B8B, #6B6B6B)",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
-                }}
-              />
-              <div
-                className="absolute -top-1 z-10 w-1.5 h-1.5 rounded-full"
-                style={{
-                  left: `calc(${pinLeft}% + 5px)`,
-                  background: "radial-gradient(circle, #A0A0A0, #707070)",
-                  boxShadow: "0 0 4px rgba(0,0,0,0.3)",
-                }}
-              />
-
-              <div
-                className="rounded-lg p-3 min-h-[90px] flex flex-col justify-between border transition-shadow group-hover:shadow-xl"
-                style={{
-                  background: "linear-gradient(145deg, #f5f0e8 0%, #ebe4d4 50%, #f0ead8 100%)",
-                  borderColor: "rgba(180,170,150,0.4)",
-                  boxShadow: "2px 3px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.4)",
-                }}
+            return (
+              <button
+                key={doc.id}
+                data-testid={`document-paper-${doc.id}`}
+                onClick={() => setExpandedDoc(doc.id)}
+                className="relative group transition-all duration-200 hover:scale-110 hover:z-20 text-left cursor-pointer"
+                style={{ transform: `rotate(${rotation}deg)` }}
               >
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    {getDocIcon(doc.type)}
-                    <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">{getDocLabel(doc.type)}</span>
+                <div
+                  className="absolute -top-2 z-20 w-4 h-4 rounded-full"
+                  style={{
+                    left: `${pinLeft}%`,
+                    background: `radial-gradient(circle at 35% 35%, #B0B0B0, #707070)`,
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.5)",
+                  }}
+                />
+
+                <div
+                  className="rounded-sm p-4 min-h-[120px] sm:min-h-[140px] flex flex-col justify-between relative overflow-hidden"
+                  style={{
+                    background: "linear-gradient(145deg, #f5f0e8 0%, #ebe4d4 50%, #f0ead8 100%)",
+                    boxShadow: "3px 4px 12px rgba(0,0,0,0.25), -1px -1px 0 rgba(255,255,255,0.3) inset",
+                    borderBottom: "3px solid rgba(0,0,0,0.08)",
+                    borderRight: "2px solid rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <div className="absolute top-2 right-2 opacity-10 pointer-events-none" style={{ transform: "rotate(12deg)" }}>
+                    <div className="px-1.5 py-0.5 border-2 rounded-sm text-[8px] font-black uppercase" style={{ borderColor: stamp.color, color: stamp.color }}>
+                      {stamp.text}
+                    </div>
                   </div>
-                  <div className="text-[11px] font-bold text-slate-800 uppercase tracking-wide leading-tight line-clamp-2" style={{ fontFamily: "'Georgia', serif" }}>
-                    {doc.title}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-2">
+                      {getDocIcon(doc.type)}
+                      <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">{getDocLabel(doc.type)}</span>
+                    </div>
+                    <div className="text-xs font-bold text-slate-800 uppercase tracking-wide leading-tight line-clamp-2" style={{ fontFamily: "'Georgia', serif" }}>
+                      {doc.title}
+                    </div>
+                    {doc.level && (
+                      <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[8px] font-bold uppercase" style={{
+                        backgroundColor: doc.level === "hard" ? "rgba(220,38,38,0.12)" : "rgba(234,179,8,0.12)",
+                        color: doc.level === "hard" ? "#991b1b" : "#92400e",
+                      }}>
+                        {doc.level}
+                      </span>
+                    )}
                   </div>
-                  {doc.level && (
-                    <span className="inline-block mt-1 px-1.5 py-0.5 rounded text-[7px] font-bold uppercase" style={{
-                      backgroundColor: doc.level === "hard" ? "rgba(220,38,38,0.12)" : "rgba(234,179,8,0.12)",
-                      color: doc.level === "hard" ? "#991b1b" : "#92400e",
-                    }}>
-                      {doc.level}
-                    </span>
-                  )}
+                  <div className="mt-2 pt-1.5 border-t border-slate-300/30">
+                    <span className="text-[8px] text-slate-500">{formatDate(doc.createdAt)}</span>
+                  </div>
                 </div>
-                <div className="mt-2 pt-1 border-t border-slate-300/30">
-                  <span className="text-[7px] text-slate-500">{formatDate(doc.createdAt)}</span>
-                </div>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -535,22 +657,22 @@ export default function StickerBoard({ stickers, isDom, partnerName, userId, onS
   ];
 
   return (
-    <div data-testid="enhanced-sticker-board" className="space-y-5 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="p-2.5 rounded-xl bg-amber-900/20 border border-amber-700/30">
-          <StickyNote size={20} className="text-amber-400" />
+    <div data-testid="enhanced-sticker-board" className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+      <div className="flex items-center gap-4 mb-3">
+        <div className="p-3 rounded-xl bg-amber-900/20 border border-amber-700/30">
+          <StickyNote size={24} className="text-amber-400" />
         </div>
         <div>
-          <h2 data-testid="text-sticker-board-title" className="text-lg font-black text-white uppercase tracking-wider">
+          <h2 data-testid="text-sticker-board-title" className="text-xl font-black text-white uppercase tracking-wider">
             {isDom ? `${partnerName || "Sub"}'s Board` : "My Board"}
           </h2>
-          <p className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">
+          <p className="text-xs text-slate-500 font-mono uppercase tracking-widest">
             {stickerCount + achievementCount + documentCount} item{(stickerCount + achievementCount + documentCount) !== 1 ? "s" : ""} pinned
           </p>
         </div>
       </div>
 
-      <div className="flex gap-1.5 p-1 bg-black/40 rounded-xl border border-white/5">
+      <div className="flex gap-2 p-1.5 bg-black/40 rounded-xl border border-white/5">
         {sections.map(section => {
           const Icon = section.icon;
           const isActive = activeSection === section.key;
@@ -559,20 +681,19 @@ export default function StickerBoard({ stickers, isDom, partnerName, userId, onS
               key={section.key}
               data-testid={`tab-${section.key}`}
               onClick={() => setActiveSection(section.key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer ${
                 isActive ? "text-white shadow-lg" : "text-slate-500 hover:text-slate-300"
               }`}
               style={isActive ? {
                 backgroundColor: section.bg,
-                boxShadow: `0 0 12px ${section.bg}`,
-                borderColor: `${section.color}40`,
+                boxShadow: `0 0 16px ${section.bg}`,
                 border: `1px solid ${section.color}40`,
               } : undefined}
             >
-              <Icon size={11} />
+              <Icon size={13} />
               <span className="hidden sm:inline">{section.label}</span>
               {section.count > 0 && (
-                <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black" style={{
+                <span className="ml-0.5 px-2 py-0.5 rounded-full text-[9px] font-black" style={{
                   backgroundColor: isActive ? `${section.color}30` : "rgba(255,255,255,0.05)",
                   color: isActive ? section.color : "inherit",
                 }}>

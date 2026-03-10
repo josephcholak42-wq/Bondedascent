@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { SexyIcon } from "@/components/sexy-icon";
 import { UniversalCreator } from "@/components/universal-creator";
 import { feedbackComplete, feedbackUrgent, feedbackDelete, feedbackTap, feedbackPunishment, feedbackReward } from "@/lib/feedback";
+import { useRestrictionsStatus, useAuth } from "@/lib/hooks";
 
 export type FeedItemType =
   | "demand" | "command" | "accusation" | "task"
@@ -295,7 +296,7 @@ function getPinnedIds(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(PINNED_KEY) || "[]")); } catch { return new Set(); }
 }
 function savePinnedIds(ids: Set<string>) {
-  localStorage.setItem(PINNED_KEY, JSON.stringify([...ids]));
+  localStorage.setItem(PINNED_KEY, JSON.stringify(Array.from(ids)));
 }
 
 function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, isSelecting, isSelected, onToggleSelect, onDelete, onEdit, isLive }: {
@@ -425,10 +426,9 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   };
 
   const handleAction = (id: string, action: string, payload?: any) => {
-    const matchedItem = allItems.find(i => i.id === id);
-    if (matchedItem?.type === "punishment" && (action === "complete")) {
+    if (item.type === "punishment" && (action === "complete")) {
       feedbackPunishment();
-    } else if (matchedItem?.type === "reward" && (action === "claim" || action === "redeem")) {
+    } else if (item.type === "reward" && (action === "claim" || action === "redeem")) {
       feedbackReward();
     } else if (action === "toggle" || action === "complete" || action === "approve" || action === "redeem") {
       feedbackComplete();
@@ -779,6 +779,7 @@ export function CommandProtocols({
   stickers, onSendSticker, featureSettings, onToggleFeature, userStats, onCrisisMode, onLaunchOverlay, onCreate,
   onDelete, onEdit, recentActivity, trendData, activeSimulation, userLevel,
 }: CommandProtocolsProps) {
+  const { data: authUser } = useAuth();
   const [filter, setFilter] = useState("all");
   const [commandInput, setCommandInput] = useState("");
   const [demandMessage, setDemandMessage] = useState("");
@@ -842,6 +843,9 @@ export function CommandProtocols({
       .filter(Boolean) as typeof WINDOW_CONFIG_BASE;
   }, [windowOrder]);
 
+  const { data: restrictionsStatus } = useRestrictionsStatus();
+  const restrictionsEnabled = restrictionsStatus?.restrictionsEnabled !== false;
+
   const FEATURE_LEVEL_MAP: Record<string, number> = {
     rituals: 1, standing_orders: 1, limits: 1, permissions: 1, desired_changes: 1,
     live_sessions: 7, interrogation: 5, confessions: 5, aftercare: 1, autodom: 1,
@@ -852,6 +856,7 @@ export function CommandProtocols({
     body_map: 15, dares: 3, stickers: 3, rewards: 3, punishments: 3, punishment_chest: 7, reward_chest: 7,
   };
   const isLocked = (feature: string) => {
+    if (!restrictionsEnabled) return false;
     const required = FEATURE_LEVEL_MAP[feature];
     if (!required || !userLevel) return false;
     return userLevel < required;
@@ -1101,7 +1106,7 @@ export function CommandProtocols({
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600/30 to-red-900/30 border border-red-500/20 flex items-center justify-center relative"
                   style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.4), 0 0 8px rgba(140,15,15,0.15), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 2px rgba(0,0,0,0.3)" }}>
-                  <SexyIcon name={role === "dom" ? "command-center" : "assign-tasks"} size={28} fallbackIcon={<Zap size={20} className="text-red-400" />} />
+                  <SexyIcon name={role === "dom" ? "command-center" : "assign-tasks"} size={28} fallback={<Zap size={20} className="text-red-400" />} />
                 </div>
                 <div>
                   <h2 className="text-base font-black text-white uppercase tracking-[0.12em]" style={{ textShadow: "0 0 20px rgba(140,15,15,0.3), 0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4)" }}>
@@ -1521,7 +1526,7 @@ export function CommandProtocols({
                 <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-slate-300" sexyIcon="secrets" />
                 <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-red-400" sexyIcon="conflicts" />
                 <DrawerFeatureLink icon={<FileSignature size={14} />} label="Contracts" desc="Binding agreements" href="/contracts" color="text-[#d4a24e]" sexyIcon="standing-orders" locked={isLocked("contracts")} requiredLevel={getReqLevel("contracts")} />
-                <DrawerFeatureLink icon={<BookOpen size={14} />} label="Journal" desc="Reflections & logs" href="/secrets" color="text-[#b8845a]" sexyIcon="secrets" />
+                <DrawerFeatureLink icon={<BookOpen size={14} />} label="Journal" desc="Reflections & logs" href="/journal" color="text-[#b8845a]" sexyIcon="journal" />
               </div>
             </FeatureDrawer>
 
@@ -1535,6 +1540,12 @@ export function CommandProtocols({
                 <DrawerFeatureLink icon={<Camera size={14} />} label="Locked Media" desc="Restricted gallery" href="/locked-media" color="text-slate-400" sexyIcon="secrets" />
               </div>
             </FeatureDrawer>
+
+            {authUser?.isAdmin && (
+              <div className="mt-2 pt-2 border-t border-red-500/20">
+                <DrawerFeatureLink icon={<Shield size={14} />} label="Admin Panel" desc="Master controls" href="/admin" color="text-red-500" sexyIcon="config" />
+              </div>
+            )}
           </div>
 
           <div className="px-5 pb-4 space-y-2">

@@ -33,6 +33,7 @@ import SceneScriptsPage from "@/pages/scene-scripts";
 import ContractsPage from "@/pages/contracts";
 import TrainingProgramsPage from "@/pages/training-programs";
 import AnalyticsPage from "@/pages/analytics";
+import AdminPanel from "@/pages/admin-panel";
 import { useAuth } from "@/lib/hooks";
 import { Loader2 } from "lucide-react";
 
@@ -100,6 +101,8 @@ function Router() {
       <Route path="/contracts" component={() => <ProtectedRoute component={ContractsPage} />} />
       <Route path="/training-programs" component={() => <ProtectedRoute component={TrainingProgramsPage} />} />
       <Route path="/analytics" component={() => <ProtectedRoute component={AnalyticsPage} />} />
+      <Route path="/admin" component={() => <ProtectedRoute component={AdminPanel} />} />
+      <Route path="/journal">{() => { window.location.href = "/?view=journal"; return null; }}</Route>
       <Route path="/sub-status" component={() => <ProtectedRoute component={SubStatusPage} />} />
       <Route path="/dom-overview" component={() => <ProtectedRoute component={DomOverviewPage} />} />
       <Route path="/auth" component={AuthRoute} />

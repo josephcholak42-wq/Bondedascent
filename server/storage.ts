@@ -55,11 +55,14 @@ import {
   simulations,
   type Simulation, type InsertSimulation,
   whispers, altarOfferings, notificationPreferences, ritualCompletions, tribunals,
+  adminSettings, adminStickers, trinkets, userTrinkets,
   type Whisper, type InsertWhisper,
   type AltarOffering, type InsertAltarOffering,
   type NotificationPreference, type InsertNotificationPreference,
   type RitualCompletion, type InsertRitualCompletion,
   type Tribunal, type InsertTribunal,
+  type AdminSettings, type AdminSticker, type InsertAdminSticker,
+  type Trinket, type InsertTrinket, type UserTrinket, type InsertUserTrinket,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -1178,7 +1181,7 @@ export class DatabaseStorage implements IStorage {
   }
   async getSensationSpinsForPair(userIds: string[], role?: string): Promise<SensationSpin[]> {
     const conditions = [inArray(sensationSpins.userId, userIds)];
-    if (role) conditions.push(eq(sensationSpins.createdAsRole, role));
+    if (role) conditions.push(eq(sensationSpins.cardType, role));
     return db.select().from(sensationSpins).where(and(...conditions)).orderBy(desc(sensationSpins.createdAt));
   }
 
@@ -1844,6 +1847,100 @@ export class DatabaseStorage implements IStorage {
   // Unlocks
   async getAllUsers(): Promise<User[]> {
     return db.select().from(users);
+  }
+
+  async getAdminSettings(): Promise<AdminSettings | undefined> {
+    const [s] = await db.select().from(adminSettings).limit(1);
+    return s;
+  }
+
+  async updateAdminSettings(data: Partial<AdminSettings>): Promise<AdminSettings | undefined> {
+    const existing = await this.getAdminSettings();
+    if (!existing) {
+      const [created] = await db.insert(adminSettings).values({
+        restrictionsEnabled: data.restrictionsEnabled ?? true,
+        maintenanceMode: data.maintenanceMode ?? false,
+        globalMessage: data.globalMessage ?? null,
+      }).returning();
+      return created;
+    }
+    const [s] = await db.update(adminSettings).set({ ...data, updatedAt: new Date() }).where(eq(adminSettings.id, existing.id)).returning();
+    return s;
+  }
+
+  async getAllUsersAdmin(): Promise<User[]> {
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllSecretsAdmin(): Promise<Secret[]> {
+    return db.select().from(secrets).orderBy(desc(secrets.createdAt));
+  }
+
+  async getAllWhispersAdmin(): Promise<Whisper[]> {
+    return db.select().from(whispers).orderBy(desc(whispers.createdAt));
+  }
+
+  async setUserLevelOverride(userId: string, levelOverride: number | null): Promise<User | undefined> {
+    const [u] = await db.update(users).set({ levelOverride }).where(eq(users.id, userId)).returning();
+    return u;
+  }
+
+  async setUserAdmin(userId: string, isAdmin: boolean): Promise<User | undefined> {
+    const [u] = await db.update(users).set({ isAdmin }).where(eq(users.id, userId)).returning();
+    return u;
+  }
+
+  async getAdminStickers(): Promise<AdminSticker[]> {
+    return db.select().from(adminStickers).orderBy(desc(adminStickers.createdAt));
+  }
+
+  async createAdminSticker(data: InsertAdminSticker): Promise<AdminSticker> {
+    const [s] = await db.insert(adminStickers).values(data).returning();
+    return s;
+  }
+
+  async deleteAdminSticker(id: string): Promise<void> {
+    await db.delete(adminStickers).where(eq(adminStickers.id, id));
+  }
+
+  async getTrinkets(): Promise<Trinket[]> {
+    return db.select().from(trinkets).orderBy(desc(trinkets.createdAt));
+  }
+
+  async createTrinket(data: InsertTrinket): Promise<Trinket> {
+    const [t] = await db.insert(trinkets).values(data).returning();
+    return t;
+  }
+
+  async deleteTrinket(id: string): Promise<void> {
+    await db.delete(trinkets).where(eq(trinkets.id, id));
+  }
+
+  async getUserTrinkets(userId: string): Promise<(UserTrinket & { trinket?: Trinket })[]> {
+    const uts = await db.select().from(userTrinkets).where(eq(userTrinkets.userId, userId)).orderBy(desc(userTrinkets.earnedAt));
+    const allTrinkets = await this.getTrinkets();
+    const trinketMap = new Map(allTrinkets.map(t => [t.id, t]));
+    return uts.map(ut => ({ ...ut, trinket: trinketMap.get(ut.trinketId) }));
+  }
+
+  async awardTrinket(userId: string, trinketId: string): Promise<UserTrinket> {
+    const [ut] = await db.insert(userTrinkets).values({ userId, trinketId }).returning();
+    return ut;
+  }
+
+  async getUserTrinketById(id: string): Promise<UserTrinket | undefined> {
+    const [ut] = await db.select().from(userTrinkets).where(eq(userTrinkets.id, id));
+    return ut;
+  }
+
+  async equipTrinket(id: string, equipped: boolean): Promise<UserTrinket | undefined> {
+    const [ut] = await db.update(userTrinkets).set({ equipped }).where(eq(userTrinkets.id, id)).returning();
+    return ut;
+  }
+
+  async updateUserProfileCustomization(userId: string, data: { profileBorder?: string; profileBadge?: string }): Promise<User | undefined> {
+    const [u] = await db.update(users).set(data).where(eq(users.id, userId)).returning();
+    return u;
   }
 }
 

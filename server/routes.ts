@@ -3404,5 +3404,140 @@ export async function registerRoutes(
     res.json(updated);
   });
 
+  // ============ RESTRICTIONS STATUS (public for logged-in users) ============
+
+  app.get("/api/restrictions-status", requireAuth, async (_req, res) => {
+    const settings = await storage.getAdminSettings();
+    res.json({ restrictionsEnabled: settings?.restrictionsEnabled ?? true });
+  });
+
+  // ============ USER TRINKETS ============
+
+  app.get("/api/trinkets/mine", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const ut = await storage.getUserTrinkets(user.id);
+    res.json(ut);
+  });
+
+  app.post("/api/trinkets/:id/equip", requireAuth, async (req, res) => {
+    const { equipped } = req.body;
+    const authUser = req.user as User;
+    const trinketRecord = await storage.getUserTrinketById(req.params.id as string);
+    if (!trinketRecord || trinketRecord.userId !== authUser.id) {
+      return res.status(403).json({ error: "Not your trinket" });
+    }
+    const result = await storage.equipTrinket(req.params.id as string, equipped !== false);
+    res.json(result);
+  });
+
+  // ============ ADMIN ROUTES ============
+
+  const requireAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const user = req.user as User | undefined;
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  };
+
+  app.get("/api/admin/settings", requireAuth, requireAdmin, async (_req, res) => {
+    const settings = await storage.getAdminSettings();
+    res.json(settings || { restrictionsEnabled: true, maintenanceMode: false });
+  });
+
+  app.put("/api/admin/settings", requireAuth, requireAdmin, async (req, res) => {
+    const { restrictionsEnabled, globalMessage, maintenanceMode } = req.body;
+    const updated = await storage.updateAdminSettings({ restrictionsEnabled, globalMessage, maintenanceMode });
+    res.json(updated);
+  });
+
+  app.get("/api/admin/users", requireAuth, requireAdmin, async (_req, res) => {
+    const allUsers = await storage.getAllUsersAdmin();
+    const sanitized = allUsers.map(u => ({
+      ...u,
+      password: "[HASHED]",
+    }));
+    res.json(sanitized);
+  });
+
+  app.get("/api/admin/secrets", requireAuth, requireAdmin, async (_req, res) => {
+    const allSecrets = await storage.getAllSecretsAdmin();
+    res.json(allSecrets);
+  });
+
+  app.get("/api/admin/whispers", requireAuth, requireAdmin, async (_req, res) => {
+    const allWhispers = await storage.getAllWhispersAdmin();
+    res.json(allWhispers);
+  });
+
+  app.put("/api/admin/users/:id/level-override", requireAuth, requireAdmin, async (req, res) => {
+    const { levelOverride } = req.body;
+    const updated = await storage.setUserLevelOverride(req.params.id as string, levelOverride);
+    res.json(updated);
+  });
+
+  app.get("/api/admin/stickers", requireAuth, requireAdmin, async (_req, res) => {
+    const stickers = await storage.getAdminStickers();
+    res.json(stickers);
+  });
+
+  app.post("/api/admin/stickers", requireAuth, requireAdmin, async (req, res) => {
+    const { name, emoji, category, rarity, description } = req.body;
+    const sticker = await storage.createAdminSticker({ name, emoji, category: category || "general", rarity: rarity || "common", description });
+    res.json(sticker);
+  });
+
+  app.delete("/api/admin/stickers/:id", requireAuth, requireAdmin, async (req, res) => {
+    await storage.deleteAdminSticker(req.params.id as string);
+    res.json({ ok: true });
+  });
+
+  app.get("/api/admin/trinkets", requireAuth, requireAdmin, async (_req, res) => {
+    const t = await storage.getTrinkets();
+    res.json(t);
+  });
+
+  app.post("/api/admin/trinkets", requireAuth, requireAdmin, async (req, res) => {
+    const { name, description, rarity, imageEmoji, profileReward, profileRewardType } = req.body;
+    const trinket = await storage.createTrinket({ name, description, rarity: rarity || "common", imageEmoji, profileReward, profileRewardType });
+    res.json(trinket);
+  });
+
+  app.delete("/api/admin/trinkets/:id", requireAuth, requireAdmin, async (req, res) => {
+    await storage.deleteTrinket(req.params.id as string);
+    res.json({ ok: true });
+  });
+
+  app.post("/api/admin/award-sticker", requireAuth, requireAdmin, async (req, res) => {
+    const { userId, stickerType, message } = req.body;
+    const adminUser = req.user as User;
+    const sticker = await storage.createSticker({
+      senderId: adminUser.id,
+      recipientId: userId,
+      stickerType,
+      message: message || "Awarded by Admin",
+      createdAsRole: "dom",
+    });
+    res.json(sticker);
+  });
+
+  app.post("/api/admin/award-trinket", requireAuth, requireAdmin, async (req, res) => {
+    const { userId, trinketId } = req.body;
+    const ut = await storage.awardTrinket(userId, trinketId);
+    res.json(ut);
+  });
+
+  app.get("/api/admin/activity", requireAuth, requireAdmin, async (_req, res) => {
+    const allUsers = await storage.getAllUsersAdmin();
+    const stats = {
+      totalUsers: allUsers.length,
+      activeUsers: allUsers.filter(u => u.partnerId).length,
+      totalXp: allUsers.reduce((sum, u) => sum + (u.xp || 0), 0),
+      averageLevel: allUsers.length > 0 ? Math.round(allUsers.reduce((sum, u) => sum + (u.level || 1), 0) / allUsers.length * 10) / 10 : 1,
+      adminCount: allUsers.filter(u => u.isAdmin).length,
+    };
+    res.json(stats);
+  });
+
   return httpServer;
 }
