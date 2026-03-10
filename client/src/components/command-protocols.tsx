@@ -42,12 +42,13 @@ export interface FeedItem {
 }
 
 export interface StickerItem {
-  id: number;
+  id: string;
   stickerType: string;
   message?: string | null;
-  senderId?: number;
-  recipientId?: number;
-  createdAt?: string | Date;
+  senderId?: string;
+  recipientId?: string;
+  createdAsRole?: string;
+  createdAt?: string | Date | null;
 }
 
 export interface FeatureSetting {
@@ -553,8 +554,8 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
       onContextMenu={(e) => { if (canNavigate) e.preventDefault(); }}
       onTouchStart={(e) => { onTouchStart(e); startLongPressTouch(e); }}
       onTouchMove={(e) => { onTouchMove(e); moveLongPressTouch(e); }}
-      onTouchEnd={(e) => { if (longPressTriggeredRef.current) { e.preventDefault(); e.stopPropagation(); } else { onTouchEnd(e); } cancelLongPress(); }}
-      onTouchCancel={(e) => { onTouchCancel(e); cancelLongPress(); }}
+      onTouchEnd={(e) => { if (longPressTriggeredRef.current) { e.preventDefault(); e.stopPropagation(); } else { onTouchEnd(); } cancelLongPress(); }}
+      onTouchCancel={() => { onTouchCancel(); cancelLongPress(); }}
       onMouseDown={startLongPressMouse}
       onMouseUp={cancelLongPress}
       onMouseLeave={cancelLongPress}

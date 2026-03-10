@@ -435,7 +435,7 @@ export function usePunishments() {
 export function useCreatePunishment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; targetUserId?: string }) => {
+    mutationFn: async (data: { name: string; targetUserId?: string; category?: string }) => {
       const res = await apiRequest("POST", "/api/punishments", data);
       return res.json();
     },
@@ -454,8 +454,8 @@ export function useJournal() {
 export function useCreateJournal() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (content: string) => {
-      const res = await apiRequest("POST", "/api/journal", { content });
+    mutationFn: async (data: { content: string; mood?: string }) => {
+      const res = await apiRequest("POST", "/api/journal", data);
       return res.json();
     },
     onSuccess: () => {

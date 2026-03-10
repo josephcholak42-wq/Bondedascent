@@ -618,7 +618,7 @@ export default function BondedAscentApp() {
 
   const handleSaveJournal = () => {
     if (!journalContent.trim()) return;
-    createJournalMutation.mutate(journalContent);
+    createJournalMutation.mutate({ content: journalContent });
     setJournalContent("");
   };
 
@@ -697,7 +697,7 @@ export default function BondedAscentApp() {
         onQuickCommand={(msg) => { sendQuickCommandMutation.mutate({ message: msg }); }}
         onDemandTimer={(msg, mins) => { createDemandTimerMutation.mutate({ message: msg, durationSeconds: mins * 60 }); }}
         onToggleLockdown={(locked) => { toggleLockdownMutation.mutate(locked); }}
-        partnerStats={partnerStats}
+        partnerStats={partnerStats ?? undefined}
         partnerPresence={partnerPresence}
         partnerName={partner?.username}
         lockdownStatus={lockdownStatus?.lockedDown ?? false}
@@ -888,12 +888,12 @@ export default function BondedAscentApp() {
       case "dare": spinDareMutation.mutate(); break;
       case "journal": createJournalMutation.mutate({ content: data.text || data.content, mood: data.mood }); break;
       case "checkin": createCheckInMutation.mutate({ mood: data.mood || 5, obedience: data.obedience || 5, notes: data.text || data.notes || "" }); break;
-      case "wager": createWagerMutation.mutate({ title: data.text || data.title, stakes: data.stakes, deadline: data.deadline }); break;
+      case "wager": createWagerMutation.mutate({ title: data.text || data.title, stakes: data.stakes, description: [data.description, data.deadline ? `Deadline: ${data.deadline}` : ""].filter(Boolean).join(" | ") || undefined }); break;
       case "devotion": createDevotionMutation.mutate({ content: data.text || data.description || data.title }); break;
       case "secret": createSecretMutation.mutate({ title: data.title || "Secret", content: data.text || data.content }); break;
       case "limit": createLimitMutation.mutate({ name: data.text || data.name || data.title, level: data.level || data.limitType || "soft", description: data.description }); break;
       case "conflict": createConflictMutation.mutate({ title: data.text || data.title, description: data.description }); break;
-      case "desired_change": createDesiredChangeMutation.mutate({ title: data.text || data.title, description: data.description, priority: data.priority || "medium" }); break;
+      case "desired_change": createDesiredChangeMutation.mutate({ title: data.text || data.title, description: data.description, category: data.priority || data.category || "behavior" }); break;
       case "countdown_event": createCountdownEventMutation.mutate({ title: data.text || data.title, targetDate: data.eventDate || data.targetDate || new Date().toISOString() }); break;
       case "rating": createRatingMutation.mutate({ ratedUserId: partner?.id || "", overall: data.score || 5, notes: data.text || data.notes }); break;
       case "permission_request": createPermissionRequestMutation.mutate({ title: data.text || data.title, description: data.reason || data.description }); break;
@@ -1565,7 +1565,7 @@ export default function BondedAscentApp() {
     if (activeView === "resume") {
       const handleShareActivity = async () => {
         const lines = activityLog.slice(0, 20).map((log) => {
-          const date = new Date(log.createdAt).toLocaleString();
+          const date = new Date(log.createdAt || Date.now()).toLocaleString();
           const action = log.action.replace(/_/g, " ").toUpperCase();
           return `[${date}] ${action}${log.detail ? ` — ${log.detail}` : ""}`;
         });
@@ -5394,7 +5394,7 @@ function NotificationPreferencesPanel() {
           <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">{label}</span>
           <button
             data-testid={`toggle-${key}`}
-            onClick={() => updatePrefs.mutate({ [key]: !(prefs as any)?.[key] ?? false })}
+            onClick={() => updatePrefs.mutate({ [key]: !((prefs as any)?.[key] ?? false) })}
             className={`w-10 h-5 rounded-full transition-all relative ${
               (prefs as any)?.[key] !== false
                 ? "bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.5)]"
