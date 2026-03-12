@@ -271,6 +271,7 @@ import StickerBoard from "@/components/sticker-board";
 import RewardChest from "@/components/reward-chest";
 import PunishmentChest from "@/components/punishment-chest";
 import ConsequencePanels from "@/components/consequence-panels";
+import ConsequenceSpirits from "@/components/consequence-spirits";
 import DailyAltar from "@/components/daily-altar";
 import { DevotionFlames, useDevotionFlames } from "@/components/devotion-flames";
 import WhisperChamber from "@/components/whisper-chamber";
@@ -2007,6 +2008,15 @@ export default function BondedAscentApp() {
             {renderContent()}
           </div>
         </div>
+
+        {activeView === "dashboard" && (
+          <ConsequenceSpirits
+            activePunishments={(punishments || []).filter((p: any) => p.status !== "completed").length}
+            activeRewards={(rewards || []).filter((r: any) => !r.redeemed && !r.claimedAt).length}
+            onPunishmentClick={() => navigateView("punishments")}
+            onRewardClick={() => navigateView("reward-chest")}
+          />
+        )}
 
         <div className="md:hidden absolute bottom-0 w-full bg-black/90 backdrop-blur-xl border-t border-white/10 p-2 pb-6 flex justify-around items-end z-30">
           <MobileNavIcon
