@@ -270,6 +270,7 @@ import AutoDomSimulation from "@/components/auto-dom-simulation";
 import StickerBoard from "@/components/sticker-board";
 import RewardChest from "@/components/reward-chest";
 import PunishmentChest from "@/components/punishment-chest";
+import ConsequencePanels from "@/components/consequence-panels";
 import DailyAltar from "@/components/daily-altar";
 import { DevotionFlames, useDevotionFlames } from "@/components/devotion-flames";
 import WhisperChamber from "@/components/whisper-chamber";
@@ -698,6 +699,14 @@ export default function BondedAscentApp() {
         role="dom"
         onComplete={handleScrollComplete}
       />
+      <ConsequencePanels
+        punishments={punishments || []}
+        rewards={rewards || []}
+        dares={dares || []}
+        role="dom"
+        onOpenPunishmentChest={() => navigateView("punishment-chest")}
+        onOpenRewardChest={() => navigateView("reward-chest")}
+      />
       <CommandProtocols
         role="dom"
         feedItems={buildDomFeedItems()}
@@ -774,14 +783,8 @@ export default function BondedAscentApp() {
     tasks.filter((t: any) => !t.done).forEach((t) => {
       items.push({ id: t.id, type: "task", title: t.text, data: t, createdAt: (t as any).createdAt });
     });
-    (punishments || []).filter((p: any) => p.userId === user?.id).filter((p: any) => p.status !== "completed").forEach((p: any) => {
-      items.push({ id: p.id, type: "punishment", title: p.name, description: p.category ? `${p.category} · ${p.status || ""}` : p.status, data: p, createdAt: p.createdAt });
-    });
     dares.filter((d: any) => !d.completed).forEach((d: any) => {
       items.push({ id: d.id, type: "dare", title: d.text, data: d, createdAt: d.createdAt });
-    });
-    (rewards || []).filter((r: any) => r.userId === user?.id).filter((r: any) => !r.redeemed && !r.claimedAt).forEach((r: any) => {
-      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.filter((n: any) => n.type === "partner_activity").slice(0, 15).forEach((n) => {
       items.push({ id: n.id, type: "partner_activity" as any, title: n.text, data: n, createdAt: (n as any).createdAt });
@@ -820,12 +823,6 @@ export default function BondedAscentApp() {
     });
     (partnerTasks || []).filter((t: any) => !t.done).forEach((t: any) => {
       items.push({ id: t.id, type: "task", title: t.text, description: t.done ? "Completed" : "Assigned", data: { ...t, isPartnerTask: true }, createdAt: t.createdAt });
-    });
-    (punishments || []).filter((p: any) => p.status !== "completed").forEach((p: any) => {
-      items.push({ id: p.id, type: "punishment", title: p.name, description: `${p.status || "active"} · ${p.category || ""}`, data: p, createdAt: p.createdAt });
-    });
-    (rewards || []).filter((r: any) => !r.redeemed && !r.claimedAt).forEach((r: any) => {
-      items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
     notifications.filter((n: any) => n.type === "partner_activity").slice(0, 15).forEach((n) => {
       items.push({ id: n.id, type: "partner_activity" as any, title: n.text, data: n, createdAt: (n as any).createdAt });
@@ -1033,6 +1030,16 @@ export default function BondedAscentApp() {
             tasks={tasks}
             role="sub"
             onComplete={handleScrollComplete}
+          />
+          <ConsequencePanels
+            punishments={punishments || []}
+            rewards={rewards || []}
+            dares={dares || []}
+            role="sub"
+            onCompletePunishment={(id) => updatePunishmentStatusMutation.mutate({ punishmentId: id, status: "completed" })}
+            onRedeemReward={(id) => toggleRewardMutation.mutate(id)}
+            onCompleteDare={(id) => completeDareMutation.mutate(id)}
+            onOpenRewardChest={() => navigateView("reward-chest")}
           />
           <CommandProtocols
             role="sub"
