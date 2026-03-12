@@ -270,7 +270,6 @@ import AutoDomSimulation from "@/components/auto-dom-simulation";
 import StickerBoard from "@/components/sticker-board";
 import RewardChest from "@/components/reward-chest";
 import PunishmentChest from "@/components/punishment-chest";
-import ConsequencePanels from "@/components/consequence-panels";
 import ConsequenceSpirits from "@/components/consequence-spirits";
 import DailyAltar from "@/components/daily-altar";
 import { DevotionFlames, useDevotionFlames } from "@/components/devotion-flames";
@@ -700,14 +699,6 @@ export default function BondedAscentApp() {
         role="dom"
         onComplete={handleScrollComplete}
       />
-      <ConsequencePanels
-        punishments={punishments || []}
-        rewards={rewards || []}
-        dares={dares || []}
-        role="dom"
-        onOpenPunishmentChest={() => navigateView("punishment-chest")}
-        onOpenRewardChest={() => navigateView("reward-chest")}
-      />
       <CommandProtocols
         role="dom"
         feedItems={buildDomFeedItems()}
@@ -1031,16 +1022,6 @@ export default function BondedAscentApp() {
             tasks={tasks}
             role="sub"
             onComplete={handleScrollComplete}
-          />
-          <ConsequencePanels
-            punishments={punishments || []}
-            rewards={rewards || []}
-            dares={dares || []}
-            role="sub"
-            onCompletePunishment={(id) => updatePunishmentStatusMutation.mutate({ punishmentId: id, status: "completed" })}
-            onRedeemReward={(id) => toggleRewardMutation.mutate(id)}
-            onCompleteDare={(id) => completeDareMutation.mutate(id)}
-            onOpenRewardChest={() => navigateView("reward-chest")}
           />
           <CommandProtocols
             role="sub"
