@@ -9,122 +9,58 @@ interface ConsequenceSpiritsProps {
 
 function DevilIcon({ animate }: { animate: boolean }) {
   return (
-    <svg viewBox="0 0 80 80" className="w-full h-full" style={{ filter: animate ? "drop-shadow(0 0 8px rgba(220,38,38,0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.8))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
+    <svg viewBox="0 0 80 100" className="w-full h-full" style={{ filter: animate ? "drop-shadow(0 0 8px rgba(220,38,38,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.7))" : "drop-shadow(0 2px 3px rgba(0,0,0,0.5))" }}>
       <defs>
-        <radialGradient id="devil-skin" cx="50%" cy="40%" r="55%">
-          <stop offset="0%" stopColor="#c0392b" />
-          <stop offset="50%" stopColor="#8b1a1a" />
-          <stop offset="100%" stopColor="#4a0e0e" />
-        </radialGradient>
-        <radialGradient id="devil-skin-highlight" cx="35%" cy="30%" r="40%">
-          <stop offset="0%" stopColor="#e74c3c" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <radialGradient id="devil-eye-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ffcc00" />
-          <stop offset="40%" stopColor="#ff6600" />
-          <stop offset="100%" stopColor="#cc3300" />
-        </radialGradient>
-        <linearGradient id="horn-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1a0a0a" />
-          <stop offset="30%" stopColor="#3d1111" />
-          <stop offset="60%" stopColor="#5c1a1a" />
-          <stop offset="100%" stopColor="#2a0505" />
+        <linearGradient id="devil-body" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#dc2626" />
+          <stop offset="100%" stopColor="#7f1d1d" />
         </linearGradient>
-        <radialGradient id="devil-nose-shadow" cx="50%" cy="60%" r="50%">
-          <stop offset="0%" stopColor="#6b1515" />
-          <stop offset="100%" stopColor="#4a0e0e" />
-        </radialGradient>
-        <filter id="devil-inner-shadow">
-          <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-          <feOffset dx="0" dy="1" result="offset" />
-          <feComposite in="SourceGraphic" in2="offset" operator="over" />
-        </filter>
+        <linearGradient id="devil-flame" x1="0.5" y1="1" x2="0.5" y2="0">
+          <stop offset="0%" stopColor="#dc2626" />
+          <stop offset="50%" stopColor="#ef4444" />
+          <stop offset="100%" stopColor="#fbbf24" />
+        </linearGradient>
       </defs>
 
       <g>
-        {animate && <animateTransform attributeName="transform" type="rotate" values="-1,40,40;1,40,40;-1,40,40" dur="2.5s" repeatCount="indefinite" />}
+        {animate && <animateTransform attributeName="transform" type="rotate" values="-1,40,55;1,40,55;-1,40,55" dur="2s" repeatCount="indefinite" />}
 
-        <path d="M18 22 C16 8, 22 2, 26 6 C28 8, 27 14, 28 22" fill="url(#horn-grad)" stroke="#1a0505" strokeWidth="0.8">
-          {animate && <animateTransform attributeName="transform" type="rotate" values="-2,23,22;2,23,22;-2,23,22" dur="1.5s" repeatCount="indefinite" />}
-        </path>
-        <path d="M18.5 20 C19 14, 22 10, 24 12" fill="none" stroke="#5c1a1a" strokeWidth="0.4" opacity="0.4" />
+        <circle cx="40" cy="18" r="7" fill="url(#devil-body)" />
 
-        <path d="M62 22 C64 8, 58 2, 54 6 C52 8, 53 14, 52 22" fill="url(#horn-grad)" stroke="#1a0505" strokeWidth="0.8">
-          {animate && <animateTransform attributeName="transform" type="rotate" values="2,57,22;-2,57,22;2,57,22" dur="1.5s" repeatCount="indefinite" />}
-        </path>
-        <path d="M61.5 20 C61 14, 58 10, 56 12" fill="none" stroke="#5c1a1a" strokeWidth="0.4" opacity="0.4" />
-
-        <ellipse cx="40" cy="42" rx="20" ry="22" fill="url(#devil-skin)" stroke="#3d0808" strokeWidth="0.5" />
-        <ellipse cx="40" cy="42" rx="20" ry="22" fill="url(#devil-skin-highlight)" />
-
-        <ellipse cx="40" cy="44" rx="18" ry="16" fill="none" stroke="#2a0505" strokeWidth="0.3" opacity="0.2" />
-
-        <path d="M30 28 C30 28, 24 26, 22 30" fill="none" stroke="#2a0505" strokeWidth="1.5" strokeLinecap="round">
-          {animate && <animate attributeName="d" values="M30 28 C30 28, 24 26, 22 30;M30 27 C30 27, 24 24, 22 28;M30 28 C30 28, 24 26, 22 30" dur="3s" repeatCount="indefinite" />}
-        </path>
-        <path d="M50 28 C50 28, 56 26, 58 30" fill="none" stroke="#2a0505" strokeWidth="1.5" strokeLinecap="round">
-          {animate && <animate attributeName="d" values="M50 28 C50 28, 56 26, 58 30;M50 27 C50 27, 56 24, 58 28;M50 28 C50 28, 56 26, 58 30" dur="3s" repeatCount="indefinite" />}
+        <path d="M36 12 Q38 2, 40 6 Q42 2, 44 12" fill="url(#devil-flame)">
+          {animate && (
+            <animate attributeName="d" values="M36 12 Q38 2, 40 6 Q42 2, 44 12;M36 12 Q37 0, 40 5 Q43 0, 44 12;M36 12 Q38 2, 40 6 Q42 2, 44 12" dur="0.6s" repeatCount="indefinite" />
+          )}
         </path>
 
-        <ellipse cx="33" cy="35" rx="5" ry="4" fill="#1a0505" />
-        <ellipse cx="33" cy="35" rx="4" ry="3.5" fill="url(#devil-eye-glow)">
-          {animate && <animate attributeName="ry" values="3.5;1.5;3.5" dur="4s" repeatCount="indefinite" />}
-        </ellipse>
-        <ellipse cx="33" cy="34.5" rx="2" ry="2.5" fill="#111">
-          {animate && <animate attributeName="ry" values="2.5;1;2.5" dur="4s" repeatCount="indefinite" />}
-        </ellipse>
-        <circle cx="31.5" cy="33.5" r="0.8" fill="#fff" opacity="0.8" />
+        <path d="M40 25 C40 25, 36 30, 34 50 C33 58, 34 62, 34 70" fill="none" stroke="url(#devil-body)" strokeWidth="5" strokeLinecap="round" />
+        <path d="M40 25 C40 25, 44 30, 46 50 C47 58, 46 62, 46 70" fill="none" stroke="url(#devil-body)" strokeWidth="5" strokeLinecap="round" />
 
-        <ellipse cx="47" cy="35" rx="5" ry="4" fill="#1a0505" />
-        <ellipse cx="47" cy="35" rx="4" ry="3.5" fill="url(#devil-eye-glow)">
-          {animate && <animate attributeName="ry" values="3.5;1.5;3.5" dur="4s" begin="0.15s" repeatCount="indefinite" />}
-        </ellipse>
-        <ellipse cx="47" cy="34.5" rx="2" ry="2.5" fill="#111">
-          {animate && <animate attributeName="ry" values="2.5;1;2.5" dur="4s" begin="0.15s" repeatCount="indefinite" />}
-        </ellipse>
-        <circle cx="45.5" cy="33.5" r="0.8" fill="#fff" opacity="0.8" />
-
-        <ellipse cx="40" cy="43" rx="3" ry="2" fill="url(#devil-nose-shadow)" />
-        <ellipse cx="40" cy="43" rx="2.5" ry="1.5" fill="#7a1c1c" />
-        <ellipse cx="38.5" cy="43.5" rx="0.8" ry="0.6" fill="#3d0808" />
-        <ellipse cx="41.5" cy="43.5" rx="0.8" ry="0.6" fill="#3d0808" />
-
-        <path d="M33 49 C33 49, 36 51, 40 51 C44 51, 47 49, 47 49" fill="none" stroke="#3d0808" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M34 50 Q40 55 46 50" fill="#2a0505" stroke="none">
-          {animate && <animate attributeName="d" values="M34 50 Q40 55 46 50;M34 49.5 Q40 56 46 49.5;M34 50 Q40 55 46 50" dur="3s" repeatCount="indefinite" />}
+        <path d="M34 70 C33 75, 30 82, 28 88" fill="none" stroke="url(#devil-body)" strokeWidth="4.5" strokeLinecap="round">
+          {animate && <animate attributeName="d" values="M34 70 C33 75, 30 82, 28 88;M34 70 C33 75, 31 82, 29 88;M34 70 C33 75, 30 82, 28 88" dur="1.5s" repeatCount="indefinite" />}
         </path>
-        <path d="M35 50 L36 48 L37.5 50 L39 48 L40.5 50 L42 48 L43.5 50 L45 48" fill="none" stroke="#ddd" strokeWidth="0.5" opacity="0.7" />
-
-        <path d="M23 41 C20 39, 18 41, 19 43" fill="none" stroke="#6b1515" strokeWidth="0.6" opacity="0.4" />
-        <path d="M57 41 C60 39, 62 41, 61 43" fill="none" stroke="#6b1515" strokeWidth="0.6" opacity="0.4" />
-
-        <path d="M40 64 Q42 70, 38 72 Q34 74, 32 71 Q30 68, 33 66 Q36 64, 38 67 L40 64" fill="#6b1515" stroke="#3d0808" strokeWidth="0.6">
-          {animate && <animateTransform attributeName="transform" type="rotate" values="-10,40,64;15,40,64;-10,40,64" dur="1.8s" repeatCount="indefinite" />}
+        <path d="M46 70 C47 75, 50 82, 52 88" fill="none" stroke="url(#devil-body)" strokeWidth="4.5" strokeLinecap="round">
+          {animate && <animate attributeName="d" values="M46 70 C47 75, 50 82, 52 88;M46 70 C47 75, 49 82, 51 88;M46 70 C47 75, 50 82, 52 88" dur="1.5s" begin="0.2s" repeatCount="indefinite" />}
         </path>
-        <circle cx="32" cy="72" r="2.5" fill="#8b1a1a" stroke="#3d0808" strokeWidth="0.5">
-          {animate && <animateTransform attributeName="transform" type="rotate" values="-10,40,64;15,40,64;-10,40,64" dur="1.8s" repeatCount="indefinite" />}
-        </circle>
 
-        <path d="M28 55 C26 56, 25 55, 25.5 53" fill="none" stroke="#4a0e0e" strokeWidth="0.4" opacity="0.3" />
-        <path d="M52 55 C54 56, 55 55, 54.5 53" fill="none" stroke="#4a0e0e" strokeWidth="0.4" opacity="0.3" />
+        <path d="M36 35 C32 32, 24 34, 20 44 C18 50, 22 52, 24 48" fill="none" stroke="url(#devil-body)" strokeWidth="4" strokeLinecap="round">
+          {animate && <animateTransform attributeName="transform" type="rotate" values="0,36,35;-3,36,35;0,36,35" dur="2s" repeatCount="indefinite" />}
+        </path>
 
-        {animate && (
-          <>
-            <circle cx="25" cy="60" r="0.5" fill="#ff4444" opacity="0">
-              <animate attributeName="opacity" values="0;0.6;0" dur="2s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="62;56" dur="2s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="55" cy="58" r="0.4" fill="#ff6600" opacity="0">
-              <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" begin="0.7s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="60;54" dur="2.5s" begin="0.7s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="40" cy="68" r="0.3" fill="#ff3333" opacity="0">
-              <animate attributeName="opacity" values="0;0.4;0" dur="3s" begin="1.2s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="70;64" dur="3s" begin="1.2s" repeatCount="indefinite" />
-            </circle>
-          </>
-        )}
+        <g>
+          {animate && <animateTransform attributeName="transform" type="rotate" values="0,44,35;4,44,35;0,44,35;-2,44,35;0,44,35" dur="1.8s" repeatCount="indefinite" />}
+          <path d="M44 35 C48 32, 52 30, 54 28" fill="none" stroke="url(#devil-body)" strokeWidth="4" strokeLinecap="round" />
+          <line x1="54" y1="28" x2="54" y2="65" stroke="url(#devil-body)" strokeWidth="2.5" strokeLinecap="round" />
+          <path d="M51 30 L54 26 L57 30" fill="none" stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M51.5 33 L54 29 L56.5 33" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </g>
+
+        <path d="M40 70 C42 74, 50 78, 56 74 C60 72, 62 68, 58 66" fill="none" stroke="url(#devil-body)" strokeWidth="2.5" strokeLinecap="round">
+          {animate && <animateTransform attributeName="transform" type="rotate" values="-3,40,70;5,40,70;-3,40,70" dur="1.6s" repeatCount="indefinite" />}
+        </path>
+        <path d="M58 66 L62 62 L56 64 Z" fill="#dc2626">
+          {animate && <animateTransform attributeName="transform" type="rotate" values="-3,40,70;5,40,70;-3,40,70" dur="1.6s" repeatCount="indefinite" />}
+        </path>
       </g>
     </svg>
   );
@@ -132,143 +68,79 @@ function DevilIcon({ animate }: { animate: boolean }) {
 
 function AngelIcon({ animate }: { animate: boolean }) {
   return (
-    <svg viewBox="0 0 80 80" className="w-full h-full" style={{ filter: animate ? "drop-shadow(0 0 8px rgba(212,162,78,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+    <svg viewBox="0 0 80 100" className="w-full h-full" style={{ filter: animate ? "drop-shadow(0 0 8px rgba(212,162,78,0.5)) drop-shadow(0 2px 4px rgba(0,0,0,0.6))" : "drop-shadow(0 2px 3px rgba(0,0,0,0.4))" }}>
       <defs>
-        <radialGradient id="angel-skin" cx="50%" cy="38%" r="55%">
-          <stop offset="0%" stopColor="#f5e6d0" />
-          <stop offset="40%" stopColor="#e8d0b0" />
-          <stop offset="100%" stopColor="#c4a882" />
-        </radialGradient>
-        <radialGradient id="angel-skin-highlight" cx="38%" cy="30%" r="35%">
-          <stop offset="0%" stopColor="#fff5e6" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <radialGradient id="angel-eye" cx="50%" cy="45%" r="50%">
-          <stop offset="0%" stopColor="#4a90d9" />
-          <stop offset="60%" stopColor="#2563eb" />
-          <stop offset="100%" stopColor="#1e3a5f" />
-        </radialGradient>
-        <linearGradient id="halo-grad" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#d4a24e" stopOpacity="0.3" />
-          <stop offset="25%" stopColor="#f0d68a" />
+        <linearGradient id="angel-body" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#d4a24e" />
+          <stop offset="100%" stopColor="#92400e" />
+        </linearGradient>
+        <linearGradient id="angel-wing" x1="1" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f0d68a" />
           <stop offset="50%" stopColor="#d4a24e" />
-          <stop offset="75%" stopColor="#f0d68a" />
-          <stop offset="100%" stopColor="#d4a24e" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#92400e" />
         </linearGradient>
-        <radialGradient id="halo-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#f0d68a" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
-        <linearGradient id="wing-grad-l" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f5f0e8" stopOpacity="0.9" />
-          <stop offset="50%" stopColor="#e0d5c5" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#c4b8a5" stopOpacity="0.5" />
+        <linearGradient id="angel-halo" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#d4a24e" stopOpacity="0.4" />
+          <stop offset="50%" stopColor="#f0d68a" />
+          <stop offset="100%" stopColor="#d4a24e" stopOpacity="0.4" />
         </linearGradient>
-        <linearGradient id="wing-grad-r" x1="1" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f5f0e8" stopOpacity="0.9" />
-          <stop offset="50%" stopColor="#e0d5c5" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#c4b8a5" stopOpacity="0.5" />
-        </linearGradient>
-        <radialGradient id="cheek-blush" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#e8a0a0" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="transparent" />
-        </radialGradient>
       </defs>
 
       <g>
-        {animate && <animateTransform attributeName="transform" type="translate" values="0,0;0,-2;0,0;0,-1;0,0" dur="3s" repeatCount="indefinite" />}
+        {animate && <animateTransform attributeName="transform" type="translate" values="0,0;0,-3;0,0;0,-1;0,0" dur="3s" repeatCount="indefinite" />}
 
-        <ellipse cx="40" cy="10" rx="14" ry="4" fill="url(#halo-glow)" />
-        <ellipse cx="40" cy="10" rx="13" ry="3.5" fill="none" stroke="url(#halo-grad)" strokeWidth="2.5" opacity="0.9">
+        <ellipse cx="40" cy="7" rx="10" ry="3" fill="none" stroke="url(#angel-halo)" strokeWidth="2" opacity="0.85">
           {animate && (
             <>
-              <animate attributeName="ry" values="3.5;3;3.5;4;3.5" dur="4s" repeatCount="indefinite" />
-              <animate attributeName="opacity" values="0.9;1;0.9;0.7;0.9" dur="4s" repeatCount="indefinite" />
-              <animateTransform attributeName="transform" type="rotate" values="-2,40,10;2,40,10;-2,40,10" dur="5s" repeatCount="indefinite" />
+              <animate attributeName="ry" values="3;2.5;3;3.5;3" dur="4s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.85;1;0.85;0.6;0.85" dur="4s" repeatCount="indefinite" />
             </>
           )}
         </ellipse>
-        <ellipse cx="40" cy="10" rx="11" ry="2.5" fill="none" stroke="#f0d68a" strokeWidth="0.6" opacity="0.3">
-          {animate && <animate attributeName="opacity" values="0.3;0.5;0.3" dur="2s" repeatCount="indefinite" />}
-        </ellipse>
 
-        <g>
-          {animate && <animateTransform attributeName="transform" type="rotate" values="0,18,40;-6,18,40;0,18,40" dur="2.5s" repeatCount="indefinite" />}
-          <path d="M20 32 C14 28, 6 32, 4 40 C2 48, 8 54, 14 52 C10 48, 8 42, 12 36 C14 32, 18 34, 20 36 Z" fill="url(#wing-grad-l)" stroke="#c4b8a5" strokeWidth="0.4" />
-          <path d="M18 34 C14 32, 8 36, 7 42" fill="none" stroke="#e0d5c5" strokeWidth="0.5" opacity="0.5" />
-          <path d="M16 38 C12 37, 7 40, 6 45" fill="none" stroke="#e0d5c5" strokeWidth="0.4" opacity="0.4" />
-          <path d="M15 42 C11 42, 8 44, 7 48" fill="none" stroke="#e0d5c5" strokeWidth="0.3" opacity="0.3" />
-        </g>
+        <circle cx="40" cy="18" r="7" fill="url(#angel-body)" />
 
-        <g>
-          {animate && <animateTransform attributeName="transform" type="rotate" values="0,62,40;6,62,40;0,62,40" dur="2.5s" repeatCount="indefinite" />}
-          <path d="M60 32 C66 28, 74 32, 76 40 C78 48, 72 54, 66 52 C70 48, 72 42, 68 36 C66 32, 62 34, 60 36 Z" fill="url(#wing-grad-r)" stroke="#c4b8a5" strokeWidth="0.4" />
-          <path d="M62 34 C66 32, 72 36, 73 42" fill="none" stroke="#e0d5c5" strokeWidth="0.5" opacity="0.5" />
-          <path d="M64 38 C68 37, 73 40, 74 45" fill="none" stroke="#e0d5c5" strokeWidth="0.4" opacity="0.4" />
-          <path d="M65 42 C69 42, 72 44, 73 48" fill="none" stroke="#e0d5c5" strokeWidth="0.3" opacity="0.3" />
-        </g>
+        <path d="M40 25 C40 25, 36 30, 34 50 C33 58, 34 62, 34 70" fill="none" stroke="url(#angel-body)" strokeWidth="5" strokeLinecap="round" />
+        <path d="M40 25 C40 25, 44 30, 46 50 C47 58, 46 62, 46 70" fill="none" stroke="url(#angel-body)" strokeWidth="5" strokeLinecap="round" />
 
-        <ellipse cx="40" cy="40" rx="18" ry="20" fill="url(#angel-skin)" stroke="#b8a080" strokeWidth="0.4" />
-        <ellipse cx="40" cy="40" rx="18" ry="20" fill="url(#angel-skin-highlight)" />
-
-        <path d="M30 30 C30 27, 35 26, 37 28" fill="none" stroke="#a08060" strokeWidth="0.8" strokeLinecap="round" />
-        <path d="M50 30 C50 27, 45 26, 43 28" fill="none" stroke="#a08060" strokeWidth="0.8" strokeLinecap="round" />
-
-        <ellipse cx="34" cy="35" rx="4.5" ry="4" fill="#fff" stroke="#b8a080" strokeWidth="0.3" />
-        <ellipse cx="34" cy="35.5" rx="3" ry="3" fill="url(#angel-eye)">
-          {animate && <animate attributeName="ry" values="3;1.2;3" dur="5s" repeatCount="indefinite" />}
-        </ellipse>
-        <ellipse cx="34" cy="35.5" rx="1.5" ry="1.8" fill="#111">
-          {animate && <animate attributeName="ry" values="1.8;0.7;1.8" dur="5s" repeatCount="indefinite" />}
-        </ellipse>
-        <circle cx="32.8" cy="34" r="0.9" fill="#fff" opacity="0.9" />
-        <circle cx="35" cy="36.5" r="0.4" fill="#fff" opacity="0.4" />
-
-        <ellipse cx="46" cy="35" rx="4.5" ry="4" fill="#fff" stroke="#b8a080" strokeWidth="0.3" />
-        <ellipse cx="46" cy="35.5" rx="3" ry="3" fill="url(#angel-eye)">
-          {animate && <animate attributeName="ry" values="3;1.2;3" dur="5s" begin="0.2s" repeatCount="indefinite" />}
-        </ellipse>
-        <ellipse cx="46" cy="35.5" rx="1.5" ry="1.8" fill="#111">
-          {animate && <animate attributeName="ry" values="1.8;0.7;1.8" dur="5s" begin="0.2s" repeatCount="indefinite" />}
-        </ellipse>
-        <circle cx="44.8" cy="34" r="0.9" fill="#fff" opacity="0.9" />
-        <circle cx="47" cy="36.5" r="0.4" fill="#fff" opacity="0.4" />
-
-        <ellipse cx="40" cy="42" rx="2" ry="1.5" fill="#dcc0a0" stroke="#c4a882" strokeWidth="0.3" />
-        <ellipse cx="39.3" cy="42.3" rx="0.5" ry="0.4" fill="#c4a882" />
-        <ellipse cx="40.7" cy="42.3" rx="0.5" ry="0.4" fill="#c4a882" />
-
-        <circle cx="28" cy="42" r="4" fill="url(#cheek-blush)" />
-        <circle cx="52" cy="42" r="4" fill="url(#cheek-blush)" />
-
-        <path d="M36 48 Q40 52 44 48" fill="none" stroke="#c4907a" strokeWidth="1" strokeLinecap="round">
-          {animate && <animate attributeName="d" values="M36 48 Q40 52 44 48;M36 47.5 Q40 53 44 47.5;M36 48 Q40 52 44 48" dur="4s" repeatCount="indefinite" />}
+        <path d="M34 70 C33 75, 30 82, 28 88" fill="none" stroke="url(#angel-body)" strokeWidth="4.5" strokeLinecap="round">
+          {animate && <animate attributeName="d" values="M34 70 C33 75, 30 82, 28 88;M34 70 C33 75, 31 83, 29 89;M34 70 C33 75, 30 82, 28 88" dur="2s" repeatCount="indefinite" />}
         </path>
-        <path d="M37 48.5 Q40 50 43 48.5" fill="#d4a090" opacity="0.3" />
+        <path d="M46 70 C47 75, 50 82, 52 88" fill="none" stroke="url(#angel-body)" strokeWidth="4.5" strokeLinecap="round">
+          {animate && <animate attributeName="d" values="M46 70 C47 75, 50 82, 52 88;M46 70 C47 75, 49 83, 51 89;M46 70 C47 75, 50 82, 52 88" dur="2s" begin="0.3s" repeatCount="indefinite" />}
+        </path>
 
-        <path d="M28 20 C30 15, 35 14, 40 16 C45 14, 50 15, 52 20 C50 18, 45 17, 40 19 C35 17, 30 18, 28 20 Z" fill="#c4a882" opacity="0.4" />
+        <path d="M36 35 C32 32, 26 36, 24 42 C22 48, 26 50, 28 46" fill="none" stroke="url(#angel-body)" strokeWidth="4" strokeLinecap="round">
+          {animate && <animateTransform attributeName="transform" type="rotate" values="0,36,35;-4,36,35;0,36,35" dur="2.5s" repeatCount="indefinite" />}
+        </path>
+        <path d="M44 35 C48 32, 54 36, 56 42 C58 48, 54 50, 52 46" fill="none" stroke="url(#angel-body)" strokeWidth="4" strokeLinecap="round">
+          {animate && <animateTransform attributeName="transform" type="rotate" values="0,44,35;4,44,35;0,44,35" dur="2.5s" repeatCount="indefinite" />}
+        </path>
+
+        <g>
+          {animate && <animateTransform attributeName="transform" type="rotate" values="0,30,35;-8,30,35;0,30,35" dur="2.2s" repeatCount="indefinite" />}
+          <path d="M30 28 C22 22, 8 24, 4 34 C2 40, 6 44, 10 42" fill="url(#angel-wing)" opacity="0.85" />
+          <path d="M28 32 C22 28, 12 30, 8 36" fill="none" stroke="#f0d68a" strokeWidth="0.6" opacity="0.5" />
+          <path d="M26 36 C20 34, 10 36, 7 40" fill="none" stroke="#f0d68a" strokeWidth="0.5" opacity="0.4" />
+          <path d="M24 30 C18 26, 10 28, 6 34" fill="none" stroke="#f0d68a" strokeWidth="0.5" opacity="0.3" />
+        </g>
+        <g>
+          {animate && <animateTransform attributeName="transform" type="rotate" values="0,50,35;8,50,35;0,50,35" dur="2.2s" repeatCount="indefinite" />}
+          <path d="M50 28 C58 22, 72 24, 76 34 C78 40, 74 44, 70 42" fill="url(#angel-wing)" opacity="0.85" />
+          <path d="M52 32 C58 28, 68 30, 72 36" fill="none" stroke="#f0d68a" strokeWidth="0.6" opacity="0.5" />
+          <path d="M54 36 C60 34, 70 36, 73 40" fill="none" stroke="#f0d68a" strokeWidth="0.5" opacity="0.4" />
+          <path d="M56 30 C62 26, 70 28, 74 34" fill="none" stroke="#f0d68a" strokeWidth="0.5" opacity="0.3" />
+        </g>
 
         {animate && (
           <>
-            <circle cx="22" cy="24" r="0.6" fill="#f0d68a" opacity="0">
+            <circle cx="20" cy="20" r="0.5" fill="#f0d68a" opacity="0">
               <animate attributeName="opacity" values="0;0.5;0" dur="3s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="26;18" dur="3s" repeatCount="indefinite" />
+              <animate attributeName="cy" values="22;14" dur="3s" repeatCount="indefinite" />
             </circle>
-            <circle cx="58" cy="22" r="0.5" fill="#f0d68a" opacity="0">
-              <animate attributeName="opacity" values="0;0.4;0" dur="3.5s" begin="0.8s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="24;16" dur="3.5s" begin="0.8s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="40" cy="4" r="0.4" fill="#f0d68a" opacity="0">
-              <animate attributeName="opacity" values="0;0.6;0" dur="2.5s" begin="1.5s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="6;0" dur="2.5s" begin="1.5s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="32" cy="18" r="0.3" fill="#f0d68a" opacity="0">
-              <animate attributeName="opacity" values="0;0.3;0" dur="4s" begin="0.4s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="20;14" dur="4s" begin="0.4s" repeatCount="indefinite" />
-            </circle>
-            <circle cx="48" cy="16" r="0.35" fill="#f0d68a" opacity="0">
-              <animate attributeName="opacity" values="0;0.35;0" dur="3.2s" begin="2s" repeatCount="indefinite" />
-              <animate attributeName="cy" values="18;12" dur="3.2s" begin="2s" repeatCount="indefinite" />
+            <circle cx="60" cy="18" r="0.4" fill="#f0d68a" opacity="0">
+              <animate attributeName="opacity" values="0;0.4;0" dur="3.5s" begin="1s" repeatCount="indefinite" />
+              <animate attributeName="cy" values="20;12" dur="3.5s" begin="1s" repeatCount="indefinite" />
             </circle>
           </>
         )}
@@ -299,8 +171,8 @@ export default function ConsequenceSpirits({
         style={{
           left: "12px",
           bottom: "80px",
-          width: "56px",
-          height: "56px",
+          width: "52px",
+          height: "65px",
           animation: hasActivePunishments ? "spirit-devil-bob 2s ease-in-out infinite" : "none",
           transition: "transform 0.3s ease",
           transform: devilHover ? "scale(1.2)" : "scale(1)",
@@ -331,8 +203,8 @@ export default function ConsequenceSpirits({
         style={{
           right: "12px",
           bottom: "80px",
-          width: "56px",
-          height: "56px",
+          width: "52px",
+          height: "65px",
           animation: hasActiveRewards ? "spirit-angel-float 3s ease-in-out infinite" : "none",
           transition: "transform 0.3s ease",
           transform: angelHover ? "scale(1.2)" : "scale(1)",
