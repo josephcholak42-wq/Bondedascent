@@ -1092,7 +1092,7 @@ export function CommandProtocols({
     let items = allItems;
     if (debouncedSearch) {
       const q = debouncedSearch.toLowerCase();
-      items = items.filter(i => i.title.toLowerCase().includes(q) || (i.description && i.description.toLowerCase().includes(q)));
+      items = items.filter(i => (i.title && i.title.toLowerCase().includes(q)) || (i.description && i.description.toLowerCase().includes(q)));
     }
     if (filter !== "all") {
       if (filter === "simulation") {
