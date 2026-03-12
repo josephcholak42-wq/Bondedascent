@@ -293,6 +293,159 @@ export function feedbackLevelUp() {
   if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 100, 50, 200]);
 }
 
+let ambientNodes: { osc: OscillatorNode; gain: GainNode }[] = [];
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
+export function feedbackSessionAmbient(start: boolean) {
+  if (start && !isMuted()) {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    ambientNodes.forEach(n => { try { n.osc.stop(); } catch {} });
+    ambientNodes = [];
+    const freqs = [55, 82.5, 110];
+    freqs.forEach(freq => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(200, ctx.currentTime);
+      filter.Q.setValueAtTime(1, ctx.currentTime);
+      gain.gain.setValueAtTime(0.03, ctx.currentTime);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      ambientNodes.push({ osc, gain });
+    });
+  } else {
+    ambientNodes.forEach(n => {
+      try { n.gain.gain.exponentialRampToValueAtTime(0.001, (getAudioContext()?.currentTime ?? 0) + 0.5); } catch {}
+      setTimeout(() => { try { n.osc.stop(); } catch {} }, 600);
+    });
+    ambientNodes = [];
+  }
+}
+
+export function feedbackIntensityHeartbeat(intensity: number, start: boolean) {
+  if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+  if (!start || isMuted()) return;
+  const clamped = Math.max(1, Math.min(10, intensity));
+  const bpm = 40 + clamped * 12;
+  const intervalMs = 60000 / bpm;
+  const beat = () => {
+    if (isMuted()) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    playTone(60 + clamped * 3, 0.08, "sine", 0.06 + clamped * 0.008);
+    playTone(55 + clamped * 2, 0.06, "sine", 0.04 + clamped * 0.005, 0.12);
+    if (navigator.vibrate) {
+      const v = Math.max(15, 30 + clamped * 3);
+      navigator.vibrate([v, Math.max(30, 80 - clamped * 5), v]);
+    }
+  };
+  beat();
+  heartbeatInterval = setInterval(beat, intervalMs);
+}
+
+export function feedbackConfessionSubmit() {
+  if (!shouldPlay()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(40, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(25, ctx.currentTime + 1.2);
+  gain.gain.setValueAtTime(0.25, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 1.2);
+  if (navigator.vibrate) navigator.vibrate([100, 50, 200]);
+}
+
+export function feedbackSessionTransition() {
+  if (!shouldPlay()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const bufferSize = ctx.sampleRate * 0.8;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * 0.02 * (1 - i / bufferSize);
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  const filter = ctx.createBiquadFilter();
+  filter.type = "lowpass";
+  filter.frequency.setValueAtTime(800, ctx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.8);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.12, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  source.start(ctx.currentTime);
+  source.stop(ctx.currentTime + 0.8);
+  playTone(220, 0.6, "sine", 0.06);
+  playTone(165, 0.8, "sine", 0.04, 0.1);
+}
+
+export function feedbackAftercareCalm() {
+  if (!shouldPlay()) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+  const chord = [261.6, 329.6, 392.0];
+  chord.forEach((freq) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    gain.gain.setValueAtTime(0.04, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 2.5);
+  });
+}
+
+export function feedbackInterrogationTick() {
+  if (!shouldPlay()) return;
+  playTone(1800, 0.03, "square", 0.06);
+}
+
+export function feedbackJudgment(type: "absolve" | "punish" | "silence") {
+  if (!shouldPlay()) return;
+  if (type === "absolve") {
+    playTone(440, 0.3, "sine", 0.1);
+    playTone(523, 0.4, "sine", 0.08, 0.2);
+  } else if (type === "punish") {
+    playTone(80, 0.5, "sawtooth", 0.15);
+    if (navigator.vibrate) navigator.vibrate([150, 50, 150]);
+  } else {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const bufferSize = ctx.sampleRate * 0.3;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const d = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) d[i] = (Math.random() * 2 - 1) * 0.04 * (1 - i / bufferSize);
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.1, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    src.connect(g);
+    g.connect(ctx.destination);
+    src.start();
+    src.stop(ctx.currentTime + 0.3);
+  }
+}
+
 export function feedbackAltarClaim() {
   if (!shouldPlay()) return;
   const ctx = getAudioContext();

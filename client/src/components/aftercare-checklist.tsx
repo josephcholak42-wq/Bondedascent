@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { feedbackAftercareCalm, feedbackComplete } from "@/lib/feedback";
 
 interface AftercareChecklistProps {
   isOpen: boolean;
@@ -36,6 +37,17 @@ export default function AftercareChecklist({
   const [notes, setNotes] = useState("");
   const [customItemLabel, setCustomItemLabel] = useState("");
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const [fadeIn, setFadeIn] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFadeIn(false);
+      requestAnimationFrame(() => {
+        setFadeIn(true);
+        feedbackAftercareCalm();
+      });
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -45,40 +57,71 @@ export default function AftercareChecklist({
         i === index ? { ...item, checked: !item.checked } : item
       )
     );
+    feedbackComplete();
   };
 
   const addCustomItem = () => {
     if (customItemLabel.trim()) {
       setItems((prev) => [
         ...prev,
-        {
-          type: `custom-${Date.now()}`,
-          label: customItemLabel.trim(),
-          icon: "✨",
-          checked: false,
-        },
+        { type: `custom-${Date.now()}`, label: customItemLabel.trim(), icon: "✨", checked: false },
       ]);
       setCustomItemLabel("");
       setShowCustomInput(false);
     }
   };
 
+  const checkedCount = items.filter(i => i.checked).length;
+  const progress = items.length > 0 ? (checkedCount / items.length) * 100 : 0;
+
+  const moodColor = moodRating >= 7 ? "#d4a24e" : moodRating >= 4 ? "#b87333" : "#991b1b";
+
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col overflow-y-auto"
       style={{
-        background: "linear-gradient(180deg, #0a0a1a 0%, #050510 100%)",
+        background: "radial-gradient(ellipse at 50% 0%, #1a1008 0%, #0a0806 40%, #050403 100%)",
+        opacity: fadeIn ? 1 : 0,
+        transition: "opacity 1s ease-out",
       }}
       data-testid="aftercare-overlay"
     >
+      <style>{`
+        @keyframes ac-breathe {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.08); opacity: 0.9; }
+        }
+        @keyframes ac-check-pop {
+          0% { transform: scale(0.8); opacity: 0; }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes ac-item-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes ac-glow-pulse {
+          0%, 100% { box-shadow: 0 0 20px rgba(212,162,78,0.08); }
+          50% { box-shadow: 0 0 40px rgba(212,162,78,0.15); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
+      `}</style>
+
       <div className="flex items-center justify-between px-6 pt-6 pb-2">
-        <h1
-          className="text-slate-400 text-sm tracking-[0.3em] uppercase"
-          style={{ fontFamily: "Montserrat, sans-serif" }}
-          data-testid="text-aftercare-header"
-        >
-          AFTERCARE
-        </h1>
+        <div>
+          <h1
+            className="text-sm tracking-[0.3em] uppercase"
+            style={{ fontFamily: "'Playfair Display', serif", color: "#d4a24e", textShadow: "0 0 20px rgba(212,162,78,0.2)" }}
+            data-testid="text-aftercare-header"
+          >
+            AFTERCARE
+          </h1>
+          <p className="text-[10px] tracking-[0.15em] uppercase mt-1" style={{ color: "rgba(200,191,182,0.3)" }}>
+            You are held. You are safe.
+          </p>
+        </div>
         <button
           onClick={onClose}
           className="text-slate-600 hover:text-slate-400 transition-colors text-xl leading-none"
@@ -88,42 +131,74 @@ export default function AftercareChecklist({
         </button>
       </div>
 
-      <div className="flex-1 px-6 py-4 space-y-3">
+      <div className="flex justify-center py-4">
+        <div className="relative w-16 h-16 flex items-center justify-center">
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              border: "2px solid rgba(212,162,78,0.15)",
+              animation: "ac-breathe 4s ease-in-out infinite",
+            }}
+          />
+          <div
+            className="absolute inset-1 rounded-full"
+            style={{
+              border: "1px solid rgba(212,162,78,0.1)",
+              animation: "ac-breathe 4s ease-in-out infinite 0.5s",
+            }}
+          />
+          <svg className="absolute inset-0 w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+            <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(212,162,78,0.1)" strokeWidth="2" />
+            <circle
+              cx="32" cy="32" r="28" fill="none"
+              stroke="#d4a24e"
+              strokeWidth="2"
+              strokeDasharray={`${(progress / 100) * 175.9} 175.9`}
+              strokeLinecap="round"
+              style={{ transition: "stroke-dasharray 0.6s ease-out", filter: "drop-shadow(0 0 4px rgba(212,162,78,0.4))" }}
+            />
+          </svg>
+          <span className="text-xs font-mono" style={{ color: "#d4a24e" }}>{checkedCount}/{items.length}</span>
+        </div>
+      </div>
+
+      <div className="flex-1 px-6 py-2 space-y-2">
         {items.map((item, index) => (
           <button
             key={item.type}
             onClick={() => toggleItem(index)}
-            className="w-full text-left rounded-lg px-4 py-3 flex items-center gap-3 transition-all duration-300"
+            className="w-full text-left rounded-lg px-4 py-3.5 flex items-center gap-3 transition-all duration-500 group"
             style={{
-              backgroundColor: "#0f0f1a",
-              borderWidth: "1px",
-              borderStyle: "solid",
-              borderColor: item.checked ? "#1e3a5f" : "#1e293b",
-              transform: item.checked ? "scale(1.02)" : "scale(1)",
-              opacity: item.checked ? 1 : 0.7,
+              backgroundColor: item.checked ? "rgba(184,115,51,0.06)" : "rgba(10,10,10,0.4)",
+              border: `1px solid ${item.checked ? "rgba(212,162,78,0.2)" : "rgba(200,191,182,0.06)"}`,
+              animation: `ac-item-in 0.4s ease-out ${index * 0.05}s both`,
+              boxShadow: item.checked ? "0 0 15px rgba(212,162,78,0.05)" : "none",
             }}
             data-testid={`button-checklist-${item.type}`}
           >
             <span
-              className="text-lg transition-transform duration-300"
-              style={{
-                transform: item.checked ? "scale(1.2)" : "scale(1)",
-              }}
+              className="text-lg transition-transform duration-500"
+              style={{ transform: item.checked ? "scale(1.15)" : "scale(1)" }}
             >
               {item.icon}
             </span>
             <span
-              className={`text-sm transition-colors duration-300 ${
-                item.checked ? "text-slate-300" : "text-slate-500"
-              }`}
+              className="text-sm transition-all duration-500 flex-1"
+              style={{ color: item.checked ? "#d4a24e" : "rgba(200,191,182,0.5)" }}
             >
               {item.label}
             </span>
             <span className="ml-auto">
               {item.checked ? (
-                <span className="text-slate-400 text-sm">✓</span>
+                <span style={{
+                  color: "#d4a24e",
+                  fontSize: "16px",
+                  animation: "ac-check-pop 0.3s ease-out",
+                  textShadow: "0 0 8px rgba(212,162,78,0.4)",
+                }}>✓</span>
               ) : (
-                <span className="w-4 h-4 rounded border border-slate-700 inline-block" />
+                <span className="w-4 h-4 rounded-full inline-block"
+                  style={{ border: "1px solid rgba(200,191,182,0.15)" }} />
               )}
             </span>
           </button>
@@ -137,13 +212,19 @@ export default function AftercareChecklist({
               onChange={(e) => setCustomItemLabel(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCustomItem()}
               placeholder="Custom item..."
-              className="flex-1 bg-black/50 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 placeholder-slate-600 focus:outline-none focus:border-slate-600"
+              className="flex-1 text-sm rounded-lg px-3 py-2.5 focus:outline-none"
+              style={{
+                background: "rgba(10,10,10,0.6)",
+                border: "1px solid rgba(212,162,78,0.15)",
+                color: "#c8bfb6",
+              }}
               data-testid="input-custom-item"
               autoFocus
             />
             <button
               onClick={addCustomItem}
-              className="px-3 py-2 text-sm text-slate-400 border border-slate-700 rounded-lg hover:border-slate-500 transition-colors"
+              className="px-4 py-2.5 text-sm rounded-lg transition-colors"
+              style={{ border: "1px solid rgba(212,162,78,0.2)", color: "#d4a24e" }}
               data-testid="button-confirm-custom-item"
             >
               Add
@@ -152,7 +233,11 @@ export default function AftercareChecklist({
         ) : (
           <button
             onClick={() => setShowCustomInput(true)}
-            className="w-full text-center text-slate-600 text-sm py-3 border border-dashed border-slate-800 rounded-lg hover:border-slate-600 hover:text-slate-400 transition-colors"
+            className="w-full text-center text-xs py-3 rounded-lg transition-all duration-300 uppercase tracking-wider"
+            style={{
+              border: "1px dashed rgba(200,191,182,0.1)",
+              color: "rgba(200,191,182,0.3)",
+            }}
             data-testid="button-add-custom-item"
           >
             + Add custom item
@@ -160,10 +245,13 @@ export default function AftercareChecklist({
         )}
       </div>
 
-      <div className="px-6 py-4 space-y-4">
+      <div className="px-6 py-4 space-y-5" style={{
+        borderTop: "1px solid rgba(212,162,78,0.08)",
+        background: "rgba(26,16,8,0.5)",
+      }}>
         <div>
-          <label className="text-slate-500 text-xs uppercase tracking-widest block mb-2">
-            Mood Rating: {moodRating}/10
+          <label className="text-[10px] uppercase tracking-[0.2em] block mb-3" style={{ color: "rgba(200,191,182,0.4)" }}>
+            Mood: <span style={{ color: moodColor }}>{moodRating}/10</span>
           </label>
           <input
             type="range"
@@ -171,24 +259,22 @@ export default function AftercareChecklist({
             max={10}
             value={moodRating}
             onChange={(e) => setMoodRating(Number(e.target.value))}
-            className="w-full accent-slate-600"
+            className="w-full appearance-none cursor-pointer"
             style={{
-              WebkitAppearance: "none",
               height: "4px",
-              background: `linear-gradient(to right, #1e3a5f ${(moodRating - 1) * 11.1}%, #1e293b ${(moodRating - 1) * 11.1}%)`,
+              background: `linear-gradient(to right, #991b1b, #b87333 50%, #d4a24e 100%)`,
               borderRadius: "2px",
               outline: "none",
             }}
             data-testid="slider-mood-rating"
           />
-          <div className="flex justify-between text-slate-700 text-xs mt-1">
-            <span>1</span>
-            <span>10</span>
+          <div className="flex justify-between text-[10px] mt-1" style={{ color: "rgba(200,191,182,0.25)" }}>
+            <span>1</span><span>10</span>
           </div>
         </div>
 
         <div>
-          <label className="text-slate-500 text-xs uppercase tracking-widest block mb-2">
+          <label className="text-[10px] uppercase tracking-[0.2em] block mb-2" style={{ color: "rgba(200,191,182,0.4)" }}>
             Reflection Notes
           </label>
           <textarea
@@ -196,18 +282,25 @@ export default function AftercareChecklist({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="How are you feeling? Any thoughts to capture..."
             rows={3}
-            className="w-full bg-black/50 border border-slate-800 text-slate-300 text-sm rounded-lg px-3 py-2 placeholder-slate-600 focus:outline-none focus:border-slate-600 resize-none"
+            className="w-full text-sm rounded-lg px-3 py-2.5 resize-none focus:outline-none"
+            style={{
+              background: "rgba(10,10,10,0.5)",
+              border: "1px solid rgba(212,162,78,0.1)",
+              color: "#c8bfb6",
+              fontFamily: "'Playfair Display', serif",
+            }}
             data-testid="textarea-notes"
           />
         </div>
 
         <button
           onClick={() => onComplete(notes, moodRating)}
-          className="w-full py-3 rounded-lg text-sm uppercase tracking-[0.2em] transition-all duration-300 border"
+          className="w-full py-3.5 rounded-lg text-sm uppercase tracking-[0.2em] transition-all duration-500"
           style={{
-            backgroundColor: "#0f0f1a",
-            borderColor: "#1e3a5f",
-            color: "#94a3b8",
+            background: "rgba(212,162,78,0.08)",
+            border: "1px solid rgba(212,162,78,0.25)",
+            color: "#d4a24e",
+            animation: "ac-glow-pulse 3s ease-in-out infinite",
           }}
           data-testid="button-session-complete"
         >

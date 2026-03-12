@@ -4743,7 +4743,7 @@ export default function BondedAscentApp() {
             title: activeLiveSession?.title || "Live Session",
             currentInstruction: activeLiveSession?.currentInstruction || null,
             currentIntensity: activeLiveSession?.currentIntensity ?? 5,
-            currentPhase: activeLiveSession?.currentPhase || "warmup",
+            currentPhase: activeLiveSession?.currentPhase || "WARM-UP",
             isLive: activeLiveSession?.isLive ?? true,
             status: activeLiveSession?.status || "active",
           }}
@@ -4759,10 +4759,13 @@ export default function BondedAscentApp() {
               updateLiveSessionMutation.mutate({ id: sid, data: { isLive: false, status: "completed" } });
             }
             setLiveSessionId(null);
-            closeOverlay();
           }}
           onClose={() => {
             closeOverlay();
+          }}
+          onTransition={(target) => {
+            closeOverlay();
+            setTimeout(() => openOverlay(target as any), 100);
           }}
         />
         </div>
