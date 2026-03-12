@@ -1999,49 +1999,6 @@ export default function BondedAscentApp() {
           />
         )}
 
-        <button
-          data-testid="whisper-quick-bar"
-          onClick={() => openOverlay("whisper-chamber")}
-          className="absolute left-0 right-0 z-25 flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all hover:bg-[#451a03]/30 group md:bottom-0 bottom-[60px]"
-          style={{
-            background: "linear-gradient(90deg, rgba(0,0,0,0.95) 0%, rgba(20,10,5,0.95) 50%, rgba(0,0,0,0.95) 100%)",
-            borderTop: "1px solid rgba(184,115,51,0.2)",
-            boxShadow: "0 -4px 20px rgba(0,0,0,0.5)",
-          }}
-        >
-          <div className="relative flex-shrink-0">
-            <MessageSquare size={20} className="text-[#b87333] group-hover:text-[#d4a24e] transition-colors" />
-            {(unreadWhisperData?.count ?? 0) > 0 && (
-              <span
-                className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[8px] font-black text-white"
-                style={{
-                  background: "linear-gradient(135deg, #dc2626, #7f1d1d)",
-                  boxShadow: "0 0 6px rgba(220,38,38,0.5)",
-                }}
-              >
-                {unreadWhisperData?.count}
-              </span>
-            )}
-          </div>
-          <div className="flex-1 min-w-0 text-left">
-            {whispersList.length > 0 ? (
-              <p className="text-[11px] text-slate-400 truncate group-hover:text-slate-300 transition-colors">
-                <span className="text-[#c9956a] font-semibold">
-                  {whispersList[whispersList.length - 1]?.senderId === user?.id ? "You" : (partner?.username || "Partner")}:
-                </span>{" "}
-                {whispersList[whispersList.length - 1]?.content}
-              </p>
-            ) : (
-              <p className="text-[11px] text-slate-500 italic group-hover:text-slate-400 transition-colors">
-                Open Whisper Chamber...
-              </p>
-            )}
-          </div>
-          <div className="flex-shrink-0 text-[9px] text-[#78350f] uppercase tracking-widest font-bold group-hover:text-[#b87333] transition-colors">
-            Whisper
-          </div>
-        </button>
-
         <div className="md:hidden absolute bottom-0 w-full bg-black/90 backdrop-blur-xl border-t border-white/10 p-2 pb-6 flex justify-around items-end z-30">
           <MobileNavIcon
             icon={<Home />}
@@ -2050,15 +2007,25 @@ export default function BondedAscentApp() {
             onClick={() => navigateView("dashboard")}
           />
           <div
-            onClick={() => navigateView("profile")}
-            className={`mb-2 w-14 h-14 rounded-full border-2 border-slate-800 flex items-center justify-center shadow-lg transition-transform active:scale-95 cursor-pointer overflow-hidden ${activeView === "profile" ? "bg-red-600 border-red-400 text-white shadow-[0_0_15px_red]" : "bg-slate-900 text-slate-400"}`}
-            data-testid="mobile-profile-pic"
+            onClick={() => openOverlay("whisper-chamber")}
+            className="relative flex flex-col items-center gap-0.5 cursor-pointer active:scale-95 transition-transform"
+            data-testid="mobile-whisper-nav"
           >
-            {user?.profilePic ? (
-              <img src={user.profilePic} alt={user?.username || ""} className="w-full h-full object-cover" />
-            ) : (
-              <Menu size={26} />
-            )}
+            <div className="relative">
+              <MessageSquare size={22} className="text-[#b87333]" />
+              {(unreadWhisperData?.count ?? 0) > 0 && (
+                <span
+                  className="absolute -top-1.5 -right-2 min-w-[16px] h-[16px] rounded-full flex items-center justify-center text-[8px] font-black text-white"
+                  style={{
+                    background: "linear-gradient(135deg, #dc2626, #7f1d1d)",
+                    boxShadow: "0 0 6px rgba(220,38,38,0.5)",
+                  }}
+                >
+                  {unreadWhisperData?.count}
+                </span>
+              )}
+            </div>
+            <span className="text-[9px] text-[#b87333] font-semibold tracking-wide">Whisper</span>
           </div>
           <MobileNavIcon
             icon={<Activity />}
