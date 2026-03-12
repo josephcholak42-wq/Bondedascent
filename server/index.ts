@@ -5,6 +5,7 @@ import { createServer } from "http";
 import { startTetherEngine } from "./tether";
 import { storage } from "./storage";
 import { seedStickersAndTrinkets } from "./seed-stickers-trinkets";
+import { apiKeyAuth } from "./api-key-auth";
 
 const app = express();
 const httpServer = createServer(app);
@@ -24,6 +25,23 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key");
+    res.setHeader("Access-Control-Max-Age", "86400");
+  }
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+app.use("/api", apiKeyAuth);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

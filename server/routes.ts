@@ -6,6 +6,8 @@ import { sendPushToUser, getVapidPublicKey } from "./push";
 import { addSSEClient, sendToUser, sendToUsers } from "./sse";
 import { type User, type InterrogationSession } from "@shared/schema";
 import { generateSimulation } from "./simulation-engine";
+import { generateApiKey, hashApiKey } from "./api-key-auth";
+import { getOpenApiSpec } from "./openapi";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -3537,6 +3539,65 @@ export async function registerRoutes(
       adminCount: allUsers.filter(u => u.isAdmin).length,
     };
     res.json(stats);
+  });
+
+  app.get("/api/openapi.json", (_req, res) => {
+    const protocol = _req.headers["x-forwarded-proto"] || "https";
+    const host = _req.headers["host"] || "localhost:5000";
+    const baseUrl = `${protocol}://${host}`;
+    res.json(getOpenApiSpec(baseUrl));
+  });
+
+  app.get("/api/api-keys", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const keys = await storage.getApiKeysByUser(user.id);
+    res.json(keys.map(k => ({
+      id: k.id,
+      name: k.name,
+      keyPrefix: k.keyPrefix,
+      scopes: k.scopes,
+      lastUsedAt: k.lastUsedAt,
+      expiresAt: k.expiresAt,
+      createdAt: k.createdAt,
+    })));
+  });
+
+  app.post("/api/api-keys", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { name, scopes, expiresInDays } = req.body;
+    if (!name || typeof name !== "string") {
+      return res.status(400).json({ message: "name is required" });
+    }
+    const { fullKey, prefix, hash } = generateApiKey();
+    const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 86400000) : null;
+    const apiKey = await storage.createApiKey({
+      userId: user.id,
+      name,
+      keyHash: hash,
+      keyPrefix: prefix,
+      scopes: scopes && Array.isArray(scopes) ? scopes : ["all"],
+      expiresAt,
+      revoked: false,
+    });
+    res.status(201).json({
+      id: apiKey.id,
+      name: apiKey.name,
+      key: fullKey,
+      keyPrefix: prefix,
+      scopes: apiKey.scopes,
+      expiresAt: apiKey.expiresAt,
+      createdAt: apiKey.createdAt,
+      note: "Save this key now. It will not be shown again.",
+    });
+  });
+
+  app.delete("/api/api-keys/:id", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const key = await storage.revokeApiKey(req.params.id, user.id);
+    if (!key) {
+      return res.status(404).json({ message: "API key not found" });
+    }
+    res.json({ message: "API key revoked" });
   });
 
   return httpServer;

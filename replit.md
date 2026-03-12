@@ -59,7 +59,10 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 ### Backend
 - **Framework**: Express 5 with Node.js and TypeScript
 - **API Pattern**: RESTful JSON API
-- **Authentication**: Passport.js with Local Strategy, session-based (`express-session`, `connect-pg-simple`).
+- **Authentication**: Passport.js with Local Strategy, session-based (`express-session`, `connect-pg-simple`). Also supports API key authentication via `Authorization: Bearer ba_xxx` or `X-API-Key: ba_xxx` headers for external agent/bot access.
+- **API Key System**: Table `api_keys` with SHA-256 hashed keys, prefix-based lookup, scopes, expiry, and revocation. Routes: `GET/POST /api/api-keys`, `DELETE /api/api-keys/:id`. Middleware in `server/api-key-auth.ts` runs on all `/api` routes before session auth.
+- **OpenAPI Spec**: Machine-readable API documentation at `GET /api/openapi.json` (OpenAPI 3.1.0) covering all major endpoints with auth schemes. Source: `server/openapi.ts`.
+- **CORS**: Enabled for all origins on `/api` routes to support external AI agent access. Configured in `server/index.ts`.
 - **Password Hashing**: Node.js `crypto.scrypt`.
 - **Request Validation**: Zod schemas.
 - **Push Notifications**: `web-push` with VAPID keys.

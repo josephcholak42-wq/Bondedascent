@@ -11,7 +11,7 @@ import {
   media, stickers, featureSettings, bodyMapZones,
   contracts, confessions, trainingPrograms, trainingDays, trainingEnrollments,
   sceneScripts, scriptSteps, interrogationSessions, interrogationQuestions,
-  aftercareItems, streaks,
+  aftercareItems, streaks, apiKeys,
   type User, type InsertUser, type Task, type InsertTask,
   type CheckIn, type InsertCheckIn, type Reward, type InsertReward,
   type Punishment, type InsertPunishment, type JournalEntry,
@@ -63,6 +63,7 @@ import {
   type Tribunal, type InsertTribunal,
   type AdminSettings, type AdminSticker, type InsertAdminSticker,
   type Trinket, type InsertTrinket, type UserTrinket, type InsertUserTrinket,
+  type ApiKey, type InsertApiKey,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -1941,6 +1942,29 @@ export class DatabaseStorage implements IStorage {
   async updateUserProfileCustomization(userId: string, data: { profileBorder?: string; profileBadge?: string }): Promise<User | undefined> {
     const [u] = await db.update(users).set(data).where(eq(users.id, userId)).returning();
     return u;
+  }
+
+  async createApiKey(data: InsertApiKey): Promise<ApiKey> {
+    const [key] = await db.insert(apiKeys).values(data).returning();
+    return key;
+  }
+
+  async getApiKeysByUser(userId: string): Promise<ApiKey[]> {
+    return db.select().from(apiKeys).where(and(eq(apiKeys.userId, userId), eq(apiKeys.revoked, false))).orderBy(desc(apiKeys.createdAt));
+  }
+
+  async getApiKeyByPrefix(prefix: string): Promise<ApiKey | undefined> {
+    const [key] = await db.select().from(apiKeys).where(and(eq(apiKeys.keyPrefix, prefix), eq(apiKeys.revoked, false)));
+    return key;
+  }
+
+  async revokeApiKey(keyId: string, userId: string): Promise<ApiKey | undefined> {
+    const [key] = await db.update(apiKeys).set({ revoked: true }).where(and(eq(apiKeys.id, keyId), eq(apiKeys.userId, userId))).returning();
+    return key;
+  }
+
+  async touchApiKeyLastUsed(keyId: string): Promise<void> {
+    await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, keyId));
   }
 }
 
