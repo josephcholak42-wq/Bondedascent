@@ -97,6 +97,19 @@ export function useRegister() {
   });
 }
 
+export function useUpdateProfileType() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (profileType: string) => {
+      const res = await apiRequest("PATCH", "/api/profile-type", { profileType });
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    },
+  });
+}
+
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({

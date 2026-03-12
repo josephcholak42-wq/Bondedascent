@@ -301,6 +301,7 @@ export interface IStorage {
 
   updateUserStickerBalance(userId: string, balance: number): Promise<User | undefined>;
   updateUserProfilePic(userId: string, profilePic: string): Promise<User | undefined>;
+  updateUserProfileType(userId: string, profileType: string): Promise<User | undefined>;
   getJournalEntriesForPair(userIds: string[], role?: string): Promise<JournalEntry[]>;
   unlockJournalEntry(id: string, unlockedBy: string): Promise<JournalEntry | undefined>;
   getLockedMediaForPair(userIds: string[], role?: string): Promise<Media[]>;
@@ -1290,6 +1291,11 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserProfilePic(userId: string, profilePic: string): Promise<User | undefined> {
     const [user] = await db.update(users).set({ profilePic }).where(eq(users.id, userId)).returning();
+    return user;
+  }
+
+  async updateUserProfileType(userId: string, profileType: string): Promise<User | undefined> {
+    const [user] = await db.update(users).set({ profileType }).where(eq(users.id, userId)).returning();
     return user;
   }
 

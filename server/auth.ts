@@ -94,12 +94,14 @@ export function setupAuth(app: Express) {
 
       const hashedPassword = await hashPassword(password);
       const selectedRole = role || "sub";
+      const defaultProfileType = selectedRole === "dom" ? "Master" : "Sub";
       const user = await storage.createUser({
         username,
         password: hashedPassword,
         email: email || null,
         role: selectedRole,
         originalRole: selectedRole,
+        profileType: defaultProfileType,
       });
 
       req.login(user, (err) => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from "wouter";
-import { Lock, User, ArrowRight, Shield, Heart, Loader2 } from 'lucide-react';
+import { Lock, User, ArrowRight, Shield, Heart, Loader2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useLogin, useRegister } from '@/lib/hooks';
@@ -123,27 +123,40 @@ export default function AuthPage() {
             </div>
 
             {!isLogin && (
-              <div className="space-y-2 pt-2 animate-in slide-in-from-top-2">
-                <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Select Role Profile</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    data-testid="button-role-sub"
-                    type="button"
-                    onClick={() => setRole('sub')}
-                    className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${role === 'sub' ? 'bg-red-900/20 border-red-500 text-white shadow-[0_0_10px_rgba(220,38,38,0.2)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
-                  >
-                    <Heart size={16} className={role === 'sub' ? 'text-red-500' : ''} />
-                    <span className="text-xs font-bold uppercase">Submissive</span>
-                  </button>
-                  <button
-                    data-testid="button-role-dom"
-                    type="button"
-                    onClick={() => setRole('dom')}
-                    className={`p-3 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${role === 'dom' ? 'bg-red-900/20 border-red-500 text-white shadow-[0_0_10px_rgba(220,38,38,0.2)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
-                  >
-                    <Shield size={16} className={role === 'dom' ? 'text-red-500' : ''} />
-                    <span className="text-xs font-bold uppercase">Dominant</span>
-                  </button>
+              <div className="space-y-4 pt-2 animate-in slide-in-from-top-2">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase font-bold text-slate-400 ml-1">Choose Your Path</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      data-testid="button-role-dom"
+                      type="button"
+                      onClick={() => setRole('dom')}
+                      className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer ${role === 'dom' ? 'bg-red-900/30 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+                    >
+                      <Crown size={20} className={role === 'dom' ? 'text-red-500' : ''} />
+                      <span className="text-xs font-black uppercase tracking-wider">Dominant</span>
+                      <div className="flex gap-1 mt-1">
+                        <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-900/40 text-red-400 border border-red-500/20">Master</span>
+                        <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-800/40 text-slate-400 border border-slate-500/20">Sub</span>
+                      </div>
+                    </button>
+                    <button
+                      data-testid="button-role-sub"
+                      type="button"
+                      onClick={() => setRole('sub')}
+                      className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer ${role === 'sub' ? 'bg-red-900/30 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.3)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
+                    >
+                      <Heart size={20} className={role === 'sub' ? 'text-red-500' : ''} />
+                      <span className="text-xs font-black uppercase tracking-wider">Submissive</span>
+                      <div className="flex gap-1 mt-1">
+                        <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-900/40 text-red-400 border border-red-500/20">Sub</span>
+                        <span className="text-[8px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-800/40 text-slate-400 border border-slate-500/20">Mistress</span>
+                      </div>
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-slate-600 text-center font-mono uppercase mt-1">
+                    {role === 'dom' ? 'Profiles: Master & Sub' : 'Profiles: Sub & Mistress'}
+                  </p>
                 </div>
               </div>
             )}

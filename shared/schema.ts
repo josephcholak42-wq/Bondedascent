@@ -22,6 +22,7 @@ export const users = pgTable("users", {
   levelOverride: integer("level_override"),
   profileBorder: text("profile_border"),
   profileBadge: text("profile_badge"),
+  profileType: text("profile_type"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -317,6 +318,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   role: true,
   originalRole: true,
+  profileType: true,
 });
 
 export const insertTaskSchema = createInsertSchema(tasks).pick({

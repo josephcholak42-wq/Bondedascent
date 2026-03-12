@@ -21,7 +21,9 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 
 ### Core Architectural Decisions
 - **Command Center First**: All application functionality is accessible through the Command Center, which serves as the primary user interface.
-- **Multi-Window Layout**: The Command Center features a CSS grid with 9 distinct category windows, each with varied sizes, specific color-coded borders/glow, and scrollable content areas.
+- **Multi-Window Layout**: The Command Center features a CSS grid with 8 distinct category windows (URGENT, DIRECTIVES, PUNISHMENTS, REWARDS, SCENES, PARTNER WATCH, CONNECTION, STRUCTURE, JOURNAL), each with varied sizes, specific color-coded borders/glow, and scrollable content areas. Connection Pulse and Reviews windows removed.
+- **Profile Types**: Each role has two switchable profile types. Dom role → "Master" or "Sub". Sub role → "Sub" or "Mistress". Stored in `users.profileType`, switchable from dashboard profile area. Route: `PATCH /api/profile-type`.
+- **Partner Activity Notifications**: Dedicated `partner_activity` notification type with Eyes Wide Shut mask icon, shown in PARTNER WATCH window. Triggers on: task completion, check-in, dare completion, journal entry, ritual completion, reward claim/redeem, punishment status change, confession, live session start.
 - **Role-Based Access Control**: Content access and creation are managed through `created_as_role` on content tables, ensuring appropriate data visibility for "sub" and "dom" users.
 - **Pair-Aware Data Sharing**: Most data endpoints are designed to fetch and display information relevant to both paired users.
 - **Gamification Mechanics**: The application incorporates XP, leveling, dares, rewards, punishments, check-ins, streaks, altar cycles, and relics to drive user engagement.

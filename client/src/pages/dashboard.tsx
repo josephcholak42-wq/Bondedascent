@@ -212,6 +212,7 @@ import {
   useSubmitPlea,
   useNotificationPreferences,
   useUpdateNotificationPreferences,
+  useUpdateProfileType,
 } from "@/lib/hooks";
 import {
   PREBUILT_PUNISHMENTS,
@@ -511,6 +512,7 @@ export default function BondedAscentApp() {
   const uploadMediaMutation = useUploadMedia();
   const deleteMediaMutation = useDeleteMedia();
   const uploadProfilePicMutation = useUploadProfilePic();
+  const updateProfileTypeMutation = useUpdateProfileType();
   const createRitualMutation = useCreateRitual();
   const createStandingOrderMutation = useCreateStandingOrder();
   const createWagerMutation = useCreateWager();
@@ -781,7 +783,10 @@ export default function BondedAscentApp() {
     (rewards || []).filter((r: any) => r.userId === user?.id).filter((r: any) => !r.redeemed && !r.claimedAt).forEach((r: any) => {
       items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
-    notifications.slice(0, 10).forEach((n) => {
+    notifications.filter((n: any) => n.type === "partner_activity").slice(0, 15).forEach((n) => {
+      items.push({ id: n.id, type: "partner_activity" as any, title: n.text, data: n, createdAt: (n as any).createdAt });
+    });
+    notifications.filter((n: any) => n.type !== "partner_activity").slice(0, 10).forEach((n) => {
       items.push({ id: n.id, type: "notification", title: n.text, data: n, createdAt: (n as any).createdAt });
     });
     journalEntries.slice(0, 20).forEach((j: any) => {
@@ -822,7 +827,10 @@ export default function BondedAscentApp() {
     (rewards || []).filter((r: any) => !r.redeemed && !r.claimedAt).forEach((r: any) => {
       items.push({ id: r.id, type: "reward", title: r.name, description: r.category || undefined, data: r, createdAt: r.createdAt });
     });
-    notifications.slice(0, 10).forEach((n) => {
+    notifications.filter((n: any) => n.type === "partner_activity").slice(0, 15).forEach((n) => {
+      items.push({ id: n.id, type: "partner_activity" as any, title: n.text, data: n, createdAt: (n as any).createdAt });
+    });
+    notifications.filter((n: any) => n.type !== "partner_activity").slice(0, 10).forEach((n) => {
       items.push({ id: n.id, type: "notification", title: n.text, data: n, createdAt: (n as any).createdAt });
     });
     dares.filter((d: any) => !d.completed).forEach((d: any) => {
@@ -929,6 +937,7 @@ export default function BondedAscentApp() {
       case "countdown_event": deleteCountdownEventMutation.mutate(id); break;
       case "standing_order": deleteStandingOrderMutation.mutate(id); break;
       case "notification": dismissNotificationMutation.mutate(id); break;
+      case "partner_activity": dismissNotificationMutation.mutate(id); break;
       case "punishment": deletePunishmentMutation.mutate(id); break;
       case "reward": deleteRewardMutation.mutate(id); break;
       case "dare": completeDareMutation.mutate(id); break;
@@ -1141,22 +1150,40 @@ export default function BondedAscentApp() {
             >
               {user?.username}
             </h2>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <div className="flex items-center gap-2 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-white/10">
-                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_rgba(180,30,30,0.5)]" />
-                <span className="text-xs font-bold text-red-500 uppercase">
-                  Connected
+            <div className="flex flex-col items-center gap-2 mt-2">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-black/40 w-fit px-4 py-1.5 rounded-full border border-white/10">
+                  <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_rgba(180,30,30,0.5)]" />
+                  <span className="text-xs font-bold text-red-500 uppercase">
+                    Connected
+                  </span>
+                </div>
+                <span
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border ${
+                    userRole === "dom"
+                      ? "bg-red-900/40 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]"
+                      : "bg-red-950/40 text-red-300 border-red-500/50 shadow-[0_0_10px_rgba(180,30,30,0.3)]"
+                  }`}
+                >
+                  {userRole === "dom" ? "DOM" : "SUB"}
                 </span>
               </div>
-              <span
-                className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest border ${
-                  userRole === "dom"
-                    ? "bg-red-900/40 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(220,38,38,0.3)]"
-                    : "bg-red-950/40 text-red-300 border-red-500/50 shadow-[0_0_10px_rgba(180,30,30,0.3)]"
-                }`}
-              >
-                {userRole === "dom" ? "DOM" : "SUB"}
-              </span>
+              <div className="flex items-center gap-1.5 mt-1">
+                {(userRole === "dom" ? ["Master", "Sub"] : ["Sub", "Mistress"]).map((pt) => (
+                  <button
+                    key={pt}
+                    data-testid={`button-profile-type-${pt.toLowerCase()}`}
+                    onClick={() => updateProfileTypeMutation.mutate(pt)}
+                    className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all cursor-pointer ${
+                      (user?.profileType || (userRole === "dom" ? "Master" : "Sub")) === pt
+                        ? "bg-[#451a03]/60 text-[#d4a24e] border-[#d4a24e]/50 shadow-[0_0_8px_rgba(212,162,78,0.25)]"
+                        : "bg-black/30 text-slate-500 border-slate-700/50 hover:border-slate-500/50 hover:text-slate-400"
+                    }`}
+                  >
+                    {pt}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -1940,7 +1967,7 @@ export default function BondedAscentApp() {
                     : "bg-red-950/40 text-red-300 border-red-500/50 shadow-[0_0_10px_rgba(180,30,30,0.3)]"
                 }`}
               >
-                {userRole === "dom" ? "DOM" : "SUB"}
+                {user?.profileType || (userRole === "dom" ? "Master" : "Sub")}
               </span>
             </div>
           </div>

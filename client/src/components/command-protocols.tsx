@@ -21,14 +21,24 @@ import { UniversalCreator } from "@/components/universal-creator";
 import { feedbackComplete, feedbackUrgent, feedbackDelete, feedbackTap, feedbackPunishment, feedbackReward } from "@/lib/feedback";
 import { useRestrictionsStatus, useAuth } from "@/lib/hooks";
 
+function MaskIcon({ size = 16, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M2 12c0-3 2.5-7 10-7s10 4 10 7c0 2-1.5 4-4 4-1.5 0-2.5-.5-3.5-1.5C13.5 13.5 12.5 13 12 13s-1.5.5-2.5 1.5C8.5 15.5 7.5 16 6 16c-2.5 0-4-2-4-4z" />
+      <circle cx="8" cy="11" r="1.5" fill="currentColor" />
+      <circle cx="16" cy="11" r="1.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 export type FeedItemType =
   | "demand" | "command" | "accusation" | "task"
   | "punishment" | "reward" | "dare" | "checkin_review"
-  | "notification" | "standing_order" | "ritual"
+  | "notification" | "ritual"
   | "journal" | "play_session" | "countdown_event" | "wager"
   | "devotion" | "secret" | "conflict" | "rating"
   | "permission_request" | "desired_change" | "limit"
-  | "achievement" | "sticker_received";
+  | "achievement" | "sticker_received" | "partner_activity";
 
 export interface FeedItem {
   id: string;
@@ -118,7 +128,7 @@ const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor:
   accusation: { color: "text-red-400", borderColor: "border-l-red-500", bgColor: "from-red-950/50 to-red-950/15", glowColor: "shadow-red-600/15", icon: AlertTriangle, label: "ACCUSATION", priority: 2, iconBg: "bg-red-900/35", pillBg: "bg-red-500/20 text-red-400" },
   checkin_review: { color: "text-slate-400", borderColor: "border-l-slate-400", bgColor: "from-slate-900/40 to-slate-900/10", glowColor: "shadow-slate-500/15", icon: MessageSquare, label: "CHECK-IN", priority: 3, iconBg: "bg-slate-800/40", pillBg: "bg-slate-500/15 text-slate-400" },
   task: { color: "text-red-300", borderColor: "border-l-red-600", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-700/10", icon: Target, label: "DIRECTIVE", priority: 4, iconBg: "bg-red-900/30", pillBg: "bg-red-500/15 text-red-300" },
-  standing_order: { color: "text-red-400", borderColor: "border-l-red-600", bgColor: "from-red-950/40 to-red-950/10", glowColor: "shadow-red-800/10", icon: FileSignature, label: "STANDING ORDER", priority: 5, iconBg: "bg-red-900/30", pillBg: "bg-red-500/15 text-red-400" },
+  partner_activity: { color: "text-[#d4a24e]", borderColor: "border-l-[#d4a24e]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#d4a24e]/15", icon: MaskIcon as any, label: "PARTNER", priority: 2, iconBg: "bg-[#451a03]/40", pillBg: "bg-[#d4a24e]/15 text-[#d4a24e]" },
   ritual: { color: "text-[#c9956a]", borderColor: "border-l-[#92622a]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#78350f]/15", icon: RotateCcw, label: "RITUAL", priority: 6, iconBg: "bg-[#451a03]/40", pillBg: "bg-[#78350f]/25 text-[#c9956a]" },
   punishment: { color: "text-red-500", borderColor: "border-l-red-600", bgColor: "from-red-950/30 to-red-950/10", glowColor: "shadow-red-700/10", icon: Gavel, label: "PUNISHMENT", priority: 7, iconBg: "bg-red-900/40", pillBg: "bg-red-500/20 text-red-500" },
   reward: { color: "text-[#d4a24e]", borderColor: "border-l-[#b8860b]", bgColor: "from-[#451a03]/40 to-[#451a03]/10", glowColor: "shadow-[#92400e]/20", icon: Gift, label: "REWARD", priority: 8, iconBg: "bg-[#451a03]/40", pillBg: "bg-[#92400e]/25 text-[#d4a24e]" },
@@ -142,10 +152,10 @@ const TYPE_CONFIG: Record<string, { color: string; borderColor: string; bgColor:
 const FILTER_OPTIONS = [
   { key: "all", label: "All", icon: Eye },
   { key: "urgent", label: "Urgent", icon: Flame, types: ["demand", "command", "accusation"] },
-  { key: "protocols", label: "Directives", icon: ListChecks, types: ["task", "standing_order", "ritual"] },
+  { key: "protocols", label: "Directives", icon: ListChecks, types: ["task", "ritual"] },
   { key: "rewards", label: "Rewards", icon: Gift, types: ["reward"] },
   { key: "punishments", label: "Punishments", icon: Gavel, types: ["punishment", "dare"] },
-  { key: "reviews", label: "Reviews", icon: MessageSquare, types: ["checkin_review", "notification"] },
+  { key: "partner", label: "Partner", icon: Eye, types: ["partner_activity", "checkin_review"] },
   { key: "scenes", label: "Scenes", icon: Play, types: ["play_session", "wager", "countdown_event"] },
   { key: "connection", label: "Connection", icon: Heart, types: ["devotion", "secret", "conflict", "rating"] },
   { key: "structure", label: "Structure", icon: Shield, types: ["permission_request", "desired_change", "limit"] },
@@ -171,7 +181,7 @@ const WINDOW_CONFIG_BASE = [
   { key: "punishments", label: "PUNISHMENTS", icon: Gavel, types: ["punishment", "dare"], defaultSize: "standard" as WindowSize, borderColor: "#b91c1c", glowColor: "rgba(185,28,28,0.2)", bgFrom: "rgba(127,29,29,0.3)", headerBg: "rgba(185,28,28,0.1)" },
   { key: "rewards", label: "REWARDS", icon: Gift, types: ["reward", "achievement", "sticker_received"], defaultSize: "compact" as WindowSize, borderColor: "#d4a24e", glowColor: "rgba(212,162,78,0.2)", bgFrom: "rgba(69,26,3,0.35)", headerBg: "rgba(212,162,78,0.1)" },
   { key: "scenes", label: "SCENES", icon: Play, types: ["play_session", "wager", "countdown_event"], defaultSize: "wide" as WindowSize, borderColor: "#e87640", glowColor: "rgba(232,118,64,0.2)", bgFrom: "rgba(67,20,7,0.35)", headerBg: "rgba(232,118,64,0.08)" },
-  { key: "reviews", label: "REVIEWS", icon: MessageSquare, types: ["checkin_review", "notification"], defaultSize: "standard" as WindowSize, borderColor: "#64748b", glowColor: "rgba(100,116,139,0.15)", bgFrom: "rgba(30,41,59,0.4)", headerBg: "rgba(100,116,139,0.08)" },
+  { key: "partner", label: "PARTNER WATCH", icon: Eye, types: ["partner_activity", "checkin_review"], defaultSize: "standard" as WindowSize, borderColor: "#d4a24e", glowColor: "rgba(212,162,78,0.15)", bgFrom: "rgba(69,26,3,0.35)", headerBg: "rgba(212,162,78,0.08)" },
   { key: "connection", label: "CONNECTION", icon: Heart, types: ["devotion", "secret", "conflict", "rating"], defaultSize: "standard" as WindowSize, borderColor: "#b87333", glowColor: "rgba(184,115,51,0.2)", bgFrom: "rgba(69,26,3,0.3)", headerBg: "rgba(184,115,51,0.08)" },
   { key: "structure", label: "STRUCTURE", icon: Shield, types: ["permission_request", "desired_change", "limit"], defaultSize: "compact" as WindowSize, borderColor: "#475569", glowColor: "rgba(71,85,105,0.15)", bgFrom: "rgba(30,41,59,0.35)", headerBg: "rgba(71,85,105,0.08)" },
   { key: "journal", label: "JOURNAL", icon: BookOpen, types: ["journal"], defaultSize: "standard" as WindowSize, borderColor: "#92622a", glowColor: "rgba(146,98,42,0.2)", bgFrom: "rgba(69,26,3,0.25)", headerBg: "rgba(146,98,42,0.08)" },
@@ -336,7 +346,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const longPressMoveThreshold = 15;
 
   const navTargetMap: Record<string, string> = {
-    task: "dashboard", standing_order: "dashboard", ritual: "dashboard",
+    task: "dashboard", ritual: "dashboard", partner_activity: "dashboard",
     demand: "dashboard", command: "dashboard", accusation: "dashboard",
     punishment: "punishment-chest", reward: "reward-chest",
     dare: "punishment-chest", checkin_review: "dashboard",
@@ -410,8 +420,8 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
   const isCompletable = ["task", "punishment", "dare"].includes(item.type);
   const isCompleted = item.data?.done || item.data?.completed || item.data?.status === "completed";
   const rawId = item.id.replace(/^(so-|rit-)/, "");
-  const canEdit = ["task", "standing_order", "ritual"].includes(item.type);
-  const canDelete = ["task", "ritual", "limit", "countdown_event", "standing_order", "notification", "punishment", "reward", "dare", "secret", "wager", "rating", "permission_request", "devotion", "conflict", "desired_change", "play_session"].includes(item.type);
+  const canEdit = ["task", "ritual"].includes(item.type);
+  const canDelete = ["task", "ritual", "limit", "countdown_event", "notification", "partner_activity", "punishment", "reward", "dare", "secret", "wager", "rating", "permission_request", "devotion", "conflict", "desired_change", "play_session"].includes(item.type);
   const isNotification = item.type === "notification";
   const isUnread = isNotification && !item.data?.read;
   const isRead = isNotification && item.data?.read;
@@ -420,7 +430,7 @@ function FeedCard({ item, onAction, role, searchQuery, isPinned, onTogglePin, is
     if (item.type === "task") return "toggle";
     if (item.type === "punishment" || item.type === "dare") return "complete";
     if (item.type === "reward" && !item.data?.claimedAt) return "claim";
-    if (item.type === "notification") return "dismiss";
+    if (item.type === "notification" || item.type === "partner_activity") return "dismiss";
     return null;
   };
 
@@ -1048,7 +1058,7 @@ export function CommandProtocols({
     live_sessions: 7, interrogation: 5, confessions: 5, aftercare: 1, autodom: 1,
     play_sessions: 1, scene_scripts: 15, intensity: 1, obedience_trials: 10,
     sensation_roulette: 10, wagers: 5, endurance: 10, training_programs: 15,
-    connection_pulse: 1, devotions: 1, secrets: 1, conflicts: 1, contracts: 7, journal: 1,
+    devotions: 1, secrets: 1, conflicts: 1, contracts: 7, journal: 1,
     ratings: 3, achievements: 1, analytics: 1, countdown_events: 1, sealed_orders: 10, locked_media: 1,
     body_map: 15, dares: 3, stickers: 3, rewards: 3, punishments: 3, punishment_chest: 7, reward_chest: 7,
   };
@@ -1162,8 +1172,8 @@ export function CommandProtocols({
       else if (item.type === "dare") onAction(id, "complete");
       else if (item.type === "punishment") onAction(id, "complete");
       else if (item.type === "reward" && !item.data?.claimedAt) onAction(id, "claim");
-      else if (item.type === "notification") onAction(id, "dismiss");
-      else if (item.type === "standing_order" || item.type === "ritual") onAction(id, "toggle");
+      else if (item.type === "notification" || item.type === "partner_activity") onAction(id, "dismiss");
+      else if (item.type === "ritual") onAction(id, "toggle");
       else if (onDelete) onDelete(item.type, rawId);
     });
     setSelectedIds(new Set());
@@ -1717,7 +1727,6 @@ export function CommandProtocols({
 
             <FeatureDrawer title="Bond & Reflection" icon={<HeartPulse size={14} className="text-[#c9845a]" />}>
               <div className="space-y-1.5">
-                <DrawerFeatureLink icon={<HeartPulse size={14} />} label="Connection Pulse" desc="Bond status" href="/connection-pulse" color="text-[#c9845a]" sexyIcon="connection-pulse" />
                 <DrawerFeatureLink icon={<Heart size={14} />} label="Devotions" desc="Acts of service" href="/devotions" color="text-[#b8845a]" sexyIcon="devotions" />
                 <DrawerFeatureLink icon={<Eye size={14} />} label="Secrets" desc="Confessions & vault" href="/secrets" color="text-slate-300" sexyIcon="secrets" />
                 <DrawerFeatureLink icon={<AlertTriangle size={14} />} label="Conflicts" desc="Dispute resolution" href="/conflicts" color="text-red-400" sexyIcon="conflicts" />

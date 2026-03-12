@@ -233,6 +233,9 @@ export async function registerRoutes(
       }
       await storage.logActivity(user.id, "task_completed", task.text, user.role);
       await notifyUser(user.id, `Completed: ${task.text} (+5 XP)`, "info", user.role);
+      if (user.partnerId) {
+        await notifyUser(user.partnerId, `${user.username} completed task: "${task.text}"`, "partner_activity", user.role);
+      }
       const today = new Date().toISOString().split("T")[0];
       await storage.upsertStreak(user.id, "task_completion", today);
       if (task.assignedBy && task.assignedBy !== user.id) {
@@ -286,6 +289,9 @@ export async function registerRoutes(
     const checkIn = await storage.createCheckIn({ userId: user.id, mood, obedience, notes, createdAsRole: user.role });
     await storage.logActivity(user.id, "checkin_submitted", `Mood: ${mood}, Obedience: ${obedience}`, user.role);
     await notifyUser(user.id, "Check-in submitted successfully", "info", user.role);
+    if (user.partnerId) {
+      await notifyUser(user.partnerId, `${user.username} submitted a check-in (Mood: ${mood}/10)`, "partner_activity", user.role);
+    }
 
     const freshUser = await storage.getUser(user.id);
     if (freshUser) {
@@ -373,6 +379,9 @@ export async function registerRoutes(
       await storage.updateUserXp(user.id, newXp);
     }
     await storage.logActivity(user.id, "dare_completed", dare.text, user.role);
+    if (user.partnerId) {
+      await notifyUser(user.partnerId, `${user.username} completed a dare: "${dare.text}"`, "partner_activity", user.role);
+    }
     res.json(dare);
   });
 
@@ -459,7 +468,7 @@ export async function registerRoutes(
     if (!reward) return res.status(404).json({ message: "Reward not found" });
     await storage.logActivity(user.id, "reward_claimed", reward.name, user.role);
     if (partner) {
-      await notifyUser(partner.id, `${user.username} claimed reward "${reward.name}" into their chest`, "info", user.role);
+      await notifyUser(partner.id, `${user.username} claimed reward "${reward.name}"`, "partner_activity", user.role);
     }
     res.json(reward);
   });
@@ -475,7 +484,7 @@ export async function registerRoutes(
     if (!reward) return res.status(404).json({ message: "Reward not found" });
     await storage.logActivity(user.id, "reward_redeemed", reward.name, user.role);
     if (partner) {
-      await notifyUser(partner.id, `${user.username} is redeeming reward: "${reward.name}"`, "alert", user.role);
+      await notifyUser(partner.id, `${user.username} is redeeming reward: "${reward.name}"`, "partner_activity", user.role);
     }
     res.json(reward);
   });
@@ -525,7 +534,7 @@ export async function registerRoutes(
     if (!punishment) return res.status(404).json({ message: "Punishment not found" });
     await storage.logActivity(user.id, `punishment_${status}`, punishment.name, user.role);
     if (partner) {
-      await notifyUser(partner.id, `${user.username} marked punishment "${punishment.name}" as ${status}`, "info", user.role);
+      await notifyUser(partner.id, `${user.username} marked punishment "${punishment.name}" as ${status}`, "partner_activity", user.role);
     }
     res.json(punishment);
   });
@@ -618,6 +627,9 @@ export async function registerRoutes(
     await storage.logActivity(user.id, "journal_entry", "New journal entry", user.role);
     const today = new Date().toISOString().split("T")[0];
     await storage.upsertStreak(user.id, "journal", today);
+    if (user.partnerId) {
+      await notifyUser(user.partnerId, `${user.username} wrote a new journal entry`, "partner_activity", user.role);
+    }
     if (isShared) {
       const partner = await storage.getPartner(user.id);
       if (partner) {
@@ -2183,6 +2195,17 @@ export async function registerRoutes(
   // --- MEDIA UPLOADS ---
   app.use("/uploads", express.static(uploadsDir));
 
+  app.patch("/api/profile-type", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const { profileType } = req.body;
+    const validTypes = user.role === "dom" ? ["Master", "Sub"] : ["Sub", "Mistress"];
+    if (!profileType || !validTypes.includes(profileType)) {
+      return res.status(400).json({ message: `Invalid profile type. Must be one of: ${validTypes.join(", ")}` });
+    }
+    const updated = await storage.updateUserProfileType(user.id, profileType);
+    res.json(updated);
+  });
+
   app.post("/api/profile-pic", requireAuth, upload.single("file"), async (req, res) => {
     const user = req.user as User;
     const file = req.file;
@@ -2529,7 +2552,7 @@ export async function registerRoutes(
     });
     await storage.logActivity(user.id, "confession_submitted", "New confession", user.role);
     if (confession.partnerId) {
-      await notifyUser(confession.partnerId, `${user.username} submitted a confession`, "alert", user.role);
+      await notifyUser(confession.partnerId, `${user.username} submitted a confession`, "partner_activity", user.role);
     }
     res.status(201).json(confession);
   });
@@ -2930,7 +2953,7 @@ export async function registerRoutes(
     });
     await storage.logActivity(user.id, "live_session_started", "Live Session started", user.role);
     if (partner) {
-      await notifyUser(partner.id, "Your partner has started a Live Session. Join now!", "live_session");
+      await notifyUser(partner.id, `${user.username} started a Live Session — join now!`, "partner_activity", user.role);
       sendToUser(partner.id, "live-session-started", { sessionId: session.id });
     }
     res.status(201).json(session);
@@ -3306,7 +3329,7 @@ export async function registerRoutes(
     if (user.partnerId) {
       const prefs = await storage.getNotificationPreferences(user.partnerId);
       if (!prefs || prefs.performanceAlerts) {
-        await notifyUser(user.partnerId, `${user.username} completed their ritual`, "ritual_complete", user.role);
+        await notifyUser(user.partnerId, `${user.username} completed their ritual`, "partner_activity", user.role);
       }
     }
 

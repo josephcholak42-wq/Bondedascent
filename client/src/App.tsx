@@ -11,7 +11,6 @@ import LimitsPage from "@/pages/limits";
 import SecretsPage from "@/pages/secrets";
 import WagersPage from "@/pages/wagers";
 import RatingsPage from "@/pages/ratings";
-import ConnectionPulsePage from "@/pages/connection-pulse";
 import PlaySessionsPage from "@/pages/play-sessions";
 import CountdownEventsPage from "@/pages/countdown-events";
 import AchievementsPage from "@/pages/achievements";
@@ -82,7 +81,6 @@ function Router() {
       <Route path="/secrets" component={() => <ProtectedRoute component={SecretsPage} />} />
       <Route path="/wagers" component={() => <ProtectedRoute component={WagersPage} />} />
       <Route path="/ratings" component={() => <ProtectedRoute component={RatingsPage} />} />
-      <Route path="/connection-pulse" component={() => <ProtectedRoute component={ConnectionPulsePage} />} />
       <Route path="/play-sessions" component={() => <ProtectedRoute component={PlaySessionsPage} />} />
       <Route path="/countdown-events" component={() => <ProtectedRoute component={CountdownEventsPage} />} />
       <Route path="/achievements" component={() => <ProtectedRoute component={AchievementsPage} />} />
