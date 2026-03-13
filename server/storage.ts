@@ -253,6 +253,7 @@ export interface IStorage {
 
   // Endurance Challenges
   getEnduranceChallenges(targetUserId: string): Promise<EnduranceChallenge[]>;
+  getEnduranceChallengesForPair(userIds: string[]): Promise<EnduranceChallenge[]>;
   getEnduranceChallengesByCreator(userId: string): Promise<EnduranceChallenge[]>;
   createEnduranceChallenge(challenge: InsertEnduranceChallenge): Promise<EnduranceChallenge>;
   updateEnduranceChallenge(id: string, data: Partial<EnduranceChallenge>): Promise<EnduranceChallenge | undefined>;
@@ -1095,6 +1096,11 @@ export class DatabaseStorage implements IStorage {
   // Endurance Challenges
   async getEnduranceChallenges(targetUserId: string): Promise<EnduranceChallenge[]> {
     return db.select().from(enduranceChallenges).where(eq(enduranceChallenges.targetUserId, targetUserId)).orderBy(desc(enduranceChallenges.createdAt));
+  }
+  async getEnduranceChallengesForPair(userIds: string[]): Promise<EnduranceChallenge[]> {
+    return db.select().from(enduranceChallenges).where(
+      and(inArray(enduranceChallenges.userId, userIds), inArray(enduranceChallenges.targetUserId, userIds))
+    ).orderBy(desc(enduranceChallenges.createdAt));
   }
   async getEnduranceChallengesByCreator(userId: string): Promise<EnduranceChallenge[]> {
     return db.select().from(enduranceChallenges).where(eq(enduranceChallenges.userId, userId)).orderBy(desc(enduranceChallenges.createdAt));

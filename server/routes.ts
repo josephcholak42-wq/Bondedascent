@@ -103,7 +103,7 @@ export async function registerRoutes(
       storage.getWagersForPair(userIds),
       storage.getDesiredChangesForPair(userIds),
       storage.getObedienceTrialsForPair(userIds),
-      storage.getEnduranceChallenges(user.id),
+      storage.getEnduranceChallengesForPair(userIds),
       storage.getSealedOrders(user.id),
       storage.getSecretsForPair(userIds),
       storage.getLimitsForPair(userIds),
@@ -1075,6 +1075,10 @@ export async function registerRoutes(
     if (!name?.trim()) return res.status(400).json({ message: "Name required" });
     const limit = await storage.createLimit({ userId: user.id, name: name.trim(), category, level, description, createdAsRole: user.role });
     await storage.logActivity(user.id, "limit_set", name.trim(), user.role);
+    const limitPartner = await storage.getPartner(user.id);
+    if (limitPartner) {
+      await notifyUser(limitPartner.id, `${user.username} set a limit: "${name.trim()}"`, "partner_activity", user.role);
+    }
     res.status(201).json(limit);
   });
 
@@ -1241,6 +1245,10 @@ export async function registerRoutes(
     if (!title?.trim() || !targetDate) return res.status(400).json({ message: "Title and target date required" });
     const event = await storage.createCountdownEvent({ userId: user.id, title: title.trim(), description, targetDate: new Date(targetDate), category, createdAsRole: user.role });
     await storage.logActivity(user.id, "countdown_created", title.trim(), user.role);
+    const countdownPartner = await storage.getPartner(user.id);
+    if (countdownPartner) {
+      await notifyUser(countdownPartner.id, `${user.username} set a countdown: "${title.trim()}"`, "partner_activity", user.role);
+    }
     res.status(201).json(event);
   });
 
@@ -1267,6 +1275,10 @@ export async function registerRoutes(
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
     const order = await storage.createStandingOrder({ userId: user.id, assignedBy: user.id, title: title.trim(), description, priority, createdAsRole: user.role });
     await storage.logActivity(user.id, "standing_order_created", title.trim(), user.role);
+    const soPartner = await storage.getPartner(user.id);
+    if (soPartner) {
+      await notifyUser(soPartner.id, `${user.username} created a standing order: "${title.trim()}"`, "partner_activity", user.role);
+    }
     res.status(201).json(order);
   });
 
@@ -1362,6 +1374,10 @@ export async function registerRoutes(
     if (!content?.trim()) return res.status(400).json({ message: "Content required" });
     const devotion = await storage.createDevotion({ userId: user.id, type: type || "affirmation", content: content.trim(), createdAsRole: user.role });
     await storage.logActivity(user.id, "devotion_created", content.trim().substring(0, 50), user.role);
+    const devotionPartner = await storage.getPartner(user.id);
+    if (devotionPartner) {
+      await notifyUser(devotionPartner.id, `${user.username} added a devotion`, "partner_activity", user.role);
+    }
     res.status(201).json(devotion);
   });
 
@@ -1391,6 +1407,10 @@ export async function registerRoutes(
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
     const conflict = await storage.createConflict({ userId: user.id, partnerId, title: title.trim(), description, createdAsRole: user.role });
     await storage.logActivity(user.id, "conflict_opened", title.trim(), user.role);
+    const conflictPartner = await storage.getPartner(user.id);
+    if (conflictPartner) {
+      await notifyUser(conflictPartner.id, `${user.username} opened a conflict: "${title.trim()}"`, "partner_activity", user.role);
+    }
     res.status(201).json(conflict);
   });
 
@@ -1421,6 +1441,10 @@ export async function registerRoutes(
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
     const change = await storage.createDesiredChange({ userId: user.id, targetUserId, title: title.trim(), description, category, createdAsRole: user.role });
     await storage.logActivity(user.id, "desired_change_created", title.trim(), user.role);
+    const changePartner = await storage.getPartner(user.id);
+    if (changePartner) {
+      await notifyUser(changePartner.id, `${user.username} proposed a change: "${title.trim()}"`, "partner_activity", user.role);
+    }
     res.status(201).json(change);
   });
 
@@ -1471,6 +1495,10 @@ export async function registerRoutes(
       createdAsRole: user.role,
     });
     await storage.logActivity(user.id, "play_session_created", title || "New session", user.role);
+    const playPartner = await storage.getPartner(user.id);
+    if (playPartner) {
+      await notifyUser(playPartner.id, `${user.username} planned a session: "${title || "New session"}"`, "partner_activity", user.role);
+    }
     res.status(201).json(session);
   });
 
@@ -1932,7 +1960,7 @@ export async function registerRoutes(
         status: "pending",
       });
     }
-    await notifyUser(user.partnerId, `New trial assigned: "${title}" (${steps.length} steps)`, "alert", user.role);
+    await notifyUser(user.partnerId, `${user.username} assigned a trial: "${title}" (${steps.length} steps)`, "partner_activity", user.role);
     await storage.logActivity(user.id, "trial_created", title, user.role);
     res.json(trial);
   });
@@ -2171,7 +2199,7 @@ export async function registerRoutes(
       createdAsRole: user.role,
     });
     await storage.updateEnduranceChallenge(challenge.id, { totalCheckins });
-    await notifyUser(user.partnerId, `Endurance challenge: "${title}" — ${durationHours}h, check in every ${intervalMins}min`, "alert", user.role);
+    await notifyUser(user.partnerId, `${user.username} started an endurance challenge: "${title}" — ${durationHours}h, check in every ${intervalMins}min`, "partner_activity", user.role);
     await storage.logActivity(user.id, "endurance_challenge_created", title, user.role);
     res.json(challenge);
   });
