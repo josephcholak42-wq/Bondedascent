@@ -37,15 +37,20 @@ import AdminPanel from "@/pages/admin-panel";
 import { useAuth } from "@/lib/hooks";
 import { Loader2 } from "lucide-react";
 
+function LoadingScreen() {
+  return (
+    <div className="after-dark-shell min-h-screen flex flex-col items-center justify-center gap-3">
+      <Loader2 className="animate-spin text-red-500" size={44} />
+      <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 font-black">Loading secure interface</p>
+    </div>
+  );
+}
+
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { data: user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="animate-spin text-red-600" size={48} />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user) {
@@ -59,11 +64,7 @@ function AuthRoute() {
   const { data: user, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="animate-spin text-red-600" size={48} />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (user) {
