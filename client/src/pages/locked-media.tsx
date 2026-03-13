@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/hooks";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LockedMediaPage() {
-  const { user } = useAuth();
+  const { data: user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,12 +73,7 @@ export default function LockedMediaPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
-        <PageBreadcrumb
-          items={[
-            { label: "Dashboard", href: "/" },
-            { label: isDom ? "Locked Vault" : "Secret Gallery" },
-          ]}
-        />
+        <PageBreadcrumb current={isDom ? "Locked Vault" : "Secret Gallery"} />
 
         <div className="text-center space-y-1">
           <h1 data-testid="text-page-title" className="text-xl font-black uppercase tracking-wider">
