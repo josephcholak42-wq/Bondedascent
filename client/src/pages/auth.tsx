@@ -5,6 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useLogin, useRegister } from '@/lib/hooks';
 
+const FEATURED_CONTENT = [
+  {
+    badge: "After Hours",
+    title: "Private Scene Drops",
+    description: "Unlock intense narrative prompts and cinematic visual packs built for mature roleplay sessions.",
+  },
+  {
+    badge: "Provocation",
+    title: "High-Stakes Challenges",
+    description: "Explore harder missions, stricter protocols, and premium challenge tracks for experienced pairs.",
+  },
+  {
+    badge: "Vault Access",
+    title: "Curated Mature Library",
+    description: "Build your own private catalog of premium scripts, themes, and media intended for consenting adults.",
+  },
+] as const;
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [, setLocation] = useLocation();
@@ -47,13 +65,13 @@ export default function AuthPage() {
   const isLoading = loginMutation.isPending || registerMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-black text-slate-200 font-sans flex flex-col items-center justify-start px-4 py-8 sm:px-6 sm:py-10 relative overflow-hidden">
+    <div className="after-dark-shell min-h-screen text-slate-200 font-sans flex flex-col items-center justify-start px-4 py-8 sm:px-6 sm:py-10 relative overflow-hidden">
       <div className="absolute inset-0 opacity-5 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-red-900/20 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-red-950/20 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-lg z-10 animate-in fade-in zoom-in-95 duration-500">
-        <div className="text-center mb-8 sm:mb-10">
+      <main className="w-full max-w-lg z-10 animate-in fade-in zoom-in-95 duration-500">
+        <header className="text-center mb-8 sm:mb-10">
           <div className="flex justify-center mb-4">
             <div className="w-20 h-20 bg-gradient-to-br from-zinc-950 to-black rounded-2xl border border-red-900/40 flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.25)]">
               <Lock size={40} className="text-red-500 drop-shadow-[0_0_14px_rgba(220,38,38,0.7)]" />
@@ -63,14 +81,16 @@ export default function AuthPage() {
             Bonded<span className="text-red-500">Ascent</span>
           </h1>
           <p className="text-slate-400 text-[11px] sm:text-xs uppercase tracking-[0.3em] font-black">After Dark Protocol Interface</p>
-        </div>
+        </header>
 
-        <div className="bg-zinc-950/80 backdrop-blur-md border border-red-900/30 p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+        <section className="after-dark-panel backdrop-blur-md p-6 sm:p-8 rounded-3xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent opacity-70" />
           
-          <div className="flex gap-3 mb-8 p-1 bg-black/60 rounded-xl border border-red-900/25">
+          <div className="flex gap-3 mb-8 p-1 bg-black/60 rounded-xl border border-red-900/25" role="tablist" aria-label="Authentication mode">
             <button 
               data-testid="tab-login"
+              role="tab"
+              aria-selected={isLogin}
               onClick={() => { setIsLogin(true); setError(''); }}
               className={`flex-1 py-2 text-xs font-black uppercase tracking-[0.12em] rounded-lg transition-all cursor-pointer ${isLogin ? 'bg-zinc-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
@@ -78,6 +98,8 @@ export default function AuthPage() {
             </button>
             <button 
               data-testid="tab-register"
+              role="tab"
+              aria-selected={!isLogin}
               onClick={() => { setIsLogin(false); setError(''); }}
               className={`flex-1 py-2 text-xs font-black uppercase tracking-[0.12em] rounded-lg transition-all cursor-pointer ${!isLogin ? 'bg-zinc-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
             >
@@ -86,37 +108,50 @@ export default function AuthPage() {
           </div>
 
           {error && (
-            <div data-testid="text-error" className="mb-6 p-3 bg-red-950/50 border border-red-500/30 rounded-xl text-xs text-red-400 font-bold uppercase tracking-wider text-center">
+            <div
+              data-testid="text-error"
+              role="alert"
+              aria-live="assertive"
+              className="mb-6 p-3 bg-red-950/50 border border-red-500/30 rounded-xl text-xs text-red-400 font-bold uppercase tracking-wider text-center"
+            >
               {error}
             </div>
           )}
 
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-2">
-              <Label className="text-xs uppercase font-black tracking-[0.12em] text-slate-300 ml-1">Username</Label>
+              <Label htmlFor="username" className="text-xs uppercase font-black tracking-[0.12em] text-slate-300 ml-1">Username</Label>
               <div className="relative group">
                 <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" />
                 <input 
+                  id="username"
                   data-testid="input-username"
                   type="text" 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter username"
+                  autoComplete="username"
+                  disabled={isLoading}
+                  required
                   className="w-full bg-black/50 border border-zinc-700 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-red-500/60 transition-colors placeholder:text-slate-600"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs uppercase font-black tracking-[0.12em] text-slate-300 ml-1">Password</Label>
+              <Label htmlFor="password" className="text-xs uppercase font-black tracking-[0.12em] text-slate-300 ml-1">Password</Label>
               <div className="relative group">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-white transition-colors" />
                 <input 
+                  id="password"
                   data-testid="input-password"
                   type="password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  disabled={isLoading}
+                  required
                   className="w-full bg-black/50 border border-zinc-700 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-red-500/60 transition-colors placeholder:text-slate-600"
                 />
               </div>
@@ -131,6 +166,8 @@ export default function AuthPage() {
                       data-testid="button-role-dom"
                       type="button"
                       onClick={() => setRole('dom')}
+                      aria-pressed={role === 'dom'}
+                      disabled={isLoading}
                       className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer ${role === 'dom' ? 'bg-red-900/30 border-red-500 text-white shadow-[0_0_18px_rgba(220,38,38,0.35)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
                     >
                       <Crown size={20} className={role === 'dom' ? 'text-red-500' : ''} />
@@ -144,6 +181,8 @@ export default function AuthPage() {
                       data-testid="button-role-sub"
                       type="button"
                       onClick={() => setRole('sub')}
+                      aria-pressed={role === 'sub'}
+                      disabled={isLoading}
                       className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-all cursor-pointer ${role === 'sub' ? 'bg-red-900/30 border-red-500 text-white shadow-[0_0_18px_rgba(220,38,38,0.35)]' : 'bg-black/20 border-slate-700 text-slate-500 hover:border-slate-500'}`}
                     >
                       <Heart size={20} className={role === 'sub' ? 'text-red-500' : ''} />
@@ -181,6 +220,7 @@ export default function AuthPage() {
           <div className="mt-6 text-center">
             <button
               data-testid="link-forgot-password"
+              type="button"
               onClick={() => setLocation('/reset-password')}
               className="text-xs text-slate-500 hover:text-red-400 uppercase tracking-wider font-bold transition-colors cursor-pointer"
             >
@@ -188,19 +228,23 @@ export default function AuthPage() {
             </button>
           </div>
 
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-2">
             <p className="text-[10px] text-slate-600 font-mono uppercase">
               Secure Connection • End-to-End Encryption • Protocol v2.4
             </p>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-[0.15em] flex items-center justify-center gap-1.5">
+              <Shield size={12} className="text-red-400" />
+              Consent-first, adults only environment
+            </p>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
 
       <section
         data-testid="featured-content"
         className="w-full max-w-6xl z-10 mt-10 sm:mt-12"
       >
-        <div className="rounded-3xl border border-red-900/30 bg-gradient-to-b from-zinc-950/95 to-black/95 p-5 sm:p-8 shadow-[0_0_60px_rgba(120,10,20,0.2)]">
+        <div className="after-dark-panel rounded-3xl p-5 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-6">
             <div>
               <p className="text-[10px] uppercase tracking-[0.25em] text-red-400 font-black">
@@ -216,29 +260,26 @@ export default function AuthPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <article className="rounded-2xl border border-red-900/35 bg-zinc-900/40 p-4 sm:p-5">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-red-300 font-black mb-2">After Hours</p>
-              <h3 className="text-lg text-white font-black tracking-[0.08em] mb-2">Private Scene Drops</h3>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Unlock intense narrative prompts and cinematic visual packs built for mature roleplay sessions.
-              </p>
-            </article>
+            {FEATURED_CONTENT.map((item) => (
+              <article key={item.title} className="after-dark-card rounded-2xl p-4 sm:p-5">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-red-300 font-black mb-2">{item.badge}</p>
+                <h3 className="text-lg text-white font-black tracking-[0.08em] mb-2">{item.title}</h3>
+                <p className="text-sm text-slate-300 leading-relaxed">{item.description}</p>
+              </article>
+            ))}
+          </div>
 
-            <article className="rounded-2xl border border-red-900/35 bg-zinc-900/40 p-4 sm:p-5">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-red-300 font-black mb-2">Provocation</p>
-              <h3 className="text-lg text-white font-black tracking-[0.08em] mb-2">High-Stakes Challenges</h3>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Explore harder missions, stricter protocols, and premium challenge tracks for experienced pairs.
-              </p>
-            </article>
-
-            <article className="rounded-2xl border border-red-900/35 bg-zinc-900/40 p-4 sm:p-5">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-red-300 font-black mb-2">Vault Access</p>
-              <h3 className="text-lg text-white font-black tracking-[0.08em] mb-2">Curated Mature Library</h3>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                Build your own private catalog of premium scripts, themes, and media intended for consenting adults.
-              </p>
-            </article>
+          <div className="mt-6 pt-5 border-t border-red-900/30 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+            <p className="text-xs text-slate-400 uppercase tracking-[0.12em]">
+              Join to unlock mature features and advanced protocol tracks
+            </p>
+            <Button
+              type="button"
+              onClick={() => { setIsLogin(false); setError(''); }}
+              className="bg-red-900 hover:bg-red-800 text-white font-black uppercase tracking-[0.12em]"
+            >
+              Create 18+ Profile
+            </Button>
           </div>
         </div>
       </section>

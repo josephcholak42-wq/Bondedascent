@@ -84,6 +84,9 @@
   * {
     @apply border-border;
   }
+  html {
+    color-scheme: dark;
+  }
   body {
     @apply font-sans antialiased;
     background: radial-gradient(circle at 20% 0%, rgba(120, 10, 20, 0.16), transparent 38%), radial-gradient(circle at 100% 100%, rgba(80, 5, 15, 0.18), transparent 46%), #050505;
@@ -98,6 +101,32 @@
   input, textarea, select {
     font-size: 16px !important;
   }
+  ::selection {
+    background: rgba(176, 22, 42, 0.35);
+    color: #fff;
+  }
+  :focus-visible {
+    outline: 2px solid rgba(220, 38, 38, 0.8);
+    outline-offset: 2px;
+  }
+}
+
+.after-dark-shell {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(130, 12, 26, 0.2), transparent 35%),
+    radial-gradient(circle at 90% 100%, rgba(96, 8, 20, 0.22), transparent 45%),
+    #040404;
+}
+
+.after-dark-panel {
+  border: 1px solid rgba(127, 29, 29, 0.42);
+  background: linear-gradient(180deg, rgba(24, 24, 27, 0.86) 0%, rgba(3, 3, 4, 0.94) 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 50px rgba(150, 24, 38, 0.14);
+}
+
+.after-dark-card {
+  border: 1px solid rgba(127, 29, 29, 0.45);
+  background: linear-gradient(180deg, rgba(26, 26, 29, 0.88) 0%, rgba(12, 12, 13, 0.88) 100%);
 }
 
 .animate-in {
