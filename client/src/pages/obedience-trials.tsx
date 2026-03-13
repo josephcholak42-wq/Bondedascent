@@ -1,10 +1,11 @@
 import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React, { useState, useEffect, useMemo } from 'react';
-import { Shield, Plus, X, Check, Play, Trash2, Clock, Trophy, XCircle } from 'lucide-react';
+import { Shield, Plus, X, Check, Play, Trash2, Clock, Trophy, XCircle, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { useObedienceTrials, useCreateObedienceTrial, useUpdateObedienceTrial, useTrialSteps, useUpdateTrialStep, useAuth } from '@/lib/hooks';
+import { PREBUILT_OBEDIENCE_TRIALS, OBEDIENCE_TRIAL_CATEGORIES, type PrebuiltObedienceTrial } from '@/lib/prebuilt-obedience-trials';
 
 const STATUS_COLORS: Record<string, string> = {
   pending: 'bg-red-700/20 text-red-400',
@@ -35,6 +36,9 @@ export default function ObedienceTrialsPage() {
   const [autoReward, setAutoReward] = useState('');
   const [autoPunishment, setAutoPunishment] = useState('');
   const [selectedTrialId, setSelectedTrialId] = useState<string | null>(null);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryCategoryFilter, setLibraryCategoryFilter] = useState<string | null>(null);
+  const [librarySearch, setLibrarySearch] = useState('');
 
   const { data: trialSteps = [] } = useTrialSteps(selectedTrialId);
 
@@ -94,6 +98,18 @@ export default function ObedienceTrialsPage() {
     setShowForm(false);
   };
 
+  const handleCreateFromPrebuilt = (trial: PrebuiltObedienceTrial) => {
+    createTrialMutation.mutate({
+      title: trial.title,
+      timeLimitSeconds: trial.timeLimitSeconds,
+      steps: trial.steps,
+    });
+  };
+
+  const filteredLibraryTrials = PREBUILT_OBEDIENCE_TRIALS
+    .filter(t => !libraryCategoryFilter || t.category === libraryCategoryFilter)
+    .filter(t => !librarySearch || t.title.toLowerCase().includes(librarySearch.toLowerCase()) || t.steps.some(s => s.toLowerCase().includes(librarySearch.toLowerCase())));
+
   const handleStart = (trialId: string) => {
     updateTrialMutation.mutate({
       id: trialId,
@@ -132,16 +148,98 @@ export default function ObedienceTrialsPage() {
         {userRole === 'dom' ? 'Create multi-step trial challenges' : 'Complete trial challenges from your Dom'}
       </p>
 
-      <RoleGatedButton
-        data-testid="button-toggle-form"
-        allowed={userRole === 'dom'}
-        tooltipText="Only your Dom can create trials"
-        className="mb-6 bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
-        onClick={() => setShowForm(!showForm)}
-      >
-        <Plus size={16} className="mr-2" />
-        Create Trial
-      </RoleGatedButton>
+      <div className="flex gap-2 mb-6">
+        <RoleGatedButton
+          data-testid="button-toggle-form"
+          allowed={userRole === 'dom'}
+          tooltipText="Only your Dom can create trials"
+          className="bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
+          onClick={() => setShowForm(!showForm)}
+        >
+          <Plus size={16} className="mr-2" />
+          Custom Trial
+        </RoleGatedButton>
+        {userRole === 'dom' && (
+          <Button
+            data-testid="button-toggle-library"
+            variant="outline"
+            className="border-red-600/40 text-red-400 hover:bg-red-600/20 uppercase tracking-wider"
+            onClick={() => setShowLibrary(!showLibrary)}
+          >
+            <Shield size={16} className="mr-2" />
+            Trial Library ({PREBUILT_OBEDIENCE_TRIALS.length})
+            {showLibrary ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />}
+          </Button>
+        )}
+      </div>
+
+      {userRole === 'dom' && showLibrary && (
+        <div className="mb-6 bg-slate-900/50 border border-red-900/20 rounded-lg p-4 space-y-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              data-testid="input-library-search"
+              type="text"
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              placeholder="Search trials..."
+              className="w-full bg-black/40 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+              style={{ fontSize: '16px' }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              data-testid="button-trial-cat-all"
+              onClick={() => setLibraryCategoryFilter(null)}
+              className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!libraryCategoryFilter ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+            >
+              All
+            </button>
+            {OBEDIENCE_TRIAL_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                data-testid={`button-trial-cat-${cat.toLowerCase()}`}
+                onClick={() => setLibraryCategoryFilter(cat)}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${libraryCategoryFilter === cat ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div className="max-h-[45vh] overflow-y-auto space-y-1.5 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {filteredLibraryTrials.map((trial, i) => (
+              <button
+                key={i}
+                data-testid={`button-prebuilt-trial-${i}`}
+                onClick={() => handleCreateFromPrebuilt(trial)}
+                className="w-full flex items-start gap-3 p-3 bg-red-950/10 border border-red-900/20 hover:bg-red-900/30 hover:border-red-500/40 rounded-xl transition-all cursor-pointer group text-left"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-red-400 font-semibold group-hover:text-white transition-colors">{trial.title}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[9px] text-slate-500 uppercase">{trial.category}</span>
+                    <span className="text-[9px] text-slate-600">•</span>
+                    <span className="text-[9px] text-slate-500">{trial.steps.length} steps</span>
+                    <span className="text-[9px] text-slate-600">•</span>
+                    <span className="text-[9px] text-slate-500">{Math.floor(trial.timeLimitSeconds / 60)} min</span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {trial.steps.slice(0, 3).map((s, j) => (
+                      <span key={j} className="text-[8px] text-slate-600 bg-slate-800/50 px-1.5 py-0.5 rounded">{j + 1}. {s.length > 40 ? s.slice(0, 40) + '...' : s}</span>
+                    ))}
+                    {trial.steps.length > 3 && <span className="text-[8px] text-slate-600">+{trial.steps.length - 3} more</span>}
+                  </div>
+                </div>
+                <div className="flex gap-0.5 shrink-0 mt-1">
+                  {Array.from({ length: 10 }, (_, j) => (
+                    <div key={j} className={`w-1.5 h-1.5 rounded-full ${j < trial.difficulty ? (trial.difficulty >= 7 ? 'bg-red-500' : 'bg-red-700') : 'bg-slate-800'}`} />
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {userRole === 'dom' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-3" data-testid="form-create-trial">

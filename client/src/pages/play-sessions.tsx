@@ -1,11 +1,12 @@
 import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React, { useState } from 'react';
-import { Play, Plus, Clock, Check, Search, Flame, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Play, Plus, Clock, Check, Search, Flame, ChevronDown, ChevronUp, X, ListOrdered } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
 import { usePlaySessions, useCreatePlaySession, useUpdatePlaySession, useAuth } from '@/lib/hooks';
 import { PREBUILT_SCENES, SCENE_CATEGORIES, type PrebuiltScene } from '@/lib/prebuilt-scenes';
+import { PREBUILT_SCENE_SCRIPTS, SCENE_SCRIPT_CATEGORIES, type PrebuiltSceneScript } from '@/lib/prebuilt-scene-steps';
 
 export default function PlaySessionsPage() {
   const { data: user } = useAuth();
@@ -17,6 +18,10 @@ export default function PlaySessionsPage() {
   const [sceneSearch, setSceneSearch] = useState('');
   const [sceneCategoryFilter, setSceneCategoryFilter] = useState<string | null>(null);
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [showScripts, setShowScripts] = useState(false);
+  const [scriptCategoryFilter, setScriptCategoryFilter] = useState<string | null>(null);
+  const [scriptSearch, setScriptSearch] = useState('');
+  const [expandedScript, setExpandedScript] = useState<number | null>(null);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [mood, setMood] = useState('excited');
@@ -34,6 +39,22 @@ export default function PlaySessionsPage() {
       status: 'planned',
     });
   };
+
+  const handleCreateFromScript = (script: PrebuiltSceneScript) => {
+    const stepsText = script.steps.map((s, i) => `${i + 1}. [${s.phase}] (${s.durationNote}) — ${s.instruction}`).join('\n');
+    createMutation.mutate({
+      title: `${script.name} (Scripted)`,
+      notes: `Category: ${script.category}\nSuggested Duration: ${script.duration}\n\nScene Steps:\n${stepsText}`,
+      mood: script.intensity >= 7 ? 'intense' : script.intensity >= 4 ? 'excited' : 'relaxed',
+      intensity: script.intensity,
+      activities: script.steps.map(s => s.phase.toLowerCase()),
+      status: 'planned',
+    });
+  };
+
+  const filteredScripts = PREBUILT_SCENE_SCRIPTS
+    .filter(s => !scriptCategoryFilter || s.category === scriptCategoryFilter)
+    .filter(s => !scriptSearch || s.name.toLowerCase().includes(scriptSearch.toLowerCase()) || s.steps.some(st => st.instruction.toLowerCase().includes(scriptSearch.toLowerCase())));
 
   const handleCreateCustom = () => {
     if (!title.trim()) return;
@@ -184,6 +205,101 @@ export default function PlaySessionsPage() {
             {filteredScenes.length === 0 && (
               <div className="text-center py-6 text-slate-600 text-xs">
                 No scenes match your search
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-slate-800 pt-3">
+            <button
+              data-testid="button-toggle-scripts"
+              onClick={() => setShowScripts(!showScripts)}
+              className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-2 cursor-pointer hover:text-slate-300 transition-colors"
+            >
+              <ListOrdered size={12} />
+              Scene Scripts — Step-by-Step ({PREBUILT_SCENE_SCRIPTS.length})
+              {showScripts ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+            {showScripts && (
+              <div className="space-y-3 mb-4">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    data-testid="input-script-search"
+                    type="text"
+                    value={scriptSearch}
+                    onChange={(e) => setScriptSearch(e.target.value)}
+                    placeholder="Search scene scripts..."
+                    className="w-full bg-black/40 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+                    style={{ fontSize: '16px' }}
+                  />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    data-testid="button-script-cat-all"
+                    onClick={() => setScriptCategoryFilter(null)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!scriptCategoryFilter ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                  >
+                    All
+                  </button>
+                  {SCENE_SCRIPT_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      data-testid={`button-script-cat-${cat.toLowerCase().replace(/\s/g, '-')}`}
+                      onClick={() => setScriptCategoryFilter(cat)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${scriptCategoryFilter === cat ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                <div className="max-h-[50vh] overflow-y-auto space-y-2 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+                  {filteredScripts.map((script, i) => (
+                    <div key={i} className="bg-red-950/10 border border-red-900/20 rounded-xl overflow-hidden">
+                      <button
+                        data-testid={`button-script-${i}`}
+                        onClick={() => setExpandedScript(expandedScript === i ? null : i)}
+                        className="w-full flex items-center gap-3 p-3 hover:bg-red-900/20 transition-all cursor-pointer group text-left"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs text-red-400 font-semibold group-hover:text-white transition-colors">{script.name}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] text-slate-500 uppercase">{script.category}</span>
+                            <span className="text-[9px] text-slate-600">•</span>
+                            <span className="text-[9px] text-slate-500">{script.steps.length} steps</span>
+                            <span className="text-[9px] text-slate-600">•</span>
+                            <span className="text-[9px] text-red-500/60 flex items-center gap-0.5"><Clock size={8} />{script.duration}</span>
+                            <span className="text-[9px] text-slate-600">•</span>
+                            <IntensityDots level={script.intensity} />
+                          </div>
+                        </div>
+                        {expandedScript === i ? <ChevronUp size={14} className="text-slate-500" /> : <ChevronDown size={14} className="text-slate-500" />}
+                      </button>
+                      {expandedScript === i && (
+                        <div className="px-3 pb-3 space-y-1.5 border-t border-red-900/10 pt-2">
+                          {script.steps.map((step, j) => (
+                            <div key={j} className="flex gap-2 items-start text-left">
+                              <div className="w-5 h-5 rounded-full bg-red-900/30 flex items-center justify-center text-[8px] font-bold text-red-400 shrink-0 mt-0.5">{j + 1}</div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[10px] font-bold text-red-400 uppercase">{step.phase} <span className="text-slate-600 font-normal normal-case">({step.durationNote})</span></div>
+                                <div className="text-[10px] text-slate-400">{step.instruction}</div>
+                              </div>
+                            </div>
+                          ))}
+                          <button
+                            data-testid={`button-use-script-${i}`}
+                            onClick={() => handleCreateFromScript(script)}
+                            className="w-full mt-2 py-2 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+                          >
+                            Use This Scene Script
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {filteredScripts.length === 0 && (
+                    <div className="text-center py-6 text-slate-600 text-xs">No scene scripts match your search</div>
+                  )}
+                </div>
               </div>
             )}
           </div>

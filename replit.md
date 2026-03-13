@@ -68,6 +68,12 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
 - **CORS**: Enabled for all origins on `/api` routes to support external AI agent access. Configured in `server/index.ts`.
 - **Password Hashing**: Node.js `crypto.scrypt`.
 - **Request Validation**: Zod schemas.
+- **Pre-Built Libraries**: Extensive pre-built content libraries for quick content creation:
+  - `prebuilt-obedience-trials.ts`: 20 obedience trials across 8 categories (Protocol, Service, Discipline, Posture, Verbal, Endurance, Precision, Devotion)
+  - `prebuilt-endurance.ts`: 20 endurance challenges across 8 categories (Physical, Mental, Denial, Service, Silence, Exposure, Devotion, Survival)
+  - `prebuilt-scene-steps.ts`: 12 step-by-step scene scripts across 8 categories (Bondage, Impact, Sensory, Power Exchange, Worship, Discipline, Edge Play, Roleplay)
+  - `prebuilt-training-programs.ts`: 8 training programs (foundations, service, discipline, endurance, mindset, intimacy, obedience, advanced)
+  - Also existing: prebuilt-scenes, prebuilt-rituals, prebuilt-rewards, prebuilt-punishments, prebuilt-wagers, prebuilt-standing-orders, prebuilt-sensations, prebuilt-desired-changes, prebuilt-limits, prebuilt-devotions
 - **Push Notifications**: `web-push` with VAPID keys.
 - **Server-Sent Events**: Real-time partner sync for various features.
 - **Unlock Registry**: Feature unlock map linked to user levels.

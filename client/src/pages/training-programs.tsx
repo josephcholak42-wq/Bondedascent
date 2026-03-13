@@ -6,50 +6,9 @@ import { useAuth } from '@/lib/hooks';
 import type { TrainingProgram, TrainingDay, TrainingEnrollment } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PREBUILT_TRAINING_PROGRAMS, TRAINING_CATEGORIES } from '@/lib/prebuilt-training-programs';
 
-const PREBUILT_PROGRAMS = [
-  {
-    title: 'Obedience Foundations',
-    description: 'A 7-day introduction to the core principles of obedience and structure.',
-    durationDays: 7,
-    category: 'foundations',
-    days: Array.from({ length: 7 }, (_, i) => ({
-      dayNumber: i + 1,
-      title: `Day ${i + 1}: ${['Awareness', 'Posture & Presence', 'Active Listening', 'Prompt Response', 'Patience', 'Consistency', 'Integration'][i]}`,
-      objectives: [
-        'Practice mindful awareness of your actions and reactions throughout the day.',
-        'Maintain proper posture and present yourself with intention in every interaction.',
-        'Listen fully before responding. Repeat back instructions to confirm understanding.',
-        'Respond promptly to all requests without hesitation or delay.',
-        'Practice patience in moments of waiting. Accept timing that is not your own.',
-        'Maintain all previous lessons consistently throughout the day.',
-        'Integrate all foundations into a unified daily practice.',
-      ][i],
-    })),
-  },
-  {
-    title: 'Deepening Submission',
-    description: 'A 14-day program to deepen trust, surrender, and connection.',
-    durationDays: 14,
-    category: 'intermediate',
-    days: Array.from({ length: 14 }, (_, i) => ({
-      dayNumber: i + 1,
-      title: `Day ${i + 1}`,
-      objectives: `Focus on deepening your practice through structured exercises and reflection. Today's theme: ${['Trust Building', 'Vulnerability', 'Surrender', 'Gratitude', 'Service', 'Devotion', 'Endurance', 'Communication', 'Anticipation', 'Ritual', 'Discipline', 'Connection', 'Reflection', 'Commitment'][i]}.`,
-    })),
-  },
-  {
-    title: 'Complete Protocol Training',
-    description: 'A comprehensive 30-day protocol covering all aspects of structured submission.',
-    durationDays: 30,
-    category: 'advanced',
-    days: Array.from({ length: 30 }, (_, i) => ({
-      dayNumber: i + 1,
-      title: `Day ${i + 1}`,
-      objectives: `Complete protocol training day ${i + 1}. Focus on mastery and refinement of all learned principles.`,
-    })),
-  },
-];
+const PREBUILT_PROGRAMS = PREBUILT_TRAINING_PROGRAMS;
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const pct = Math.min(100, Math.round((current / total) * 100));

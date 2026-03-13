@@ -1,6 +1,6 @@
 import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React, { useState, useEffect } from 'react';
-import { Shield, Plus, Clock, Trophy, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, Plus, Clock, Trophy, AlertTriangle, CheckCircle, XCircle, ChevronDown, ChevronUp, Search, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RoleGatedButton, RoleGatedAction, PulseIndicator } from '@/components/ui/role-gate';
@@ -12,6 +12,7 @@ import {
   useCreateEnduranceCheckin,
   useAuth,
 } from '@/lib/hooks';
+import { PREBUILT_ENDURANCE_CHALLENGES, ENDURANCE_CATEGORIES, type PrebuiltEnduranceChallenge } from '@/lib/prebuilt-endurance';
 
 function formatTimeRemaining(endsAt: string | Date, now: Date) {
   const end = new Date(endsAt).getTime();
@@ -82,12 +83,29 @@ export default function EnduranceChallengesPage() {
   const [checkinInterval, setCheckinInterval] = useState(60);
   const [xpPerCheckin, setXpPerCheckin] = useState(15);
   const [autoPunishment, setAutoPunishment] = useState('');
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [libraryCategoryFilter, setLibraryCategoryFilter] = useState<string | null>(null);
+  const [librarySearch, setLibrarySearch] = useState('');
 
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleCreateFromPrebuilt = (challenge: PrebuiltEnduranceChallenge) => {
+    createMutation.mutate({
+      title: challenge.title,
+      description: challenge.description,
+      durationHours: challenge.durationHours,
+      checkinIntervalMinutes: challenge.checkinIntervalMinutes,
+      xpPerCheckin: challenge.xpPerCheckin,
+    });
+  };
+
+  const filteredLibraryChallenges = PREBUILT_ENDURANCE_CHALLENGES
+    .filter(c => !libraryCategoryFilter || c.category === libraryCategoryFilter)
+    .filter(c => !librarySearch || c.title.toLowerCase().includes(librarySearch.toLowerCase()) || c.description.toLowerCase().includes(librarySearch.toLowerCase()));
 
   const handleCreate = () => {
     if (!title.trim()) return;
@@ -139,20 +157,99 @@ export default function EnduranceChallengesPage() {
             {userRole === 'dom' ? 'Endurance Challenges' : 'Endurance Trials'}
           </h1>
         </div>
+      </div>
+      <p className="text-sm text-slate-400 mb-4" data-testid="text-page-description">
+        {userRole === 'dom' ? 'Create long-duration challenges with periodic check-in gates' : 'Survive the challenge — check in at every gate'}
+      </p>
+
+      <div className="flex gap-2 mb-6">
         <RoleGatedButton
           data-testid="button-toggle-form"
           allowed={userRole === 'dom'}
           tooltipText="Only your Dom can create challenges"
-          variant="outline"
-          className="border-red-600 text-red-500 hover:bg-red-600 hover:text-white"
+          className="bg-red-600 hover:bg-red-700 text-white uppercase tracking-wider"
           onClick={() => setShowForm(!showForm)}
         >
-          <Plus size={16} className="mr-1" /> New Challenge
+          <Plus size={16} className="mr-1" /> Custom Challenge
         </RoleGatedButton>
+        {userRole === 'dom' && (
+          <Button
+            data-testid="button-toggle-endurance-library"
+            variant="outline"
+            className="border-red-600/40 text-red-400 hover:bg-red-600/20 uppercase tracking-wider"
+            onClick={() => setShowLibrary(!showLibrary)}
+          >
+            <Flame size={16} className="mr-2" />
+            Endurance Library ({PREBUILT_ENDURANCE_CHALLENGES.length})
+            {showLibrary ? <ChevronUp size={14} className="ml-1" /> : <ChevronDown size={14} className="ml-1" />}
+          </Button>
+        )}
       </div>
-      <p className="text-sm text-slate-400 mb-8" data-testid="text-page-description">
-        {userRole === 'dom' ? 'Create long-duration challenges with periodic check-in gates' : 'Survive the challenge — check in at every gate'}
-      </p>
+
+      {userRole === 'dom' && showLibrary && (
+        <div className="mb-6 bg-slate-900/50 border border-red-900/20 rounded-lg p-4 space-y-3">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              data-testid="input-endurance-library-search"
+              type="text"
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              placeholder="Search endurance challenges..."
+              className="w-full bg-black/40 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:border-red-500"
+              style={{ fontSize: '16px' }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              data-testid="button-endurance-cat-all"
+              onClick={() => setLibraryCategoryFilter(null)}
+              className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${!libraryCategoryFilter ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+            >
+              All
+            </button>
+            {ENDURANCE_CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                data-testid={`button-endurance-cat-${cat.toLowerCase()}`}
+                onClick={() => setLibraryCategoryFilter(cat)}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all cursor-pointer ${libraryCategoryFilter === cat ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+          <div className="max-h-[45vh] overflow-y-auto space-y-1.5 pr-1" style={{ WebkitOverflowScrolling: 'touch' }}>
+            {filteredLibraryChallenges.map((challenge, i) => (
+              <button
+                key={i}
+                data-testid={`button-prebuilt-endurance-${i}`}
+                onClick={() => handleCreateFromPrebuilt(challenge)}
+                className="w-full flex items-start gap-3 p-3 bg-red-950/10 border border-red-900/20 hover:bg-red-900/30 hover:border-red-500/40 rounded-xl transition-all cursor-pointer group text-left"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-red-400 font-semibold group-hover:text-white transition-colors">{challenge.title}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">{challenge.description}</div>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <span className="text-[9px] text-slate-500 uppercase">{challenge.category}</span>
+                    <span className="text-[9px] text-slate-600">•</span>
+                    <span className="text-[9px] text-slate-500">{challenge.durationHours}h duration</span>
+                    <span className="text-[9px] text-slate-600">•</span>
+                    <span className="text-[9px] text-slate-500">Check-in every {challenge.checkinIntervalMinutes}m</span>
+                    <span className="text-[9px] text-slate-600">•</span>
+                    <span className="text-[9px] text-slate-500">{challenge.xpPerCheckin} XP/gate</span>
+                  </div>
+                </div>
+                <div className="flex gap-0.5 shrink-0 mt-1">
+                  {Array.from({ length: 10 }, (_, j) => (
+                    <div key={j} className={`w-1.5 h-1.5 rounded-full ${j < challenge.difficulty ? (challenge.difficulty >= 7 ? 'bg-red-500' : 'bg-red-700') : 'bg-slate-800'}`} />
+                  ))}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {userRole === 'dom' && showForm && (
         <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6 space-y-4" data-testid="form-create-challenge">
