@@ -69,7 +69,7 @@ export default function ConsequencePanels({
               </span>
             )}
           </div>
-          {role === "dom" && onOpenPunishmentChest && (
+          {onOpenPunishmentChest && (
             <button
               onClick={onOpenPunishmentChest}
               className="flex items-center gap-1 text-[9px] font-bold text-red-500/60 hover:text-red-400 uppercase tracking-wider transition-colors cursor-pointer"
@@ -110,7 +110,7 @@ export default function ConsequencePanels({
                     </span>
                   </div>
                 </div>
-                {role === "sub" && onCompletePunishment && (
+                {onCompletePunishment && (
                   <button
                     onClick={() => onCompletePunishment(p.id)}
                     className="px-3 py-1.5 bg-red-900/30 hover:bg-red-800/50 border border-red-700/30 hover:border-red-500/50 rounded-lg text-[10px] font-bold text-red-400 uppercase tracking-wider transition-all cursor-pointer shrink-0"

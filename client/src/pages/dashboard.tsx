@@ -1389,13 +1389,11 @@ export default function BondedAscentApp() {
               label="Punishments & Rewards"
               onClick={() => navigateView("punishments")}
             />
-            {userRole === "dom" && (
-              <ProfileItem
-                icon={<Siren size={20} />}
-                label="Punishment Arsenal"
-                onClick={() => navigateView("punishment-chest")}
-              />
-            )}
+            <ProfileItem
+              icon={<Siren size={20} />}
+              label="Punishment Arsenal"
+              onClick={() => navigateView("punishment-chest")}
+            />
           </div>
 
           <div className="space-y-3">
@@ -2357,7 +2355,7 @@ export default function BondedAscentApp() {
               </div>
             )}
 
-            {modal === "dom_rewards" && (
+            {modal === "grant_rewards" && (
               <div className="p-4 space-y-4 overflow-y-auto">
                 <div className="text-center mb-2">
                   <Gift size={48} className="mx-auto text-red-500 mb-2" />
@@ -2437,7 +2435,7 @@ export default function BondedAscentApp() {
               </div>
             )}
 
-            {modal === "dom_punish" && (
+            {modal === "assign_punish" && (
               <div className="p-4 space-y-4">
                 <div className="text-center mb-2">
                   <Gavel size={48} className="mx-auto text-red-600 mb-2" />
@@ -2598,7 +2596,7 @@ export default function BondedAscentApp() {
               </div>
             )}
 
-            {modal === "dom_review" && (
+            {modal === "review_checkins" && (
               <div className="p-4 space-y-6 overflow-y-auto">
                 <div className="text-center mb-4">
                   <FileSignature
