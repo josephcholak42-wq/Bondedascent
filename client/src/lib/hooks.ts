@@ -365,6 +365,41 @@ export function useRedeemReward() {
   });
 }
 
+export function useRewardArsenal() {
+  return useQuery<Reward[]>({ queryKey: ["/api/rewards/arsenal"] });
+}
+
+export function useStockpileReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; category?: string; duration?: string }) => {
+      const res = await apiRequest("POST", "/api/rewards/stockpile", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/rewards/arsenal"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+    },
+  });
+}
+
+export function useDeployReward() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rewardId: string) => {
+      const res = await apiRequest("PATCH", `/api/rewards/${rewardId}/deploy`);
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/rewards"] });
+      qc.invalidateQueries({ queryKey: ["/api/rewards/arsenal"] });
+      qc.invalidateQueries({ queryKey: ["/api/activity"] });
+      qc.invalidateQueries({ queryKey: ["/api/notifications"] });
+    },
+  });
+}
+
 export function usePunishmentChest() {
   return useQuery<Punishment[]>({ queryKey: ["/api/punishments/chest"] });
 }

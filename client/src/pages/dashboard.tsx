@@ -269,6 +269,7 @@ import AftercareChecklist from "@/components/aftercare-checklist";
 import AutoDomSimulation from "@/components/auto-dom-simulation";
 import StickerBoard from "@/components/sticker-board";
 import RewardChest from "@/components/reward-chest";
+import RewardArsenal from "@/components/reward-arsenal";
 import PunishmentChest from "@/components/punishment-chest";
 import ConsequenceSpirits from "@/components/consequence-spirits";
 import DailyAltar from "@/components/daily-altar";
@@ -1390,6 +1391,11 @@ export default function BondedAscentApp() {
               onClick={() => navigateView("punishments")}
             />
             <ProfileItem
+              icon={<Crown size={20} />}
+              label="Rewards Arsenal"
+              onClick={() => navigateView("reward-arsenal")}
+            />
+            <ProfileItem
               icon={<Siren size={20} />}
               label="Punishment Arsenal"
               onClick={() => navigateView("punishment-chest")}
@@ -1554,6 +1560,12 @@ export default function BondedAscentApp() {
     if (activeView === "punishment-chest") {
       return (
         <PunishmentChest onBack={() => navigateView("profile")} />
+      );
+    }
+
+    if (activeView === "reward-arsenal") {
+      return (
+        <RewardArsenal onBack={() => navigateView("profile")} />
       );
     }
 

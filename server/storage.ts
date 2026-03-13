@@ -98,6 +98,9 @@ export interface IStorage {
   claimReward(rewardId: string): Promise<Reward | undefined>;
   redeemReward(rewardId: string): Promise<Reward | undefined>;
   getRewardChest(userId: string): Promise<Reward[]>;
+  stockpileReward(rewardId: string): Promise<Reward | undefined>;
+  deployReward(rewardId: string): Promise<Reward | undefined>;
+  getRewardArsenal(userId: string): Promise<Reward[]>;
 
   getPunishments(userId: string): Promise<Punishment[]>;
   createPunishment(punishment: InsertPunishment): Promise<Punishment>;
@@ -543,6 +546,20 @@ export class DatabaseStorage implements IStorage {
 
   async getRewardChest(userId: string): Promise<Reward[]> {
     return db.select().from(rewards).where(and(eq(rewards.userId, userId), isNotNull(rewards.claimedAt), isNull(rewards.redeemedAt))).orderBy(desc(rewards.claimedAt));
+  }
+
+  async stockpileReward(rewardId: string): Promise<Reward | undefined> {
+    const [updated] = await db.update(rewards).set({ stockpiledAt: new Date() }).where(eq(rewards.id, rewardId)).returning();
+    return updated;
+  }
+
+  async deployReward(rewardId: string): Promise<Reward | undefined> {
+    const [updated] = await db.update(rewards).set({ deployedAt: new Date() }).where(eq(rewards.id, rewardId)).returning();
+    return updated;
+  }
+
+  async getRewardArsenal(userId: string): Promise<Reward[]> {
+    return db.select().from(rewards).where(and(eq(rewards.assignedBy, userId), isNotNull(rewards.stockpiledAt), isNull(rewards.deployedAt))).orderBy(desc(rewards.stockpiledAt));
   }
 
   async getPunishments(userId: string): Promise<Punishment[]> {

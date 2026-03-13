@@ -51,6 +51,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
     - **Aftercare Checklist**: Post-session checklist.
     - **Auto-Dom Simulation**: AI-driven task generation at varying intensities and roles.
     - **Reward/Punishment Chests**: UI for managing rewards and punishments.
+    - **Rewards Arsenal**: Dark gold/bronze themed stockpile for pre-built and custom rewards with library browser, category filtering, search, and one-click deploy to partner. Component: `client/src/components/reward-arsenal.tsx`.
     - **Sticker Board**: Three-tab corkboard (realistic wood frame, cork texture, pushpin/tape graphics, paper shadows) for Dom notes, achievements, and documents. Doubled in visual size.
     - **Devotion Flames**: Visual streak system with animated flame levels.
     - **Whisper Chamber**: Dark, themed messaging overlay with real-time delivery and special message features.

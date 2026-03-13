@@ -489,6 +489,48 @@ export async function registerRoutes(
     res.json(reward);
   });
 
+  app.get("/api/rewards/arsenal", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const list = await storage.getRewardArsenal(user.id);
+    res.json(list);
+  });
+
+  app.post("/api/rewards/stockpile", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const { name, category, duration } = req.body;
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ message: "Reward name required" });
+    }
+    const reward = await storage.createReward({
+      userId: partner ? partner.id : user.id,
+      name: name.trim(),
+      unlockLevel: 1,
+      category: category || null,
+      duration: duration || null,
+      assignedBy: user.id,
+      createdAsRole: user.role,
+    });
+    await storage.stockpileReward(reward.id);
+    await storage.logActivity(user.id, "reward_stockpiled", name.trim(), user.role);
+    res.status(201).json(reward);
+  });
+
+  app.patch("/api/rewards/:id/deploy", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const partner = await storage.getPartner(user.id);
+    const arsenal = await storage.getRewardArsenal(user.id);
+    const owned = arsenal.find(r => r.id === req.params.id);
+    if (!owned) return res.status(404).json({ message: "Reward not found in your arsenal" });
+    const reward = await storage.deployReward(req.params.id);
+    if (!reward) return res.status(404).json({ message: "Reward not found" });
+    await storage.logActivity(user.id, "reward_deployed", reward.name, user.role);
+    if (partner) {
+      await notifyUser(partner.id, `${user.username} deployed reward: "${reward.name}"`, "partner_activity", user.role);
+    }
+    res.json(reward);
+  });
+
   // --- PUNISHMENTS ---
   app.get("/api/punishments", requireAuth, async (req, res) => {
     const user = req.user as User;
