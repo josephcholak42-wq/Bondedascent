@@ -111,4 +111,8 @@ export const PREBUILT_WAGERS: PrebuiltWager[] = [
   { name: "Anticipation test — predict Dom's needs accurately", category: "Obedience", stakes: "Loser studies Dom's preferences for a week" },
   { name: "Kneeling endurance — longest kneel without shifting", category: "Obedience", stakes: "Loser kneels every time Dom enters a room" },
   { name: "Gratitude challenge — most sincere thank-yous in a day", category: "Obedience", stakes: "Loser writes a gratitude journal daily for a month" },
+  { name: "Black card command draw — highest card chooses 3 severe protocols", category: "Gamble", stakes: "Loser executes all three protocols before midnight" },
+  { name: "Timed compliance sprint — 20 commands in 10 minutes", category: "Obedience", stakes: "Loser enters 24-hour strict response protocol" },
+  { name: "Extreme endurance stack — plank + wall sit + kneel cycle", category: "Endurance", stakes: "Loser repeats full stack at dawn for 7 days" },
+  { name: "Interrogation memory wager — recall exact command phrasing", category: "Mental", stakes: "Loser writes and recites accountability statement 100 times" },
 ];

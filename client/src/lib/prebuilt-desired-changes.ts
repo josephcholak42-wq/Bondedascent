@@ -111,4 +111,8 @@ export const PREBUILT_DESIRED_CHANGES: PrebuiltDesiredChange[] = [
   { name: "Monthly relationship check-in with Dom", category: "Routine", description: "Scheduled time to discuss the dynamic openly" },
   { name: "Daily self-care block — minimum 30 minutes", category: "Routine", description: "Dedicated time for personal wellness" },
   { name: "End-of-day review — tasks completed, lessons learned", category: "Routine", description: "Reflect on accomplishments and areas for growth" },
+  { name: "Adopt blackout protocol response within 2 seconds", category: "Behavior", description: "Respond to emergency protocol words instantly without negotiation or delay" },
+  { name: "Accept high-intensity corrections without collapse", category: "Attitude", description: "Develop emotional regulation during severe accountability moments" },
+  { name: "Master long-duration restraint readiness", category: "Skill", description: "Build body conditioning and calm focus for extended controlled scenes" },
+  { name: "Complete nightly accountability ledger", category: "Routine", description: "Log deviations, triggers, and corrective actions with uncompromising honesty" },
 ];

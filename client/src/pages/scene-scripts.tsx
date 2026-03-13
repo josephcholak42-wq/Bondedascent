@@ -27,16 +27,16 @@ function intensityColor(intensity: number): string {
 }
 
 function seriousnessLabel(level: number): string {
-  if (level <= 2) return 'Playful';
-  if (level <= 4) return 'Light';
-  if (level <= 6) return 'Moderate';
-  if (level <= 8) return 'Serious';
-  return 'Intense';
+  if (level <= 2) return 'Controlled';
+  if (level <= 4) return 'Strict';
+  if (level <= 6) return 'Severe';
+  if (level <= 8) return 'Brutal';
+  return 'Extreme';
 }
 
 function seriousnessColor(level: number): string {
-  if (level <= 3) return '#d4a24e';
-  if (level <= 6) return '#e87640';
+  if (level <= 3) return '#9f1239';
+  if (level <= 6) return '#dc2626';
   return '#dc2626';
 }
 

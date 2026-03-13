@@ -163,4 +163,22 @@ export const PREBUILT_TRAINING_PROGRAMS: PrebuiltTrainingProgram[] = [
       { dayNumber: 5, title: "Day 5: The Final Test", objectives: "Your Dom will test you with rapid commands, trick questions, and challenges. Apply everything you've learned." },
     ],
   },
+  {
+    title: "Black Protocol Crucible",
+    description: "A 10-day extreme protocol cycle built for high-control dynamics and strict accountability.",
+    durationDays: 10,
+    category: "advanced",
+    days: [
+      { dayNumber: 1, title: "Day 1: Total Structure Lock-In", objectives: "Run every hour on protocol blocks: posture, speech format, timed check-ins, and immediate correction logging." },
+      { dayNumber: 2, title: "Day 2: Command Saturation", objectives: "Complete 40+ commands with zero missed acknowledgments. Every delayed response adds a consequence task." },
+      { dayNumber: 3, title: "Day 3: Endurance Service", objectives: "Maintain service posture through all domestic tasks. Record completion times and quality scores for each task." },
+      { dayNumber: 4, title: "Day 4: Silence & Precision", objectives: "Silent protocol for 4 hours except essential responses. Execute tasks only via nonverbal confirmation cues." },
+      { dayNumber: 5, title: "Day 5: Stress Inoculation", objectives: "Perform discipline drills under fatigue: kneeling holds, wall sits, and mental recitation between each set." },
+      { dayNumber: 6, title: "Day 6: Denial Discipline", objectives: "Strict denial with scheduled edge checks and exact reporting. No unlogged urge, thought, or deviation." },
+      { dayNumber: 7, title: "Day 7: Public Composure", objectives: "Maintain covert protocol in public settings: posture, language restraint, and controlled eye behavior at all times." },
+      { dayNumber: 8, title: "Day 8: Obedience Under Time Pressure", objectives: "Execute commands against countdown timers. Missed timers trigger immediate repeat sets with higher standards." },
+      { dayNumber: 9, title: "Day 9: Full Dynamic Simulation", objectives: "Live one full day under strict protocol without reminders. Dom only intervenes for scoring and corrections." },
+      { dayNumber: 10, title: "Day 10: Crucible Evaluation", objectives: "Final audit: complete service sequence, endurance test, and verbal submission review without errors." },
+    ],
+  },
 ];

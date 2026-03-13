@@ -205,4 +205,19 @@ export const PREBUILT_SCENE_SCRIPTS: PrebuiltSceneScript[] = [
       { phase: "Aftercare", instruction: "Extended holding. Warm drink. Do not rush. Sub may be disoriented — stay close and attentive", durationNote: "15 min" },
     ],
   },
+  {
+    name: "Black Protocol Enforcement",
+    category: "Edge Play",
+    duration: "45-60 min",
+    intensity: 9,
+    steps: [
+      { phase: "Briefing", instruction: "Review hard limits, stop signals, and escalation caps. Confirm consent verbally and in writing", durationNote: "5 min" },
+      { phase: "Command Lock", instruction: "Sub enters strict posture and silence. Dom sets cadence: command, compliance, reset", durationNote: "8 min" },
+      { phase: "Discipline Cycle", instruction: "Run alternating drills: posture holds, impact sets, and response-time tests", durationNote: "15 min" },
+      { phase: "Accountability", instruction: "Sub states each mistake precisely and requests corrective command", durationNote: "7 min" },
+      { phase: "Peak Protocol", instruction: "Final controlled intensity block with continuous monitoring and timed check-ins", durationNote: "8 min" },
+      { phase: "Release", instruction: "Dom clearly ends protocol, removes restraints, and slows breathing together", durationNote: "4 min" },
+      { phase: "Aftercare", instruction: "Hydration, warmth, reassurance, and structured debrief before any follow-up tasks", durationNote: "12 min" },
+    ],
+  },
 ];

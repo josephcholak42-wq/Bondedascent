@@ -7,38 +7,38 @@
 
 @theme inline {
   --font-sans: 'Montserrat', 'Inter', sans-serif;
-  --font-display: 'Impact', 'Arial Black', 'Montserrat', sans-serif;
-  --font-serif: 'Playfair Display', serif;
+  --font-display: 'Oswald', 'Montserrat', 'Inter', sans-serif;
+  --font-serif: 'Cormorant Garamond', serif;
   
-  --color-background: hsl(0 0% 1.5%);
-  --color-foreground: hsl(0 0% 90%);
+  --color-background: hsl(0 0% 1%);
+  --color-foreground: hsl(0 0% 86%);
   
-  --color-card: hsl(0 0% 3%);
-  --color-card-foreground: hsl(0 0% 90%);
+  --color-card: hsl(0 0% 2%);
+  --color-card-foreground: hsl(0 0% 86%);
   
-  --color-popover: hsl(0 0% 3%);
-  --color-popover-foreground: hsl(0 0% 90%);
+  --color-popover: hsl(0 0% 2%);
+  --color-popover-foreground: hsl(0 0% 86%);
   
   --color-primary: hsl(var(--role-primary-h, 0) var(--role-primary-s, 80%) var(--role-primary-l, 42%));
   --color-primary-foreground: hsl(0 0% 97%);
   
-  --color-secondary: hsl(0 14% 9%);
-  --color-secondary-foreground: hsl(0 0% 90%);
+  --color-secondary: hsl(0 10% 7%);
+  --color-secondary-foreground: hsl(0 0% 86%);
   
-  --color-muted: hsl(0 10% 8%);
-  --color-muted-foreground: hsl(0 7% 62%);
+  --color-muted: hsl(0 8% 7%);
+  --color-muted-foreground: hsl(0 6% 58%);
   
-  --color-accent: hsl(355 28% 12%);
+  --color-accent: hsl(0 35% 10%);
   --color-accent-foreground: hsl(0 0% 92%);
   
   --color-destructive: hsl(0 62.8% 30.6%);
   --color-destructive-foreground: hsl(0 0% 93%);
   
-  --color-border: hsl(0 14% 18%);
-  --color-input: hsl(0 10% 9%);
-  --color-ring: hsl(355 65% 46%);
+  --color-border: hsl(0 18% 16%);
+  --color-input: hsl(0 9% 8%);
+  --color-ring: hsl(0 70% 42%);
   
-  --radius: 0.75rem;
+  --radius: 0.25rem;
 }
 
 :root {
@@ -89,13 +89,13 @@
   }
   body {
     @apply font-sans antialiased;
-    background: radial-gradient(circle at 20% 0%, rgba(120, 10, 20, 0.16), transparent 38%), radial-gradient(circle at 100% 100%, rgba(80, 5, 15, 0.18), transparent 46%), #050505;
-    color: #d8d0c7;
-    letter-spacing: 0.01em;
+    background: radial-gradient(circle at 15% 0%, rgba(118, 9, 24, 0.14), transparent 34%), radial-gradient(circle at 100% 100%, rgba(72, 4, 15, 0.16), transparent 42%), linear-gradient(180deg, #030303 0%, #060606 100%);
+    color: #d5cdc3;
+    letter-spacing: 0.012em;
   }
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: 0.045em;
+    letter-spacing: 0.065em;
     text-transform: uppercase;
   }
   input, textarea, select {
@@ -121,7 +121,7 @@
 .after-dark-panel {
   border: 1px solid rgba(127, 29, 29, 0.42);
   background: linear-gradient(180deg, rgba(24, 24, 27, 0.86) 0%, rgba(3, 3, 4, 0.94) 100%);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 50px rgba(150, 24, 38, 0.14);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), 0 0 24px rgba(150, 24, 38, 0.12);
 }
 
 .after-dark-card {
@@ -177,9 +177,8 @@
 }
 
 .sexy-icon {
-  transition: transform 0.3s var(--spring-ease), filter 0.4s ease;
-  animation: sexyShimmer 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 6px rgba(140, 15, 15, 0.3));
+  transition: filter 0.18s ease;
+  filter: drop-shadow(0 0 3px rgba(120, 18, 18, 0.28));
 }
 
 @keyframes sexyShimmer {
@@ -192,26 +191,23 @@
 }
 
 .sexy-icon-interactive:hover {
-  transform: translateY(-6px) scale(1.18);
-  filter: drop-shadow(var(--glow-hover, 0 0 20px rgba(140, 15, 15, 0.6))) brightness(1.12);
-  animation: none;
+  transform: none;
+  filter: drop-shadow(var(--glow-hover, 0 0 10px rgba(130, 15, 15, 0.35))) brightness(1.04);
 }
 
 .sexy-icon-interactive:active {
-  transform: scale(0.88);
+  transform: scale(0.97);
   transition: transform 0.1s ease;
-  animation: none;
 }
 
 .sexy-icon-tap {
-  transform: scale(0.82) !important;
-  filter: drop-shadow(0 0 30px rgba(160, 20, 20, 0.7)) brightness(1.2) !important;
+  transform: scale(0.97) !important;
+  filter: drop-shadow(0 0 12px rgba(145, 18, 18, 0.45)) brightness(1.08) !important;
   transition: transform 0.1s ease, filter 0.1s ease !important;
-  animation: none !important;
 }
 
 .sexy-icon-throb {
-  animation: sexyThrob 0.8s ease-in-out infinite !important;
+  animation: none !important;
 }
 
 @keyframes sexyThrob {

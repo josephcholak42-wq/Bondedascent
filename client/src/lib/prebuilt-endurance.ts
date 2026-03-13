@@ -40,4 +40,7 @@ export const PREBUILT_ENDURANCE_CHALLENGES: PrebuiltEnduranceChallenge[] = [
   { title: "Mantra Marathon", category: "Mental", description: "Write your assigned mantra 50 times at each check-in interval", durationHours: 6, checkinIntervalMinutes: 120, xpPerCheckin: 20, difficulty: 5 },
   { title: "The Exposed Day", category: "Exposure", description: "Wear a hidden mark or item only you and your Dom know about. Report feelings at each gate", durationHours: 10, checkinIntervalMinutes: 120, xpPerCheckin: 15, difficulty: 3 },
   { title: "Survival Sprint", category: "Survival", description: "Rapid-fire challenge — complete a task at each 15-minute gate for 2 hours straight", durationHours: 2, checkinIntervalMinutes: 15, xpPerCheckin: 20, difficulty: 8 },
+  { title: "Blackout Command Marathon", category: "Survival", description: "Run a full day under strict command windows with no missed response gates", durationHours: 14, checkinIntervalMinutes: 60, xpPerCheckin: 35, difficulty: 10 },
+  { title: "Extreme Denial Siege", category: "Denial", description: "Sustained edge-denial protocol with accountability logs at every check-in", durationHours: 10, checkinIntervalMinutes: 90, xpPerCheckin: 30, difficulty: 9 },
+  { title: "Brutal Posture Gauntlet", category: "Physical", description: "Alternate kneel, wall sit, and attention stance at each gate without form breaks", durationHours: 6, checkinIntervalMinutes: 30, xpPerCheckin: 25, difficulty: 9 },
 ];

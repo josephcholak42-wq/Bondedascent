@@ -111,4 +111,8 @@ export const PREBUILT_DEVOTIONS: PrebuiltDevotion[] = [
   { name: "Frame a photo of a special moment together", category: "Gift", type: "gratitude" },
   { name: "Buy supplies for their favorite hobby", category: "Gift", type: "gratitude" },
   { name: "Create a custom gift that shows deep knowledge of their preferences", category: "Gift", type: "gratitude" },
+  { name: "Write and recite a black protocol vow at midnight", category: "Ritual", type: "mantra" },
+  { name: "Complete an extreme service offering without being prompted", category: "Acts of Service", type: "gratitude" },
+  { name: "Create a sealed accountability letter and submit it at dawn", category: "Written", type: "affirmation" },
+  { name: "Offer a full-body reverence sequence in silence", category: "Physical", type: "prayer" },
 ];

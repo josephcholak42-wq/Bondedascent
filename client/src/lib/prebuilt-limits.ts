@@ -116,4 +116,8 @@ export const PREBUILT_LIMITS: PrebuiltLimit[] = [
   { name: "No mind games outside of agreed scenes", category: "Psychological", level: "hard" },
   { name: "No hypnosis without explicit consent each time", category: "Psychological", level: "soft" },
   { name: "No punishment that triggers past trauma", category: "Psychological", level: "hard" },
+  { name: "No permanent piercing, scarification, or branding without written prior consent", category: "Physical", level: "hard" },
+  { name: "No heavy edge scenes without a sober monitor and emergency stop protocol", category: "Physical", level: "hard" },
+  { name: "No CNC escalation unless reconfirmed same day in writing and verbally", category: "Psychological", level: "hard" },
+  { name: "No degradation tied to identity, body dysphoria, or trauma triggers", category: "Psychological", level: "hard" },
 ];

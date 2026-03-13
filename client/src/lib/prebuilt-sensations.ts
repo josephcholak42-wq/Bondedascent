@@ -170,4 +170,8 @@ export const PREBUILT_SENSATIONS: PrebuiltSensation[] = [
   { name: "Forbidden words — banned list for 1 hour, slip = consequence", category: "Mind Games", intensity: 2, duration: "1 hour", cardType: "normal" },
   { name: "Would you rather — Dom's edition, both options are spicy", category: "Mind Games", intensity: 2, duration: "15 min", cardType: "normal" },
   { name: "Beg for it — convince Dom you deserve a reward", category: "Mind Games", intensity: 2, duration: "5 min", cardType: "normal" },
+  { name: "Extreme blackout protocol — blindfold, cuffs, countdown commands", category: "Mind Games", intensity: 5, duration: "20 min", cardType: "blackout" },
+  { name: "Caned posture hold — maintain perfect form between strikes", category: "Impact", intensity: 5, duration: "15 min", cardType: "wild" },
+  { name: "Predicament edge ladder — each movement increases stimulation", category: "Bondage", intensity: 5, duration: "20 min", cardType: "wild" },
+  { name: "Silent denial gauntlet — edge repeatedly with no vocal release", category: "Endurance", intensity: 5, duration: "25 min", cardType: "blackout" },
 ];

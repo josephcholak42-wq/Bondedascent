@@ -131,4 +131,8 @@ export const PREBUILT_STANDING_ORDERS: PrebuiltStandingOrder[] = [
   { name: "Pantry and fridge organized and labels facing forward", category: "Domestic", priority: "low" },
   { name: "Windows cleaned monthly", category: "Domestic", priority: "low" },
   { name: "Prepare the home environment before Dom arrives — lighting, music, temperature", category: "Domestic", priority: "standard" },
+  { name: "Immediate blackout protocol on command — no hesitation", category: "Protocol", priority: "urgent" },
+  { name: "Submit written accountability within 15 minutes of any infraction", category: "Communication", priority: "urgent" },
+  { name: "Maintain inspection-ready posture whenever waiting for orders", category: "Posture", priority: "high" },
+  { name: "No self-soothing behavior during correction unless instructed", category: "Behavior", priority: "urgent" },
 ];
