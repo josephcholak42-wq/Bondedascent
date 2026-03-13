@@ -349,6 +349,7 @@ export const insertJournalSchema = createInsertSchema(journalEntries).pick({
 
 export const insertRewardSchema = createInsertSchema(rewards).pick({
   userId: true,
+  assignedBy: true,
   name: true,
   description: true,
   category: true,

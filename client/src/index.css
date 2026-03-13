@@ -6,37 +6,37 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: 'Inter', sans-serif;
-  --font-display: 'Montserrat', sans-serif;
+  --font-sans: 'Montserrat', 'Inter', sans-serif;
+  --font-display: 'Impact', 'Arial Black', 'Montserrat', sans-serif;
   --font-serif: 'Playfair Display', serif;
   
-  --color-background: hsl(0 0% 2%);
-  --color-foreground: hsl(0 0% 87%);
+  --color-background: hsl(0 0% 1.5%);
+  --color-foreground: hsl(0 0% 90%);
   
-  --color-card: hsl(0 0% 4%);
-  --color-card-foreground: hsl(0 0% 87%);
+  --color-card: hsl(0 0% 3%);
+  --color-card-foreground: hsl(0 0% 90%);
   
-  --color-popover: hsl(0 0% 4%);
-  --color-popover-foreground: hsl(0 0% 87%);
+  --color-popover: hsl(0 0% 3%);
+  --color-popover-foreground: hsl(0 0% 90%);
   
-  --color-primary: hsl(var(--role-primary-h, 0) var(--role-primary-s, 72%) var(--role-primary-l, 35%));
-  --color-primary-foreground: hsl(0 0% 93%);
+  --color-primary: hsl(var(--role-primary-h, 0) var(--role-primary-s, 80%) var(--role-primary-l, 42%));
+  --color-primary-foreground: hsl(0 0% 97%);
   
-  --color-secondary: hsl(0 10% 12%);
-  --color-secondary-foreground: hsl(0 0% 87%);
+  --color-secondary: hsl(0 14% 9%);
+  --color-secondary-foreground: hsl(0 0% 90%);
   
-  --color-muted: hsl(0 8% 12%);
-  --color-muted-foreground: hsl(0 5% 55%);
+  --color-muted: hsl(0 10% 8%);
+  --color-muted-foreground: hsl(0 7% 62%);
   
-  --color-accent: hsl(0 15% 14%);
-  --color-accent-foreground: hsl(0 0% 87%);
+  --color-accent: hsl(355 28% 12%);
+  --color-accent-foreground: hsl(0 0% 92%);
   
   --color-destructive: hsl(0 62.8% 30.6%);
   --color-destructive-foreground: hsl(0 0% 93%);
   
-  --color-border: hsl(0 12% 15%);
-  --color-input: hsl(0 10% 12%);
-  --color-ring: hsl(0 50% 40%);
+  --color-border: hsl(0 14% 18%);
+  --color-input: hsl(0 10% 9%);
+  --color-ring: hsl(355 65% 46%);
   
   --radius: 0.75rem;
 }
@@ -86,8 +86,14 @@
   }
   body {
     @apply font-sans antialiased;
-    background-color: #030303;
-    color: #c8bfb6;
+    background: radial-gradient(circle at 20% 0%, rgba(120, 10, 20, 0.16), transparent 38%), radial-gradient(circle at 100% 100%, rgba(80, 5, 15, 0.18), transparent 46%), #050505;
+    color: #d8d0c7;
+    letter-spacing: 0.01em;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
   }
   input, textarea, select {
     font-size: 16px !important;
