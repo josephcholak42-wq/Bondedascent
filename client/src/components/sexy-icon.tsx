@@ -42,7 +42,7 @@ interface SexyIconProps {
   fallback?: React.ReactNode;
 }
 
-export function SexyIcon({ name, size = 48, className = "", glow = "gold", animate = true, fallback }: SexyIconProps) {
+export function SexyIcon({ name, size = 48, className = "", glow = "gold", animate = false, fallback }: SexyIconProps) {
   const [isPressed, setIsPressed] = useState(false);
   const [imgError, setImgError] = useState(false);
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

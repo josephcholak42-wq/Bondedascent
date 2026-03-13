@@ -137,4 +137,8 @@ export const PREBUILT_RITUALS: PrebuiltRitual[] = [
   { name: "Monthly anniversary ritual", category: "Maintenance", frequency: "custom", description: "Celebrate monthly dynamic anniversary with a special ritual" },
   { name: "Trust exercise", category: "Maintenance", frequency: "weekly", description: "Complete a trust-building exercise together — falls, blindfold walks, etc." },
   { name: "Fantasy sharing session", category: "Maintenance", frequency: "weekly", description: "Each partner shares one fantasy or desire in a safe, judgment-free space" },
+  { name: "Black protocol inspection", category: "Discipline", frequency: "daily", description: "Nightly full compliance audit with corrections logged and signed" },
+  { name: "Hard reset kneeling sequence", category: "Transition", frequency: "custom", description: "After conflict or failure, perform 5-minute breathing kneel before re-entry" },
+  { name: "Extreme readiness check", category: "Maintenance", frequency: "weekly", description: "Review emergency plan, hard limits, and high-intensity consent confirmations" },
+  { name: "Command silence hour", category: "Discipline", frequency: "daily", description: "One hour of full silence and immediate nonverbal response protocol" },
 ];

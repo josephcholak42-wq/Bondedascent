@@ -163,4 +163,8 @@ export const PREBUILT_PUNISHMENTS: PrebuiltPunishment[] = [
   { name: "Iron every piece of clothing — socks, underwear, pajamas", category: "Tedious Tasks", duration: "3-6 hours" },
   { name: "Separate all clothing by color", category: "Tedious Tasks", duration: "1-2 hours" },
   { name: "Cover a pinhole in a water balloon using 1 finger", category: "Tedious Tasks", duration: "30 min - 1 hour" },
+  { name: "Black protocol lock — no privileges except task execution and reports", category: "Restriction", duration: "48 hours" },
+  { name: "Extreme accountability lines — 500 lines plus spoken recitation", category: "Mental", duration: "2-5 hours" },
+  { name: "Severe denial circuit — edge on command with repeated hard stops", category: "Orgasm Control", duration: "2-3 hours" },
+  { name: "Chain chore punishment — complete 10 tasks without sitting or speaking", category: "Tedious Tasks", duration: "4-8 hours" },
 ];

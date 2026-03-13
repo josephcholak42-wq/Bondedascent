@@ -142,4 +142,7 @@ export const PREBUILT_SCENES: PrebuiltScene[] = [
   { name: "Psychological torment — mind games and emotional control", category: "Edge Play", duration: "30-60 min", intensity: 8, activities: ["psychology", "mind games"] },
   { name: "Waterboarding lite — cloth over face with controlled water drip", category: "Edge Play", duration: "5-10 min", intensity: 9, activities: ["water", "fear"] },
   { name: "Extreme temperature — very hot wax or very cold ice in sensitive areas", category: "Edge Play", duration: "15-20 min", intensity: 8, activities: ["temperature", "extreme"] },
+  { name: "Black chamber protocol — full restraint, strict command cadence, timed check-ins", category: "Edge Play", duration: "40-60 min", intensity: 9, activities: ["restraint", "protocol", "monitoring"] },
+  { name: "Brutal obedience gauntlet — impact, posture, recitation, denial", category: "Discipline", duration: "45-75 min", intensity: 9, activities: ["discipline", "impact", "denial"] },
+  { name: "Extreme service trial — chained domestic service under correction", category: "Service", duration: "2-3 hours", intensity: 8, activities: ["service", "correction", "endurance"] },
 ];

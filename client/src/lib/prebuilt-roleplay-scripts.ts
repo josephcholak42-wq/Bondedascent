@@ -577,5 +577,56 @@ export const PREBUILT_ROLEPLAY_SCRIPTS: RoleplayScript[] = [
         durationNote: "10-15 min"
       }
     ]
+  },
+  {
+    id: "rp-blacksite-protocol",
+    title: "Blacksite Protocol",
+    category: "Interrogation",
+    setting: "Cold room, one chair, one overhead light, command tone only. Minimal distractions and strict cadence.",
+    duration: "45-65 min",
+    intensity: 9,
+    summary: "A severe command-and-compliance roleplay where the Dom runs a structured blacksite intake and correction protocol while the Sub must maintain discipline under pressure.",
+    domAttire: "Dark tactical styling, gloves optional, no-nonsense posture.",
+    subAttire: "Simple fitted clothing, no accessories, wrists available for optional soft restraint.",
+    props: ["Chair", "Timer", "Soft cuffs", "Clipboard", "Water"],
+    safetyNotes: "Pre-negotiate intensity cap, hard limits, and stop signals. Use explicit check-ins between phases and after each escalation.",
+    beats: [
+      {
+        phase: "Intake",
+        domDialogue: "\"Stand on the mark. Name, status, and submission intent. Keep it concise.\"",
+        subDialogue: "\"Status: compliant. Intent: full protocol submission. Awaiting your directives.\"",
+        domAction: "Circles once, checks posture, sets timer and rules for the scene.",
+        subAction: "Holds still, delivers responses with controlled breathing and lowered gaze.",
+        mood: "Clinical authority and immediate power imbalance.",
+        durationNote: "6-8 min"
+      },
+      {
+        phase: "Pressure Test",
+        domDialogue: "\"Fifteen commands. No repeats. Delay equals failure. Begin.\"",
+        subDialogue: "\"Yes, Sir/Ma'am.\"",
+        domAction: "Issues fast chained commands, tracks precision and response time.",
+        subAction: "Executes instantly, resets posture after each command, accepts corrections without protest.",
+        mood: "Relentless, focused, and severe.",
+        durationNote: "10-14 min"
+      },
+      {
+        phase: "Accountability",
+        domDialogue: "\"State every failure clearly. No excuses. Then state your correction plan.\"",
+        subDialogue: "\"Failure one: hesitation. Failure two: posture break. Correction plan: immediate reset, slower breath, faster compliance.\"",
+        domAction: "Demands exact language and calm delivery under stress.",
+        subAction: "Owns errors directly and requests the next command.",
+        mood: "Humbling but structured, heavy on control.",
+        durationNote: "8-12 min"
+      },
+      {
+        phase: "Seal & Release",
+        domDialogue: "\"Protocol complete. You held pressure and stayed obedient. Release granted.\"",
+        subDialogue: "\"Thank you. Requesting aftercare and debrief.\"",
+        domAction: "Breaks character, removes restraints, provides water and grounding touch.",
+        subAction: "Transitions out of role, reports emotional state and body feedback.",
+        mood: "Relief, pride, and reconnection.",
+        durationNote: "12-15 min"
+      }
+    ]
   }
 ];

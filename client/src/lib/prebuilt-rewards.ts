@@ -170,4 +170,8 @@ export const PREBUILT_REWARDS: PrebuiltReward[] = [
   { name: "Hold hands for an entire walk — no letting go", category: "Intimacy", duration: "30-60 min" },
   { name: "Write future promises to each other", category: "Intimacy", duration: "20-30 min" },
   { name: "Gratitude exchange — five things you love about each other", category: "Intimacy", duration: "15 min" },
+  { name: "Extreme praise ceremony — Dom delivers a full formal commendation on knees", category: "Power Exchange", duration: "20 min" },
+  { name: "High-intensity scene privilege — sub selects one pre-negotiated extreme protocol", category: "Pleasure", duration: "1 session" },
+  { name: "Protocol suspension and total aftercare cocoon", category: "Freedom", duration: "1 evening" },
+  { name: "Overnight devotion retreat with no distractions, only connection and command", category: "Intimacy", duration: "1 night" },
 ];
