@@ -29,6 +29,7 @@ import DomOverviewPage from "@/pages/dom-overview";
 import ResetPasswordPage from "@/pages/reset-password";
 import LockedMediaPage from "@/pages/locked-media";
 import SceneScriptsPage from "@/pages/scene-scripts";
+import RoleplayLibraryPage from "@/pages/roleplay-library";
 import ContractsPage from "@/pages/contracts";
 import TrainingProgramsPage from "@/pages/training-programs";
 import AnalyticsPage from "@/pages/analytics";
@@ -96,6 +97,7 @@ function Router() {
       <Route path="/endurance-challenges" component={() => <ProtectedRoute component={EnduranceChallengesPage} />} />
       <Route path="/locked-media" component={() => <ProtectedRoute component={LockedMediaPage} />} />
       <Route path="/scene-scripts" component={() => <ProtectedRoute component={SceneScriptsPage} />} />
+      <Route path="/roleplay-library" component={() => <ProtectedRoute component={RoleplayLibraryPage} />} />
       <Route path="/contracts" component={() => <ProtectedRoute component={ContractsPage} />} />
       <Route path="/training-programs" component={() => <ProtectedRoute component={TrainingProgramsPage} />} />
       <Route path="/analytics" component={() => <ProtectedRoute component={AnalyticsPage} />} />

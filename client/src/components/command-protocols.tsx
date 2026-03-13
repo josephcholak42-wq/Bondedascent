@@ -1712,6 +1712,7 @@ export function CommandProtocols({
               <div className="space-y-1.5">
                 <DrawerFeatureLink icon={<Play size={14} />} label="Play Sessions" desc="Scene planning" href="/play-sessions" color="text-[#ea7e4a]" sexyIcon="play-sessions" locked={isLocked("play_sessions")} requiredLevel={getReqLevel("play_sessions")} />
                 <DrawerFeatureLink icon={<Film size={14} />} label="Scene Scripts" desc="Step-by-step scripts" href="/scene-scripts" color="text-[#e87640]" sexyIcon="play-sessions" locked={isLocked("scene_scripts")} requiredLevel={getReqLevel("scene_scripts")} />
+                <DrawerFeatureLink icon={<BookOpen size={14} />} label="Roleplay Library" desc="Full scripted scenes" href="/roleplay-library" color="text-[#d4a24e]" sexyIcon="play-sessions" />
                 <DrawerFeatureLink icon={<Layers size={14} />} label="Intensity Ladder" desc="Escalation levels" href="/intensity-ladder" color="text-[#e06830]" sexyIcon="endurance" />
                 <DrawerFeatureLink icon={<ListChecks size={14} />} label="Obedience Trials" desc="Structured tests" href="/obedience-trials" color="text-red-400" sexyIcon="enforce" locked={isLocked("obedience_trials")} requiredLevel={getReqLevel("obedience_trials")} />
                 <DrawerFeatureLink icon={<RotateCcw size={14} />} label="Sensation Roulette" desc="Random draws" href="/sensation-roulette" color="text-[#ea7e4a]" sexyIcon="wheel-of-dares" locked={isLocked("sensation_roulette")} requiredLevel={getReqLevel("sensation_roulette")} />

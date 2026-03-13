@@ -59,6 +59,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
     - **Ascension Path**: Visual progression tree for feature unlocks with level-up animations.
     - **Tribunal**: Cinematic weekly performance review with stats, Dom verdict, and Sub plea.
     - **Scene Scripts**: Step-by-step scene script builder with intensity level, seriousness level, goal, play session binding toggle, pre-built library browser (12 scripts across 8 categories), timeline visualization, and live preview mode with countdown timer.
+    - **Roleplay Library**: Full pre-built roleplay scene library (`/roleplay-library`) with 8 detailed scripts across 8 categories (Authority, Fantasy, Domestic, Seduction, Interrogation, Service, Worship, Captive). Each script includes: setting description, Dom/Sub attire, required props, safety notes, and multiple scene beats with exact dialogue for both roles, physical actions, mood descriptions, and timing. Scripts can be deployed into Scene Scripts for tracking. Data: `client/src/lib/prebuilt-roleplay-scripts.ts`. Page: `client/src/pages/roleplay-library.tsx`.
     - **Sensory Feedback**: Web Audio API for synthesized sounds and haptic vibrations for in-app events.
 
 ### Backend
