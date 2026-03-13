@@ -1,11 +1,12 @@
 import { PageBreadcrumb } from '@/components/page-breadcrumb';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Plus, X, ChevronUp, ChevronDown, Play, Eye, Check, ArrowLeft, GripVertical } from 'lucide-react';
+import { Plus, X, ChevronUp, ChevronDown, Play, Eye, Check, ArrowLeft, Search, BookOpen, Link2, Unlink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest, getQueryFn } from '@/lib/queryClient';
-import type { SceneScript, ScriptStep } from '@shared/schema';
+import type { SceneScript, ScriptStep, PlaySession } from '@shared/schema';
+import { PREBUILT_SCENE_SCRIPTS, SCENE_SCRIPT_CATEGORIES, type PrebuiltSceneScript } from '@/lib/prebuilt-scene-steps';
 
 type LocalStep = {
   id?: string;
@@ -16,7 +17,7 @@ type LocalStep = {
   stepOrder: number;
 };
 
-const CATEGORIES = ['warmup', 'impact', 'sensory', 'roleplay', 'bondage', 'protocol', 'custom'];
+const CATEGORIES = ['warmup', 'impact', 'sensory', 'roleplay', 'bondage', 'protocol', 'custom', ...SCENE_SCRIPT_CATEGORIES.map(c => c.toLowerCase())].filter((v, i, a) => a.indexOf(v) === i);
 const TONES = ['calm', 'tension', 'intense', 'release'];
 
 function intensityColor(intensity: number): string {
@@ -25,26 +26,46 @@ function intensityColor(intensity: number): string {
   return '#dc2626';
 }
 
-function intensityBg(intensity: number): string {
-  if (intensity <= 3) return 'bg-slate-800';
-  if (intensity <= 6) return 'bg-red-800';
-  return 'bg-red-700';
+function seriousnessLabel(level: number): string {
+  if (level <= 2) return 'Playful';
+  if (level <= 4) return 'Light';
+  if (level <= 6) return 'Moderate';
+  if (level <= 8) return 'Serious';
+  return 'Intense';
+}
+
+function seriousnessColor(level: number): string {
+  if (level <= 3) return '#d4a24e';
+  if (level <= 6) return '#e87640';
+  return '#dc2626';
 }
 
 export default function SceneScriptsPage() {
   const queryClient = useQueryClient();
-  const [view, setView] = useState<'list' | 'builder' | 'preview'>('list');
+  const [view, setView] = useState<'list' | 'builder' | 'preview' | 'library'>('list');
   const [editingScript, setEditingScript] = useState<SceneScript | null>(null);
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [estimatedDuration, setEstimatedDuration] = useState(0);
   const [category, setCategory] = useState('custom');
+  const [intensityLevel, setIntensityLevel] = useState(5);
+  const [seriousnessLevel, setSeriousnessLevel] = useState(5);
+  const [goal, setGoal] = useState('');
+  const [playSessionId, setPlaySessionId] = useState<string | null>(null);
   const [steps, setSteps] = useState<LocalStep[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [countdown, setCountdown] = useState(0);
+  const [librarySearch, setLibrarySearch] = useState('');
+  const [libraryCategory, setLibraryCategory] = useState<string>('all');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: scripts = [] } = useQuery<SceneScript[]>({
     queryKey: ['/api/scene-scripts'],
+    queryFn: getQueryFn({ on401: 'throw' }),
+  });
+
+  const { data: playSessions = [] } = useQuery<PlaySession[]>({
+    queryKey: ['/api/play-sessions'],
     queryFn: getQueryFn({ on401: 'throw' }),
   });
 
@@ -68,7 +89,7 @@ export default function SceneScriptsPage() {
   }, [loadedSteps, editingScript]);
 
   const createScript = useMutation({
-    mutationFn: async (data: { title: string; estimatedDuration: number; category: string }) => {
+    mutationFn: async (data: { title: string; estimatedDuration: number; category: string; intensityLevel: number; seriousnessLevel: number; goal: string; playSessionId: string | null; description: string }) => {
       const res = await apiRequest('POST', '/api/scene-scripts', data);
       return res.json();
     },
@@ -76,15 +97,20 @@ export default function SceneScriptsPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/scene-scripts'] });
       setEditingScript(script);
       setTitle(script.title);
+      setDescription(script.description || '');
       setEstimatedDuration(script.estimatedDuration || 0);
       setCategory(script.category || 'custom');
+      setIntensityLevel(script.intensityLevel);
+      setSeriousnessLevel(script.seriousnessLevel);
+      setGoal(script.goal || '');
+      setPlaySessionId(script.playSessionId || null);
       setSteps([]);
       setView('builder');
     },
   });
 
   const updateScript = useMutation({
-    mutationFn: async ({ id, ...data }: { id: string; title?: string; estimatedDuration?: number; category?: string; status?: string }) => {
+    mutationFn: async ({ id, ...data }: { id: string; title?: string; estimatedDuration?: number; category?: string; status?: string; intensityLevel?: number; seriousnessLevel?: number; goal?: string; playSessionId?: string | null; description?: string }) => {
       const res = await apiRequest('PUT', `/api/scene-scripts/${id}`, data);
       return res.json();
     },
@@ -138,21 +164,26 @@ export default function SceneScriptsPage() {
   });
 
   const handleCreate = () => {
-    createScript.mutate({ title: 'New Script', estimatedDuration: 0, category: 'custom' });
+    createScript.mutate({ title: 'New Script', estimatedDuration: 0, category: 'custom', intensityLevel: 5, seriousnessLevel: 5, goal: '', playSessionId: null, description: '' });
   };
 
   const handleOpenScript = (script: SceneScript) => {
     setEditingScript(script);
     setTitle(script.title);
+    setDescription(script.description || '');
     setEstimatedDuration(script.estimatedDuration || 0);
     setCategory(script.category || 'custom');
+    setIntensityLevel(script.intensityLevel);
+    setSeriousnessLevel(script.seriousnessLevel);
+    setGoal(script.goal || '');
+    setPlaySessionId(script.playSessionId || null);
     setSteps([]);
     setView('builder');
   };
 
   const handleSaveHeader = () => {
     if (!editingScript) return;
-    updateScript.mutate({ id: editingScript.id, title, estimatedDuration, category });
+    updateScript.mutate({ id: editingScript.id, title, estimatedDuration, category, intensityLevel, seriousnessLevel, goal: goal || undefined, playSessionId, description: description || undefined });
   };
 
   const handleAddStep = () => {
@@ -219,6 +250,88 @@ export default function SceneScriptsPage() {
     setEditingScript({ ...editingScript, status: 'ready' });
   };
 
+  const handleLoadPrebuilt = (prebuilt: PrebuiltSceneScript) => {
+    const durationMatch = prebuilt.duration.match(/(\d+)/);
+    const dur = durationMatch ? parseInt(durationMatch[1]) : 30;
+
+    createScript.mutate({
+      title: prebuilt.name,
+      estimatedDuration: dur,
+      category: prebuilt.category.toLowerCase(),
+      intensityLevel: prebuilt.intensity,
+      seriousnessLevel: Math.min(10, Math.max(1, prebuilt.intensity)),
+      goal: `Complete the ${prebuilt.name} scene`,
+      playSessionId: null,
+      description: `Pre-built ${prebuilt.category} scene — ${prebuilt.duration}`,
+    });
+
+    setTimeout(() => {
+      const scriptId = editingScript?.id;
+      if (scriptId) {
+        prebuilt.steps.forEach((s, i) => {
+          const durMatch = s.durationNote.match(/(\d+)/);
+          const stepDur = durMatch ? parseInt(durMatch[1]) * 60 : 60;
+          createStep.mutate({
+            scriptId,
+            instruction: `[${s.phase}] ${s.instruction}`,
+            durationSeconds: stepDur,
+            intensity: prebuilt.intensity,
+            ambientTone: null,
+            stepOrder: i + 1,
+          });
+        });
+      }
+    }, 500);
+  };
+
+  const handleLoadPrebuiltSteps = async (prebuilt: PrebuiltSceneScript, scriptId: string) => {
+    for (let i = 0; i < prebuilt.steps.length; i++) {
+      const s = prebuilt.steps[i];
+      const durMatch = s.durationNote.match(/(\d+)/);
+      const stepDur = durMatch ? parseInt(durMatch[1]) * 60 : 60;
+      await createStep.mutateAsync({
+        scriptId,
+        instruction: `[${s.phase}] ${s.instruction}`,
+        durationSeconds: stepDur,
+        intensity: prebuilt.intensity,
+        ambientTone: null,
+        stepOrder: i + 1,
+      });
+    }
+    queryClient.invalidateQueries({ queryKey: ['/api/scene-scripts', scriptId, 'steps'] });
+  };
+
+  const handleDeployPrebuilt = async (prebuilt: PrebuiltSceneScript) => {
+    const durationMatch = prebuilt.duration.match(/(\d+)/);
+    const dur = durationMatch ? parseInt(durationMatch[1]) : 30;
+
+    const res = await apiRequest('POST', '/api/scene-scripts', {
+      title: prebuilt.name,
+      estimatedDuration: dur,
+      category: prebuilt.category.toLowerCase(),
+      intensityLevel: prebuilt.intensity,
+      seriousnessLevel: Math.min(10, Math.max(1, prebuilt.intensity)),
+      goal: `Complete the ${prebuilt.name} scene`,
+      playSessionId: null,
+      description: `Pre-built ${prebuilt.category} scene — ${prebuilt.duration}`,
+    });
+    const script = await res.json() as SceneScript;
+    await handleLoadPrebuiltSteps(prebuilt, script.id);
+    queryClient.invalidateQueries({ queryKey: ['/api/scene-scripts'] });
+
+    setEditingScript(script);
+    setTitle(script.title);
+    setDescription(script.description || '');
+    setEstimatedDuration(script.estimatedDuration || 0);
+    setCategory(script.category || 'custom');
+    setIntensityLevel(script.intensityLevel);
+    setSeriousnessLevel(script.seriousnessLevel);
+    setGoal(script.goal || '');
+    setPlaySessionId(null);
+    setSteps([]);
+    setView('builder');
+  };
+
   const startPreview = useCallback(() => {
     if (steps.length === 0) return;
     setCurrentStep(0);
@@ -253,11 +366,12 @@ export default function SceneScriptsPage() {
   }, [view, steps]);
 
   const totalDuration = steps.reduce((sum, s) => sum + s.durationSeconds, 0);
+  const linkedSession = playSessions.find(ps => ps.id === playSessionId);
 
   if (view === 'preview' && steps.length > 0) {
     const step = steps[currentStep];
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6" data-testid="preview-mode">
+      <div className="min-h-screen bg-[#030303] flex flex-col items-center justify-center p-6" data-testid="preview-mode">
         <div className="w-full max-w-2xl">
           <div className="text-center mb-8">
             <p className="text-slate-400 text-sm mb-2" data-testid="preview-step-indicator">
@@ -309,9 +423,102 @@ export default function SceneScriptsPage() {
     );
   }
 
+  if (view === 'library') {
+    const filteredScripts = PREBUILT_SCENE_SCRIPTS.filter(s => {
+      const matchSearch = !librarySearch || s.name.toLowerCase().includes(librarySearch.toLowerCase()) || s.steps.some(st => st.instruction.toLowerCase().includes(librarySearch.toLowerCase()));
+      const matchCat = libraryCategory === 'all' || s.category.toLowerCase() === libraryCategory.toLowerCase();
+      return matchSearch && matchCat;
+    });
+
+    return (
+      <div className="min-h-screen bg-[#030303] p-6 max-w-3xl mx-auto" data-testid="prebuilt-library">
+        <PageBreadcrumb current="Scene Scripts" />
+        <Button
+          variant="ghost"
+          className="text-slate-400 mb-4"
+          onClick={() => setView('list')}
+          data-testid="button-back-from-library"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Scripts
+        </Button>
+
+        <h1 className="text-2xl font-bold mb-1" style={{ color: '#e87640' }} data-testid="text-library-title">Pre-Built Scene Scripts</h1>
+        <p className="text-slate-400 text-sm mb-6">Step-by-step scene outlines ready to follow. Deploy one to load it into your scripts.</p>
+
+        <div className="flex gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Input
+              value={librarySearch}
+              onChange={(e) => setLibrarySearch(e.target.value)}
+              placeholder="Search scripts..."
+              className="pl-9 bg-slate-900 border-slate-700 text-white"
+              data-testid="input-library-search"
+            />
+          </div>
+          <select
+            value={libraryCategory}
+            onChange={(e) => setLibraryCategory(e.target.value)}
+            className="h-9 px-3 rounded-md bg-slate-900 border border-slate-700 text-white text-sm"
+            data-testid="select-library-category"
+          >
+            <option value="all">All Categories</option>
+            {SCENE_SCRIPT_CATEGORIES.map(c => (
+              <option key={c} value={c.toLowerCase()}>{c}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-4">
+          {filteredScripts.map((script, idx) => (
+            <div
+              key={idx}
+              className="bg-[#0a0a0a] border rounded-lg p-5 hover:border-[#e87640]/40 transition-colors"
+              style={{ borderColor: '#1e293b' }}
+              data-testid={`prebuilt-card-${idx}`}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-white font-semibold text-lg" data-testid={`prebuilt-name-${idx}`}>{script.name}</h3>
+                  <div className="flex gap-3 mt-1 text-sm">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#431407', color: '#e87640' }} data-testid={`prebuilt-category-${idx}`}>{script.category}</span>
+                    <span className="text-slate-400" data-testid={`prebuilt-duration-${idx}`}>{script.duration}</span>
+                    <span className="text-slate-400">Intensity: {script.intensity}/10</span>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleDeployPrebuilt(script)}
+                  className="text-white text-sm"
+                  style={{ backgroundColor: '#e87640' }}
+                  data-testid={`button-deploy-${idx}`}
+                >
+                  Deploy
+                </Button>
+              </div>
+
+              <div className="space-y-1">
+                {script.steps.map((step, si) => (
+                  <div key={si} className="flex items-start gap-2 text-sm" data-testid={`prebuilt-step-${idx}-${si}`}>
+                    <span className="text-[#e87640] font-mono text-xs mt-0.5 w-5 shrink-0">{si + 1}.</span>
+                    <span className="text-slate-300 font-medium shrink-0" style={{ color: '#d4a24e' }}>[{step.phase}]</span>
+                    <span className="text-slate-400 flex-1">{step.instruction}</span>
+                    <span className="text-slate-500 text-xs shrink-0">{step.durationNote}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {filteredScripts.length === 0 && (
+            <div className="text-center py-12 text-slate-500">No scripts match your search.</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (view === 'builder') {
     return (
-      <div className="min-h-screen bg-slate-950 p-6 max-w-2xl mx-auto" data-testid="script-builder">
+      <div className="min-h-screen bg-[#030303] p-6 max-w-2xl mx-auto" data-testid="script-builder">
         <PageBreadcrumb current="Scene Scripts" />
         <Button
           variant="ghost"
@@ -322,34 +529,53 @@ export default function SceneScriptsPage() {
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Scripts
         </Button>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 mb-6" data-testid="script-header">
+        <div className="bg-[#0a0a0a] border border-slate-800 rounded-lg p-5 mb-6" data-testid="script-header">
           <div className="space-y-3">
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleSaveHeader}
               placeholder="Script title"
-              className="bg-slate-800 border-slate-700 text-white text-lg font-semibold"
+              className="bg-slate-900 border-slate-700 text-white text-lg font-semibold"
               data-testid="input-title"
             />
-            <div className="flex gap-3">
-              <div className="flex-1">
+
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onBlur={handleSaveHeader}
+              placeholder="Description (optional)"
+              className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white text-sm resize-none min-h-[40px]"
+              data-testid="input-description"
+            />
+
+            <Input
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              onBlur={handleSaveHeader}
+              placeholder="Goal — what is the objective of this scene?"
+              className="bg-slate-900 border-slate-700 text-white"
+              data-testid="input-goal"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
                 <label className="text-xs text-slate-400 block mb-1">Duration (min)</label>
                 <Input
                   type="number"
                   value={estimatedDuration}
                   onChange={(e) => setEstimatedDuration(parseInt(e.target.value) || 0)}
                   onBlur={handleSaveHeader}
-                  className="bg-slate-800 border-slate-700 text-white"
+                  className="bg-slate-900 border-slate-700 text-white"
                   data-testid="input-duration"
                 />
               </div>
-              <div className="flex-1">
+              <div>
                 <label className="text-xs text-slate-400 block mb-1">Category</label>
                 <select
                   value={category}
                   onChange={(e) => { setCategory(e.target.value); setTimeout(handleSaveHeader, 0); }}
-                  className="w-full h-9 px-3 rounded-md bg-slate-800 border border-slate-700 text-white text-sm"
+                  className="w-full h-9 px-3 rounded-md bg-slate-900 border border-slate-700 text-white text-sm"
                   data-testid="select-category"
                 >
                   {CATEGORIES.map(c => (
@@ -358,6 +584,85 @@ export default function SceneScriptsPage() {
                 </select>
               </div>
             </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Intensity Level — {intensityLevel}/10</label>
+              <div className="relative h-8 rounded-full overflow-hidden bg-slate-900" data-testid="slider-intensity-level">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${(intensityLevel / 10) * 100}%`,
+                    background: `linear-gradient(to right, #1e293b, #92400e, #dc2626)`,
+                  }}
+                />
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={intensityLevel}
+                  onChange={(e) => setIntensityLevel(parseInt(e.target.value))}
+                  onMouseUp={handleSaveHeader}
+                  onTouchEnd={handleSaveHeader}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  data-testid="range-intensity-level"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Seriousness — {seriousnessLabel(seriousnessLevel)} ({seriousnessLevel}/10)</label>
+              <div className="relative h-8 rounded-full overflow-hidden bg-slate-900" data-testid="slider-seriousness">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${(seriousnessLevel / 10) * 100}%`,
+                    background: `linear-gradient(to right, #d4a24e, #e87640, #dc2626)`,
+                  }}
+                />
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={seriousnessLevel}
+                  onChange={(e) => setSeriousnessLevel(parseInt(e.target.value))}
+                  onMouseUp={handleSaveHeader}
+                  onTouchEnd={handleSaveHeader}
+                  className="absolute inset-0 w-full opacity-0 cursor-pointer"
+                  data-testid="range-seriousness"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-slate-400 block mb-2">Bind to Play Session</label>
+              {playSessionId && linkedSession ? (
+                <div className="flex items-center gap-2 bg-slate-900 border border-[#e87640]/30 rounded-lg p-3" data-testid="linked-session">
+                  <Link2 className="w-4 h-4 shrink-0" style={{ color: '#e87640' }} />
+                  <span className="text-white text-sm flex-1">{linkedSession.title || 'Untitled Session'}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-400 hover:text-red-400 h-7 px-2"
+                    onClick={() => { setPlaySessionId(null); setTimeout(handleSaveHeader, 0); }}
+                    data-testid="button-unlink-session"
+                  >
+                    <Unlink className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <select
+                  value=""
+                  onChange={(e) => { setPlaySessionId(e.target.value || null); setTimeout(handleSaveHeader, 0); }}
+                  className="w-full h-9 px-3 rounded-md bg-slate-900 border border-slate-700 text-white text-sm"
+                  data-testid="select-play-session"
+                >
+                  <option value="">No session linked</option>
+                  {playSessions.filter(ps => ps.status !== 'completed').map(ps => (
+                    <option key={ps.id} value={ps.id}>{ps.title || 'Untitled'} — {ps.status}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
         </div>
 
@@ -365,7 +670,8 @@ export default function SceneScriptsPage() {
           <h2 className="text-white font-semibold text-lg">Steps ({steps.length})</h2>
           <Button
             onClick={handleAddStep}
-            className="bg-red-700 hover:bg-red-600 text-white"
+            className="text-white"
+            style={{ backgroundColor: '#e87640' }}
             data-testid="button-add-step"
           >
             <Plus className="w-4 h-4 mr-1" /> ADD STEP
@@ -376,7 +682,7 @@ export default function SceneScriptsPage() {
           {steps.map((step, index) => (
             <div
               key={step.id || index}
-              className="bg-slate-900 border border-slate-800 rounded-lg p-4"
+              className="bg-[#0a0a0a] border border-slate-800 rounded-lg p-4"
               data-testid={`step-card-${index}`}
             >
               <div className="flex items-start gap-2 mb-3">
@@ -401,7 +707,7 @@ export default function SceneScriptsPage() {
                     onChange={(e) => handleUpdateLocalStep(index, { instruction: e.target.value })}
                     onBlur={() => handleSaveStep(index)}
                     placeholder="Enter instruction..."
-                    className="w-full bg-slate-800 border border-slate-700 rounded-md p-2 text-white text-sm resize-none min-h-[60px]"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-md p-2 text-white text-sm resize-none min-h-[60px]"
                     data-testid={`input-instruction-${index}`}
                   />
                 </div>
@@ -422,13 +728,13 @@ export default function SceneScriptsPage() {
                     value={step.durationSeconds}
                     onChange={(e) => handleUpdateLocalStep(index, { durationSeconds: parseInt(e.target.value) || 0 })}
                     onBlur={() => handleSaveStep(index)}
-                    className="bg-slate-800 border-slate-700 text-white text-sm"
+                    className="bg-slate-900 border-slate-700 text-white text-sm"
                     data-testid={`input-step-duration-${index}`}
                   />
                 </div>
                 <div className="flex-1">
                   <label className="text-xs text-slate-400 block mb-1">Intensity ({step.intensity}/10)</label>
-                  <div className="relative h-6 rounded-full overflow-hidden bg-slate-800" data-testid={`intensity-slider-${index}`}>
+                  <div className="relative h-6 rounded-full overflow-hidden bg-slate-900" data-testid={`intensity-slider-${index}`}>
                     <div
                       className="h-full rounded-full transition-all"
                       style={{
@@ -454,7 +760,7 @@ export default function SceneScriptsPage() {
                   <select
                     value={step.ambientTone || ''}
                     onChange={(e) => { handleUpdateLocalStep(index, { ambientTone: e.target.value || null }); setTimeout(() => handleSaveStep(index), 0); }}
-                    className="w-full h-9 px-2 rounded-md bg-slate-800 border border-slate-700 text-white text-xs"
+                    className="w-full h-9 px-2 rounded-md bg-slate-900 border border-slate-700 text-white text-xs"
                     data-testid={`select-tone-${index}`}
                   >
                     <option value="">none</option>
@@ -503,7 +809,8 @@ export default function SceneScriptsPage() {
           </Button>
           <Button
             onClick={handleMarkReady}
-            className="bg-red-700 hover:bg-red-700 text-white flex-1"
+            className="text-white flex-1"
+            style={{ backgroundColor: '#e87640' }}
             data-testid="button-mark-ready"
           >
             <Check className="w-4 h-4 mr-1" /> MARK READY
@@ -521,59 +828,105 @@ export default function SceneScriptsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 p-6 max-w-2xl mx-auto" data-testid="script-list">
+    <div className="min-h-screen bg-[#030303] p-6 max-w-2xl mx-auto" data-testid="script-list">
       <PageBreadcrumb current="Scene Scripts" />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-white" data-testid="text-page-title">Scene Scripts</h1>
-        <Button
-          onClick={handleCreate}
-          className="bg-red-700 hover:bg-red-600 text-white"
-          data-testid="button-create-script"
-        >
-          <Plus className="w-4 h-4 mr-1" /> CREATE SCRIPT
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setView('library')}
+            className="text-white"
+            style={{ backgroundColor: '#431407', borderColor: '#e87640', borderWidth: 1 }}
+            data-testid="button-open-library"
+          >
+            <BookOpen className="w-4 h-4 mr-1" /> PRE-BUILT
+          </Button>
+          <Button
+            onClick={handleCreate}
+            className="text-white"
+            style={{ backgroundColor: '#e87640' }}
+            data-testid="button-create-script"
+          >
+            <Plus className="w-4 h-4 mr-1" /> CREATE
+          </Button>
+        </div>
       </div>
 
       {scripts.length === 0 ? (
-        <div className="text-center py-16 text-slate-500" data-testid="text-empty">
-          No scripts yet. Create one to get started.
+        <div className="text-center py-16" data-testid="text-empty">
+          <p className="text-slate-500 mb-4">No scripts yet. Create one or load a pre-built script.</p>
+          <Button
+            onClick={() => setView('library')}
+            className="text-white"
+            style={{ backgroundColor: '#e87640' }}
+            data-testid="button-browse-library"
+          >
+            <BookOpen className="w-4 h-4 mr-1" /> Browse Pre-Built Scripts
+          </Button>
         </div>
       ) : (
         <div className="space-y-3">
-          {scripts.map((script) => (
-            <div
-              key={script.id}
-              className="bg-slate-900 border border-slate-800 rounded-lg p-4 cursor-pointer hover:border-slate-700 transition-colors"
-              onClick={() => handleOpenScript(script)}
-              data-testid={`card-script-${script.id}`}
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-white font-semibold" data-testid={`text-script-title-${script.id}`}>
-                    {script.title}
-                  </h3>
-                  <div className="flex gap-3 mt-1 text-sm text-slate-400">
-                    {script.estimatedDuration ? (
-                      <span data-testid={`text-duration-${script.id}`}>{script.estimatedDuration} min</span>
-                    ) : null}
-                    {script.category && (
-                      <span data-testid={`text-category-${script.id}`}>{script.category}</span>
+          {scripts.map((script) => {
+            const session = playSessions.find(ps => ps.id === script.playSessionId);
+            return (
+              <div
+                key={script.id}
+                className="bg-[#0a0a0a] border border-slate-800 rounded-lg p-4 cursor-pointer hover:border-[#e87640]/40 transition-colors"
+                onClick={() => handleOpenScript(script)}
+                data-testid={`card-script-${script.id}`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold" data-testid={`text-script-title-${script.id}`}>
+                      {script.title}
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mt-1 text-sm text-slate-400">
+                      {script.estimatedDuration ? (
+                        <span data-testid={`text-duration-${script.id}`}>{script.estimatedDuration} min</span>
+                      ) : null}
+                      {script.category && (
+                        <span className="px-1.5 py-0.5 rounded text-xs" style={{ backgroundColor: '#431407', color: '#e87640' }} data-testid={`text-category-${script.id}`}>{script.category}</span>
+                      )}
+                      <span className="text-xs" style={{ color: intensityColor(script.intensityLevel) }}>
+                        Int: {script.intensityLevel}/10
+                      </span>
+                      <span className="text-xs" style={{ color: seriousnessColor(script.seriousnessLevel) }}>
+                        {seriousnessLabel(script.seriousnessLevel)}
+                      </span>
+                    </div>
+                    {script.goal && (
+                      <p className="text-slate-500 text-xs mt-1 truncate" data-testid={`text-goal-${script.id}`}>Goal: {script.goal}</p>
+                    )}
+                    {session && (
+                      <div className="flex items-center gap-1 mt-1 text-xs" style={{ color: '#e87640' }} data-testid={`text-linked-${script.id}`}>
+                        <Link2 className="w-3 h-3" /> Linked: {session.title || 'Untitled Session'}
+                      </div>
                     )}
                   </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        script.status === 'ready'
+                          ? 'text-white'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}
+                      style={script.status === 'ready' ? { backgroundColor: '#e87640' } : undefined}
+                      data-testid={`status-badge-${script.id}`}
+                    >
+                      {script.status}
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteScript.mutate(script.id); }}
+                      className="text-slate-600 hover:text-red-500 p-1"
+                      data-testid={`button-delete-script-${script.id}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full font-medium ${
-                    script.status === 'ready'
-                      ? 'bg-red-700 text-red-400'
-                      : 'bg-slate-800 text-slate-400'
-                  }`}
-                  data-testid={`status-badge-${script.id}`}
-                >
-                  {script.status}
-                </span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

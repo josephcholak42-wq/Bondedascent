@@ -914,6 +914,10 @@ export const sceneScripts = pgTable("scene_scripts", {
   description: text("description"),
   estimatedDuration: integer("estimated_duration"),
   category: text("category"),
+  intensityLevel: integer("intensity_level").notNull().default(5),
+  seriousnessLevel: integer("seriousness_level").notNull().default(5),
+  goal: text("goal"),
+  playSessionId: varchar("play_session_id"),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
 });

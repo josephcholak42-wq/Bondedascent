@@ -2734,13 +2734,27 @@ export async function registerRoutes(
 
   app.post("/api/scene-scripts", requireAuth, async (req, res) => {
     const user = req.user as User;
-    const { title, description, estimatedDuration, category } = req.body;
+    const { title, description, estimatedDuration, category, intensityLevel, seriousnessLevel, goal, playSessionId } = req.body;
     if (!title?.trim()) return res.status(400).json({ message: "Title required" });
+    let validatedSessionId = null;
+    if (playSessionId) {
+      const session = await storage.getPlaySessionById(playSessionId);
+      if (!session || (session.userId !== user.id && session.partnerId !== user.id)) {
+        return res.status(400).json({ message: "Invalid play session" });
+      }
+      validatedSessionId = playSessionId;
+    }
+    const clampedIntensity = Math.max(1, Math.min(10, intensityLevel || 5));
+    const clampedSeriousness = Math.max(1, Math.min(10, seriousnessLevel || 5));
     const script = await storage.createSceneScript({
       creatorId: user.id,
       title: title.trim(),
       description: description || null,
       estimatedDuration: estimatedDuration || null,
+      intensityLevel: clampedIntensity,
+      seriousnessLevel: clampedSeriousness,
+      goal: goal || null,
+      playSessionId: validatedSessionId,
       category: category || null,
     });
     await storage.logActivity(user.id, "scene_script_created", title.trim(), user.role);
@@ -2752,7 +2766,16 @@ export async function registerRoutes(
     const existing = await storage.getSceneScriptById(req.params.id);
     if (!existing) return res.status(404).json({ message: "Not found" });
     if (existing.creatorId !== user.id) return res.status(403).json({ message: "Not authorized" });
-    const script = await storage.updateSceneScript(req.params.id, req.body);
+    const updates = { ...req.body };
+    if (updates.playSessionId) {
+      const session = await storage.getPlaySessionById(updates.playSessionId);
+      if (!session || (session.userId !== user.id && session.partnerId !== user.id)) {
+        return res.status(400).json({ message: "Invalid play session" });
+      }
+    }
+    if (updates.intensityLevel !== undefined) updates.intensityLevel = Math.max(1, Math.min(10, updates.intensityLevel));
+    if (updates.seriousnessLevel !== undefined) updates.seriousnessLevel = Math.max(1, Math.min(10, updates.seriousnessLevel));
+    const script = await storage.updateSceneScript(req.params.id, updates);
     if (!script) return res.status(404).json({ message: "Not found" });
     res.json(script);
   });
@@ -2768,13 +2791,19 @@ export async function registerRoutes(
 
   // --- SCRIPT STEPS ---
   app.get("/api/scene-scripts/:scriptId/steps", requireAuth, async (req, res) => {
+    const user = req.user as User;
+    const parentScript = await storage.getSceneScriptById(req.params.scriptId);
+    if (!parentScript || parentScript.creatorId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const steps = await storage.getScriptSteps(req.params.scriptId);
     res.json(steps);
   });
 
   app.post("/api/script-steps", requireAuth, async (req, res) => {
+    const user = req.user as User;
     const { scriptId, stepOrder, instruction, durationSeconds, intensity, ambientTone, branchCondition, branchTargetStep } = req.body;
     if (!scriptId || !instruction?.trim()) return res.status(400).json({ message: "scriptId and instruction required" });
+    const parentScript = await storage.getSceneScriptById(scriptId);
+    if (!parentScript || parentScript.creatorId !== user.id) return res.status(403).json({ message: "Not authorized" });
     const step = await storage.createScriptStep({
       scriptId,
       stepOrder: stepOrder || 1,

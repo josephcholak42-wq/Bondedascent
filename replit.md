@@ -58,6 +58,7 @@ Sub role theme: deep wine/burgundy (hue ~345), NOT purple/pink.
     - **Daily Altar**: 7-day reward cycle with a "Kneel" button and escalating rewards.
     - **Ascension Path**: Visual progression tree for feature unlocks with level-up animations.
     - **Tribunal**: Cinematic weekly performance review with stats, Dom verdict, and Sub plea.
+    - **Scene Scripts**: Step-by-step scene script builder with intensity level, seriousness level, goal, play session binding toggle, pre-built library browser (12 scripts across 8 categories), timeline visualization, and live preview mode with countdown timer.
     - **Sensory Feedback**: Web Audio API for synthesized sounds and haptic vibrations for in-app events.
 
 ### Backend
